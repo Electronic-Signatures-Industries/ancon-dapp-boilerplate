@@ -1,0 +1,168 @@
+<rFE xmlns="http://dgi-fep.mef.gob.pa" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://dgi-fep.mef.gob.pa /home/rogelio/Code/xdv-fe-client/src/libs/dgi-fe/xsd/FE_Flat_v1.00.xsd">
+  <!-- version -->  <dVerForm>1.00</dVerForm>
+  <!-- id <xs:pattern value="[F][E](([A|V|T|E|P|N|I]|[-]|[a-zA-Z0-9]){64})?"/>
+-->   <dId>FE01200000000000029-29-29-5676322018101525982740639300126729580548</dId>
+    <gDGen>
+  <!-- 1=prod, 2=testnet -->      <iAmb>2</iAmb>
+  <!--  01=prev,normal;02=prev,contin;03=pos,normal,04=pos,contin-->      <iTpEmis>01</iTpEmis>
+ <!--fecha contin -->       <dFechaCont>2018-10-15T23:59:00-05:00</dFechaCont>
+     <!-- razon contin-->   <dMotCont>se fue la luz en el establecimiento 6</dMotCont>
+    <!-- tipo 01-09 -->    <iDoc>01</iDoc>
+    <!-- pos seq -->    <dNroDF>2598274063</dNroDF>
+ <!-- pos -->       <dPtoFacDF>930</dPtoFacDF>
+ <!-- cod seg -->       <dSeg>672958054</dSeg>
+  <!-- fecha emision-->      <dFechaEm>2018-10-15T23:59:00-05:00</dFechaEm>
+<!--fecha salida -->        <dFechaSalida>2018-10-15T23:59:00-05:00</dFechaSalida>
+ <!-- operacion -->       <iNatOp>01</iNatOp>
+   <!-- 1=SELL,2=BUY -->     <iTipoOp>2</iTipoOp>
+   <!--Dest 1=Panama,2=ext -->     <iDest>1</iDest>
+ <!-- CAFE generation, 1 -->       <iFormCAFE>3</iFormCAFE>
+<!-- 3 -->        <iEntCAFE>1</iEntCAFE>
+    <dEnvFE>2</dEnvFE>
+     <!-- 1=own-->       <iProGen>2</iProGen>
+    <!-- 4=service-->    <iTipoTranVenta>1</iTipoTranVenta>
+        <dInfEmFE>la factura sera entregada despues</dInfEmFE>
+        <gEmis>
+            <gRucEmi>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>29-29-29</dRuc>
+                <dDV>56</dDV>
+            </gRucEmi>
+            <dNombEm>FE generada en ambiente de pruebas - sin valor comercial ni fiscal &amp;amp; </dNombEm>
+            <dSucEm>7632</dSucEm>
+            <dCoordEm>+8.9892,-79.5201</dCoordEm>
+            <dDirecEm>CALLE 53 ESTE</dDirecEm>
+            <gUbiEm>
+                <dCodUbi>1-1-2</dCodUbi>
+                <dCorreg>BASTIMENTOS</dCorreg>
+                <dDistr>BOCAS DEL TORO</dDistr>
+                <dProv>BOCAS DEL TORO</dProv>
+            </gUbiEm>
+            <dTfnEm>997-8242</dTfnEm>
+            <dCorElectEmi>fep@gmail.com</dCorElectEmi>
+        </gEmis>
+        <gDatRec>
+<!--01=contribuyente,02=consumidor -->            <iTipoRec>01</iTipoRec>
+            <gRucRec>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>28-28-28</dRuc>
+                <dDV>40</dDV>
+            </gRucRec>
+            <dNombRec>FE generad en ambientede pruebas - sin valor comercial ni fiscal</dNombRec>
+            <dDirecRec>Av. Balboa</dDirecRec>
+            <gUbiRec>
+                <dCodUbi>1-1-2</dCodUbi>
+                <dCorreg>BASTIMENTOS</dCorreg>
+                <dDistr>BOCAS DEL TORO</dDistr>
+                <dProv>BOCAS DEL TORO</dProv>
+            </gUbiRec>
+            <dTfnRec>628-8131</dTfnRec>
+            <dCorElectRec>fep@gmail.com</dCorElectRec>
+<!-- -->            <cPaisRec>PA</cPaisRec>
+        </gDatRec>
+        <gAutXML>
+            <gRucAutXML>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>14-14-14</dRuc>
+                <dDV>25</dDV>
+            </gRucAutXML>
+        </gAutXML>
+    </gDGen>
+    <gItem>
+        <dSecItem>001</dSecItem>
+        <dDescProd>cable usb</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>5.01</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>137.943600</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>691.0974</dPrItem>
+            <dPrAcarItem>1.01</dPrAcarItem>
+            <dPrSegItem>12.01</dPrSegItem>
+            <dValTotItem>807.78</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>3</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>3</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>03</dTasaITBMS>
+            <dValITBMS>103.66461</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.0000</dTasaISC>
+            <dValISC>0.00</dValISC>
+        </gISCItem>
+    </gItem>
+    
+    
+    <gTot>
+        <dTotNeto>3235.10</dTotNeto>
+        <dTotITBMS>281.74</dTotITBMS>
+        <dTotISC>99.30</dTotISC>
+        <dTotGravado>381.04</dTotGravado>
+        <dTotDesc>2.09</dTotDesc>
+        <dTotAcar>0.00</dTotAcar>
+        <dTotSeg>0.00</dTotSeg>
+        <dVTot>3681.07</dVTot>
+        <dTotRec>3681.07</dTotRec>
+        <dVuelto>0.00</dVuelto>
+        <iPzPag>1</iPzPag>
+        <dNroItems>10</dNroItems>
+        <dVTotItems>3683.16</dVTotItems>
+        <gDescBonif>
+            <dDetalDesc>Pronto pago</dDetalDesc>
+            <dValDesc>2.09</dValDesc>
+        </gDescBonif>
+        <gFormaPago>
+            <iFormaPago>99</iFormaPago>
+            <dFormaPagoDesc>tranferencia</dFormaPagoDesc>
+            <dVlrCuota>3681.07</dVlrCuota>
+        </gFormaPago>
+    </gTot>
+    <gPedComGl>
+        <dNroPed>8761</dNroPed>
+        <dNumAcept>123456789</dNumAcept>
+        <dInfEmPedGl>El equipo mide 250 metros 2 y es de color naranja con rayas negras</dInfEmPedGl>
+    </gPedComGl>
+    <gInfoLog>
+        <dNroVols>305</dNroVols>
+        <dPesoTot>5983.008953</dPesoTot>
+        <dUnPesoTot>2</dUnPesoTot>
+        <dLicCamion>tipo D</dLicCamion>
+        <dNomTransp>Transporte Los Angeles</dNomTransp>
+        <gRucTransp>
+            <dTipoRuc>2</dTipoRuc>
+            <dRuc>14-14-14</dRuc>
+            <dDV>25</dDV>
+        </gRucTransp>
+        <dInfEmLog>El camion debe entrar por la puerta trasera del super mercado para hacer entrega de la mercancia.  Preguntar por John</dInfEmLog>
+    </gInfoLog>
+    <gLcEntr>
+        <gRucLcEntr>
+            <dTipoRuc>2</dTipoRuc>
+            <dRuc>14-14-14</dRuc>
+            <dDV>25</dDV>
+        </gRucLcEntr>
+        <dNombLcEntr>Super mercado 104</dNombLcEntr>
+        <dDirecLcEntr>Urbanizacion Montelimar</dDirecLcEntr>
+        <gUbiLcEntr>
+            <dCodUbi>1-1-2</dCodUbi>
+            <dCorreg>Las Cruces</dCorreg>
+            <dDistr>Boca Cupe</dDistr>
+            <dProv>Cocle</dProv>
+        </gUbiLcEntr>
+        <dTfnLcEntr>6698-8601</dTfnLcEntr>
+        <dTfnAdLcEntr>998-4541</dTfnAdLcEntr>
+    </gLcEntr>
+ 
+    <gNoFirm>
+        <dQRCode><![CDATA[https://prueba-fep-test.mef.gob.pa/Consultas/FacturasPorQR?chFE=FE01200000000000029-29-29-5676322018101525982740639300126729580548&iAmb=2&digestValue=Pamocwb0HjNoMlpTM30et0Ngp+JE6g0E5jg5enMsIBM=&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkaWdlc3RWYWx1ZSI6IlBhbW9jd2IwSGpOb01scFRNMzBldDBOZ3ArSkU2ZzBFNWpnNWVuTXNJQk09IiwiY2hGRSI6IkZFMDEyMDAwMDAwMDAwMDAwMjktMjktMjktNTY3NjMyMjAxODEwMTUyNTk4Mjc0MDYzOTMwMDEyNjcyOTU4MDU0OCIsImlBbWIiOiIyIn0.72fbdo2op-JRga2Qjft2U5vEKYn4uneclZKk49VicsA]]></dQRCode></gNoFirm></rFE>

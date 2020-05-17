@@ -1,4 +1,5 @@
-<rFE xmlns="http://dgi-fep.mef.gob.pa">
+<rFE xmlns="http://dgi-fep.mef.gob.pa" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://dgi-fep.mef.gob.pa /home/rogelio/Code/xdv-fe-client/src/libs/dgi-fe/xsd/FE_Flat_v1.00.xsd">
     <dVerForm>1.00</dVerForm>
     <dId>FE01200000000000029-29-29-5676322018101525982740639300126729580548</dId>
     <gDGen>
