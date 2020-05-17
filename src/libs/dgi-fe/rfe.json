@@ -1,0 +1,523 @@
+{
+  "rFE": {
+    "@xmlns": "http://dgi-fep.mef.gob.pa",
+    "dVerForm": "1.00",
+    "dId": "FE01200000000000029-29-29-5676322018101525982740639300126729580548",
+    "gDGen": {
+      "iAmb": "2",
+      "iTpEmis": "01",
+      "dFechaCont": "2018-10-15T23:59:00-05:00",
+      "dMotCont": "se fue la luz en el establecimiento 6",
+      "iDoc": "01",
+      "dNroDF": "2598274063",
+      "dPtoFacDF": "930",
+      "dSeg": "672958054",
+      "dFechaEm": "2018-10-15T23:59:00-05:00",
+      "dFechaSalida": "2018-10-15T23:59:00-05:00",
+      "iNatOp": "01",
+      "iTipoOp": "2",
+      "iDest": "1",
+      "iFormCAFE": "3",
+      "iEntCAFE": "1",
+      "dEnvFE": "2",
+      "iProGen": "2",
+      "iTipoTranVenta": "1",
+      "dInfEmFE": "la factura sera entregada despues",
+      "gEmis": {
+        "gRucEmi": {
+          "dTipoRuc": "2",
+          "dRuc": "29-29-29",
+          "dDV": "56"
+        },
+        "dNombEm": "FE generada en ambiente de pruebas - sin valor comercial ni fiscal &amp;",
+        "dSucEm": "7632",
+        "dCoordEm": "+8.9892,-79.5201",
+        "dDirecEm": "CALLE 53 ESTE",
+        "gUbiEm": {
+          "dCodUbi": "1-1-2",
+          "dCorreg": "BASTIMENTOS",
+          "dDistr": "BOCAS DEL TORO",
+          "dProv": "BOCAS DEL TORO"
+        },
+        "dTfnEm": "997-8242",
+        "dCorElectEmi": "fep@gmail.com"
+      },
+      "gDatRec": {
+        "iTipoRec": "01",
+        "gRucRec": {
+          "dTipoRuc": "2",
+          "dRuc": "28-28-28",
+          "dDV": "40"
+        },
+        "dNombRec": "FE generad en ambientede pruebas - sin valor comercial ni fiscal",
+        "dDirecRec": "Av. Balboa",
+        "gUbiRec": {
+          "dCodUbi": "1-1-2",
+          "dCorreg": "BASTIMENTOS",
+          "dDistr": "BOCAS DEL TORO",
+          "dProv": "BOCAS DEL TORO"
+        },
+        "dTfnRec": "628-8131",
+        "dCorElectRec": "fep@gmail.com",
+        "cPaisRec": "PA"
+      },
+      "gAutXML": {
+        "gRucAutXML": {
+          "dTipoRuc": "2",
+          "dRuc": "14-14-14",
+          "dDV": "25"
+        }
+      }
+    },
+    "gItem": [
+      {
+        "dSecItem": "001",
+        "dDescProd": "cable usb",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "5.01",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "137.943600",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "691.0974",
+          "dPrAcarItem": "1.01",
+          "dPrSegItem": "12.01",
+          "dValTotItem": "807.78"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "3",
+          "dGTINInv": "0",
+          "dCantComInvent": "3"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "03",
+          "dValITBMS": "103.66461"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.0000",
+          "dValISC": "0.00"
+        }
+      },
+      {
+        "dSecItem": "002",
+        "dDescProd": "cuadernos",
+        "dCodProd": "1234567892",
+        "cUnidad": "dm",
+        "dCantCodInt": "6.00",
+        "dFechaFab": "2016-10-06",
+        "dFechaCad": "2016-10-06",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "93.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "558.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "603.06"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "39.06"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.00",
+          "dValISC": "0.00"
+        },
+        "gMedicina": {
+          "dNroLote": "1000000",
+          "dCtLote": "1000001"
+        }
+      },
+      {
+        "dSecItem": "003",
+        "dDescProd": "lapices",
+        "dCodProd": "1234567892",
+        "cUnidad": "cm",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "54.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "324.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "368.88"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "22.68"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "16.20"
+        }
+      },
+      {
+        "dSecItem": "004",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "57.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "342.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "389.04"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "23.94"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "17.10"
+        }
+      },
+      {
+        "dSecItem": "005",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "70.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "420.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "476.40"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "29.40"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "21.00"
+        }
+      },
+      {
+        "dSecItem": "006",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "56.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "336.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "382.32"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "23.52"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "16.80"
+        }
+      },
+      {
+        "dSecItem": "007",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "54.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "324.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "368.88"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "22.68"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "16.20"
+        }
+      },
+      {
+        "dSecItem": "008",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "28.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "168.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "194.16"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "11.76"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "8.40"
+        },
+        "gPedComIr": {
+          "dNroPed": "10000",
+          "dSecItemPed": "999",
+          "dInfEmPedIt": "Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura"
+        }
+      },
+      {
+        "dSecItem": "009",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "6.00",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "8.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "48.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "59.76"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "3.36"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "2.40"
+        },
+        "gPedComIr": {
+          "dNroPed": "10000",
+          "dSecItemPed": "999",
+          "dInfEmPedIt": "Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura"
+        }
+      },
+      {
+        "dSecItem": "010",
+        "dDescProd": "manta",
+        "dCodProd": "1234567892",
+        "cUnidad": "m",
+        "dCantCodInt": "3",
+        "dCodCPBSabr": "13",
+        "dCodCPBScmp": "1010",
+        "cUnidadCPBS": "cm",
+        "dInfEmFE": "FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X",
+        "gPrecios": {
+          "dPrUnit": "8.000000",
+          "dPrUnitDesc": "0.00",
+          "dPrItem": "24.00",
+          "dPrAcarItem": "5.00",
+          "dPrSegItem": "1.00",
+          "dValTotItem": "32.88"
+        },
+        "gCodItem": {
+          "dGTINCom": "0",
+          "dCantGTINCom": "0",
+          "dGTINInv": "0",
+          "dCantComInvent": "0.00"
+        },
+        "gITBMSItem": {
+          "dTasaITBMS": "01",
+          "dValITBMS": "1.68"
+        },
+        "gISCItem": {
+          "dTasaISC": "0.05",
+          "dValISC": "1.20"
+        },
+        "gPedComIr": {
+          "dNroPed": "10000",
+          "dSecItemPed": "999",
+          "dInfEmPedIt": "Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura"
+        }
+      }
+    ],
+    "gTot": {
+      "dTotNeto": "3235.10",
+      "dTotITBMS": "281.74",
+      "dTotISC": "99.30",
+      "dTotGravado": "381.04",
+      "dTotDesc": "2.09",
+      "dTotAcar": "0.00",
+      "dTotSeg": "0.00",
+      "dVTot": "3681.07",
+      "dTotRec": "3681.07",
+      "dVuelto": "0.00",
+      "iPzPag": "1",
+      "dNroItems": "10",
+      "dVTotItems": "3683.16",
+      "gDescBonif": {
+        "dDetalDesc": "Pronto pago",
+        "dValDesc": "2.09"
+      },
+      "gFormaPago": {
+        "iFormaPago": "99",
+        "dFormaPagoDesc": "tranferencia",
+        "dVlrCuota": "3681.07"
+      }
+    },
+    "gPedComGl": {
+      "dNroPed": "8761",
+      "dNumAcept": "123456789",
+      "dInfEmPedGl": "El equipo mide 250 metros 2 y es de color naranja con rayas negras"
+    },
+    "gInfoLog": {
+      "dNroVols": "305",
+      "dPesoTot": "5983.008953",
+      "dUnPesoTot": "2",
+      "dLicCamion": "tipo D",
+      "dNomTransp": "Transporte Los Angeles",
+      "gRucTransp": {
+        "dTipoRuc": "2",
+        "dRuc": "14-14-14",
+        "dDV": "25"
+      },
+      "dInfEmLog": "El camion debe entrar por la puerta trasera del super mercado para hacer entrega de la mercancia.  Preguntar por John"
+    },
+    "gLcEntr": {
+      "gRucLcEntr": {
+        "dTipoRuc": "2",
+        "dRuc": "14-14-14",
+        "dDV": "25"
+      },
+      "dNombLcEntr": "Super mercado 104",
+      "dDirecLcEntr": "Urbanizacion Montelimar",
+      "gUbiLcEntr": {
+        "dCodUbi": "1-1-2",
+        "dCorreg": "Las Cruces",
+        "dDistr": "Boca Cupe",
+        "dProv": "Cocle"
+      },
+      "dTfnLcEntr": "6698-8601",
+      "dTfnAdLcEntr": "998-4541"
+    },
+    "Signature": {
+      "@xmlns": "http://www.w3.org/2000/09/xmldsig#",
+      "SignedInfo": {
+        "CanonicalizationMethod": {
+          "@Algorithm": "http://www.w3.org/2001/10/xml-exc-c14n#"
+        },
+        "SignatureMethod": {
+          "@Algorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+        },
+        "Reference": {
+          "@URI": "",
+          "Transforms": {
+            "Transform": [
+              {
+                "@Algorithm": "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
+              },
+              {
+                "@Algorithm": "http://www.w3.org/2001/10/xml-exc-c14n#"
+              }
+            ]
+          },
+          "DigestMethod": {
+            "@Algorithm": "http://www.w3.org/2001/04/xmlenc#sha256"
+          },
+          "DigestValue": "Pamocwb0HjNoMlpTM30et0Ngp+JE6g0E5jg5enMsIBM="
+        }
+      },
+      "SignatureValue": "my3YGGB4qD0ckXSXW3rBUxqdkCysVWpQaXPJryjZJBULMAdrU0fJ2UtrxqmeiFVpVb/Vk6aeZmup\nt3ZqYY+312y1oqEEocRNGr7NV3xlsTGj2PqNPS2TOGHbbkxexHFyLpnihxw/4W17JzFpE9Kg+P7Q\n96U2Sos5wPwoZrO7oihnUuVFw+ZOmX5zRejz0t3mGYEla7WjAS3YQI+wRBUSY1oiqO0f+JCQ/xjV\nA7KgUi6ai/5FkQ2Vxr2QIo+CdP2u+Vcn0IEJAAmsob8DddzvcBfY+0H5F0E67IeKUkwf1HbYTuIo\nubbd7/HLw8zWe9MwUxt46tZkrPSeXo22ANQLAg==",
+      "KeyInfo": {
+        "X509Data": {
+          "X509SubjectName": "CN=[F] NOMBRE AAAAAAAAAAAAAAAA- ID 123-456789,OU=REPRESENTANTE,O=FIRMA ELECTRONICA,C=PA",
+          "X509Certificate": "MIIGYTCCBUmgAwIBAgIQZ3hivyTnWhBZ8O2dXFFecjANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQG\nEwJQQTEaMBgGA1UECgwRRklSTUEgRUxFQ1RST05JQ0ExGjAYBgNVBAMMEUNBIFBBTkFNQSBDTEFT\nRSAyMB4XDTE3MTAyNTIwMDEzM1oXDTE5MTAyNTIwMDEzM1owgYAxCzAJBgNVBAYTAlBBMRowGAYD\nVQQKDBFGSVJNQSBFTEVDVFJPTklDQTEWMBQGA1UECwwNUkVQUkVTRU5UQU5URTE9MDsGA1UEAww0\nW0ZdIE5PTUJSRSBWQVNRVUVaIEdSRUNPIExJQU4gQ1JJU1RFTCAtIElEIDgtNzc2LTY4MTCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL/zRKe+B4i0m0ZopC3WA0L7SvLDNQ10pRq1N1pq\n/bOAs3XIvWFEozlFy3OiwrTjtnpM8LxZc50w1DRpA7Ixd6pcRnBUrviNsNnFbErUilMXWQs7dMie\ndDxl8tsRv4P6pYAyBmcOOFuN8EPI9hcrFrvdkq4LhUJug4qgrLDFu7YqCYT98FHmuMZ/RdZhFyg9\nVoIsfBdb1+2gBunv+qmFRNs+eluDkNCLiIFqgKPu6PLsBnWt7+5UHLmifCrMOf9/BIFGE1XvZKkb\nM/F3lS1jdgZlBaRwecB6SVLEw2yncmM5W1ggABy/sIE/hXtATfvmGBaJz92Ke8+cszJBG4Oq1h8C\nAwEAAaOCAw8wggMLMIIBJAYDVR0RBIIBGzCCAReBFGxjdmFzcXVlekBtZWYuZ29iLnBhpIH+MIH7\nMQ8wDQYHYIRPAQECBQwCMjkxDzANBgdghE8BAQIEDAIyOTEPMA0GB2CETwEBAgMMAjI5MRUwEwYH\nYIRPAQECAgwIMjktMjktMjkxKzApBgdghE8BAQIBDB5QUlVFQkEgRkFDVFVSQSBFTEVDVFLDk05J\nQ0EgMTkxFzAVBgdghE8BAQEGDAowNC8wNy8xOTg0MRYwFAYHYIRPAQEBBQwJOC03NzYtNjgxMRIw\nEAYHYIRPAQEBBAwFR1JFQ08xFDASBgdghE8BAQEDDAdWQVNRVUVaMRQwEgYHYIRPAQEBAgwHQ1JJ\nU1RFTDERMA8GB2CETwEBAQEMBExJQU4wCQYDVR0TBAIwADAOBgNVHQ8BAf8EBAMCBkAwGQYDVR0l\nBBIwEAYIKwYBBQUHAwQGBFUdJQAwHQYDVR0OBBYEFIA8eaYsHbY9ig/u4jnW/8YAFK2LMB8GA1Ud\nIwQYMBaAFOj+bPYIlSq63GS5oFlu7dC88MlyMIHKBgNVHSAEgcIwgb8wgbwGCGCETwECAgICMIGv\nMDYGCCsGAQUFBwIBFipodHRwOi8vd3d3LnBraS5nb2IucGEvbm9ybWF0aXZhL2luZGV4Lmh0bWww\ndQYIKwYBBQUHAgIwaRpnQ2VydGlmaWNhZG8gc3VqZXRvIGEgbGEgRGVjbGFyYWNpb24gZGUgUHJh\nY3RpY2FzIGRlIENlcnRpZmljYWNpb24gZGUgRmlybWEgRWxlY3Ryb25pY2EgZGUgUGFuYW1hICgy\nMDEyKTBnBggrBgEFBQcBAQRbMFkwMwYIKwYBBQUHMAKGJ2h0dHA6Ly93d3cucGtpLmdvYi5wYS9j\nYWNlcnRzL2NhcGMyLmNydDAiBggrBgEFBQcwAYYWaHR0cDovL29jc3AucGtpLmdvYi5wYTA1BgNV\nHR8ELjAsMCqgKKAmhiRodHRwOi8vd3d3LnBraS5nb2IucGEvY3Jscy9jYXBjMi5jcmwwDQYJKoZI\nhvcNAQELBQADggEBALN8MXQphkYJeQogqrZ9BEfP6P2il7GOGjlvi8aatTIAbCz/8rOASyD+kKhC\nrmM7dF+HhzD5jGNqAYh33YHHulvlehai3i+ye6io/9r2Q/H6Z5vGcfYZLuEOEONvSR/EwFnUDwHR\nFdoyp9kkt9mqsr/szB7+hFPUU1JYFUs3354Pud1qP0rRj0cZ48RhUCg/j+QYhuH7AvRKQ6GJJCfT\nIFTCNEILVIaLgUHVU8KgU4B0ARWCK/aRh7KMP4/eUcB0HI9rFMJ/fqNhCNtmluEl6STcfMY4j1Fr\n51PVtVMWXZ50HywVUvek6aP+Fz86ofi8nMP95H/UAm5+g48mHg61tvo="
+        }
+      }
+    },
+    "gNoFirm": {
+      "dQRCode": "https://prueba-fep-test.mef.gob.pa/Consultas/FacturasPorQR?chFE=FE01200000000000029-29-29-5676322018101525982740639300126729580548&iAmb=2&digestValue=Pamocwb0HjNoMlpTM30et0Ngp+JE6g0E5jg5enMsIBM=&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkaWdlc3RWYWx1ZSI6IlBhbW9jd2IwSGpOb01scFRNMzBldDBOZ3ArSkU2ZzBFNWpnNWVuTXNJQk09IiwiY2hGRSI6IkZFMDEyMDAwMDAwMDAwMDAwMjktMjktMjktNTY3NjMyMjAxODEwMTUyNTk4Mjc0MDYzOTMwMDEyNjcyOTU4MDU0OCIsImlBbWIiOiIyIn0.72fbdo2op-JRga2Qjft2U5vEKYn4uneclZKk49VicsA"
+    }
+  }
+}

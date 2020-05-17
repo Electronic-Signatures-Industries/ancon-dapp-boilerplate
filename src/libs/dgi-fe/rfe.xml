@@ -1,0 +1,534 @@
+<rFE xmlns="http://dgi-fep.mef.gob.pa">
+    <dVerForm>1.00</dVerForm>
+    <dId>FE01200000000000029-29-29-5676322018101525982740639300126729580548</dId>
+    <gDGen>
+        <iAmb>2</iAmb>
+        <iTpEmis>01</iTpEmis>
+        <dFechaCont>2018-10-15T23:59:00-05:00</dFechaCont>
+        <dMotCont>se fue la luz en el establecimiento 6</dMotCont>
+        <iDoc>01</iDoc>
+        <dNroDF>2598274063</dNroDF>
+        <dPtoFacDF>930</dPtoFacDF>
+        <dSeg>672958054</dSeg>
+        <dFechaEm>2018-10-15T23:59:00-05:00</dFechaEm>
+        <dFechaSalida>2018-10-15T23:59:00-05:00</dFechaSalida>
+        <iNatOp>01</iNatOp>
+        <iTipoOp>2</iTipoOp>
+        <iDest>1</iDest>
+        <iFormCAFE>3</iFormCAFE>
+        <iEntCAFE>1</iEntCAFE>
+        <dEnvFE>2</dEnvFE>
+        <iProGen>2</iProGen>
+        <iTipoTranVenta>1</iTipoTranVenta>
+        <dInfEmFE>la factura sera entregada despues</dInfEmFE>
+        <gEmis>
+            <gRucEmi>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>29-29-29</dRuc>
+                <dDV>56</dDV>
+            </gRucEmi>
+            <dNombEm>FE generada en ambiente de pruebas - sin valor comercial ni fiscal &amp;amp; </dNombEm>
+            <dSucEm>7632</dSucEm>
+            <dCoordEm>+8.9892,-79.5201</dCoordEm>
+            <dDirecEm>CALLE 53 ESTE</dDirecEm>
+            <gUbiEm>
+                <dCodUbi>1-1-2</dCodUbi>
+                <dCorreg>BASTIMENTOS</dCorreg>
+                <dDistr>BOCAS DEL TORO</dDistr>
+                <dProv>BOCAS DEL TORO</dProv>
+            </gUbiEm>
+            <dTfnEm>997-8242</dTfnEm>
+            <dCorElectEmi>fep@gmail.com</dCorElectEmi>
+        </gEmis>
+        <gDatRec>
+            <iTipoRec>01</iTipoRec>
+            <gRucRec>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>28-28-28</dRuc>
+                <dDV>40</dDV>
+            </gRucRec>
+            <dNombRec>FE generad en ambientede pruebas - sin valor comercial ni fiscal</dNombRec>
+            <dDirecRec>Av. Balboa</dDirecRec>
+            <gUbiRec>
+                <dCodUbi>1-1-2</dCodUbi>
+                <dCorreg>BASTIMENTOS</dCorreg>
+                <dDistr>BOCAS DEL TORO</dDistr>
+                <dProv>BOCAS DEL TORO</dProv>
+            </gUbiRec>
+            <dTfnRec>628-8131</dTfnRec>
+            <dCorElectRec>fep@gmail.com</dCorElectRec>
+            <cPaisRec>PA</cPaisRec>
+        </gDatRec>
+        <gAutXML>
+            <gRucAutXML>
+                <dTipoRuc>2</dTipoRuc>
+                <dRuc>14-14-14</dRuc>
+                <dDV>25</dDV>
+            </gRucAutXML>
+        </gAutXML>
+    </gDGen>
+    <gItem>
+        <dSecItem>001</dSecItem>
+        <dDescProd>cable usb</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>5.01</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>137.943600</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>691.0974</dPrItem>
+            <dPrAcarItem>1.01</dPrAcarItem>
+            <dPrSegItem>12.01</dPrSegItem>
+            <dValTotItem>807.78</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>3</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>3</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>03</dTasaITBMS>
+            <dValITBMS>103.66461</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.0000</dTasaISC>
+            <dValISC>0.00</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>002</dSecItem>
+        <dDescProd>cuadernos</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>dm</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dFechaFab>2016-10-06</dFechaFab>
+        <dFechaCad>2016-10-06</dFechaCad>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>93.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>558.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>603.06</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>39.06</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.00</dTasaISC>
+            <dValISC>0.00</dValISC>
+        </gISCItem>
+        <gMedicina>
+            <dNroLote>1000000</dNroLote>
+            <dCtLote>1000001</dCtLote>
+        </gMedicina>
+    </gItem>
+    <gItem>
+        <dSecItem>003</dSecItem>
+        <dDescProd>lapices</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>cm</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>54.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>324.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>368.88</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>22.68</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>16.20</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>004</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>57.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>342.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>389.04</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>23.94</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>17.10</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>005</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>70.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>420.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>476.40</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>29.40</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>21.00</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>006</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>56.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>336.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>382.32</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>23.52</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>16.80</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>007</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>54.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>324.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>368.88</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>22.68</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>16.20</dValISC>
+        </gISCItem>
+    </gItem>
+    <gItem>
+        <dSecItem>008</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>28.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>168.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>194.16</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>11.76</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>8.40</dValISC>
+        </gISCItem>
+        <gPedComIr>
+            <dNroPed>10000</dNroPed>
+            <dSecItemPed>999</dSecItemPed>
+            <dInfEmPedIt>Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura</dInfEmPedIt>
+        </gPedComIr>
+    </gItem>
+    <gItem>
+        <dSecItem>009</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>6.00</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>8.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>48.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>59.76</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>3.36</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>2.40</dValISC>
+        </gISCItem>
+        <gPedComIr>
+            <dNroPed>10000</dNroPed>
+            <dSecItemPed>999</dSecItemPed>
+            <dInfEmPedIt>Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura</dInfEmPedIt>
+        </gPedComIr>
+    </gItem>
+    <gItem>
+        <dSecItem>010</dSecItem>
+        <dDescProd>manta</dDescProd>
+        <dCodProd>1234567892</dCodProd>
+        <cUnidad>m</cUnidad>
+        <dCantCodInt>3</dCantCodInt>
+        <dCodCPBSabr>13</dCodCPBSabr>
+        <dCodCPBScmp>1010</dCodCPBScmp>
+        <cUnidadCPBS>cm</cUnidadCPBS>
+        <dInfEmFE>FACTURA DE PRUEBA PRODUCT X CON ESPECIFICACIONS X</dInfEmFE>
+        <gPrecios>
+            <dPrUnit>8.000000</dPrUnit>
+            <dPrUnitDesc>0.00</dPrUnitDesc>
+            <dPrItem>24.00</dPrItem>
+            <dPrAcarItem>5.00</dPrAcarItem>
+            <dPrSegItem>1.00</dPrSegItem>
+            <dValTotItem>32.88</dValTotItem>
+        </gPrecios>
+        <gCodItem>
+            <dGTINCom>0</dGTINCom>
+            <dCantGTINCom>0</dCantGTINCom>
+            <dGTINInv>0</dGTINInv>
+            <dCantComInvent>0.00</dCantComInvent>
+        </gCodItem>
+        <gITBMSItem>
+            <dTasaITBMS>01</dTasaITBMS>
+            <dValITBMS>1.68</dValITBMS>
+        </gITBMSItem>
+        <gISCItem>
+            <dTasaISC>0.05</dTasaISC>
+            <dValISC>1.20</dValISC>
+        </gISCItem>
+        <gPedComIr>
+            <dNroPed>10000</dNroPed>
+            <dSecItemPed>999</dSecItemPed>
+            <dInfEmPedIt>Informacionde interes del emisor con respeto al pedido comercial, relacionado con un item de la factura</dInfEmPedIt>
+        </gPedComIr>
+    </gItem>
+    <gTot>
+        <dTotNeto>3235.10</dTotNeto>
+        <dTotITBMS>281.74</dTotITBMS>
+        <dTotISC>99.30</dTotISC>
+        <dTotGravado>381.04</dTotGravado>
+        <dTotDesc>2.09</dTotDesc>
+        <dTotAcar>0.00</dTotAcar>
+        <dTotSeg>0.00</dTotSeg>
+        <dVTot>3681.07</dVTot>
+        <dTotRec>3681.07</dTotRec>
+        <dVuelto>0.00</dVuelto>
+        <iPzPag>1</iPzPag>
+        <dNroItems>10</dNroItems>
+        <dVTotItems>3683.16</dVTotItems>
+        <gDescBonif>
+            <dDetalDesc>Pronto pago</dDetalDesc>
+            <dValDesc>2.09</dValDesc>
+        </gDescBonif>
+        <gFormaPago>
+            <iFormaPago>99</iFormaPago>
+            <dFormaPagoDesc>tranferencia</dFormaPagoDesc>
+            <dVlrCuota>3681.07</dVlrCuota>
+        </gFormaPago>
+    </gTot>
+    <gPedComGl>
+        <dNroPed>8761</dNroPed>
+        <dNumAcept>123456789</dNumAcept>
+        <dInfEmPedGl>El equipo mide 250 metros 2 y es de color naranja con rayas negras</dInfEmPedGl>
+    </gPedComGl>
+    <gInfoLog>
+        <dNroVols>305</dNroVols>
+        <dPesoTot>5983.008953</dPesoTot>
+        <dUnPesoTot>2</dUnPesoTot>
+        <dLicCamion>tipo D</dLicCamion>
+        <dNomTransp>Transporte Los Angeles</dNomTransp>
+        <gRucTransp>
+            <dTipoRuc>2</dTipoRuc>
+            <dRuc>14-14-14</dRuc>
+            <dDV>25</dDV>
+        </gRucTransp>
+        <dInfEmLog>El camion debe entrar por la puerta trasera del super mercado para hacer entrega de la mercancia.  Preguntar por John</dInfEmLog>
+    </gInfoLog>
+    <gLcEntr>
+        <gRucLcEntr>
+            <dTipoRuc>2</dTipoRuc>
+            <dRuc>14-14-14</dRuc>
+            <dDV>25</dDV>
+        </gRucLcEntr>
+        <dNombLcEntr>Super mercado 104</dNombLcEntr>
+        <dDirecLcEntr>Urbanizacion Montelimar</dDirecLcEntr>
+        <gUbiLcEntr>
+            <dCodUbi>1-1-2</dCodUbi>
+            <dCorreg>Las Cruces</dCorreg>
+            <dDistr>Boca Cupe</dDistr>
+            <dProv>Cocle</dProv>
+        </gUbiLcEntr>
+        <dTfnLcEntr>6698-8601</dTfnLcEntr>
+        <dTfnAdLcEntr>998-4541</dTfnAdLcEntr>
+    </gLcEntr>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+            <Reference URI="">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                    <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                <DigestValue>Pamocwb0HjNoMlpTM30et0Ngp+JE6g0E5jg5enMsIBM=</DigestValue>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue>my3YGGB4qD0ckXSXW3rBUxqdkCysVWpQaXPJryjZJBULMAdrU0fJ2UtrxqmeiFVpVb/Vk6aeZmup
+t3ZqYY+312y1oqEEocRNGr7NV3xlsTGj2PqNPS2TOGHbbkxexHFyLpnihxw/4W17JzFpE9Kg+P7Q
+96U2Sos5wPwoZrO7oihnUuVFw+ZOmX5zRejz0t3mGYEla7WjAS3YQI+wRBUSY1oiqO0f+JCQ/xjV
+A7KgUi6ai/5FkQ2Vxr2QIo+CdP2u+Vcn0IEJAAmsob8DddzvcBfY+0H5F0E67IeKUkwf1HbYTuIo
+ubbd7/HLw8zWe9MwUxt46tZkrPSeXo22ANQLAg==</SignatureValue>
+        <KeyInfo>
+            <X509Data>
+                <X509SubjectName>CN=[F] NOMBRE AAAAAAAAAAAAAAAA- ID 123-456789,OU=REPRESENTANTE,O=FIRMA ELECTRONICA,C=PA</X509SubjectName>
+                <X509Certificate>MIIGYTCCBUmgAwIBAgIQZ3hivyTnWhBZ8O2dXFFecjANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQG
+EwJQQTEaMBgGA1UECgwRRklSTUEgRUxFQ1RST05JQ0ExGjAYBgNVBAMMEUNBIFBBTkFNQSBDTEFT
+RSAyMB4XDTE3MTAyNTIwMDEzM1oXDTE5MTAyNTIwMDEzM1owgYAxCzAJBgNVBAYTAlBBMRowGAYD
+VQQKDBFGSVJNQSBFTEVDVFJPTklDQTEWMBQGA1UECwwNUkVQUkVTRU5UQU5URTE9MDsGA1UEAww0
+W0ZdIE5PTUJSRSBWQVNRVUVaIEdSRUNPIExJQU4gQ1JJU1RFTCAtIElEIDgtNzc2LTY4MTCCASIw
+DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL/zRKe+B4i0m0ZopC3WA0L7SvLDNQ10pRq1N1pq
+/bOAs3XIvWFEozlFy3OiwrTjtnpM8LxZc50w1DRpA7Ixd6pcRnBUrviNsNnFbErUilMXWQs7dMie
+dDxl8tsRv4P6pYAyBmcOOFuN8EPI9hcrFrvdkq4LhUJug4qgrLDFu7YqCYT98FHmuMZ/RdZhFyg9
+VoIsfBdb1+2gBunv+qmFRNs+eluDkNCLiIFqgKPu6PLsBnWt7+5UHLmifCrMOf9/BIFGE1XvZKkb
+M/F3lS1jdgZlBaRwecB6SVLEw2yncmM5W1ggABy/sIE/hXtATfvmGBaJz92Ke8+cszJBG4Oq1h8C
+AwEAAaOCAw8wggMLMIIBJAYDVR0RBIIBGzCCAReBFGxjdmFzcXVlekBtZWYuZ29iLnBhpIH+MIH7
+MQ8wDQYHYIRPAQECBQwCMjkxDzANBgdghE8BAQIEDAIyOTEPMA0GB2CETwEBAgMMAjI5MRUwEwYH
+YIRPAQECAgwIMjktMjktMjkxKzApBgdghE8BAQIBDB5QUlVFQkEgRkFDVFVSQSBFTEVDVFLDk05J
+Q0EgMTkxFzAVBgdghE8BAQEGDAowNC8wNy8xOTg0MRYwFAYHYIRPAQEBBQwJOC03NzYtNjgxMRIw
+EAYHYIRPAQEBBAwFR1JFQ08xFDASBgdghE8BAQEDDAdWQVNRVUVaMRQwEgYHYIRPAQEBAgwHQ1JJ
+U1RFTDERMA8GB2CETwEBAQEMBExJQU4wCQYDVR0TBAIwADAOBgNVHQ8BAf8EBAMCBkAwGQYDVR0l
+BBIwEAYIKwYBBQUHAwQGBFUdJQAwHQYDVR0OBBYEFIA8eaYsHbY9ig/u4jnW/8YAFK2LMB8GA1Ud
+IwQYMBaAFOj+bPYIlSq63GS5oFlu7dC88MlyMIHKBgNVHSAEgcIwgb8wgbwGCGCETwECAgICMIGv
+MDYGCCsGAQUFBwIBFipodHRwOi8vd3d3LnBraS5nb2IucGEvbm9ybWF0aXZhL2luZGV4Lmh0bWww
+dQYIKwYBBQUHAgIwaRpnQ2VydGlmaWNhZG8gc3VqZXRvIGEgbGEgRGVjbGFyYWNpb24gZGUgUHJh
+Y3RpY2FzIGRlIENlcnRpZmljYWNpb24gZGUgRmlybWEgRWxlY3Ryb25pY2EgZGUgUGFuYW1hICgy
+MDEyKTBnBggrBgEFBQcBAQRbMFkwMwYIKwYBBQUHMAKGJ2h0dHA6Ly93d3cucGtpLmdvYi5wYS9j
+YWNlcnRzL2NhcGMyLmNydDAiBggrBgEFBQcwAYYWaHR0cDovL29jc3AucGtpLmdvYi5wYTA1BgNV
+HR8ELjAsMCqgKKAmhiRodHRwOi8vd3d3LnBraS5nb2IucGEvY3Jscy9jYXBjMi5jcmwwDQYJKoZI
+hvcNAQELBQADggEBALN8MXQphkYJeQogqrZ9BEfP6P2il7GOGjlvi8aatTIAbCz/8rOASyD+kKhC
+rmM7dF+HhzD5jGNqAYh33YHHulvlehai3i+ye6io/9r2Q/H6Z5vGcfYZLuEOEONvSR/EwFnUDwHR
+Fdoyp9kkt9mqsr/szB7+hFPUU1JYFUs3354Pud1qP0rRj0cZ48RhUCg/j+QYhuH7AvRKQ6GJJCfT
+IFTCNEILVIaLgUHVU8KgU4B0ARWCK/aRh7KMP4/eUcB0HI9rFMJ/fqNhCNtmluEl6STcfMY4j1Fr
+51PVtVMWXZ50HywVUvek6aP+Fz86ofi8nMP95H/UAm5+g48mHg61tvo=</X509Certificate>
+            </X509Data>
+        </KeyInfo>
+    </Signature>
+    <gNoFirm>
+        <dQRCode><![CDATA[https://prueba-fep-test.mef.gob.pa/Consultas/FacturasPorQR?chFE=FE01200000000000029-29-29-5676322018101525982740639300126729580548&iAmb=2&digestValue=Pamocwb0HjNoMlpTM30et0Ngp+JE6g0E5jg5enMsIBM=&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkaWdlc3RWYWx1ZSI6IlBhbW9jd2IwSGpOb01scFRNMzBldDBOZ3ArSkU2ZzBFNWpnNWVuTXNJQk09IiwiY2hGRSI6IkZFMDEyMDAwMDAwMDAwMDAwMjktMjktMjktNTY3NjMyMjAxODEwMTUyNTk4Mjc0MDYzOTMwMDEyNjcyOTU4MDU0OCIsImlBbWIiOiIyIn0.72fbdo2op-JRga2Qjft2U5vEKYn4uneclZKk49VicsA]]></dQRCode></gNoFirm></rFE>
