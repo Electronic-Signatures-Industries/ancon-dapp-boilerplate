@@ -22,7 +22,8 @@
     <dEnvFE>2</dEnvFE>
      <!-- 1=own-->       <iProGen>2</iProGen>
     <!-- 4=service-->    <iTipoTranVenta>1</iTipoTranVenta>
-        <dInfEmFE>la factura sera entregada despues</dInfEmFE>
+
+    <dInfEmFE>la factura sera entregada despues</dInfEmFE>
         <gEmis>
             <gRucEmi>
                 <dTipoRuc>2</dTipoRuc>
