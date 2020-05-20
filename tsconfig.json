@@ -33,11 +33,10 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",
-    "tests/**/*.tsx", "src/views/dashboard/pages/contracts.js", "src/libs/setupSolidoWalletConnect.old", "src/views/dashboard/pages/worker.js"
-  ],
+    "tests/**/*.tsx"  ],
   "exclude": [
     "node_modules/@erebos/hex",
     "node_modules/@erebos/bzz-feed",
-    "node_modules/@erebos"
+    "node_modules"
   ]
 }

@@ -10,10 +10,12 @@ import "./plugins/vee-validate";
 import vuetify from "./plugins/vuetify";
 import "./plugins/appconfig";
 import VueMermaid from "vue-mermaid";
+import VueFormJsonSchema from 'vue-form-json-schema';
 
 import Vuethereum from "vuethereum";
 import { initMiddleware, MiddlewareOptions, initOffchainMiddleware } from "./libs";
 
+Vue.component('vue-form-json-schema', VueFormJsonSchema);
 Vue.use(VueMermaid);
 Vue.use(Vuethereum);
 import VueWorker from 'vue-worker'

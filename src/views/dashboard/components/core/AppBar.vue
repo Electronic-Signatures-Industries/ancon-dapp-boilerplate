@@ -14,34 +14,17 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-toolbar-title class="headline">MDV Workflow and Identity Hub</v-toolbar-title>
+      <v-toolbar-title class="headline">XDV Platform para Factura Electronica</v-toolbar-title>
 
       <v-spacer></v-spacer>
       
       <v-btn
         :to="{
-          name: 'MDV Workflow Editor',
-        }"
-        icon
-      >
-        <v-icon>mdi-sitemap</v-icon>
-      </v-btn>
-
-      <v-btn
-        :to="{
-          name: 'Template Deployment',
+          name: 'Editor',
         }"
         icon
       >
         <v-icon>mdi-rocket</v-icon>
-      </v-btn>
-      <v-btn
-        :to="{
-          name: 'Sitios Web Durables',
-        }"
-        icon
-      >
-        <v-icon>mdi-server</v-icon>
       </v-btn>
       <v-btn
         :to="{
