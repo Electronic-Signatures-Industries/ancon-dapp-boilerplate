@@ -6,17 +6,17 @@
       color="teal"
     ></v-progress-linear>
     <v-expansion-panels>
-      <v-expansion-panel :key="totales">
+      <v-expansion-panel>
         <v-expansion-panel-header>Generales</v-expansion-panel-header>
         <v-expansion-panel-content>
         </v-expansion-panel-content>
       </v-expansion-panel>
-      <v-expansion-panel :key="totales">
+      <v-expansion-panel>
         <v-expansion-panel-header>Items</v-expansion-panel-header>
         <v-expansion-panel-content>
         </v-expansion-panel-content>
       </v-expansion-panel>
-      <v-expansion-panel :key="totales">
+      <v-expansion-panel>
         <v-expansion-panel-header>Totales</v-expansion-panel-header>
         <v-expansion-panel-content>
           <fe-total v-bind:totales.sync="model"></fe-total>

@@ -1,13 +1,15 @@
 <template>
-  <v-autocomplete
-    :items="items"
-    dense
-    item-text="key"
-    item-value="value"
-    label="TiempoPago"
-    v-model="item"
-    v-on:change="change"
-  ></v-autocomplete>
+  <v-row
+    ><v-col>
+      <v-autocomplete
+        :items="items"
+        item-text="key"
+        item-value="value"
+        label="TiempoPago"
+        v-model="item"
+        v-on:change="change"
+      ></v-autocomplete> </v-col
+  ></v-row>
 </template>
 <script lang="ts">
 import { TypedRFE, TypedRFESchema, TiempoPago } from '@xdvplatform/fe-builder';
@@ -15,13 +17,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
   name: 'fe-total-tiempo-pago',
-  model: {
-    prop: 'value',
-    event: 'change',
-  },
-  props: {
-    value: Number,
-  },
+  props: ['tiempopago'],
 })
 export default class TotalTiempPago extends Vue {
   item = '';
@@ -30,7 +26,7 @@ export default class TotalTiempPago extends Vue {
     .map((e) => ({ key: e[1], value: e[0] }));
 
   change() {
-    this.$emit('change', this.item);
+    this.$emit('update:tiempopago', this.item);
   }
 }
 </script>
