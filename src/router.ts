@@ -3,7 +3,6 @@
 import Vue from "vue";
 import Router from "vue-router";
 import DurableWebsite from "./views/dashboard/pages/dapp/DurableWebsite.vue";
-import SolModelEditor from "./views/dashboard/pages/SolModelEditor.vue";
 import TemplateEditor from "./views/dashboard/pages/TemplateEditor.vue";
 import WorkflowEditor from "./views/dashboard/pages/WorkflowEditor.vue";
 import index from "./views/dashboard/Index.vue";
@@ -30,13 +29,9 @@ export default new Router({
       path: "/fe",
       // @ts-ignore
       component: index,
+
       children: [
-        {
-          name: "Solidity Model",
-          path: "solmodel",
-          // @ts-ignore
-          component: SolModelEditor
-        },
+  
         {
           name: "MDV Workflow Editor",
           path: "workflow",
