@@ -1,5 +1,6 @@
 <template>
-  <v-row><v-col cols="6">
+  <v-row
+    ><v-col cols="6">
       <v-text-field
         v-model="secuencia"
         label="Secuencia"
@@ -56,20 +57,21 @@ import {
   VencimientoPago,
 } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import moment  from 'moment';
 
 @Component({
   name: 'fe-total-vencimiento-pago',
   props: ['vencimientopago'],
 })
 export default class TotalVencimientoPago extends Vue {
-  fecha = new Date();
+  fecha = new Date().toISOString().substr(0, 10);
   descripcion = '';
   secuencia = 0;
   valor = 0;
   menu = false;
   change() {
     this.$emit('update:vencimientopago', {
-      dFecItPlazo: this.fecha,
+      dFecItPlazo: moment(this.fecha).toDate(),
       dSecItem: this.secuencia,
       dValItPlazo: this.valor,
       dInfPagPlazo: this.descripcion,
