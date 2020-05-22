@@ -5,7 +5,7 @@
         <v-col cols="12" md="4">
           <v-text-field
             v-model.number="model.dNroItems"
-            label="Cantidad"
+            label="Cantidad" :value="template.dNroItems.default"
             @input="handleInput"
             :error="!!validations.dNroItems"
             hint="D13: Número total de ítems de la factura"
@@ -14,8 +14,8 @@
           ></v-text-field>
         </v-col>
 
-        <v-col cols="12" md="4">
-          <v-text-field
+        <v-col cols="12" v-show="template.dTotAcar.visible" md="4">
+          <v-text-field 
             v-model.number="model.dTotAcar"
             :error="!!validations.dTotAcar"
             label="Valor de Acarreo"
@@ -167,7 +167,7 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="4" v-show="template.gPagPlazo.visible">
           <fe-total-tiempo-pago
             v-bind:tiempopago.sync="model.iPzPag"
             :error="!!validations.iPzPag"
@@ -176,7 +176,7 @@
             @change="validate('iPzPag')"
           ></fe-total-tiempo-pago>
         </v-col>
-        <v-col cols="12" md="8">
+        <v-col cols="12" md="8" v-show="template.gRetenc.visible">
           <fe-total-retencion
             v-bind:retencion.sync="model.gRetenc"
             label="Otros Impuestos"
@@ -229,7 +229,12 @@ import TotalRetencion from './Retencion.vue';
 import TotalTiempPago from './TiempoPago.vue';
 @Component({
   name: 'fe-total',
-  props: ['totales'],
+  props: ['totales', 'template'],
+//   computed: {
+//     totales: function() {
+// debugger
+//     },
+//   },
   components: {
     'fe-total-forma-pago': TotalFormaPago,
     'fe-total-bonificacion': TotalBonificacion,
@@ -241,6 +246,7 @@ import TotalTiempPago from './TiempoPago.vue';
 })
 export default class TotalIndex extends Vue {
   model: Totales = new Totales();
+  template: any;
   valid = true;
   validations = {};
 
@@ -256,6 +262,11 @@ export default class TotalIndex extends Vue {
   }
   handleInput() {
     this.$emit('update:totales', this.model);
+  }
+
+  created() {
+    this.template = this.$props.template;
+    this.model = this.$props.totales;
   }
 }
 </script>

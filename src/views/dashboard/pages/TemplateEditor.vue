@@ -8,18 +8,16 @@
     <v-expansion-panels>
       <v-expansion-panel>
         <v-expansion-panel-header>Generales</v-expansion-panel-header>
-        <v-expansion-panel-content>
-        </v-expansion-panel-content>
+        <v-expansion-panel-content> </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>Items</v-expansion-panel-header>
-        <v-expansion-panel-content>
-        </v-expansion-panel-content>
+        <v-expansion-panel-content> </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>Totales</v-expansion-panel-header>
         <v-expansion-panel-content>
-          <fe-total v-bind:totales.sync="model"></fe-total>
+          <fe-total :template="template" v-bind:totales.sync="model"></fe-total>
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -38,6 +36,21 @@ import Countries from './widgets/Countries.vue';
 export default class TemplateEditor extends Vue {
   model: Totales = new Totales();
   loading = false;
+  template = {
+    gRetenc: {
+      visible: false,
+    },
+    gPagPlazo: {
+      visible: false,
+    },
+    dTotAcar: {
+      visible: false,
+    },
+    dNroItems: {
+      default: 1,
+      visible: true,
+    },
+  };
   beforeMount() {
     this.model.dNroItems = 1;
   }
