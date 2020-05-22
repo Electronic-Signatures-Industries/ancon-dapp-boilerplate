@@ -1,16 +1,14 @@
 <template>
-  <v-form v-model="valid">
+  <v-form v-model="valid" autocomplete="off">
     <v-container>
-      <v-row>
-        <v-col>Totales </v-col>
-      </v-row>
       <v-row>
         <v-col cols="12" md="4">
           <v-text-field
             v-model.number="model.dNroItems"
             label="Cantidad"
             @input="handleInput"
-            @change="validate"
+            hint="D13: Número total de ítems de la factura"
+            @change="validate" required
           ></v-text-field>
         </v-col>
 
@@ -18,6 +16,7 @@
           <v-text-field
             v-model.number="model.dTotAcar"
             label="Valor de Acarreo"
+            hint="D07: Valor del acarreo cobrado en el precio total"
             @input="handleInput"
             @change="validate"
           ></v-text-field>
@@ -27,6 +26,7 @@
           <v-text-field
             v-model.number="model.dTotDesc"
             label="Suma de Descuentos"
+            hint="D06: Suma de los descuentos y bonificaciones concedidos sobre el valor total de la factura"
             @input="handleInput"
             @change="validate"
           ></v-text-field>
@@ -34,7 +34,8 @@
       </v-row>
       <v-row>
         <v-col cols="12" md="4">
-          <v-text-field
+          <v-text-field required
+            hint="D05: Suma total de monto gravado"
             v-model.number="model.dTotGravado"
             label="Gravado"
             @input="handleInput"
@@ -46,6 +47,7 @@
           <v-text-field
             v-model.number="model.dISC"
             label="ISC"
+            hint="D04: Total del ISC"
             @input="handleInput"
             @change="validate"
           ></v-text-field>
@@ -53,8 +55,9 @@
 
         <v-col cols="12" md="4">
           <v-text-field
-            v-model.number="model.dITBMS"
+            v-model.number="model.dITBMS" required
             label="ITBMS"
+            hint="D03: Total del ITBMS"
             @input="handleInput"
             @change="validate"
           ></v-text-field>
@@ -63,7 +66,8 @@
       <v-row>
         <v-col cols="12" md="4">
           <v-text-field
-            v-model.number="model.dTotNeto"
+            v-model.number="model.dTotNeto" required
+            hint="D02: Suma de los precios antes de impuesto"
             label="Neto"
             @input="handleInput"
             @change="validate"
@@ -72,7 +76,8 @@
 
         <v-col cols="12" md="4">
           <v-text-field
-            v-model.number="model.dTotRec"
+            v-model.number="model.dTotRec" required
+            hint="D10: Suma de los valores recibidos"
             label="Recibido"
             @input="handleInput"
             @change="validate"
@@ -81,6 +86,7 @@
 
         <v-col cols="12" md="4">
           <v-text-field
+          hint="D08: Valor del seguro cobrado en el precio total"
             v-model.number="model.dTotSeg"
             label="Asegurado"
             @input="handleInput"
@@ -90,25 +96,25 @@
       </v-row>
       <v-row>
         <v-col cols="12" md="4">
-          <v-text-field
+          <v-text-field hint="Suma total de los ítems con los montos de los impuestos"
             v-model.number="model.dVTotItems"
             label="Total Items"
-            @input="handleInput"
+            @input="handleInput" required
             @change="validate"
           ></v-text-field>
         </v-col>
 
         <v-col cols="12" md="4">
-          <v-text-field
+          <v-text-field hint="D09: Valor total de la factura"
             v-model.number="model.dVTot"
-            label="Total"
+            label="Total" required
             @input="handleInput"
             @change="validate"
           ></v-text-field>
         </v-col>
 
         <v-col cols="12" md="4">
-          <v-text-field
+          <v-text-field hint="Vuelto entregado al cliente"
             v-model.number="model.dVuelto"
             label="Vuelto"
             @input="handleInput"
@@ -127,7 +133,7 @@
         </v-col>
 
         <v-col cols="12" md="8">
-          <fe-total-forma-pago
+          <fe-total-forma-pago required
             v-bind:formapago.sync="model.gFormaPago"
             label="Forma de Pago"
             @input="handleInput"
