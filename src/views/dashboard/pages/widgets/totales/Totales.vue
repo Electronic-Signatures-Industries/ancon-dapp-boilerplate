@@ -198,13 +198,13 @@
         </v-col>
 
         <v-col cols="12" md="8">
-          <fe-total-vencimiento-pago
-            v-bind:vencimientopago.sync="model.gPagPlazo"
+          <fe-total-vencimiento-pago-list
+            v-bind:vencimientopagoitems.sync="model.gPagPlazo"
             label="Vencimiento de Pago"
             :error="!!validations.gPagPlazo"
             @input="handleInput"
             @change="validate"
-          ></fe-total-vencimiento-pago>
+          ></fe-total-vencimiento-pago-list>
         </v-col>
       </v-row>
     </v-container>
@@ -227,6 +227,7 @@ import TotalOIT from './OIT.vue';
 import TotalVencimientoPago from './VencimientoPago.vue';
 import TotalRetencion from './Retencion.vue';
 import TotalTiempPago from './TiempoPago.vue';
+import TotalVencimientoPagoList from './VencimientoPagoList.vue';
 @Component({
   name: 'fe-total',
   props: ['totales', 'template'],
@@ -239,7 +240,7 @@ import TotalTiempPago from './TiempoPago.vue';
     'fe-total-forma-pago': TotalFormaPago,
     'fe-total-bonificacion': TotalBonificacion,
     'fe-total-oit': TotalOIT,
-    'fe-total-vencimiento-pago': TotalVencimientoPago,
+    'fe-total-vencimiento-pago-list': TotalVencimientoPagoList,
     'fe-total-retencion': TotalRetencion,
     'fe-total-tiempo-pago': TotalTiempPago,
   },

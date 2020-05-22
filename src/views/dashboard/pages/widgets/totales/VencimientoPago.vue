@@ -4,18 +4,18 @@
       <v-text-field
         v-model="secuencia"
         label="Secuencia"
-        v-on:change="change"
+        v-on:change="change" hint="D501: Número secuencial de cada fracción de pago a plazo "
       ></v-text-field>
     </v-col>
     <v-col cols="6">
-      <v-text-field
+      <v-text-field hint="D503: Valor de la fracción "
         v-model="valor"
         label="Valor"
         v-on:change="change"
       ></v-text-field>
     </v-col>
     <v-col cols="6">
-      <v-menu
+      <v-menu hint="D502: Fecha de vencimiento de la fracción "
         ref="menu"
         v-model="menu"
         :close-on-content-click="false"
@@ -42,6 +42,7 @@
     <v-col cols="6">
       <v-text-field
         v-model="descripcion"
+        hint="D504: Informaciones de interés del emitente"
         label="Descripcion"
         v-on:change="change"
       ></v-text-field>

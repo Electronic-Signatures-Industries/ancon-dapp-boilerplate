@@ -7,6 +7,7 @@
         item-value="value"
         label="TiempoPago"
         v-model="item"
+        hint="D12: Tiempo de pago"
         v-on:change="change"
       ></v-autocomplete> </v-col
   ></v-row>
