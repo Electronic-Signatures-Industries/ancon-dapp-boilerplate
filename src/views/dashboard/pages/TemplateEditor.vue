@@ -50,6 +50,9 @@ export default class TemplateEditor extends Vue {
       default: 1,
       visible: true,
     },
+    iPzPag: {
+      visible: true,
+    }
   };
   beforeMount() {
     this.model.dNroItems = 1;

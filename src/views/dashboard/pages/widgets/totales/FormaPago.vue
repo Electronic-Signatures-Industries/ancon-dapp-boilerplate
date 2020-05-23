@@ -3,7 +3,7 @@
     ><v-col md="4">
       <v-autocomplete
         :items="items"
-        item-text="key"
+        item-text="key" hint="D301: Forma de pago de la factura "
         item-value="value"
         label="Forma de pago"
         v-model="item"
@@ -11,14 +11,14 @@
       ></v-autocomplete>
     </v-col>
     <v-col md="4">
-      <v-text-field
+      <v-text-field hint="D303: Valor de la fracción pagada utilizando esta forma de pago "
         v-model.number="cuota"
         label="Valor de Cuota"
         v-on:change="change"
       ></v-text-field>
     </v-col>
     <v-col>
-      <v-text-field
+      <v-text-field hint="D302: Descripción de forma de pago no listada en el formato"
         v-model="descripcion"
         label="Descripcion"
         v-on:change="change"

@@ -6,7 +6,7 @@
   >
     <template v-slot:top>
       <v-toolbar flat color="white">
-        <v-toolbar-title>Vencimiento de pagos</v-toolbar-title>
+        <v-toolbar-title>Bonificacion</v-toolbar-title>
         <v-divider class="mx-4" inset vertical></v-divider>
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="500px">
@@ -20,12 +20,12 @@
 
             <v-card-text>
               <v-container>
-                <fe-total-vencimiento-pago
-                  v-bind:vencimientopago.sync="editModel.gPagPlazo"
-                  label="Vencimiento de Pago"
-                  :error="!!validations.gPagPlazo"
+                <fe-total-bonificacion
+                  v-bind:bonificacion.sync="editModel.gDescBonif"
+                  label="Bonificacion"
+                  :error="!!validations.gDescBonif"
                   @change="validate"
-                ></fe-total-vencimiento-pago>
+                ></fe-total-bonificacion>
               </v-container>
             </v-card-text>
 
@@ -54,18 +54,18 @@ import {
   TypedRFESchema,
   OtrosImpuestos,
   CodigoRetencion,
-  VencimientoPago,
+  Bonificaciones,
 } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
-import TotalVencimientoPago from './VencimientoPago.vue';
+import TotalBonificacion from './Bonificacion.vue';
 import { validate } from 'class-validator';
 
 @Component({
-  name: 'fe-total-vencimiento-pago-list',
-  props: ['vencimientopagoitems'],
+  name: 'fe-total-bonificacion-list',
+  props: ['bonificacionitems'],
   components: {
-    'fe-total-vencimiento-pago': TotalVencimientoPago,
+    'fe-total-bonificacion': TotalBonificacion,
   },
   computed: {
     formTitle() {
@@ -78,21 +78,19 @@ import { validate } from 'class-validator';
     },
   },
 })
-export default class TotalVencimientoPagoList extends Vue {
+export default class TotalBonificacionList extends Vue {
   items: any[] = [];
  
  
   dialog = false;
   headers = [
-    { text: 'Secuencia', value: 'gPagPlazo.dSecItem' },
-    { text: 'Valor', value: 'gPagPlazo.dValItPlazo' },
-    { text: 'Fecha de Vencimiento', value: 'gPagPlazo.dFecItPlazo' },
-    { text: 'Descripcion', value: 'gPagPlazo.dInfPagPlazo' },
+    { text: 'Valor', value: 'gDescBonif.dValDesc' },
+    { text: 'Descripcion', value: 'gDescBonif.dDetalDesc' },
     { text: 'Actions', value: 'actions', sortable: false },
   ];
   editedIndex = -1;
-  editModel = new VencimientoPago();
-  defaultItem = new VencimientoPago();
+  editModel = new Bonificaciones();
+  defaultItem = new Bonificaciones();
 
   validations = {};
 
@@ -138,11 +136,10 @@ export default class TotalVencimientoPagoList extends Vue {
     this.close();
   }
   change() {
-    this.$emit('update:vencimientopagoitems', this.items.map(i => ({...i.gPagPlazo})));
+    this.$emit('update:bonificacionitems', this.items.map(i => ({...i.gDescBonif})));
   }
   created() {
-    this.items = this.$props.vencimientopagoitems;
+    this.items = this.$props.bonificacionitems;
   }
-
 }
 </script>

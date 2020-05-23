@@ -2,11 +2,12 @@
   <v-data-table
     :headers="headers"
     :items="items"
-    dense :hide-default-footer="true"
+    dense
+    :hide-default-footer="true"
   >
     <template v-slot:top>
       <v-toolbar flat color="white">
-        <v-toolbar-title>Vencimiento de pagos</v-toolbar-title>
+        <v-toolbar-title>Forma de pago</v-toolbar-title>
         <v-divider class="mx-4" inset vertical></v-divider>
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="500px">
@@ -20,12 +21,12 @@
 
             <v-card-text>
               <v-container>
-                <fe-total-vencimiento-pago
-                  v-bind:vencimientopago.sync="editModel.gPagPlazo"
-                  label="Vencimiento de Pago"
-                  :error="!!validations.gPagPlazo"
+                <fe-total-forma-pago
+                  v-bind:formapago.sync="editModel.gFormaPago"
+                  label="Forma de Pago"
+                  :error="!!validations.gFormaPago"
                   @change="validate"
-                ></fe-total-vencimiento-pago>
+                ></fe-total-forma-pago>
               </v-container>
             </v-card-text>
 
@@ -54,18 +55,19 @@ import {
   TypedRFESchema,
   OtrosImpuestos,
   CodigoRetencion,
-  VencimientoPago,
+  FormaPago,
+  FormaPagoType,
 } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
-import TotalVencimientoPago from './VencimientoPago.vue';
+import TotalFormaPago from './FormaPago.vue';
 import { validate } from 'class-validator';
 
 @Component({
-  name: 'fe-total-vencimiento-pago-list',
-  props: ['vencimientopagoitems'],
+  name: 'fe-total-forma-pago-list',
+  props: ['formapagoitems'],
   components: {
-    'fe-total-vencimiento-pago': TotalVencimientoPago,
+    'fe-total-forma-pago': TotalFormaPago,
   },
   computed: {
     formTitle() {
@@ -78,21 +80,19 @@ import { validate } from 'class-validator';
     },
   },
 })
-export default class TotalVencimientoPagoList extends Vue {
+export default class TotalFormaPagoList extends Vue {
   items: any[] = [];
- 
- 
+
   dialog = false;
   headers = [
-    { text: 'Secuencia', value: 'gPagPlazo.dSecItem' },
-    { text: 'Valor', value: 'gPagPlazo.dValItPlazo' },
-    { text: 'Fecha de Vencimiento', value: 'gPagPlazo.dFecItPlazo' },
-    { text: 'Descripcion', value: 'gPagPlazo.dInfPagPlazo' },
+    { text: 'Forma de Pago', value: 'gFormaPago.iFormaPago' },
+    { text: 'Valor Cuota', value: 'gFormaPago.dVlrCuota' },
+    { text: 'Descripcion', value: 'gFormaPago.dFormaPagoDesc' },
     { text: 'Actions', value: 'actions', sortable: false },
   ];
   editedIndex = -1;
-  editModel = new VencimientoPago();
-  defaultItem = new VencimientoPago();
+  editModel = new FormaPagoType();
+  defaultItem = new FormaPagoType();
 
   validations = {};
 
@@ -110,14 +110,14 @@ export default class TotalVencimientoPagoList extends Vue {
     this.editedIndex = this.items.indexOf(item);
     this.editModel = Object.assign({}, item);
     this.dialog = true;
-    this.change()
+    this.change();
   }
 
   deleteItem(item) {
     const index = this.items.indexOf(item);
     confirm('Are you sure you want to delete this item?') &&
       this.items.splice(index, 1);
-    this.change()
+    this.change();
   }
 
   close() {
@@ -134,15 +134,17 @@ export default class TotalVencimientoPagoList extends Vue {
     } else {
       this.items.push(this.editModel);
     }
-    this.change()
+    this.change();
     this.close();
   }
   change() {
-    this.$emit('update:vencimientopagoitems', this.items.map(i => ({...i.gPagPlazo})));
+    this.$emit(
+      'update:formapagoitems',
+      this.items.map((i) => ({ ...i.gFormaPago }))
+    );
   }
   created() {
-    this.items = this.$props.vencimientopagoitems;
+    this.items = this.$props.formapagoitems;
   }
-
 }
 </script>

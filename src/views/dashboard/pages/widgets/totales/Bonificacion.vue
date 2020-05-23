@@ -2,14 +2,14 @@
     <v-row
       ><v-col cols="6">
         <v-text-field
-          v-model.number="valor"
+          v-model.number="valor" hint="D201: Monto Descuentos/Bonificaciones y otros ajustes"
           label="Valor"
           v-on:change="change"
         ></v-text-field>
       </v-col>
       <v-col cols="6">
         <v-text-field
-          v-model="descripcion"
+          v-model="descripcion" hint="D200: Descripción de descuentos o bonificaciones adicionales aplicados a la factura"
           label="Descripcion"
           v-on:change="change"
         ></v-text-field>

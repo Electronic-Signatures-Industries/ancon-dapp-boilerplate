@@ -146,28 +146,28 @@
       </v-row>
       <v-row>
         <v-col cols="12" md="4">
-          <fe-total-bonificacion
-            v-bind:bonificacion.sync="model.gDescBonif"
+          <fe-total-bonificacion-list
+            v-bind:bonificacionitems.sync="model.gDescBonif"
             :error="!!validations.gDescBonif"
             label="Bonificaciones"
             @input="handleInput"
             @change="validate('gDescBonif')"
-          ></fe-total-bonificacion>
+          ></fe-total-bonificacion-list>
         </v-col>
 
         <v-col cols="12" md="8">
-          <fe-total-forma-pago
+          <fe-total-forma-pago-list
             required
-            v-bind:formapago.sync="model.gFormaPago"
+            v-bind:formapagoitems.sync="model.gFormaPago"
             :error="!!validations.gFormaPago"
             label="Forma de Pago"
             @input="handleInput"
             @change="validate('gFormaPago')"
-          ></fe-total-forma-pago>
+          ></fe-total-forma-pago-list>
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="4" v-show="template.gPagPlazo.visible">
+        <v-col cols="12" md="4" v-show="template.iPzPag.visible">
           <fe-total-tiempo-pago
             v-bind:tiempopago.sync="model.iPzPag"
             :error="!!validations.iPzPag"
@@ -179,7 +179,7 @@
         <v-col cols="12" md="8" v-show="template.gRetenc.visible">
           <fe-total-retencion
             v-bind:retencion.sync="model.gRetenc"
-            label="Otros Impuestos"
+            label="Retenciones"
             :error="!!validations.gRetenc"
             @input="handleInput"
             @change="validate('gRetenc')"
@@ -228,6 +228,8 @@ import TotalVencimientoPago from './VencimientoPago.vue';
 import TotalRetencion from './Retencion.vue';
 import TotalTiempPago from './TiempoPago.vue';
 import TotalVencimientoPagoList from './VencimientoPagoList.vue';
+import TotalFormaPagoList from './FormaPagoList.vue';
+import TotalBonificacionList from './BonificacionList.vue';
 @Component({
   name: 'fe-total',
   props: ['totales', 'template'],
@@ -237,8 +239,8 @@ import TotalVencimientoPagoList from './VencimientoPagoList.vue';
 //     },
 //   },
   components: {
-    'fe-total-forma-pago': TotalFormaPago,
-    'fe-total-bonificacion': TotalBonificacion,
+    'fe-total-forma-pago-list': TotalFormaPagoList,
+    'fe-total-bonificacion-list': TotalBonificacionList,
     'fe-total-oit': TotalOIT,
     'fe-total-vencimiento-pago-list': TotalVencimientoPagoList,
     'fe-total-retencion': TotalRetencion,
