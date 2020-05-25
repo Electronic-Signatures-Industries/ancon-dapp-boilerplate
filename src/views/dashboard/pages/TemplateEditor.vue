@@ -12,6 +12,7 @@
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>Items</v-expansion-panel-header>
+        <fe-item :template="template" v-bind:itemindex.sync="model"></fe-item>
         <v-expansion-panel-content> </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
@@ -28,9 +29,11 @@ import { TypedRFE, Totales } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalIndex from './widgets/totales/Totales.vue';
 import Countries from './widgets/Countries.vue';
+import ItemIndex from './widgets/lineitem/Item.vue';
 @Component({
   components: {
     'fe-total': TotalIndex,
+    'fe-item': ItemIndex,
   },
 })
 export default class TemplateEditor extends Vue {
@@ -50,9 +53,13 @@ export default class TemplateEditor extends Vue {
       default: 1,
       visible: true,
     },
+        dSecItem: {
+      default: 1,
+      visible: true,
+    },
     iPzPag: {
       visible: true,
-    }
+    },
   };
   beforeMount() {
     this.model.dNroItems = 1;

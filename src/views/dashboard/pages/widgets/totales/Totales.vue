@@ -252,7 +252,7 @@ export default class TotalIndex extends Vue {
   template: any;
   valid = true;
   validations = {};
-
+  formTitle = '';
   async validate(key) {
     this.validations = {};
     let resp = await validate(this.model);

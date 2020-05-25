@@ -7,12 +7,10 @@
   >
     <template v-slot:top>
       <v-toolbar flat color="white">
-        <v-toolbar-title>Forma de pago</v-toolbar-title>
-        <v-divider class="mx-4" inset vertical></v-divider>
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="500px">
           <template v-slot:activator="{ on }">
-            <v-btn color="primary" dark class="mb-2" v-on="on">Nuevo</v-btn>
+            <v-btn color="primary" dark class="mb-2" v-on="on">Agregar forma de pago</v-btn>
           </template>
           <v-card>
             <v-card-title>
@@ -88,7 +86,7 @@ export default class TotalFormaPagoList extends Vue {
     { text: 'Forma de Pago', value: 'gFormaPago.iFormaPago' },
     { text: 'Valor Cuota', value: 'gFormaPago.dVlrCuota' },
     { text: 'Descripcion', value: 'gFormaPago.dFormaPagoDesc' },
-    { text: 'Actions', value: 'actions', sortable: false },
+    { text: '', value: 'actions', sortable: false },
   ];
   editedIndex = -1;
   editModel = new FormaPagoType();
@@ -144,7 +142,7 @@ export default class TotalFormaPagoList extends Vue {
     );
   }
   created() {
-    this.items = this.$props.formapagoitems;
+    this.items = this.$props.formapagoitems || [];
   }
 }
 </script>

@@ -23,7 +23,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
         value: String
     }
 })
-export default class Codes extends Vue {
+export default class CatBienesAutocomplete extends Vue {
   item = '';
   items = Object.entries(CatBienes).map(([v, k]) => ({ key: v, value: k }));
 

@@ -2,20 +2,23 @@
   <v-row
     ><v-col cols="6">
       <v-text-field
-        v-model="secuencia"
+        v-model="item.dSecItem"
         label="Secuencia"
-        v-on:change="change" hint="D501: Número secuencial de cada fracción de pago a plazo "
+        v-on:input="change"
+        hint="D501: Número secuencial de cada fracción de pago a plazo "
       ></v-text-field>
     </v-col>
     <v-col cols="6">
-      <v-text-field hint="D503: Valor de la fracción "
-        v-model="valor"
+      <v-text-field
+        hint="D503: Valor de la fracción "
+        v-model="item.dValItPlazo"
         label="Valor"
-        v-on:change="change"
+        v-on:input="change"
       ></v-text-field>
     </v-col>
     <v-col cols="6">
-      <v-menu hint="D502: Fecha de vencimiento de la fracción "
+      <v-menu
+        hint="D502: Fecha de vencimiento de la fracción "
         ref="menu"
         v-model="menu"
         :close-on-content-click="false"
@@ -41,10 +44,10 @@
     </v-col>
     <v-col cols="6">
       <v-text-field
-        v-model="descripcion"
+        v-model="item.dInfPagPlazo"
         hint="D504: Informaciones de interés del emitente"
         label="Descripcion"
-        v-on:change="change"
+        v-on:input="change"
       ></v-text-field>
     </v-col>
   </v-row>
@@ -58,25 +61,29 @@ import {
   VencimientoPago,
 } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import moment  from 'moment';
+import moment from 'moment';
 
 @Component({
   name: 'fe-total-vencimiento-pago',
   props: ['vencimientopago'],
+  watch: {
+    vencimientopago: function(current, old) {
+      if (current) {
+        this.fecha = current.dFecItPlazo.toISOString().substr(0, 10);
+        this.item = { ...current };
+      }
+    },
+  },
 })
 export default class TotalVencimientoPago extends Vue {
   fecha = new Date().toISOString().substr(0, 10);
-  descripcion = '';
-  secuencia = 0;
-  valor = 0;
+
+  item: VencimientoPago = new VencimientoPago();
+
   menu = false;
   change() {
-    this.$emit('update:vencimientopago', {
-      dFecItPlazo: moment(this.fecha).toDate(),
-      dSecItem: this.secuencia,
-      dValItPlazo: this.valor,
-      dInfPagPlazo: this.descripcion,
-    } as VencimientoPago);
+    this.item.dFecItPlazo = moment(this.fecha).toDate();
+    this.$emit('update:vencimientopago', { ...this.item });
   }
 }
 </script>
