@@ -29,7 +29,7 @@
                 <v-expansion-panels>
                   <v-expansion-panel>
                     <v-expansion-panel-header
-                      >Generales</v-expansion-panel-header
+                      >Detalle</v-expansion-panel-header
                     >
                     <v-expansion-panel-content>
                       <v-row>

@@ -2,7 +2,7 @@
   <v-form v-model="valid" autocomplete="off">
     <v-expansion-panels>
       <v-expansion-panel>
-        <v-expansion-panel-header>Generales</v-expansion-panel-header>
+        <v-expansion-panel-header>Detalle</v-expansion-panel-header>
         <v-expansion-panel-content>
           <v-row>
             <v-col cols="12" md="4">
@@ -250,11 +250,15 @@ import TotalBonificacionList from './BonificacionList.vue';
 @Component({
   name: 'fe-total',
   props: ['totales', 'template'],
-  //   computed: {
-  //     totales: function() {
-  // debugger
-  //     },
-  //   },
+  watch: {
+    totales: function(current, old) {
+      if (current) {
+        // this.fechaFab = current.dFechaFab.toISOString().substr(0, 10);
+        this.model = { ...current };
+        debugger;
+      }
+    },
+  },
   components: {
     'fe-total-forma-pago-list': TotalFormaPagoList,
     'fe-total-bonificacion-list': TotalBonificacionList,
@@ -281,12 +285,11 @@ export default class TotalIndex extends Vue {
     });
   }
   handleInput() {
-    this.$emit('update:totales', this.model);
+    this.$emit('update:totales', { ...this.model });
   }
 
   created() {
     this.template = this.$props.template;
-    this.model = this.$props.totales;
   }
 }
 </script>

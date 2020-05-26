@@ -1,45 +1,38 @@
 <template>
-  <v-row
-    ><v-col cols="6">
-      <v-autocomplete
-        :items="items"
-        item-text="key"
-        item-value="value"
-        label="Tasa ITBMS"
-        v-model="item.dTasaITBMS"
-        v-on:change="change"
-      ></v-autocomplete>
-    </v-col>
-    <v-col cols="6">
-      <v-text-field
-        v-model="item.dValITBMS"
-        label="Valor"
-        v-on:change="change"
-      ></v-text-field>
-    </v-col>
-  </v-row>
+  <v-autocomplete
+    :items="items"
+    item-text="key"
+    item-value="value"
+    label="Destino"
+    v-model="item"
+    v-on:change="change"
+  ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE, TypedRFESchema, TasaITBMS, ITBMS } from '@xdvplatform/fe-builder';
+import { TypedRFE, Destino } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { isNumber } from 'class-validator';
 
 @Component({
-  name: 'fe-item-itbms',
-  props: ['itbms'],
+  name: 'fe-generales-destino',
+  props: ['destino'],
   watch: {
-    itbms: function(current, old) {
+    destino: function(current, old) {
       if (current) {
         this.item = { ...current };
       }
     },
   },
 })
-export default class ItemITBMS extends Vue {
-  item: ITBMS = new ITBMS();
-  items = Object.entries(TasaITBMS).map((e) => ({ key: e[0], value: e[1] }));
+export default class GenDestino extends Vue {
+  item: Destino = Destino.Panama;
+  items = Object.entries(Destino)
+    .filter((e) => !isNaN(e[1] as any))
+    .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
-    this.$emit('update:itbms', { ...this.item });
+    const v = Object.entries(Destino).find((i) => i[1] === this.item);
+    this.$emit('update:destino', this.item);
   }
 }
 </script>
