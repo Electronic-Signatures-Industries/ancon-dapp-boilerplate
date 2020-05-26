@@ -14,21 +14,22 @@ import { TypedRFE, TypedRFESchema, Monedas } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
-    name: 'fe-monedas',
-    model: {
-        prop: 'value',
-        event: 'change'
+  name: 'fe-monedas',
+  props: ['monedas'],
+  watch: {
+    monedas: function(current, old) {
+      if (current) {
+        this.item = current;
+      }
     },
-    props: {
-        value: String
-    }
+  },
 })
 export default class Currencies extends Vue {
   item = '';
   items = Object.entries(Monedas).map(([v, k]) => ({ key: v, value: k }));
 
   change() {
-      this.$emit('change', this.item)
+    this.$emit('update:monedas', this.item);
   }
 }
 </script>

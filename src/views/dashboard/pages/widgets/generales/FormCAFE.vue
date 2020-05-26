@@ -4,7 +4,7 @@
     item-text="key"
     item-value="value"
     label="Formulario CAFE"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -18,26 +18,18 @@ import { isNumber } from 'class-validator';
 
 @Component({
   name: 'fe-generales-formcafe',
-  props: ['formcafe'],
-  watch: {
-    formcafe: function(current, old) {
-      if (current) {
-        this.item = { ...current };
-      }
-    },
-  },
 })
 export default class GenFormCAFE extends Vue {
-  item: FormularioCafe = FormularioCafe.SinGeneracionCAFE;
+  value: FormularioCafe = FormularioCafe.SinGeneracionCAFE;
   items = Object.entries(FormularioCafe)
     .filter((e) => !isNaN(e[1] as any))
     .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
     const v = Object.entries(FormularioCafe).find(
-      (i) => i[1] === this.item
+      (i) => i[1] === this.value
     );
-    this.$emit('update:formcafe', this.item);
+    this.$emit('input', this.value);
   }
 }
 </script>

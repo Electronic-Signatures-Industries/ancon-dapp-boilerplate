@@ -5,6 +5,9 @@
     dense
     :hide-default-footer="true"
   >
+    <template v-slot:item.gPrecios="{ item }">
+      {{ displayPrice(item) }}
+    </template>
     <template v-slot:top>
       <v-toolbar flat color="white">
         <v-spacer></v-spacer>
@@ -28,9 +31,7 @@
               <v-form v-model="valid" autocomplete="off">
                 <v-expansion-panels>
                   <v-expansion-panel>
-                    <v-expansion-panel-header
-                      >Detalle</v-expansion-panel-header
-                    >
+                    <v-expansion-panel-header>Detalle</v-expansion-panel-header>
                     <v-expansion-panel-content>
                       <v-row>
                         <v-col cols="12" md="4">
@@ -107,7 +108,11 @@
                                 v-on="on"
                               ></v-text-field>
                             </template>
-                            <v-date-picker v-model="fechaFab" no-title scrollable>
+                            <v-date-picker
+                              v-model="fechaFab"
+                              no-title
+                              scrollable
+                            >
                               <v-spacer></v-spacer>
                               <v-btn
                                 text
@@ -144,7 +149,11 @@
                                 v-on="on"
                               ></v-text-field>
                             </template>
-                            <v-date-picker v-model="fechaExpire" no-title scrollable>
+                            <v-date-picker
+                              v-model="fechaExpire"
+                              no-title
+                              scrollable
+                            >
                               <v-spacer></v-spacer>
                               <v-btn
                                 text
@@ -165,7 +174,7 @@
                       <v-row>
                         <v-col cols="12" md="4">
                           <fe-cat-bienes
-                            v-bind:catbienes.sync="editModel.dCodCPBSabr"
+                            v-model="editModel.dCodCPBSabr"
                             :error="!!validations.dCodCPBSabr"
                             label="Codigo CPBS corto"
                             @change="validate('dCodCPBSabr')"
@@ -174,7 +183,7 @@
 
                         <v-col cols="12" md="4">
                           <fe-desc-bienes
-                            v-bind:descbienes.sync="editModel.dCodCPBScmp"
+                            v-model="editModel.dCodCPBScmp"
                             :error="!!validations.dCodCPBScmp"
                             label="Codigo CPBS completo"
                             @change="validate('dCodCPBScmp')"
@@ -182,7 +191,7 @@
                         </v-col>
                         <v-col cols="12" md="4">
                           <fe-unidades
-                            v-bind:units.sync="editModel.cUnidadCPBS"
+                            v-model="editModel.cUnidadCPBS"
                             :error="!!validations.cUnidadCPBS"
                             label="Unidad"
                             @change="validate('cUnidadCPBS')"
@@ -206,7 +215,7 @@
                     <v-expansion-panel-content>
                       <fe-item-precio
                         required
-                        v-model.number="editModel.gPrecios"
+                        v-model="editModel.gPrecios"
                         label="Precio"
                         :error="!!validations.gPrecios"
                         @change="validate('gPrecios')"
@@ -294,8 +303,10 @@ import moment from 'moment';
   watch: {
     itemindex: function(current, old) {
       if (current) {
-        this.fechaFab = current.dFechaFab.toISOString().substr(0, 10);
-        this.fechaExpire = current.dFechaCad.toISOString().substr(0, 10);
+        if (current.dFechaFab)
+          this.fechaFab = current.dFechaFab.toISOString().substr(0, 10);
+        if (current.dFechaCad)
+          this.fechaExpire = current.dFechaCad.toISOString().substr(0, 10);
 
         this.item = { ...current };
       }
@@ -404,6 +415,9 @@ export default class ItemIndex extends Vue {
     );
   }
 
+  displayPrice(item) {
+    return item.gPrecios.dValTotItem;
+  }
   created() {
     this.template = this.$props.template;
     //    this.model = this.$props.item;

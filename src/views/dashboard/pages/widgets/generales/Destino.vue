@@ -4,7 +4,7 @@
     item-text="key"
     item-value="value"
     label="Destino"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -15,24 +15,16 @@ import { isNumber } from 'class-validator';
 
 @Component({
   name: 'fe-generales-destino',
-  props: ['destino'],
-  watch: {
-    destino: function(current, old) {
-      if (current) {
-        this.item = { ...current };
-      }
-    },
-  },
 })
 export default class GenDestino extends Vue {
-  item: Destino = Destino.Panama;
+  value: Destino = Destino.Panama;
   items = Object.entries(Destino)
     .filter((e) => !isNaN(e[1] as any))
     .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
-    const v = Object.entries(Destino).find((i) => i[1] === this.item);
-    this.$emit('update:destino', this.item);
+    const v = Object.entries(Destino).find((i) => i[1] === this.value);
+    this.$emit('input', this.value);
   }
 }
 </script>

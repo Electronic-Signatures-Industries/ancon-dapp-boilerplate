@@ -4,7 +4,7 @@
     item-text="key"
     item-value="value"
     label="Tipo de Operacion"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -18,26 +18,18 @@ import { isNumber } from 'class-validator';
 
 @Component({
   name: 'fe-generales-tipoops',
-  props: ['tipoops'],
-  watch: {
-    tipoops: function(current, old) {
-      if (current) {
-        this.item = { ...current };
-      }
-    },
-  },
 })
 export default class GenTipoOps extends Vue {
-  item: TipoOperacion = TipoOperacion.Compra;
+  value: TipoOperacion | any = -1; //TipoOperacion.Compra;
   items = Object.entries(TipoOperacion)
     .filter((e) => !isNaN(e[1] as any))
     .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
     const v = Object.entries(TipoOperacion).find(
-      (i) => i[1] === this.item
+      (i) => i[1] === this.value
     );
-    this.$emit('update:tipoops', this.item);
+    this.$emit('input', this.value);
   }
 }
 </script>

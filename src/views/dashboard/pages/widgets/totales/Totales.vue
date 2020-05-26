@@ -255,7 +255,6 @@ import TotalBonificacionList from './BonificacionList.vue';
       if (current) {
         // this.fechaFab = current.dFechaFab.toISOString().substr(0, 10);
         this.model = { ...current };
-        debugger;
       }
     },
   },

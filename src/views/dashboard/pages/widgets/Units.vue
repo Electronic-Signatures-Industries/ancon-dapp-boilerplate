@@ -5,7 +5,7 @@
     item-text="key"
     item-value="value"
     label="Unidades"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -14,21 +14,14 @@ import { TypedRFE, TypedRFESchema, Unidades } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
-    name: 'fe-unidades',
-    model: {
-        prop: 'value',
-        event: 'change'
-    },
-    props: {
-        value: String
-    }
+  name: 'fe-unidades',
 })
 export default class Units extends Vue {
-  item = '';
+  value = '';
   items = Object.entries(Unidades).map(([v, k]) => ({ key: v, value: k }));
 
   change() {
-      this.$emit('change', this.item)
+    this.$emit('input', this.value);
   }
 }
 </script>

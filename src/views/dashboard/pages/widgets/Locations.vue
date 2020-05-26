@@ -5,7 +5,7 @@
     item-text="key"
     item-value="value"
     label="Ubicaciones"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -14,21 +14,14 @@ import { TypedRFE, TypedRFESchema, Ubicaciones } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
-    name: 'fe-ubicaciones',
-    model: {
-        prop: 'value',
-        event: 'change'
-    },
-    props: {
-        value: String
-    }
+  name: 'fe-ubicaciones',
 })
 export default class Locations extends Vue {
-  item = '';
+  value = '';
   items = Object.entries(Ubicaciones).map(([v, k]) => ({ key: v, value: k }));
 
   change() {
-      this.$emit('change', this.item)
+    this.$emit('input', this.value);
   }
 }
 </script>

@@ -4,7 +4,7 @@
     item-text="key"
     item-value="value"
     label="Tipo de Operacion"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -18,26 +18,18 @@ import { isNumber } from 'class-validator';
 
 @Component({
   name: 'fe-generales-tipogeneracion',
-  props: ['tipogeneracion'],
-  watch: {
-    tipogeneracion: function(current, old) {
-      if (current) {
-        this.item = { ...current };
-      }
-    },
-  },
 })
 export default class GenTipoGeneracion extends Vue {
-  item: TipoGeneracion = TipoGeneracion.SistemaFacturacionContribuyente;
+  value: TipoGeneracion | any = -1; // TipoGeneracion.SistemaFacturacionContribuyente;
   items = Object.entries(TipoGeneracion)
     .filter((e) => !isNaN(e[1] as any))
     .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
     const v = Object.entries(TipoGeneracion).find(
-      (i) => i[1] === this.item
+      (i) => i[1] === this.value
     );
-    this.$emit('update:tipogeneracion', this.item);
+    this.$emit('input', this.value);
   }
 }
 </script>

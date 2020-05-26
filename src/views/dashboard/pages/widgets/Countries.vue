@@ -5,7 +5,7 @@
     item-text="key"
     item-value="value"
     label="Paises"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -14,21 +14,15 @@ import { TypedRFE, TypedRFESchema, Paises } from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
-    name: 'fe-paises',
-    model: {
-        prop: 'value',
-        event: 'change'
-    },
-    props: {
-        value: String
-    }
+  name: 'fe-paises',
+  
 })
 export default class Countries extends Vue {
-  item = '';
+  value = '';
   items = Object.entries(Paises).map(([v, k]) => ({ key: v, value: k }));
 
   change() {
-      this.$emit('change', this.item)
+    this.$emit('input', this.value);
   }
 }
 </script>

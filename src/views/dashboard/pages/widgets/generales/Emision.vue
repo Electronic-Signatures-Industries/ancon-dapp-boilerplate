@@ -4,7 +4,7 @@
     item-text="key"
     item-value="value"
     label="Emision"
-    v-model="item"
+    v-model="value"
     v-on:change="change"
   ></v-autocomplete>
 </template>
@@ -21,24 +21,16 @@ import { isNumber } from 'class-validator';
 
 @Component({
   name: 'fe-generales-tipoemision',
-  props: ['tipoemision'],
-  watch: {
-    tipoemision: function(current, old) {
-      if (current) {
-        this.item = { ...current };
-      }
-    },
-  },
 })
 export default class GenTipoEmision extends Vue {
-  item: TipoEmision = TipoEmision.UsoPosteriorOpsNormal;
+  value: TipoEmision | any = -1;
   items = Object.entries(TipoEmision)
     .filter((e) => !isNaN(e[1] as any))
     .map((e) => ({ key: e[0], value: e[1] }));
 
   change() {
-    const v = Object.entries(TipoEmision).find((i) => i[1] === this.item);
-    this.$emit('update:tipoemision', this.item);
+    const v = Object.entries(TipoEmision).find((i) => i[1] === this.value);
+    this.$emit('input', this.value);
   }
 }
 </script>

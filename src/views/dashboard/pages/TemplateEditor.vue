@@ -25,7 +25,8 @@
         <v-expansion-panel-content>
           <fe-generales
             :template="template"
-            v-bind:generales.sync="model.dGen"
+            @input="handleUpdate"
+            v-model="model.gDGen"
           ></fe-generales>
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -72,10 +73,29 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
+    <v-row>
+      <v-col>
+        <v-btn class="primary">Guardar como plantilla</v-btn>
+      </v-col>
+
+      <v-col>
+        <v-btn class="primary">Guardar en almacenamiento seguro</v-btn>
+      </v-col>
+
+      <v-col>
+        <v-btn class="primary">Firmar</v-btn>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script lang="ts">
-import { TypedRFE, Totales, DGen } from '@xdvplatform/fe-builder';
+import {
+  TypedRFE,
+  Totales,
+  DGen,
+  Emisor,
+  Receptor,
+} from '@xdvplatform/fe-builder';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalIndex from './widgets/totales/Totales.vue';
 import Countries from './widgets/Countries.vue';
@@ -94,7 +114,9 @@ export default class TemplateEditor extends Vue {
   open = false;
   get totalItems() {
     const n = this.model.gItem.reduce((prev, c) => {
-      return c.gPrecios.dValTotItem;
+      const p = (c.gPrecios || {}) as any;
+      const amt = p.dValTotItem || 0;
+      return amt + 0;
     }, 0);
     return n.toFixed(2);
   }
@@ -137,11 +159,8 @@ export default class TemplateEditor extends Vue {
       visible: true,
     },
   };
-  beforeMount() {
-    this.model.gDGen = new DGen();
-    this.model.gItem = [];
-    this.model.gTot = new Totales();
-    this.model.gTot.dNroItems = 1;
+  handleUpdate(item) {
+    //   this.model = { ...item };
   }
 }
 </script>
