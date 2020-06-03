@@ -32,10 +32,10 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   FormaPago,
   FormaPagoType,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { VAutocomplete } from 'vuetify/lib';
 

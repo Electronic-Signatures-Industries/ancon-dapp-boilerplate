@@ -1,3 +1,3 @@
 # xdv-fe-client
-XDV FE Client
+XDV Standard Client
 identity-hub

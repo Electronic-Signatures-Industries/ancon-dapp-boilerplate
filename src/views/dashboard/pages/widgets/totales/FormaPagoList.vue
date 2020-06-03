@@ -50,12 +50,12 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   OtrosImpuestos,
   CodigoRetencion,
   FormaPago,
   FormaPagoType,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 import TotalFormaPago from './FormaPago.vue';

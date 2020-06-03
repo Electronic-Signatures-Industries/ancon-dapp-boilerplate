@@ -21,10 +21,10 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   OtrosImpuestos,
   Bonificaciones,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

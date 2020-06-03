@@ -39,7 +39,7 @@
   </div>
 </template>
 <script lang="ts">
-import { TypedRFE, TypedRFESchema, CodigoItem } from '@xdvplatform/fe-builder';
+import { TypedRFE,  CodigoItem } from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

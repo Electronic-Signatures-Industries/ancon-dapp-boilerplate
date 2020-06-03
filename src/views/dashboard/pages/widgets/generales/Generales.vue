@@ -327,11 +327,11 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   FormaPago,
   FormaPagoType,
   DGen,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalFormaPago from './FormaPago.vue';
 import TotalBonificacion from './Bonificacion.vue';

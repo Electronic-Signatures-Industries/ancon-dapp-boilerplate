@@ -11,11 +11,11 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   TasaITBMS,
   ITBMS,
   TipoEmision,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 

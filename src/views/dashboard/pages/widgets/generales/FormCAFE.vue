@@ -12,7 +12,7 @@
 import {
   TypedRFE,
   FormularioCafe,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 

@@ -76,11 +76,11 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   TasaITBMS,
   ITBMS,
   Emisor,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import GenRucType from './RucType.vue';
 import { validate } from 'class-validator';

@@ -22,10 +22,10 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   TasaISC,
   ISC,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

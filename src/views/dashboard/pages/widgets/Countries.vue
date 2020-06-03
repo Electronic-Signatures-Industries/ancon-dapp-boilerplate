@@ -10,7 +10,7 @@
   ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE, TypedRFESchema, Paises } from '@xdvplatform/fe-builder';
+import { TypedRFE,  Paises } from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

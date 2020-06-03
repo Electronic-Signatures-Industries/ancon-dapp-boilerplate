@@ -49,11 +49,11 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   OtrosImpuestos,
   CodigoRetencion,
   VencimientoPago,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 import TotalVencimientoPago from './VencimientoPago.vue';

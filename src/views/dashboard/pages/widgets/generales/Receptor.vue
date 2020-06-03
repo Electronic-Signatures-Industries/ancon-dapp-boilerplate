@@ -72,11 +72,11 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   TasaITBMS,
   ITBMS,
   Receptor,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Countries from '../Countries.vue';
 import GenRucType from './RucType.vue';

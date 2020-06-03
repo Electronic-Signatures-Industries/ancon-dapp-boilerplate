@@ -95,7 +95,7 @@ import {
   DGen,
   Emisor,
   Receptor,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalIndex from './widgets/totales/Totales.vue';
 import Countries from './widgets/Countries.vue';

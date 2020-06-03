@@ -12,10 +12,10 @@
 <script lang="ts">
 import {
   TypedRFE,
-  TypedRFESchema,
+  
   DescBienes,
   CatBienes,
-} from '@xdvplatform/fe-builder';
+} from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

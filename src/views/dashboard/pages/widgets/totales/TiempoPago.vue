@@ -13,7 +13,7 @@
   ></v-row>
 </template>
 <script lang="ts">
-import { TypedRFE, TypedRFESchema, TiempoPago } from '@xdvplatform/fe-builder';
+import { TypedRFE,  TiempoPago } from 'xdvplatform-tools';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
