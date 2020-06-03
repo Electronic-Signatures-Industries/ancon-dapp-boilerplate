@@ -65,6 +65,7 @@ export default class DashboardIndex extends Vue {
   async mounted() {
     if (this.$route.path.indexOf("verify_credentials") > -1
     || this.$route.path.indexOf("workflow") > -1
+    // || this.$route.path.indexOf("xdv") > -1
     || this.$route.path.indexOf("durable_website") > -1) {
       const props = await (this as any).$loadOffchainDependencies({
         networkId: this.network,

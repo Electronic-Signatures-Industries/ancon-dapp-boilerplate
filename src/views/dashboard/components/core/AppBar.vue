@@ -14,10 +14,17 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-toolbar-title class="headline">XDV Platform para Factura Electronica</v-toolbar-title>
+      <v-toolbar-title class="headline">XDV Platform - Documentos Seguros Verificables</v-toolbar-title>
 
       <v-spacer></v-spacer>
-      
+            <v-btn
+        :to="{
+          name: 'drive',
+        }"
+        icon
+      >
+        <v-icon>mdi-rocket</v-icon>
+      </v-btn>
       <v-btn
         :to="{
           name: 'Editor',
