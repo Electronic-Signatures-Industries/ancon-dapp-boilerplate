@@ -1,10 +1,16 @@
-import { setupSolido, SetupSolidoOptions } from "./setupSolido";
-import { initializeEthrDID, initializeOffchainEthrDID } from "./ethrdid";
-import { initIPFS, initSwarm } from "./userconfig";
+import { initializeEthrDID, initializeOffchainEthrDID } from './ethrdid';
+import { initIPFS, initSwarm } from './userconfig';
 import { Issuer } from 'did-jwt-vc';
-import { Resolver } from 'did-resolver';
 import { merge } from 'rxjs';
+import { Resolver } from 'did-resolver';
+import { setupSolido, SetupSolidoOptions } from './setupSolido';
 
+import {
+  IpldClient,
+  DIDDocumentBuilder,
+  DIDMethodXDV,
+  Pubsub,
+} from 'xdvplatform-tools';
 
 export interface StorageMiddleware {
   getUserModel: any;
@@ -37,6 +43,26 @@ export interface MiddlewareOptions {
   did?: DIDMiddleware;
   offchain?: boolean;
   secureLinkedStorage: any;
+  xdv?: XDVMiddleware;
+}
+
+interface XDVMiddleware {
+  ipld: IpldClient;
+  comm: Pubsub;
+  didxdv: DIDMethodXDV;
+}
+
+export const initXdvMiddleware = async options => {
+  const ipld = new IpldClient();
+  const comm = new Pubsub(ipld);
+  await comm.initialize();
+
+  return {
+    ipld,
+    didxdv: new DIDMethodXDV(ipld),
+    comm,
+    offchain: true
+  };
 }
 
 export const initOffchainMiddleware = async options => {

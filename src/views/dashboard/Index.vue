@@ -7,18 +7,23 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Vue } from 'vue-property-decorator';
 
-import { SolidoSingleton } from "./components/core/SolidoSingleton";
-import Onboard from "bnc-onboard";
-import Web3 from "web3";
+import {
+  IpldClient,
+  DIDDocumentBuilder,
+  DIDMethodXDV,
+} from 'xdvplatform-tools';
+import { SolidoSingleton } from './components/core/SolidoSingleton';
+import Onboard from 'bnc-onboard';
+import Web3 from 'web3';
 
 @Component({
-  name: "DashboardIndex",
+  name: 'DashboardIndex',
   components: {
-    DashboardCoreAppBar: () => import("./components/core/AppBar.vue"),
-    DashboardCoreView: () => import("./components/core/View.vue")
-  }
+    DashboardCoreAppBar: () => import('./components/core/AppBar.vue'),
+    DashboardCoreView: () => import('./components/core/View.vue'),
+  },
 })
 export default class DashboardIndex extends Vue {
   solidoProps = { db: null, contracts: null };
@@ -30,23 +35,24 @@ export default class DashboardIndex extends Vue {
     address: this.handleAddressChange,
     network: this.handleNetworkChange,
     balance: this.handleBalanceChange,
-    wallet: this.handleWalletChange
+    wallet: this.handleWalletChange,
   };
   _network = 3;
-  _address = "";
+  _address = '';
   canInit = false;
+  ipld: IpldClient;
 
   get address() {
-    return localStorage.getItem("address");
+    return localStorage.getItem('address');
   }
   set address(value) {
-    localStorage.setItem("address", value);
+    localStorage.setItem('address', value);
   }
   get network() {
-    return +localStorage.getItem("network");
+    return +localStorage.getItem('network');
   }
   set network(value: number) {
-    localStorage.setItem("network", value.toString());
+    localStorage.setItem('network', value.toString());
   }
   handleAddressChange(address) {
     this.address = address;
@@ -59,18 +65,18 @@ export default class DashboardIndex extends Vue {
   handleBalanceChange(balance) {}
 
   handleWalletChange(wallet) {
-    localStorage.setItem("selectedWallet", wallet.name);
+    localStorage.setItem('selectedWallet', wallet.name);
   }
 
   async mounted() {
-    if (this.$route.path.indexOf("verify_credentials") > -1
-    || this.$route.path.indexOf("workflow") > -1
-    // || this.$route.path.indexOf("xdv") > -1
-    || this.$route.path.indexOf("durable_website") > -1) {
-      const props = await (this as any).$loadOffchainDependencies({
+    new IpldClient();
+    if (
+      this.$route.path.indexOf('xdv') > -1
+    ) {
+      const props = await (this as any).$loadXdvDependencies({
         networkId: this.network,
-        account: this.address
-      });
+        account: this.address,
+      });debugger
       SolidoSingleton.setProps(props);
       this.canInit = true;
 
@@ -82,12 +88,12 @@ export default class DashboardIndex extends Vue {
       networkId: this.defaultNetwork,
       subscriptions: this.onboardSync,
       walletSelect: undefined,
-      walletCheck: undefined
+      walletCheck: undefined,
     });
 
     if (!(window as any).ethereum) {
-      this.$router.push({ path: "onboard" });
-    } else if (localStorage.getItem("selectedWallet") === null) {
+      this.$router.push({ path: 'onboard' });
+    } else if (localStorage.getItem('selectedWallet') === null) {
       // display onboard.js
 
       const hasSelected = await this.onboard.walletSelect();
@@ -99,17 +105,17 @@ export default class DashboardIndex extends Vue {
         setTimeout(async () => {
           const props = await (self as any).$loadOnchainDependencies({
             networkId: self.onboard.getState().network,
-            account: self.onboard.getState().address
+            account: self.onboard.getState().address,
           });
           SolidoSingleton.setProps(props);
           self.canInit = init;
-          self.$router.push({ path: "client" });
+          self.$router.push({ path: 'client' });
         }, 800);
       }
     } else {
       // get the selectedWallet value from local storage
       const previouslySelectedWallet = window.localStorage.getItem(
-        "selectedWallet"
+        'selectedWallet'
       );
 
       // call wallet select with that value if it exists
@@ -118,7 +124,7 @@ export default class DashboardIndex extends Vue {
       }
       const props = await (this as any).$loadOnchainDependencies({
         networkId: this.network,
-        account: this.address
+        account: this.address,
       });
       await (window as any).ethereum.enable();
       SolidoSingleton.setProps(props);

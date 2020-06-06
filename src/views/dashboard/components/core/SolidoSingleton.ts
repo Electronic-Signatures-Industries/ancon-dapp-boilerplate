@@ -1,6 +1,6 @@
-import { Issuer } from "did-jwt-vc";
-import { Resolver } from "did-resolver";
+import { Issuer } from 'did-jwt-vc';
 import { MiddlewareOptions } from '@/libs';
+import { Resolver } from 'did-resolver';
 
 
 export class SolidoSingleton {

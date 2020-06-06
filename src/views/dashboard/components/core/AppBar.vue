@@ -19,11 +19,27 @@
       <v-spacer></v-spacer>
             <v-btn
         :to="{
+          name: 'messaging',
+        }"
+        icon
+      >
+        <v-icon>mdi-message</v-icon>
+      </v-btn>
+          <v-btn
+        :to="{
           name: 'drive',
         }"
         icon
       >
-        <v-icon>mdi-rocket</v-icon>
+        <v-icon>mdi-file-cabinet</v-icon>
+      </v-btn>
+            <v-btn
+        :to="{
+          name: 'wallet',
+        }"
+        icon
+      >
+        <v-icon>mdi-wallet</v-icon>
       </v-btn>
       <v-btn
         :to="{
@@ -33,7 +49,7 @@
       >
         <v-icon>mdi-rocket</v-icon>
       </v-btn>
-      <v-btn
+      <!-- <v-btn
         :to="{
           name: 'Admin',
         }"
@@ -41,7 +57,7 @@
       >
         <v-icon>mdi-account-cog</v-icon>
       </v-btn>
-
+ -->
 
       <v-btn
         href="https://github.com/molekilla/mdv-contracts"
