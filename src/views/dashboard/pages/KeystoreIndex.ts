@@ -13,7 +13,7 @@ export class KeystoreIndex {
     }
 
 
-    keystore: string;
+    keystore: any | string;
     name: string;
     created: Date = new Date();
     algorithm: string;
