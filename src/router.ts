@@ -1,14 +1,13 @@
+import DriveComponent from './views/dashboard/pages/Drive.vue';
+import DurableWebsite from './views/dashboard/pages/dapp/DurableWebsite.vue';
+import index from './views/dashboard/Index.vue';
+import MessagingComponent from './views/dashboard/pages/Messaging.vue';
+import Router from 'vue-router';
+import TemplateEditor from './views/dashboard/pages/TemplateEditor.vue';
+import Vue from 'vue';
+import WalletComponent from './views/dashboard/pages/Wallet.vue';
 // @ts-ignore
 // @ts-nocheck
-import Vue from "vue";
-import Router from "vue-router";
-import DurableWebsite from "./views/dashboard/pages/dapp/DurableWebsite.vue";
-import TemplateEditor from "./views/dashboard/pages/TemplateEditor.vue";
-import WorkflowEditor from "./views/dashboard/pages/WorkflowEditor.vue";
-import index from "./views/dashboard/Index.vue";
-import WalletComponent from "./views/dashboard/pages/Wallet.vue";
-import MessagingComponent from "./views/dashboard/pages/Messaging.vue";
-import DriveComponent from "./views/dashboard/pages/Drive.vue";
 
 
 Vue.use(Router);
@@ -65,12 +64,7 @@ export default new Router({
 
       children: [
 
-        {
-          name: "MDV Workflow Editor",
-          path: "workflow",
-          // @ts-ignore
-          component: WorkflowEditor
-        },
+
         {
           name: "Editor",
           path: "editor",
