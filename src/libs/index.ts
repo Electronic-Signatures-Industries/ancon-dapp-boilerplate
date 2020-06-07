@@ -28,7 +28,7 @@ export interface EthereumeMiddleware {
   networkId: number;
   network: string;
   web3: any;
-  provider: any; 
+  provider: any;
   signer?: any;
 }
 
@@ -46,16 +46,48 @@ export interface MiddlewareOptions {
   xdv?: XDVMiddleware;
 }
 
-interface XDVMiddleware {
+export interface XDVMiddleware {
   ipld: IpldClient;
   comm: Pubsub;
   didxdv: DIDMethodXDV;
 }
 
 export const initXdvMiddleware = async options => {
+
+  const config = {
+    Addresses: {
+      Swarm: [
+        "/dns4/xdvmessaging.auth2factor.com/tcp/443/wss/p2p-webrtc-star/",
+        '/ip4/0.0.0.0/tcp/0',
+        '/ip4/190.34.226.207/tcp/4001/p2p/QmWquNJVDxGEefcyPLTULKwkgJEmMDjgurokma9Kwa7BME'
+      ],
+      API: '/dns4/ipfs.auth2factor.com/tcp/443',
+      Gateway: '/dns4/ipfs.infura.io/tcp/5001'
+    },
+    Discovery: {
+      webRTCStar: {
+        Enabled: false
+      }
+    },
+    "Bootstrap": [
+        "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+        "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+        "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+        "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+        "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+    ],
+    AutoNAT: {},
+    Pubsub: {
+      Router: "gossipsub"
+    },
+    EXPERIMENTAL: {
+      pubsub: false
+    }
+
+  }
   const ipld = new IpldClient();
   const comm = new Pubsub(ipld);
-  await comm.initialize();
+  await comm.initialize(config);
 
   return {
     ipld,
@@ -65,15 +97,6 @@ export const initXdvMiddleware = async options => {
   };
 }
 
-export const initOffchainMiddleware = async options => {
-  const did = await initializeOffchainEthrDID(options);
-  const storage = await initSwarm(options);
-  return {
-    did,
-    storage,
-    offchain: true
-  };
-}
 
 export const initMiddleware = async options => {
   let mergeOptions = options;
@@ -82,28 +105,6 @@ export const initMiddleware = async options => {
     ...mergeOptions,
     ethereum: solidoProps
   };
-  const ethrDIDOptions = await initializeEthrDID(mergeOptions);
-  mergeOptions = {
-    did: ethrDIDOptions,
-    ...mergeOptions
-  };
-
-  const swarmOptions = await initSwarm(mergeOptions);
   
-  const ipfsOptions = await initIPFS(mergeOptions);
-  mergeOptions = {
-    ...mergeOptions,
-    storage: {
-      ...ipfsOptions,
-      ...swarmOptions,
-    }
-  };
-
-  // const secureStorage = await initSecureLinkableStorage(mergeOptions);
-  // mergeOptions = {
-  //   ...mergeOptions,
-  //   secureLinkedStorage: secureStorage,
-  // };
-
   return { ...mergeOptions } as MiddlewareOptions;
 };

@@ -76,7 +76,7 @@ export default class DashboardIndex extends Vue {
       const props = await (this as any).$loadXdvDependencies({
         networkId: this.network,
         account: this.address,
-      });debugger
+      });
       SolidoSingleton.setProps(props);
       this.canInit = true;
 
