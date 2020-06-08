@@ -7,36 +7,32 @@
     ></v-progress-linear>
     <v-card class="mx-auto">
       <v-toolbar color="pink" dark>
+        <v-menu bottom left>
+          <template v-slot:activator="{ on }">
+            <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
+          </template>
 
-          <v-menu bottom left>
-            <template v-slot:activator="{ on }">
-             
-                      <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
-
-            </template>
-
-            <v-list>
-              <v-list-item
-                v-for="(item, i) in menuitems"
-                :key="i"
-                @click="item.handle"
-              >
-                <v-list-item-title>{{ item.title }}</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        <v-toolbar-title>Documentos</v-toolbar-title>
+          <v-list>
+            <v-list-item
+              v-for="(item, i) in menuitems"
+              :key="i"
+              @click="item.handler"
+            >
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+        <v-toolbar-title
+          >Documentos asociados a cartera {{ select.name }}</v-toolbar-title
+        >
 
         <v-spacer></v-spacer>
 
         <v-btn icon>
           <v-icon>mdi-magnify</v-icon>
         </v-btn>
-
         <v-dialog v-model="didDialog" max-width="500px">
-       
           <template v-slot:activator="{ on }">
-
             <v-btn v-on="on" icon>
               <v-icon>mdi-file-key</v-icon>
             </v-btn>
@@ -96,6 +92,63 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="selectWalletDialog" max-width="500px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Ingrese clave para acceder cartera</span>
+            </v-card-title>
+
+            <v-card-text>
+              <v-form v-model="form" autocomplete="off">
+                <v-row>
+                  <v-col cols="12" md="12">
+                    <v-select
+                      v-model="select"
+                      :hint="`${select.algorithm}`"
+                      :items="wallets"
+                      item-text="name"
+                      item-value="name"
+                      label="Cartera Digital"
+                      persistent-hint
+                      return-object
+                      single-line
+                    >
+                    </v-select>
+                    <v-text-field
+                      required
+                      v-model="password"
+                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                      :type="showPassword ? 'text' : 'password'"
+                      label="Clave"
+                      class="input-group--focused"
+                      @click:append="showPassword = !showPassword"
+                      :error="validations.password"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                :disabled="loading"
+                @click="selectWalletDialog = false"
+                >Cancelar</v-btn
+              >
+              <v-btn
+                color="blue darken-1"
+                text
+                :disabled="loading"
+                @click="unlock"
+                >Acceder</v-btn
+              >
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <v-dialog v-model="fileDialog" max-width="500px">
           <template v-slot:activator="{ on }">
             <v-btn v-on="on" icon>
@@ -171,7 +224,11 @@
       </v-toolbar>
 
       <v-list two-line>
-        <v-list-item-group v-model="selected" multiple active-class="pink lighten-5">
+        <v-list-item-group
+          v-model="selected"
+          multiple
+          active-class="pink lighten-5"
+        >
           <template v-for="(item, index) in items">
             <v-list-item :key="item.title">
               <template v-slot:default="{ active }">
@@ -196,6 +253,9 @@
 
                   <v-icon v-else color="yellow">
                     mdi-star
+                  </v-icon>
+                  <v-icon color="green">
+                    mdi-share
                   </v-icon>
                 </v-list-item-action>
               </template>
@@ -236,6 +296,7 @@ import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin } from 'rxjs';
+import { DriveSession } from './DriveSession';
 
 @Component({})
 export default class DriveComponent extends Vue {
@@ -255,11 +316,8 @@ export default class DriveComponent extends Vue {
   password = '';
   mnemonic = [];
   selectedPanel = 0;
-  selected  = [];
-  menuitems = [{
-    title: 'Compartir',
-    handle: this.share,
-  }];
+  selected = [];
+  menuitems: any[] = [];
   items = [
     {
       action: 'Hace 15 min',
@@ -280,19 +338,27 @@ export default class DriveComponent extends Vue {
       subtitle: 'Almacenado para posterior firmado',
     },
   ];
+  selectWalletDialog = false;
   select: KeystoreIndex = new KeystoreIndex();
-  wallets: KeystoreIndex[];
+  wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
   driveSession;
-  any = null;
+
   async mounted() {
-    this.loading = true;
-    this.solidoProps = await SolidoSingleton.getProps();
     this.loadWallets();
-    if (localStorage.getItem('xdv:drive:session')) {
+    this.select = this.wallets[0];
+
+    // set existing wallets
+    this.menuitems = this.wallets.map((i) => {
+      return {
+        title: `${i.name} - ${i.algorithm}`,
+        handler: () => this.changeWallet(i),
+      };
+    });
+    if (DriveSession.has()) {
       await this.loadDirectory();
     }
-    this.select = this.wallets[0];
+    this.loading = true;
     this.loading = false;
   }
 
@@ -302,32 +368,60 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  async share(){
-    
+  async share() {}
+
+  async changeWallet(i: KeystoreIndex) {
+    this.selectWalletDialog = true;
+    this.select = i;
+  }
+
+  async unlock() {
+    const ks = this.select;
+    this.loading = true;
+
+    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    if (!wallet) {
+      this.validations.password = 'Clave invalida';
+      return;
+    }
+    this.validations.password = false;
+
+    const kp = wallet.getES256K();
+    const { swarmFeed, feedHash } = await DriveSession.getSwarmNodeClient(
+      wallet
+    );
+    DriveSession.set(
+      feedHash,
+      `did:xdv:${swarmFeed.user}`,
+      kp.getPublic('array'),
+      swarmFeed.user,
+      ks.name
+    );
+
+    this.loading = false;
+    this.selectWalletDialog = false;
+    this.loadDirectory();
   }
 
   async loadDirectory() {
-    if (!this.driveSession) {
-      this.driveSession = JSON.parse(localStorage.getItem('xdv:drive:session'));
+    if (DriveSession.has()) {
+      this.driveSession = DriveSession.get();
+      this.select = this.wallets.find(
+        (i) => i.name === this.driveSession.ksName
+      );
+      this.selectWalletDialog = false;
+    } else {
+      return;
     }
-    const swarmFeed = new SwarmFeed(
-      (data) => Promise.resolve(false),
-      this.driveSession.pub
-    );
-    swarmFeed.initialize();
-
-    let { body } = await swarmFeed.bzzFeed.getContent(
-      this.driveSession.feed,
-      {
-        path: 'index.json',
-      }
-    );
+    const swarmFeed = DriveSession.getSwarmNodeQueryable();
+    const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
+    let { body } = await swarmFeed.bzzFeed.getContent(feed, {
+      path: 'index.json',
+    });
 
     let reader = new Response(body);
     let content = await reader.json();
 
-
-    console.log(content);
     this.items = [];
     this.items = [
       {
@@ -338,13 +432,9 @@ export default class DriveComponent extends Vue {
       },
     ];
 
-
-    body = await swarmFeed.bzzFeed.getContent(
-      this.driveSession.feed,
-      {
-        path: 'docs/refs.json',
-      }
-    );
+    body = await swarmFeed.bzzFeed.getContent(feed, {
+      path: 'docs/refs.json',
+    });
 
     reader = new Response(body.body);
     content = await reader.json();
@@ -384,7 +474,8 @@ export default class DriveComponent extends Vue {
   async createDocumentNode() {
     const ks = this.select;
 
-    const wallet = await this.browserUnlock(ks, this.password);
+    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    //    const wallet = await this.browserUnlock(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       return;
@@ -397,22 +488,13 @@ export default class DriveComponent extends Vue {
     const kpJwk = await KeyConvert.getP256(kp);
 
     const swarmKp = wallet.getES256K();
-    const swarmFeed = new SwarmFeed(
-      (data) => Promise.resolve(sign(data, swarmKp)),
-      swarmKp.getPublic('array')
-    );
-    swarmFeed.initialize();
-
-    // get index json
-    const { body } = await swarmFeed.bzzFeed.getContent(this.driveSession.feed);
-    const reader = new Response(body);
-    const indexJson = await reader.json();
+    const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
 
     const documents = this.files.map(async (i) => {
       let ab = await (i as Blob).arrayBuffer();
       let buf = new Uint8Array(ab);
-      const hash = ethers.utils.hashMessage(buf);
-      const signature = kp.sign(i.hash);
+      const hash = ethers.utils.keccak256(buf);
+      const signature = kp.sign(hash.replace('0x'));
 
       return {
         contentType: i.type,
@@ -424,6 +506,14 @@ export default class DriveComponent extends Vue {
         hash,
       } as SwarmNodeSignedContent;
     });
+
+    // get index json
+    const { body } = await swarmFeed.bzzFeed.getContent(
+      this.driveSession.feed,
+      { path: 'docs/refs.json' }
+    );
+    const reader = new Response(body);
+    const indexJson = await reader.json();
 
     let patchRefs = {
       docs: indexJson.docs || {},
@@ -456,9 +546,8 @@ export default class DriveComponent extends Vue {
       'docs/refs.json': patchRefs,
     };
 
-    debugger;
     const res = await swarmFeed.publishDirectory({
-      name: did.id,
+      name: did,
       contents: swarmFeed.toSwarmPayload(payload),
       defaultPath: 'index.json',
     });
@@ -468,27 +557,11 @@ export default class DriveComponent extends Vue {
     await this.loadDirectory();
   }
 
-  async browserUnlock(keystore: KeystoreIndex, password) {
-    try {
-      const base = await ethers.Wallet.fromEncryptedJson(
-        keystore.keystore,
-        password
-      );
-      return new Wallet(base.mnemonic, base);
-    } catch (e) {
-      console.log(e);
-      this.invalidPassword = true;
-    }
-    return null;
-  }
-
   async createDID() {
     // validate
-
-    const { ipld, didxdv } = this.solidoProps as XDVMiddleware;
     const ks = this.select;
 
-    const wallet = await this.browserUnlock(ks, this.password);
+    const wallet = await DriveSession.browserUnlock(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       return;
@@ -500,25 +573,32 @@ export default class DriveComponent extends Vue {
     const kpJwk = await KeyConvert.getP256(kp);
 
     const swarmKp = wallet.getES256K();
-    const swarmFeed = new SwarmFeed(
-      (data) => Promise.resolve(sign(data, swarmKp)),
-      swarmKp.getPublic('array')
-    );
-    swarmFeed.initialize();
+    const swarmJwk = await KeyConvert.getES256K(kp);
+
+    const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
 
     // Create IPFS key storage lock
-    const session = await didxdv.createIpldSession(kpJwk.pem);
+    const session = `did:xdv:${swarmFeed.user}`;
     const ldCrypto = await KeyConvert.createLinkedDataJsonFormat(
       LDCryptoTypes.Sepc256r1,
       kpJwk.ldSuite,
       false
     );
 
+    const ldCrypto2 = await KeyConvert.createLinkedDataJsonFormat(
+      LDCryptoTypes.Sepc256k1,
+      swarmJwk.ldSuite,
+      false
+    );
+
     // Create DID document with an did-ipid based issuer
     const did = await DIDDocumentBuilder.createDID({
-      issuer: session.key,
-      verificationKeys: [ldCrypto.toPublicKey()],
-      authenticationKeys: [ldCrypto.toAuthorizationKey()],
+      issuer: session,
+      verificationKeys: [ldCrypto.toPublicKey(), ldCrypto2.toPublicKey()],
+      authenticationKeys: [
+        ldCrypto.toAuthorizationKey(),
+        ldCrypto2.toAuthorizationKey(),
+      ],
     });
 
     const didIndex = DIDNodeSchema.create(did, 'main_did');
@@ -528,22 +608,12 @@ export default class DriveComponent extends Vue {
     };
 
     const res = await swarmFeed.publishDirectory({
-      name: session.key,
+      name: session,
       contents: swarmFeed.toSwarmPayload(references),
       defaultPath: 'index.json',
     });
 
-    this.driveSession = {
-      feed: res.feedHash,
-      did,
-      didIndex,
-      pub: swarmKp.getPublic('array'),
-      address: swarmFeed.user,
-    };
-    localStorage.setItem(
-      'xdv:drive:session',
-      JSON.stringify(this.driveSession)
-    );
+    DriveSession.set(res, did.id, kp.getPublic('array'), res.user, ks.name);
     this.loading = false;
     this.close();
     await this.loadDirectory();

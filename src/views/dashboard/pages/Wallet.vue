@@ -45,20 +45,7 @@ w<template>
                                   value="rsa"
                                 ></v-radio>
                               </template>
-                              <span>RSA, 2049 bits</span>
-                            </v-tooltip>
-
-                            <v-tooltip bottom>
-                              <template v-slot:activator="{ on }">
-                                <v-radio
-                                  v-on="on"
-                                  class="font-weight-medium"
-                                  label="Blockchain"
-                                  color="indigo"
-                                  value="secp256k1"
-                                ></v-radio>
-                              </template>
-                              <span>secp256k1</span>
+                              <span>RSA, 2048 bits</span>
                             </v-tooltip>
 
                             <v-tooltip bottom>
@@ -180,106 +167,106 @@ w<template>
                             Mnemonico
                           </v-col>
                         </v-row>
-                        <v-chip-group column active-class="display-3">
-                          <v-chip
+                        <div column active-class="display-3">
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[0] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[1] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[2] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[3] }}
-                          </v-chip>
+                          </div>
 
-                          <v-chip
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[4] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[5] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[6] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[7] }}
-                          </v-chip>
+                          </div>
 
-                          <v-chip
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[8] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[9] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[10] }}
-                          </v-chip>
-                          <v-chip
+                          </div>
+                          <div
                             class="display-3"
                             color="pink"
                             label
                             text-color="white"
                           >
                             {{ mnemonic[11] }}
-                          </v-chip>
-                        </v-chip-group>
+                          </div>
+                        </div>
                       </v-row>
                     </v-expansion-panel-content></v-expansion-panel
                   >
@@ -418,7 +405,6 @@ export default class WalletComponent extends Vue {
   }
 
   async createKeys() {
-    console.log(this.x509Info);
     this.loading = true;
     this.valid = false;
     if (
