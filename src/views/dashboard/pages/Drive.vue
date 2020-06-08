@@ -3,12 +3,28 @@
     <v-progress-linear
       indeterminate
       v-if="loading"
-      color="teal"
+      color="pink"
     ></v-progress-linear>
     <v-card class="mx-auto">
       <v-toolbar color="pink" dark>
-        <v-app-bar-nav-icon></v-app-bar-nav-icon>
 
+          <v-menu bottom left>
+            <template v-slot:activator="{ on }">
+             
+                      <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
+
+            </template>
+
+            <v-list>
+              <v-list-item
+                v-for="(item, i) in menuitems"
+                :key="i"
+                @click="item.handle"
+              >
+                <v-list-item-title>{{ item.title }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         <v-toolbar-title>Documentos</v-toolbar-title>
 
         <v-spacer></v-spacer>
@@ -18,7 +34,9 @@
         </v-btn>
 
         <v-dialog v-model="didDialog" max-width="500px">
+       
           <template v-slot:activator="{ on }">
+
             <v-btn v-on="on" icon>
               <v-icon>mdi-file-key</v-icon>
             </v-btn>
@@ -153,7 +171,7 @@
       </v-toolbar>
 
       <v-list two-line>
-        <v-list-item-group v-model="selected" multiple active-class="primary">
+        <v-list-item-group v-model="selected" multiple active-class="pink lighten-5">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.title">
               <template v-slot:default="{ active }">
@@ -177,7 +195,7 @@
                   </v-icon>
 
                   <v-icon v-else color="yellow">
-                    star
+                    mdi-star
                   </v-icon>
                 </v-list-item-action>
               </template>
@@ -237,6 +255,11 @@ export default class DriveComponent extends Vue {
   password = '';
   mnemonic = [];
   selectedPanel = 0;
+  selected  = [];
+  menuitems = [{
+    title: 'Compartir',
+    handle: this.share,
+  }];
   items = [
     {
       action: 'Hace 15 min',
@@ -279,6 +302,10 @@ export default class DriveComponent extends Vue {
     );
   }
 
+  async share(){
+    
+  }
+
   async loadDirectory() {
     if (!this.driveSession) {
       this.driveSession = JSON.parse(localStorage.getItem('xdv:drive:session'));
@@ -289,16 +316,16 @@ export default class DriveComponent extends Vue {
     );
     swarmFeed.initialize();
 
-    const { body } = await swarmFeed.bzzFeed.getContent(
+    let { body } = await swarmFeed.bzzFeed.getContent(
       this.driveSession.feed,
       {
         path: 'index.json',
       }
     );
 
-    const reader = new Response(body);
+    let reader = new Response(body);
+    let content = await reader.json();
 
-    const content = await reader.json();
 
     console.log(content);
     this.items = [];
@@ -311,21 +338,37 @@ export default class DriveComponent extends Vue {
       },
     ];
 
-    if (content.children && content.children.length > 0) {
-      const temp = content.children.map(async (i) => {
-        const ref: SwarmNodeSignedContent = await swarmFeed.bzz.downloadData(
-          i.ref
-        );
-        const s = ethers.utils.joinSignature({
-          r: '0x' + ref.signature.r,
-          s: '0x' + ref.signature.s,
-          recoveryParam: ref.signature.recoveryParam,
-        });
+
+    body = await swarmFeed.bzzFeed.getContent(
+      this.driveSession.feed,
+      {
+        path: 'docs/refs.json',
+      }
+    );
+
+    reader = new Response(body.body);
+    content = await reader.json();
+
+    if (content.docs) {
+      const temp = Object.keys(content.docs).map(async (k) => {
+        const i = content.docs[k];
+        const has = !!i.signature;
+        if (has) {
+          const s = ethers.utils.joinSignature({
+            r: '0x' + i.signature.r,
+            s: '0x' + i.signature.s,
+            recoveryParam: i.signature.recoveryParam,
+          });
+          return {
+            action: moment(i.lastModified).fromNow(),
+            title: i.name,
+            headline: i.contentType,
+            subtitle: `hash ${i.hash}, firma ${s}`,
+          };
+        }
         return {
-          action: moment(ref.lastModified).fromNow(),
-          title: ref.name,
-          headline: ref.contentType,
-          subtitle: `hash ${ref.hash}, firma ${s}`,
+          title: i.name,
+          headline: i.contentType,
         };
       });
       const res = await forkJoin(temp).toPromise();
@@ -383,7 +426,7 @@ export default class DriveComponent extends Vue {
     });
 
     let patchRefs = {
-      children: indexJson.children || [],
+      docs: indexJson.docs || {},
     };
     const signedDocs = await forkJoin(documents).toPromise();
     const refs = signedDocs.map(async (i: SwarmNodeSignedContent) => {
@@ -395,16 +438,22 @@ export default class DriveComponent extends Vue {
           // manifestHash: this.driveSession.feed,
         }
       );
-      return { ref, name: i.name, contentType: i.contentType };
+      const { contentType, name, size, signature, hash, lastModified } = i;
+      return { ref, contentType, name, size, signature, hash, lastModified };
     });
 
     const items = await forkJoin(refs).toPromise();
-    console.log(items);
+    items.map((i) => {
+      patchRefs.docs = {
+        ...patchRefs.docs,
+        [i.hash]: { ...i },
+      };
+    });
     const payload = {
       'index.json': {
         ...indexJson,
-        children: [...patchRefs.children, ...items],
       },
+      'docs/refs.json': patchRefs,
     };
 
     debugger;

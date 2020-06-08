@@ -22,6 +22,7 @@
     "@erebos/keccak256": "^0.13.1",
     "@erebos/secp256k1": "^0.10.0",
     "@erebos/swarm-browser": "^0.13.0",
+    "@erebos/timeline": "^0.13.1",
     "arraybuffer-concat": "0.0.1",
     "arraybuffer-to-buffer": "0.0.7",
     "arraybuffer-to-string": "^1.0.2",
