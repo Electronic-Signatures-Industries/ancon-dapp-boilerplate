@@ -31,6 +31,73 @@
         <v-btn icon>
           <v-icon>mdi-magnify</v-icon>
         </v-btn>
+        <v-dialog v-model="shareDialog" max-width="500px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Compartir</span>
+            </v-card-title>
+
+            <v-card-text>
+              <v-form v-model="form" autocomplete="off">
+                <v-row>
+                  <v-col cols="12" md="12">
+                    <v-text-field
+                      required
+                      v-model="shareInfo.feed"
+                      label="Enlace"
+                    ></v-text-field>
+                    <v-text-field
+                      required
+                      v-model="shareInfo.address"
+                      label="Direccion"
+                    ></v-text-field>
+                    <v-select
+                      v-model="select"
+                      :hint="`${select.algorithm}`"
+                      :items="wallets"
+                      item-text="name"
+                      item-value="name"
+                      label="Cartera Digital"
+                      persistent-hint
+                      return-object
+                      single-line
+                    >
+                    </v-select>
+                    <v-text-field
+                      required
+                      v-model="password"
+                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                      :type="showPassword ? 'text' : 'password'"
+                      label="Clave"
+                      class="input-group--focused"
+                      @click:append="showPassword = !showPassword"
+                      :error="validations.password"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                :disabled="loading"
+                @click="shareDialog = false"
+                >Cancelar</v-btn
+              >
+              <v-btn
+                color="blue darken-1"
+                text
+                :disabled="loading"
+                @click="share"
+                >Compartir</v-btn
+              >
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <v-dialog v-model="didDialog" max-width="500px">
           <template v-slot:activator="{ on }">
             <v-btn v-on="on" icon>
@@ -224,11 +291,7 @@
       </v-toolbar>
 
       <v-list two-line>
-        <v-list-item-group
-          v-model="selected"
-          multiple
-          active-class="pink lighten-5"
-        >
+        <v-list-item-group v-model="selected" active-class="pink lighten-5">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.title">
               <template v-slot:default="{ active }">
@@ -248,13 +311,13 @@
                     v-text="item.action"
                   ></v-list-item-action-text>
                   <v-icon v-if="!active" color="grey lighten-1">
-                    mdi-star
+                    mdi-lock
                   </v-icon>
 
                   <v-icon v-else color="yellow">
                     mdi-star
                   </v-icon>
-                  <v-icon color="green">
+                  <v-icon color="green" @click="openShareDialog(item)">
                     mdi-share
                   </v-icon>
                 </v-list-item-action>
@@ -283,7 +346,11 @@ import {
   LDCryptoTypes,
   KeyConvert,
   DIDNodeSchema,
+  DIDDocument,
   DocumentNodeSchema,
+  JOSEService,
+  JWTService,
+  PublicKey,
 } from 'xdvplatform-tools';
 import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
 import { Component, Prop, Vue } from 'vue-property-decorator';
@@ -297,6 +364,9 @@ import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin } from 'rxjs';
 import { DriveSession } from './DriveSession';
+import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
+import copy from 'copy-to-clipboard';
+const bs58 = require('bs58');
 
 @Component({})
 export default class DriveComponent extends Vue {
@@ -315,8 +385,13 @@ export default class DriveComponent extends Vue {
   showPassword = false;
   password = '';
   mnemonic = [];
-  selectedPanel = 0;
+  selectedDocument = {};
   selected = [];
+  shareDialog = false;
+  shareInfo = {
+    address: '0x0fccbb0c51b5c0cf435d7d5b4659ee93567e469b',
+    feed: 'ef26e27db5b805869ae4ff56869144a4bba52d2545be38f84d0b943b6e56d1e8',
+  };
   menuitems: any[] = [];
   items = [
     {
@@ -368,7 +443,72 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  async share() {}
+  openShareDialog(item) {
+    this.shareDialog = true;
+    this.selectedDocument = item;
+  }
+
+  async share() {
+    const ks = this.select;
+    this.loading = true;
+
+    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    if (!wallet) {
+      this.validations.password = 'Clave invalida';
+      return;
+    }
+    this.validations.password = false;
+    const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
+
+    // resolve DID
+    const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
+    const resolver = await DriveSession.createDIDResolver(
+      swarmFeed,
+      this.shareInfo.feed
+    );
+    const did = resolver.resolve(
+      `did:xdv:${this.shareInfo.address}`
+    ) as DIDDocument;
+    const pub = did.publicKey[0].publicKeyJwk;
+
+    const kp = wallet.getES256K();
+    const kpSuite = await KeyConvert.getES256K(kp);
+
+    // get did document
+    const document = await swarmFeed.bzz.downloadData(
+      this.selectedDocument.item
+    );
+
+    // signed message from user
+    const signed = await JWTService.sign(kpSuite.pem, document, {
+      iss: swarmFeed.user,
+      sub: this.shareInfo.address,
+      aud: swarmFeed.user,
+    } as any);
+
+    // encrypt
+
+    const encrypted = await JOSEService.encrypt(pub, signed);
+
+    const feedHash = await swarmFeed.bzzFeed.createManifest({
+      user: swarmFeed.user,
+      name: `${swarmFeed.user}:${this.shareInfo.address}`
+    });
+    const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, feedHash);
+
+    // topic is user did
+    const topic = did.id;
+
+    const topicInstance = duplexClient.createSubject(topic);
+
+    duplexClient.subscribe().live({
+      interval: 5000,
+    }).subscribe(console.log)
+    await topicInstance.send(encrypted);
+
+this.loading = false;
+    this.shareDialog = false;
+  }
 
   async changeWallet(i: KeystoreIndex) {
     this.selectWalletDialog = true;
@@ -425,11 +565,12 @@ export default class DriveComponent extends Vue {
     this.items = [];
     this.items = [
       {
+        item: content,
         action: moment(content.created).fromNow(),
         headline: content.id,
         title: 'DID',
-        subtitle: 'ethereum address ' + this.driveSession.address,
-      },
+        subtitle: `direccion ${this.driveSession.address} enlace ${feed}`,
+      } as any,
     ];
 
     body = await swarmFeed.bzzFeed.getContent(feed, {
@@ -450,10 +591,14 @@ export default class DriveComponent extends Vue {
             recoveryParam: i.signature.recoveryParam,
           });
           return {
+            item: i.ref,
             action: moment(i.lastModified).fromNow(),
             title: i.name,
             headline: i.contentType,
-            subtitle: `hash ${i.hash}, firma ${s}`,
+            subtitle: `hash ${i.hash.replace('0x', '')} firma ${s.replace(
+              '0x',
+              ''
+            )}`,
           };
         }
         return {
@@ -462,7 +607,7 @@ export default class DriveComponent extends Vue {
         };
       });
       const res = await forkJoin(temp).toPromise();
-      this.items = [...this.items, ...res];
+      this.items = [...this.items, ...res] as any[];
     }
   }
 
@@ -489,6 +634,7 @@ export default class DriveComponent extends Vue {
 
     const swarmKp = wallet.getES256K();
     const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
+    const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
 
     const documents = this.files.map(async (i) => {
       let ab = await (i as Blob).arrayBuffer();
@@ -508,15 +654,19 @@ export default class DriveComponent extends Vue {
     });
 
     // get index json
-    const { body } = await swarmFeed.bzzFeed.getContent(
-      this.driveSession.feed,
-      { path: 'docs/refs.json' }
-    );
+    const index = await swarmFeed.bzzFeed.getContent(feed, {
+      path: 'index.json',
+    });
+    const readerIndex = new Response(index.body);
+    const indexJson = await readerIndex.json();
+    // get index json
+    const { body } = await swarmFeed.bzzFeed.getContent(feed, {
+      path: 'docs/refs.json',
+    });
     const reader = new Response(body);
-    const indexJson = await reader.json();
-
+    const docsJson = await reader.json();
     let patchRefs = {
-      docs: indexJson.docs || {},
+      docs: docsJson.docs || {},
     };
     const signedDocs = await forkJoin(documents).toPromise();
     const refs = signedDocs.map(async (i: SwarmNodeSignedContent) => {
@@ -524,8 +674,6 @@ export default class DriveComponent extends Vue {
         DocumentNodeSchema.create(did, i, 'file'),
         {
           encrypt: true,
-          // pin: true,
-          // manifestHash: this.driveSession.feed,
         }
       );
       const { contentType, name, size, signature, hash, lastModified } = i;
@@ -580,28 +728,18 @@ export default class DriveComponent extends Vue {
     // Create IPFS key storage lock
     const session = `did:xdv:${swarmFeed.user}`;
     const ldCrypto = await KeyConvert.createLinkedDataJsonFormat(
-      LDCryptoTypes.Sepc256r1,
-      kpJwk.ldSuite,
+      LDCryptoTypes.JWK,
+      { publicJwk: kpJwk.jwk } as any,
       false
     );
 
-    const ldCrypto2 = await KeyConvert.createLinkedDataJsonFormat(
-      LDCryptoTypes.Sepc256k1,
-      swarmJwk.ldSuite,
-      false
-    );
+    const did = new DIDDocument();
+    const pub = { owner: swarmFeed.user, ...ldCrypto };
+    did.id = session;
+    did.publicKey = [pub];
+    did.authentication = [pub as any];
 
-    // Create DID document with an did-ipid based issuer
-    const did = await DIDDocumentBuilder.createDID({
-      issuer: session,
-      verificationKeys: [ldCrypto.toPublicKey(), ldCrypto2.toPublicKey()],
-      authenticationKeys: [
-        ldCrypto.toAuthorizationKey(),
-        ldCrypto2.toAuthorizationKey(),
-      ],
-    });
-
-    const didIndex = DIDNodeSchema.create(did, 'main_did');
+    const didIndex = { ...did, tag: 'main_did' };
     const references = {
       'index.json': didIndex,
       // 'did.json': did,

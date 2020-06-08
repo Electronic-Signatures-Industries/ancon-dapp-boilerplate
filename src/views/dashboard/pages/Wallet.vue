@@ -167,7 +167,7 @@ w<template>
                             Mnemonico
                           </v-col>
                         </v-row>
-                        <div column active-class="display-3">
+                        <v-row>
                           <div
                             class="display-3"
                             color="pink"
@@ -266,7 +266,7 @@ w<template>
                           >
                             {{ mnemonic[11] }}
                           </div>
-                        </div>
+                        </v-row>
                       </v-row>
                     </v-expansion-panel-content></v-expansion-panel
                   >
