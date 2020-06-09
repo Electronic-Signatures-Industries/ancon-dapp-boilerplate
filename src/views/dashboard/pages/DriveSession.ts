@@ -57,11 +57,10 @@ export class DriveSession {
     }
 
 
-    static getSwarmNodeQueryable() {
-        const driveSession = DriveSession.get();
+    static getSwarmNodeQueryable(publicKey: any) {
         const swarmFeed = new SwarmFeed(
             (data) => Promise.resolve(false),
-            driveSession.pub
+            publicKey
         );
         swarmFeed.initialize();
 

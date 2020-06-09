@@ -22,8 +22,8 @@ export class MessagingTimelineDuplexClient {
             type: 'application/json'
         });
 
-        const send = (message) => {
-            pushMessage({ content: message })
+        const send = (message, signature) => {
+            pushMessage({ content: message, signature })
         }
 
         return { send };

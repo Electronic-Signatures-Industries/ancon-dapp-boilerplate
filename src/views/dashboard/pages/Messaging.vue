@@ -7,9 +7,37 @@
     ></v-progress-linear>
     <v-card class="mx-auto">
       <v-toolbar color="deep-purple accent-4" dark>
-        <v-app-bar-nav-icon></v-app-bar-nav-icon>
+        <v-menu bottom left>
+          <template v-slot:activator="{ on }">
+            <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
+          </template>
 
-        <v-toolbar-title>Mensajeria</v-toolbar-title>
+          <v-list>
+            <v-list-item
+              v-for="(item, i) in activeSubscriptions"
+              :key="i"
+              @click="item.handler"
+            >
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <v-toolbar-title>
+          <v-row>
+            <v-col>
+              Mensajeria
+            </v-col>
+            <v-col>
+              <div v-if="activeSubscriptions.length === 1">
+                - una subscripcion activa
+              </div>
+              <div v-if="activeSubscriptions.length > 1">
+                &nbsp; - {{ activeSubscriptions.length }} subscripciones activas
+              </div>
+            </v-col></v-row
+          >
+        </v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-dialog v-model="shareDialog" max-width="500px">
@@ -42,7 +70,6 @@
                       :hint="`${select.algorithm}`"
                       :items="wallets"
                       item-text="name"
-                      item-value="name"
                       label="Cartera Digital"
                       persistent-hint
                       return-object
@@ -106,7 +133,7 @@
       </v-list>
 
       <v-divider></v-divider> -->
-      <v-list subheader>
+      <v-list two-line>
         <v-list-item-group
           v-model="selected"
           active-class="indigo lighten-5"
@@ -180,13 +207,14 @@ import { createKeyPair, sign } from '@erebos/secp256k1';
 import { MiddlewareOptions, XDVMiddleware } from '../../../libs';
 import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
-import { arrayify } from 'ethers/utils';
+import { arrayify, BigNumber } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin } from 'rxjs';
 import { DriveSession } from './DriveSession';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 import { PartialChapter } from '@erebos/timeline';
+import { MessageIO } from './MessageIO';
 const bs58 = require('bs58');
 
 @Component({})
@@ -214,7 +242,7 @@ export default class MessagingComponent extends Vue {
     feed: '120ddc6359bba7bf789db6ff18042d5dbd496fe4892900d9be0fa7de33639479',
   };
   subscriptions = [];
-  menuitems: any[] = [];
+  activeSubscriptions: any[] = [];
   items = [
     {
       active: true,
@@ -227,19 +255,18 @@ export default class MessagingComponent extends Vue {
   select: KeystoreIndex = new KeystoreIndex();
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
-  activeSubscriptions = [];
 
   async mounted() {
     this.loadWallets();
     this.select = this.wallets[0];
 
-    // set existing wallets
-    this.menuitems = this.wallets.map((i) => {
-      return {
-        title: `${i.name} - ${i.algorithm}`,
-        handler: () => this.changeWallet(i),
-      };
-    });
+    // // set existing wallets
+    // this.activeSubscriptions = this.wallets.map((i) => {
+    //   return {
+    //     title: `${i.name} - ${i.algorithm}`,
+    //     handler: () => this.changeWallet(i),
+    //   };
+    // });
     if (localStorage.getItem('xdv:messaging:subs')) {
       await this.loadSubscriptions();
     }
@@ -279,7 +306,7 @@ export default class MessagingComponent extends Vue {
     const did = resolver.resolve(
       `did:xdv:${this.shareInfo.address}`
     ) as DIDDocument;
-    // const pub = did.publicKey[0].publicKeyJwk;
+    const pub = did.publicKey[0].publicKeyJwk;
 
     const kp = wallet.getES256K();
     const kpSuite = await KeyConvert.getES256K(kp);
@@ -288,23 +315,23 @@ export default class MessagingComponent extends Vue {
       user: this.shareInfo.address,
       name: `${this.shareInfo.address}:${swarmFeed.user}`,
     });
-    const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, feedHash);
+    // const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, feedHash);
 
-    duplexClient
-      .subscribe()
-      .live({
-        interval: 5000,
-      })
-      .subscribe((m: PartialChapter<string>) => {
-        this.items.push({
-          // active: true,
-          title: m.author,
-          headline: m.content,
-          action: moment(m.timestamp).fromNow(),
-          subtitle: `firma ${m.signature}`,
-        });
-      });
-
+    // const u = duplexClient
+    //   .subscribe()
+    //   .live({
+    //     interval: 5000,
+    //   })
+    //   .subscribe((m: PartialChapter<string>) => {
+    //     this.items.push({
+    //       // active: true,
+    //       title: m.author,
+    //       headline: m.content,
+    //       action: moment(m.timestamp).fromNow(),
+    //       subtitle: `firma ${m.signature}`,
+    //     });
+    //   });
+    // this.activeSubscriptions = [...this.activeSubscriptions, u];
     this.loading = false;
     this.shareDialog = false;
 
@@ -317,6 +344,7 @@ export default class MessagingComponent extends Vue {
       {
         feedHash,
         did,
+        pub,
       },
     ];
 
@@ -325,40 +353,36 @@ export default class MessagingComponent extends Vue {
       'xdv:messaging:subs',
       JSON.stringify(this.subscriptions)
     );
+    await this.loadSubscriptions();
   }
 
   async loadSubscriptions() {
     this.loading = true;
 
     // resolve DID
-    const swarmFeed = await DriveSession.getSwarmNodeQueryable();
 
-    const subs = JSON.parse(localStorage.getItem('xdv:messaging:subs'));
-    this.activeSubscriptions = subs.map((i) => {
-      const { did, feedHash } = i;
-      const duplexClient = new MessagingTimelineDuplexClient(
-        swarmFeed,
-        feedHash
-      );
+    const subs = MessageIO.loadSubscriptions((m: any) => {
+      const decoded = JWTService.decodeWithSignature(m.content);
+      console.log(decoded)
+      this.items.push({
+        // active: true,
+        headline: `${decoded.payload.contentType}`,
+        title: decoded.payload.name,
+        action: moment(m.timestamp).fromNow(),
+        subtitle: `firma ${decoded.signature} peso ${new BigNumber(decoded.payload.size).toNumber().toLocaleString()} kb`,
+      });
+    });
 
-      const unsubscribe = duplexClient
-        .subscribe()
-        .live({
-          interval: 5000,
-        })
-        .subscribe((c: PartialChapter<string>) => {
-          c.forEach((m) =>
-            this.items.push({
-              // active: true,
-              title: m.author,
-              headline: m.content,
-              action: moment(m.timestamp).fromNow(),
-              subtitle: `firma ${m.signature}`,
-            })
-          );
-        });
-
-      return unsubscribe;
+    this.activeSubscriptions = [];
+    subs.forEach((subscription, index) => {
+      const topic = subscription.did;
+      this.activeSubscriptions.push({
+        handler: () => {
+          subscription.unsubscribe();
+          this.activeSubscriptions.splice(index);
+        },
+        title: `${topic.id} -> ${subscription.currentUser}`,
+      });
     });
 
     this.loading = false;

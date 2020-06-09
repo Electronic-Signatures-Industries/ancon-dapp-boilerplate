@@ -3,17 +3,17 @@
     <v-toolbar dense>
       <!-- <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
 
-      <v-btn icon @click="show">
+      <!-- <v-btn icon @click="show">
         <v-icon>mdi-dots-vertical</v-icon>
-      </v-btn>
+      </v-btn> -->
 
-        <v-menu v-model="open" open-on-hover top offset-y>
+        <!-- <v-menu v-model="open" open-on-hover top offset-y>
         <v-list>
           <v-list-item v-for="i in items" :key="i.title" @click="goTo(i.href)">
             <v-list-item-title>{{ i.title }}</v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu>
+      </v-menu> -->
       <v-toolbar-title class="headline">XDV Platform - Documentos Seguros Verificables</v-toolbar-title>
 
       <v-spacer></v-spacer>

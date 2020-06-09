@@ -43,6 +43,7 @@
                   <v-col cols="12" md="12">
                     <v-text-field
                       required
+                      @input="readMagicLink"
                       v-model="shareInfo.feed"
                       label="Enlace"
                     ></v-text-field>
@@ -288,40 +289,69 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+        <template v-slot:extension>
+          <v-tabs v-model="tab" @change="filter" align-with-title>
+            <v-tabs-slider color="yellow"></v-tabs-slider>
+            <v-tab>
+              DID
+            </v-tab>
+            <v-tab>
+              Documentos
+            </v-tab>
+            <v-tab>
+              Facturas
+            </v-tab>
+            <v-tab>
+              Documentos VC
+            </v-tab>
+          </v-tabs>
+        </template>
       </v-toolbar>
 
       <v-list two-line>
-        <v-list-item-group v-model="selected" active-class="pink lighten-5">
+        <v-list-item-group
+          v-model="selected"
+          active-class="pink lighten-5"
+          class="pink--text"
+        >
           <template v-for="(item, index) in items">
             <v-list-item :key="item.title">
-              <template v-slot:default="{ active }">
-                <v-list-item-content>
-                  <v-list-item-title v-text="item.title"></v-list-item-title>
-                  <v-list-item-subtitle
-                    class="text--primary"
-                    v-text="item.headline"
-                  ></v-list-item-subtitle>
-                  <v-list-item-subtitle
-                    v-text="item.subtitle"
-                  ></v-list-item-subtitle>
-                </v-list-item-content>
+              <v-list-item-content>
+                <v-list-item-title v-text="item.title"></v-list-item-title>
+                <v-list-item-subtitle
+                  class="text--primary"
+                  v-text="item.headline"
+                ></v-list-item-subtitle>
+                <v-list-item-subtitle
+                  v-text="item.subtitle"
+                ></v-list-item-subtitle>
+              </v-list-item-content>
 
-                <v-list-item-action>
-                  <v-list-item-action-text
-                    v-text="item.action"
-                  ></v-list-item-action-text>
-                  <v-icon v-if="!active" color="grey lighten-1">
-                    mdi-lock
-                  </v-icon>
+              <v-list-item-action>
+                <v-list-item-action-text
+                  v-text="item.action"
+                ></v-list-item-action-text>
 
-                  <v-icon v-else color="yellow">
-                    mdi-star
-                  </v-icon>
-                  <v-icon color="green" @click="openShareDialog(item)">
-                    mdi-share
-                  </v-icon>
-                </v-list-item-action>
-              </template>
+                <v-icon v-if="hasCopyRef && item.type === 'did'" color="yellow">
+                  mdi-clipboard
+                </v-icon>
+
+                <v-icon
+                  @click="handleCopyDIDReference(item)"
+                  v-if="!hasCopyRef && item.type === 'did'"
+                  color="grey"
+                >
+                  mdi-clipboard
+                </v-icon>
+                <v-icon
+                  v-if="item.type !== 'did'"
+                  color="green"
+                  @click="openShareDialog(item)"
+                >
+                  mdi-share
+                </v-icon>
+              </v-list-item-action>
             </v-list-item>
 
             <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
@@ -367,6 +397,9 @@ import { DriveSession } from './DriveSession';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
+import { MessageIO } from './MessageIO';
+import { DriveSwarmManager } from './DriveSwarmManager';
+const cbor = require('cbor-sync');
 
 @Component({})
 export default class DriveComponent extends Vue {
@@ -389,8 +422,8 @@ export default class DriveComponent extends Vue {
   selected = [];
   shareDialog = false;
   shareInfo = {
-    address: '0x0fccbb0c51b5c0cf435d7d5b4659ee93567e469b',
-    feed: 'ef26e27db5b805869ae4ff56869144a4bba52d2545be38f84d0b943b6e56d1e8',
+    address: '',
+    feed: '',
   };
   menuitems: any[] = [];
   items = [
@@ -413,11 +446,44 @@ export default class DriveComponent extends Vue {
       subtitle: 'Almacenado para posterior firmado',
     },
   ];
+  showMenu = false;
   selectWalletDialog = false;
   select: KeystoreIndex = new KeystoreIndex();
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
-  driveSession;
+  selectedItem = new SwarmNodeSignedContent();
+  driveSession = {};
+  tab = 0;
+  itemsClone = [];
+
+  hasCopyRef = false;
+
+  handleMenu(item) {}
+  handleCopyDIDReference(item) {
+    let ref;
+    if (item.didReference) {
+      ref = `${item.didReference.address},${item.didReference.feed}`;
+      ref = cbor.encode({ link: ref });
+      ref = bs58.encode(ref);
+      copy(ref);
+      this.hasCopyRef = true;
+    }
+  }
+
+  readCopyDIDReference(reference) {
+    let ref = bs58.decode(reference);
+    ref = cbor.decode(ref);
+    this.shareInfo.address = ref.link.split(',')[0];
+    this.shareInfo.feed = ref.link.split(',')[1];
+  }
+
+  readMagicLink(link) {
+    try {
+      this.readCopyDIDReference(link);
+    } catch (e) {
+      // no - op
+    }
+  }
 
   async mounted() {
     this.loadWallets();
@@ -462,49 +528,15 @@ export default class DriveComponent extends Vue {
 
     // resolve DID
     const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
-    const resolver = await DriveSession.createDIDResolver(
-      swarmFeed,
-      this.shareInfo.feed
-    );
-    const did = resolver.resolve(
-      `did:xdv:${this.shareInfo.address}`
-    ) as DIDDocument;
-    const pub = did.publicKey[0].publicKeyJwk;
 
-    const kp = wallet.getES256K();
-    const kpSuite = await KeyConvert.getES256K(kp);
+    const messageIO = new MessageIO(wallet, swarmFeed);
 
-    // get did document
-    const document = await swarmFeed.bzz.downloadData(
-      this.selectedDocument.item
+    await messageIO.sendEncryptedCommPayload(
+      this.shareInfo,
+      this.selectedDocument.item as SwarmNodeSignedContent
     );
 
-    // signed message from user
-    const signed = await JWTService.sign(kpSuite.pem, document, {
-      iss: swarmFeed.user,
-      sub: this.shareInfo.address,
-      aud: swarmFeed.user,
-    } as any);
-
-    // encrypt
-
-    const encrypted = await JOSEService.encrypt(pub, signed);
-
-    const feedHash = await swarmFeed.bzzFeed.createManifest({
-      user: swarmFeed.user,
-      name: `${swarmFeed.user}:${this.shareInfo.address}`
-    });
-    const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, feedHash);
-
-    // topic is user did
-    const topic = did.id;
-
-    const topicInstance = duplexClient.createSubject(topic);
-
-
-    await topicInstance.send(encrypted);
-
-this.loading = false;
+    this.loading = false;
     this.shareDialog = false;
   }
 
@@ -541,6 +573,18 @@ this.loading = false;
     this.loadDirectory();
   }
 
+  filter() {
+    if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
+    const mapping = {
+      did: 0,
+      file_document: 1,
+      fe: 2,
+      vc: 3,
+    };
+    const type = Object.keys(mapping)[this.tab];
+    this.items = this.itemsClone.filter((i) => i.type === type);
+  }
+
   async loadDirectory() {
     if (DriveSession.has()) {
       this.driveSession = DriveSession.get();
@@ -551,7 +595,7 @@ this.loading = false;
     } else {
       return;
     }
-    const swarmFeed = DriveSession.getSwarmNodeQueryable();
+    const swarmFeed = DriveSession.getSwarmNodeQueryable(this.driveSession.pub);
     const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
     let { body } = await swarmFeed.bzzFeed.getContent(feed, {
       path: 'index.json',
@@ -563,6 +607,8 @@ this.loading = false;
     this.items = [];
     this.items = [
       {
+        type: 'did',
+        didReference: { address: this.driveSession.address, feed },
         item: content,
         action: moment(content.created).fromNow(),
         headline: content.id,
@@ -589,7 +635,8 @@ this.loading = false;
             recoveryParam: i.signature.recoveryParam,
           });
           return {
-            item: i.ref,
+            item: i,
+            type: 'file_document',
             action: moment(i.lastModified).fromNow(),
             title: i.name,
             headline: i.contentType,
@@ -606,6 +653,7 @@ this.loading = false;
       });
       const res = await forkJoin(temp).toPromise();
       this.items = [...this.items, ...res] as any[];
+      this.filter();
     }
   }
 
@@ -626,78 +674,8 @@ this.loading = false;
     this.validations.password = false;
     this.loading = true;
 
-    const did = this.driveSession.did;
-    const kp = wallet.getP256();
-    const kpJwk = await KeyConvert.getP256(kp);
-
-    const swarmKp = wallet.getES256K();
-    const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
-    const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
-
-    const documents = this.files.map(async (i) => {
-      let ab = await (i as Blob).arrayBuffer();
-      let buf = new Uint8Array(ab);
-      const hash = ethers.utils.keccak256(buf);
-      const signature = kp.sign(hash.replace('0x'));
-
-      return {
-        contentType: i.type,
-        name: i.name,
-        lastModified: i.lastModified,
-        size: i.size,
-        content: ethers.utils.base64.encode(buf),
-        signature,
-        hash,
-      } as SwarmNodeSignedContent;
-    });
-
-    // get index json
-    const index = await swarmFeed.bzzFeed.getContent(feed, {
-      path: 'index.json',
-    });
-    const readerIndex = new Response(index.body);
-    const indexJson = await readerIndex.json();
-    // get index json
-    const { body } = await swarmFeed.bzzFeed.getContent(feed, {
-      path: 'docs/refs.json',
-    });
-    const reader = new Response(body);
-    const docsJson = await reader.json();
-    let patchRefs = {
-      docs: docsJson.docs || {},
-    };
-    const signedDocs = await forkJoin(documents).toPromise();
-    const refs = signedDocs.map(async (i: SwarmNodeSignedContent) => {
-      const ref = await swarmFeed.bzz.uploadData(
-        DocumentNodeSchema.create(did, i, 'file'),
-        {
-          encrypt: true,
-        }
-      );
-      const { contentType, name, size, signature, hash, lastModified } = i;
-      return { ref, contentType, name, size, signature, hash, lastModified };
-    });
-
-    const items = await forkJoin(refs).toPromise();
-    items.map((i) => {
-      patchRefs.docs = {
-        ...patchRefs.docs,
-        [i.hash]: { ...i },
-      };
-    });
-    const payload = {
-      'index.json': {
-        ...indexJson,
-      },
-      'docs/refs.json': patchRefs,
-    };
-
-    const res = await swarmFeed.publishDirectory({
-      name: did,
-      contents: swarmFeed.toSwarmPayload(payload),
-      defaultPath: 'index.json',
-    });
-
+    const driveManager = new DriveSwarmManager(wallet, DriveSession.get());
+    await driveManager.pushFiles({ files: this.files });
     this.loading = false;
     this.close();
     await this.loadDirectory();
