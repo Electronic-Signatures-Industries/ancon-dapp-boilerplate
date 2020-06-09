@@ -501,9 +501,7 @@ export default class DriveComponent extends Vue {
 
     const topicInstance = duplexClient.createSubject(topic);
 
-    duplexClient.subscribe().live({
-      interval: 5000,
-    }).subscribe(console.log)
+
     await topicInstance.send(encrypted);
 
 this.loading = false;

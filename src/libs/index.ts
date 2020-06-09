@@ -87,7 +87,7 @@ export const initXdvMiddleware = async options => {
   }
   const ipld = new IpldClient();
   const comm = new Pubsub(ipld);
-  await comm.initialize(config);
+  // sawait comm.initialize(config);
 
   return {
     ipld,
