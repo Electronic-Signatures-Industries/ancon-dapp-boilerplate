@@ -492,7 +492,7 @@ export default class WalletComponent extends Vue {
 
     // Store P256 Public Key
     kpJwk.jwk = (await JWK.asKey(kpJwk.jwk, 'jwk')).toJSON();
-    const swarmFeed = await DriveSession.getSwarmNodeClient(swarmKeypair);
+    const swarmFeed =  DriveSession.getSwarmNodeClient(swarmKeypair);
 
     // Store P256 pvk
     // @ts-ignore

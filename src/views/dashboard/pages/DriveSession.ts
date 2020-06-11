@@ -40,7 +40,7 @@ export class DriveSession {
         await DriveSession.setSecure(
             did,
             'P256_JWK_PUBLIC',
-            pub
+            JSON.stringify(pub)
         );
 
         // Get Key Store Index
@@ -65,7 +65,6 @@ export class DriveSession {
     public static async  getPrivateKey(id: string, algorithm: string, password: string) {
         let pvk = '';
         let key = id+algorithm;
-        debugger
         if (this.KeystoreInMem && this.KeystoreInMem.get(key)) {
             return this.KeystoreInMem.get(key);
         }
@@ -85,7 +84,7 @@ export class DriveSession {
         }
 
         if (AlgorithmType[algorithm] === AlgorithmType.P256_JWK_PUBLIC) {
-            return await JWK.asKey(pvk, 'jwk');
+            return await JWK.asKey(JSON.parse(pvk), 'jwk');
         }
     }
 
@@ -109,7 +108,7 @@ export class DriveSession {
     }
 
 
-    static async getSwarmNodeClient(keypair: ec.KeyPair) {
+    static getSwarmNodeClient(keypair: ec.KeyPair) {
         console.log(pubKeyToAddress(keypair.getPublic('array')))
         const user = pubKeyToAddress(keypair.getPublic('array'));
         const swarmFeed = new SwarmFeed(

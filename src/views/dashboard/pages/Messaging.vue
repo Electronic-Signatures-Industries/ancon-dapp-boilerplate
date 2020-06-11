@@ -361,7 +361,7 @@ export default class MessagingComponent extends Vue {
     // const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
 
     // resolve DID
-    const  swarmFeed  = await DriveSession.getSwarmNodeClient(wallet.getES256K());
+    const  swarmFeed  = DriveSession.getSwarmNodeClient(wallet.getES256K());
     const resolver = await DriveSession.createDIDResolver(
       swarmFeed,
       this.shareInfo.feed

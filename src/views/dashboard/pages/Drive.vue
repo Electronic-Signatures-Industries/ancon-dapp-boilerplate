@@ -408,6 +408,7 @@ export default class DriveComponent extends Vue {
   search = '';
   publicWallets = [];
   hasCopyRef = false;
+  sub: any;
 
   handleMenu(item) {}
   handleCopyDIDReference(item) {
@@ -491,26 +492,28 @@ export default class DriveComponent extends Vue {
     this.validations.password = false;
 
     // from
-    const mySwarmKeys: any = await DriveSession.getPrivateKey(
+    const mySwarmKeys: ec.KeyPair = await DriveSession.getPrivateKey(
       ks.address,
       'ES256K',
       this.password,
     );
 
+const pub = mySwarmKeys.getPublic();
    // user
-   debugger
     const userKp = await DriveSession.getPrivateKey(
       this.shareInfo.recipients.name,
       'P256_JWK_PUBLIC',
       this.password
     );
 
-    const swarmFeed = await DriveSession.getSwarmNodeClient(mySwarmKeys);
+    const swarmFeed = DriveSession.getSwarmNodeClient(mySwarmKeys);
     const messageIO = new MessageIO(mySwarmKeys, userKp, swarmFeed);
 
     await messageIO.sendEncryptedCommPayload(
-      this.sh.recipients.address,
-      this.selectedDocument.item as SwarmNodeSignedContent
+      mySwarmKeys,
+      swarmFeed,
+      this.shareInfo.recipients.address,
+      this.selectedDocument.item as SwarmNodeSignedContent,
     );
 
     this.loading = false;
@@ -534,7 +537,7 @@ export default class DriveComponent extends Vue {
     this.validations.password = false;
 
     const kp = wallet.getES256K();
-    const swarmFeed = await DriveSession.getSwarmNodeClient(kp);
+    const swarmFeed =  DriveSession.getSwarmNodeClient(kp);
     DriveSession.set(`did:xdv:${swarmFeed.user}`, swarmFeed.user, ks.name);
 
     this.loading = false;
@@ -592,7 +595,7 @@ export default class DriveComponent extends Vue {
       user: swarmFeed.user,
       name: 'tx-document-tree',
     });
-    await DriveSwarmManager.subscribe(swarmFeed, queue, (content) => {
+   this.sub = await DriveSwarmManager.subscribe(swarmFeed, queue, (content) => {
       console.log(content);
       const item = content.metadata.map((reference) => {
         const s = ethers.utils.joinSignature({

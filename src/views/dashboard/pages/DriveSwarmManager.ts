@@ -44,7 +44,7 @@ export class DriveSwarmManager {
 
         const ES256k = new ec('secp256k1');
         const kp = ES256k.keyFromPrivate(pvk);
-        const swarmFeed = await DriveSession.getSwarmNodeClient(
+        const swarmFeed =  DriveSession.getSwarmNodeClient(
             kp);
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();

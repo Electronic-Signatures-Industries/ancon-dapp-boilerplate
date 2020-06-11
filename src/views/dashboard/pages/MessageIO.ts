@@ -26,12 +26,12 @@ export class MessageIO {
 
     }
 
-    async sendEncryptedCommPayload(userAddress: string, documentPayload: SwarmNodeSignedContent) {
+    async sendEncryptedCommPayload(keypair: any, swarmFeed: any, userAddress: string, documentPayload: SwarmNodeSignedContent) {
         
         const kpSuite = await KeyConvert.getP256(this.keypair);
 
         // get document from reference
-        const document = await this.swarmFeed.bzz.downloadFile(
+        const document = await swarmFeed.bzz.downloadFile(
             documentPayload.ref
         );
 
@@ -40,9 +40,8 @@ export class MessageIO {
         .update(Buffer.from((document)))
         .final();
 
-        debugger
         // upload
-        const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
+        const encDocUrl = await swarmFeed.bzz.uploadData({ cipher: encDoc });
 
         // signed message from user
         const signed = await JWTService.sign(kpSuite.pem,
