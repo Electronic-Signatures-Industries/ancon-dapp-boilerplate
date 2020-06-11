@@ -26,22 +26,33 @@ export class MessageIO {
 
     }
 
-    async sendEncryptedCommPayload(keypair: any, swarmFeed: any, userAddress: string, documentPayload: SwarmNodeSignedContent) {
+    async sendEncryptedCommPayload(userAddress: string, documentPayload: any, hash: string) {
         
         const kpSuite = await KeyConvert.getP256(this.keypair);
 
         // get document from reference
-        const document = await swarmFeed.bzz.downloadFile(
-            documentPayload.ref
+        const ref = await this.swarmFeed.bzz.downloadData(
+            hash
         );
 
+        // download ref raw
+        const document = await this.swarmFeed.bzz.download(
+            ref.entries[0].hash,
+            {
+                mode: 'raw'
+            }
+        );
+
+        let payload = new Response(document);
+        let buf = await payload.arrayBuffer();
+        // is a cbor content
         const encDoc  = await JWE
         .createEncrypt([this.recipientKeypair])
-        .update(Buffer.from((document)))
+        .update(Buffer.from(buf))
         .final();
 
         // upload
-        const encDocUrl = await swarmFeed.bzz.uploadData({ cipher: encDoc });
+        const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
 
         // signed message from user
         const signed = await JWTService.sign(kpSuite.pem,
@@ -56,7 +67,7 @@ export class MessageIO {
 
         const feedHash = await this.swarmFeed.bzzFeed.createManifest({
             user: this.swarmFeed.user,
-            name: `${this.swarmFeed.user}:${userAddress}`
+            name: `messaging`
         });
         const duplexClient = new MessagingTimelineDuplexClient(this.swarmFeed, feedHash);
 

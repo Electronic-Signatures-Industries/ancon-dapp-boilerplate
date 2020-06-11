@@ -15,13 +15,14 @@
           v-model="select"
           :items="wallets"
           :loading="loading"
-          :search-input.sync="search"
           chips
           clearable
           hide-details
           hide-selected
+          item-text="name"
+          return-object
           label="Buscar carteras"
-          @change="loadSession"
+          @input="loadSession"
           solo
         >
           <template v-slot:no-data>
@@ -48,11 +49,11 @@
               color="indigo"
               class="headline font-weight-light white--text"
             >
-              {{ item.name.charAt(0) }}
+              {{ item.address }}
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle v-text="item.symbol"></v-list-item-subtitle>
+              <v-list-item-subtitle v-text="item.address"></v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon>mdi-coin</v-icon>
@@ -357,7 +358,7 @@ import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Unsubscribable } from 'rxjs';
 import { DriveSession } from './DriveSession';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
@@ -383,6 +384,7 @@ export default class DriveComponent extends Vue {
   files: File[] = [];
   open = false;
   walletDescription = '';
+  search = '';
   showPassword = false;
   password = '';
   mnemonic = [];
@@ -408,7 +410,7 @@ export default class DriveComponent extends Vue {
   search = '';
   publicWallets = [];
   hasCopyRef = false;
-  sub: any;
+  sub: Unsubscribable;
 
   handleMenu(item) {}
   handleCopyDIDReference(item) {
@@ -423,19 +425,22 @@ export default class DriveComponent extends Vue {
   async loadSession() {
     if (!this.select) return;
     this.loading = true;
+    if (this.sub) {
+      this.sub.unsubscribe();
+    }
     DriveSession.set(
       `did:xdv:${this.select.address}`,
       this.select.address,
       this.select.name,
     );
 
-    // set existing wallets
-    this.menuitems = this.wallets.map((i) => {
-      return {
-        title: `${i.name}`,
-        handler: () => this.changeWallet(i),
-      };
-    });
+    // // set existing wallets
+    // this.menuitems = this.wallets.map((i) => {
+    //   return {
+    //     title: `${i.name}`,
+    //     handler: () => this.changeWallet(i),
+    //   };
+    // });
 
     this.driveSession = DriveSession.get();
     this.selectWalletDialog = false;
@@ -443,6 +448,7 @@ export default class DriveComponent extends Vue {
 
     this.loading = false;
   }
+
   async mounted() {
     this.loading = true;
 
@@ -455,9 +461,6 @@ export default class DriveComponent extends Vue {
       };
     });
 
-    if (!this.select) {
-        this.select = this.wallets[0];
-    }
     if (DriveSession.has()) {
       await this.loadDirectory();
     }
@@ -498,22 +501,19 @@ export default class DriveComponent extends Vue {
       this.password,
     );
 
-const pub = mySwarmKeys.getPublic();
    // user
-    const userKp = await DriveSession.getPrivateKey(
+    const userKp = await DriveSession.getPublicKey(
       this.shareInfo.recipients.name,
       'P256_JWK_PUBLIC',
-      this.password
     );
 
     const swarmFeed = DriveSession.getSwarmNodeClient(mySwarmKeys);
     const messageIO = new MessageIO(mySwarmKeys, userKp, swarmFeed);
 
     await messageIO.sendEncryptedCommPayload(
-      mySwarmKeys,
-      swarmFeed,
       this.shareInfo.recipients.address,
-      this.selectedDocument.item as SwarmNodeSignedContent,
+      this.selectedDocument.item,
+      this.selectedDocument.item.txs,
     );
 
     this.loading = false;
@@ -604,7 +604,7 @@ const pub = mySwarmKeys.getPublic();
           recoveryParam: reference.signature.recoveryParam,
         });
         return {
-          item: reference,
+          item: { txs: content.txs, reference },
           type: 'file_document',
           action: moment(reference.lastModified).fromNow(),
           title: reference.name,

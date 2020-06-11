@@ -360,23 +360,21 @@ export default class MessagingComponent extends Vue {
     this.validations.password = false;
     // const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
 
-    // resolve DID
-    const  swarmFeed  = DriveSession.getSwarmNodeClient(wallet.getES256K());
-    const resolver = await DriveSession.createDIDResolver(
-      swarmFeed,
-      this.shareInfo.feed
+    // from
+    const user = await DriveSession.getPublicKey(
+      this.shareInfo.recipients.name,
+      'P256_JWK_PUBLIC',
     );
-    const did = resolver.resolve(
-      `did:xdv:${this.shareInfo.address}`
-    ) as DIDDocument;
-    const pub = did.publicKey[0].publicKeyJwk;
 
-    const kp = wallet.getES256K();
-    const kpSuite = await KeyConvert.getES256K(kp);
-
+   // user
+    const mySwarmKeys = await DriveSession.getPrivateKey(
+      ks.address,
+      'ES256K',
+      this.password
+    );
     const feedHash = await swarmFeed.bzzFeed.createManifest({
       user: this.shareInfo.address,
-      name: `${this.shareInfo.address}:${swarmFeed.user}`,
+      name: `messaging`,
     });
     this.loading = false;
     this.shareDialog = false;

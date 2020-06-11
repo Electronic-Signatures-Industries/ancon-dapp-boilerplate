@@ -61,17 +61,19 @@ export class DriveSession {
         KeystoreIndex.setIndex([...localkeystoreIndex, key]);
 
     }
-    
-    public static async  getPrivateKey(id: string, algorithm: string, password: string) {
+    public static async getPublicKey(id: string, algorithm: string) {
+        return DriveSession.getPrivateKey(id, algorithm, '');
+    }
+    public static async getPrivateKey(id: string, algorithm: string, password?: string) {
         let pvk = '';
-        let key = id+algorithm;
+        let key = id + algorithm;
         if (this.KeystoreInMem && this.KeystoreInMem.get(key)) {
-            return this.KeystoreInMem.get(key);
+            pvk = this.KeystoreInMem.get(key);
+        } else {
+
+            // Read value
+            pvk = await keyHandler.getSecureValue(key);
         }
-
-        // Read value
-        pvk = await keyHandler.getSecureValue(key);
-
         this.KeystoreInMem.set(key, pvk);
         if (AlgorithmType[algorithm] === AlgorithmType.ES256K) {
             const ES256k = new ec('secp256k1');
