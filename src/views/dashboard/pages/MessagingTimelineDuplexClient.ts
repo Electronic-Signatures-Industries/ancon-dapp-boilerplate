@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { BzzFeed } from '@erebos/bzz-feed';
 import { BzzNode } from '@erebos/bzz-node';
 import { Chapter, TimelineReader, TimelineWriter } from '@erebos/timeline';
@@ -17,13 +18,22 @@ export class MessagingTimelineDuplexClient {
             feed: this.feed,
         });
 
-        const pushMessage = writer.createAddChapter({
-            author: this.swarmFeed.user,
-            type: 'application/json'
-        });
+        const send =  (content, signature) => {
 
-        const send = (message, signature) => {
-            pushMessage({ content: message, signature })
+
+            const pushMessage =   writer.createAddChapter({
+                author: this.swarmFeed.user,
+                type: 'application/json',
+                protocol: 'timeline',
+                content,
+
+                signature,
+                version: '1.0.0',
+                timestamp: moment().unix()
+            });
+
+         pushMessage({ content })
+//            await writer.setLatestChapterID(pushMessage.id)
         }
 
         return { send };
@@ -35,11 +45,11 @@ export class MessagingTimelineDuplexClient {
             bzz: this.swarmFeed.bzzFeed,
             feed: this.feed,
         }); // 10 seconds
-            // .subscribe(chapters => {
-            //     chapters.forEach(c => {
-            //         console.log(`New message from Alice: ${c.content}`)
-            //     })
-            // })
+        // .subscribe(chapters => {
+        //     chapters.forEach(c => {
+        //         console.log(`New message from Alice: ${c.content}`)
+        //     })
+        // })
 
         return reader;
     }

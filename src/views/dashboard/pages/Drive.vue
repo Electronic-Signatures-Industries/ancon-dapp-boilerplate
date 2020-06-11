@@ -342,7 +342,7 @@
           class="pink--text"
         >
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.title">
+            <v-list-item :key="index">
               <v-list-item-content>
                 <v-list-item-title v-text="item.title"></v-list-item-title>
                 <v-list-item-subtitle
@@ -426,6 +426,7 @@ const bs58 = require('bs58');
 import { MessageIO } from './MessageIO';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import { ec } from 'elliptic';
+import { async } from 'rxjs/internal/scheduler/async';
 const cbor = require('cbor-sync');
 
 @Component({})
@@ -568,7 +569,7 @@ export default class DriveComponent extends Vue {
     const pvk = await DriveSession.getPrivateKey(
       `${ks.address}:ES256K`,
       this.password,
-      DriveSession.KeystoreInMem      
+      DriveSession.KeystoreInMem
     );
     const ES256k = new ec('secp256k1');
 
@@ -624,6 +625,7 @@ export default class DriveComponent extends Vue {
   }
 
   async loadDirectory() {
+    this.loading =  false;
     const swarmFeed = DriveSession.getSwarmNodeQueryable(this.select.address);
 
     const feed = await swarmFeed.bzzFeed.createManifest({
@@ -658,34 +660,29 @@ export default class DriveComponent extends Vue {
 
     const queue = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
-      name: 'documents',
+      name: 'tx-document-tree',
     });
-
-    console.log({
-      user: swarmFeed.user,
-      name: 'documents',
-    });
-    console.log(queue);
-    DriveSwarmManager.subscribe(swarmFeed, queue, (content) => {
+    await DriveSwarmManager.subscribe(swarmFeed, queue, (content) => {
       console.log(content);
-      const s = ethers.utils.joinSignature({
-        r: '0x' + content.signature.r,
-        s: '0x' + content.signature.s,
-        recoveryParam: content.signature.recoveryParam,
+      const item = content.metadata.map((reference) => {
+        const s = ethers.utils.joinSignature({
+          r: '0x' + reference.signature.r,
+          s: '0x' + reference.signature.s,
+          recoveryParam: reference.signature.recoveryParam,
+        });
+        return {
+          item: reference,
+          type: 'file_document',
+          action: moment(reference.lastModified).fromNow(),
+          title: reference.name,
+          headline: reference.contentType,
+          subtitle: `hash ${reference.hash.replace('0x', '')} firma ${s.replace(
+            '0x',
+            ''
+          )}`,
+        };
       });
-      const item = {
-        item: content,
-        type: 'file_document',
-        action: moment(content.lastModified).fromNow(),
-        title: content.name,
-        headline: content.contentType,
-        subtitle: `hash ${content.hash.replace('0x', '')} firma ${s.replace(
-          '0x',
-          ''
-        )}`,
-      };
-
-      this.items = [...this.items, item] as any[];
+      this.items = [...this.items, ...item] as any[];
     });
   }
 
@@ -696,11 +693,12 @@ export default class DriveComponent extends Vue {
 
   async createDocumentNode() {
     const ks = this.select;
-
+this.loading = true;
     const wallet = await DriveSession.browserUnlock(ks, this.password);
     //    const wallet = await this.browserUnlock(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
+      this.loading=false;
       return;
     }
     this.validations.password = false;

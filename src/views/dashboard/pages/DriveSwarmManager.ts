@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { count } from 'rxjs/operators';
 import { defaultPath } from 'ethers/utils/hdnode';
 import {
     DocumentNodeSchema,
@@ -45,12 +46,6 @@ export class DriveSwarmManager {
         const kp = ES256k.keyFromPrivate(pvk);
         const swarmFeed = await DriveSession.getSwarmNodeClient(
             kp);
-
-        const feed = await swarmFeed.bzzFeed.createManifest({
-            user: options.address,
-            name: `did:xdv:${options.address}`
-        })
-
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();
             let buf = new Uint8Array(ab);
@@ -79,22 +74,21 @@ export class DriveSwarmManager {
             return { ref, reference: { contentType, name, size, signature, hash, lastModified } };
         });
 
-        const queue = await swarmFeed.bzzFeed.createManifest({
-            user: options.address,
-            name: options.queueName
-        })
 
-        console.log({
-            user: options.address,
-            name: 'documents',
-        })
-        return await this.addToTimeline(swarmFeed, options.queueName, splitIntoCborAndReferences, queue);
+        return await this.addToTimeline(swarmFeed, kp, splitIntoCborAndReferences);
     }
 
 
-    async addToTimeline(swarmFeed: SwarmFeed, queueName: string, contents: DriveDocumentRef[], queueHash: string) {
-        console.log(queueHash)
+    async addToTimeline(swarmFeed: SwarmFeed, kp: ec.KeyPair, contents: DriveDocumentRef[]) {
+        const queueHash = await swarmFeed.bzzFeed.createManifest({
+            user: swarmFeed.user,
+            name: moment().unix().toString()
+        })
 
+        console.log({
+            user: swarmFeed.user,
+            name: 'documents',
+        })
         const directoryFixedHash = queueHash;
         // upload as directory
         let directory = {};
@@ -114,31 +108,42 @@ export class DriveSwarmManager {
         const underlyingHash = await swarmFeed.bzz.uploadDirectory(directory, {
             encrypt: true,
         });
-        await swarmFeed.bzzFeed.setContentHash(directoryFixedHash, underlyingHash);
-        const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, queueHash);
-        const topicInstance = duplexClient.createSubject();
-        const refs = contents.map(i => i.reference);
-        await topicInstance.send({ refs }, null);
+        // await swarmFeed.bzzFeed.setContentHash(directoryFixedHash, underlyingHash);
+
+
+
+        const feed = await swarmFeed.bzzFeed.createManifest({
+            user: swarmFeed.user,
+            name: `tx-document-tree`
+        })
+        let parentHash = '';
+        let rootHash = '';
+        let current = 0;
+        try {
+            let lastBlock = await swarmFeed.bzzFeed.getContentHash(feed);
+            let res = await swarmFeed.bzz.downloadData(lastBlock);
+            current = res.block;
+            parentHash = lastBlock;
+            rootHash = res.rootHash;
+        } catch (error) {
+        }
+        const refUnderlyingHash = await swarmFeed.bzz.uploadData({
+            block: current + 1,
+            rootHash: current === 1 ? parentHash : rootHash,
+            parentHash: 0,
+            txs: underlyingHash,
+            metadata: contents.map(i => i.reference),
+            timestamp: moment().unix()
+        }, {
+            encrypt: true,
+        });
+        await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
     }
 
-    static subscribe(swarmFeed: SwarmFeed, feedHash: string, callback) {
-        const duplexClient = new MessagingTimelineDuplexClient(
-            swarmFeed,
-            feedHash
-        );
-
-        const unsubscribe = duplexClient
-            .subscribe()
-            .live({
-                interval: 5000,
-            })
-            .subscribe((c: PartialChapter<SwarmNodeSignedContent>[]) => {
-                c.forEach(m => callback({
-                    ...m,
-                    feedHash
-                }));
-            });
-        return unsubscribe;
-
+    static async  subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
+        return swarmFeed.bzzFeed.pollContentHash(feedHash, { changedOnly: true, interval: 2000 }).subscribe(async m => {
+            const block = await swarmFeed.bzz.downloadData(m);
+            callback(block);
+        });
     }
 }
