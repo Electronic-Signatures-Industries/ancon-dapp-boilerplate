@@ -37,9 +37,9 @@ export class DriveSwarmManager {
     async pushFiles(options: PushFilesOptions) {
 
         const pvk = await DriveSession.getPrivateKey(
-            `${options.address}:ES256K`,
+            options.address,
+            'ES256K',
             options.password,
-            DriveSession.KeystoreInMem
         );
 
         const ES256k = new ec('secp256k1');

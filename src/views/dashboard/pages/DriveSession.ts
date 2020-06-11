@@ -1,8 +1,10 @@
 import SessionKeystore from 'session-keystore';
+import { AlgorithmType } from './AlgorithmType';
 import { BzzFeed } from '@erebos/bzz-feed';
+import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-tools';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
-import { KeyConvert, Wallet } from 'xdvplatform-tools';
+import { JWK } from 'node-jose';
 import { KeyHandler, KeyStore } from '@decent-bet/webcrypto-keychain';
 import { KeystoreIndex } from './KeystoreIndex';
 import { pubKeyToAddress } from '@erebos/keccak256';
@@ -11,30 +13,87 @@ import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
 
 const keyStore = new KeyStore();
 const keyHandler = new KeyHandler(keyStore);
-
 const KEY = 'xdv:drive:session';
+
+export type AlgorithmTypeString = keyof typeof AlgorithmType;
 export class DriveSession {
     static KeystoreInMem = new SessionKeystore();
 
 
+    public static async resolveAndStoreDID(did: string) {
+        const user = did.split(':')[2];
+        // resolve DID
+        const swarmFeed = await DriveSession.getSwarmNodeQueryable(user);
 
-    public static async  getPrivateKey( id: string, password: string, session = null) {
+        const feedHash = await swarmFeed.bzzFeed.createManifest({
+            user,
+            name: did,
+        });
+        const resolver = await DriveSession.createDIDResolver(
+            swarmFeed,
+            feedHash
+        );
+        const document = resolver.resolve(did) as DIDDocument;
+        const pub = document.publicKey[0].publicKeyJwk;
+
+
+        await DriveSession.setSecure(
+            did,
+            'P256_JWK_PUBLIC',
+            pub
+        );
+
+        // Get Key Store Index
+        const localkeystoreIndex = KeystoreIndex.getIndex();
+        const key = new KeystoreIndex();
+        key.address = user;
+        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
+        key.keystore = '';
+        key.created = new Date();
+        key.publicKeyFromDID = pub;
+        key.name = did;
+
+        // store
+        if (localkeystoreIndex.find(i => i.name === key.name)) {
+            // already exists
+            return;
+        }
+        KeystoreIndex.setIndex([...localkeystoreIndex, key]);
+
+    }
+    
+    public static async  getPrivateKey(id: string, algorithm: string, password: string) {
         let pvk = '';
-        if (session && session.get(id)) {
-            return session.get(id);
+        let key = id+algorithm;
+        debugger
+        if (this.KeystoreInMem && this.KeystoreInMem.get(key)) {
+            return this.KeystoreInMem.get(key);
         }
 
         // Read value
-        pvk = await keyHandler.getSecureValue(id);
+        pvk = await keyHandler.getSecureValue(key);
 
-        session.set(id, pvk);
-        return pvk;
+        this.KeystoreInMem.set(key, pvk);
+        if (AlgorithmType[algorithm] === AlgorithmType.ES256K) {
+            const ES256k = new ec('secp256k1');
+            return ES256k.keyFromPrivate(pvk);
+        }
+
+        if (AlgorithmType[algorithm] === AlgorithmType.P256) {
+            const P256 = new ec('P256');
+            return P256.keyFromPrivate(pvk);
+        }
+
+        if (AlgorithmType[algorithm] === AlgorithmType.P256_JWK_PUBLIC) {
+            return await JWK.asKey(pvk, 'jwk');
+        }
     }
 
 
-    static setSecure(key: string, value: string) {
+    static setSecure(id: string, algorithm: AlgorithmTypeString, value: string) {
+        const key = id + algorithm;
         // Write value
-      return keyHandler.writeSecureValue(key, value);
+        return keyHandler.writeSecureValue(key, value);
     }
     static async browserUnlock(keystore: KeystoreIndex, password: string) {
         try {

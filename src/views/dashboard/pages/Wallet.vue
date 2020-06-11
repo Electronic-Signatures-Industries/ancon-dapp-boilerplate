@@ -7,43 +7,27 @@ w<template>
     ></v-progress-linear>
     <v-card class="mx-auto" tile>
       <v-toolbar color="blue" dark>
-        <!-- <v-menu bottom left>
-          <template v-slot:activator="{ on }">
-            <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
-          </template>
-
-          <v-list>
-            <v-list-item
-              v-for="(item, i) in menuitems"
-              :key="i"
-              @click="item.handler"
-            >
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu> -->
         <v-toolbar-title>Cartera Digital</v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
-          v-model="model"
-          :items="items"
-          :loading="isLoading"
+          v-model="selected"
+          :items="searchResults"
+          :loading="loading"
           :search-input.sync="search"
           chips
           clearable
           hide-details
           hide-selected
           item-text="name"
-          item-value="symbol"
+          item-value="name"
           label=""
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Search for your favorite
-                <strong>Cryptocurrency</strong>
+                Buscar carteras o agregar DID
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -55,7 +39,7 @@ w<template>
               class="white--text"
               v-on="on"
             >
-              <v-icon left>mdi-coin</v-icon>
+              <v-icon left>mdi-wallet</v-icon>
               <span v-text="item.name"></span>
             </v-chip>
           </template>
@@ -64,14 +48,16 @@ w<template>
               color="indigo"
               class="headline font-weight-light white--text"
             >
-              {{ item.name.charAt(0) }}
+              {{ item.address }}
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle v-text="item.symbol"></v-list-item-subtitle>
+              <v-list-item-subtitle
+                v-text="item.address"
+              ></v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
-              <v-icon>mdi-coin</v-icon>
+              <v-icon @click="copyAddress(item.address)">mdi-clipboard</v-icon>
             </v-list-item-action>
           </template>
         </v-autocomplete>
@@ -325,7 +311,7 @@ w<template>
           class="blue--text"
         >
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.title">
+            <v-list-item :key="index">
               <template v-slot:default="{ active }">
                 <v-list-item-content>
                   <v-list-item-title v-text="item.title"></v-list-item-title>
@@ -376,8 +362,23 @@ import moment from 'moment';
 import { DriveSession } from './DriveSession';
 import { JWK } from 'node-jose';
 import { pubKeyToAddress } from '@erebos/keccak256';
+import { AlgorithmType } from './AlgorithmType';
+import copy from 'copy-to-clipboard';
 
-@Component({})
+@Component({
+  watch: {
+    async search(val) {
+      if (val && val.indexOf('did:xdv:') === 0) {
+        this.loading = true;
+        // fetch DID
+        await DriveSession.resolveAndStoreDID(val);
+        this.loading = false;
+      } else {
+        // no op
+      }
+    },
+  },
+})
 export default class WalletComponent extends Vue {
   show(e) {
     this.open = false;
@@ -387,7 +388,9 @@ export default class WalletComponent extends Vue {
   }
   loading = false;
   validations: any = { password: false };
-
+  searchResults = [];
+  selected = {};
+  search = '';
   keystore: any | Wallet = null;
   rsaKey: any = {};
   walletType: string = '';
@@ -418,17 +421,23 @@ export default class WalletComponent extends Vue {
     this.walletType = 'rsa';
   }
 
+  copyAddress(address) {
+    copy(address);
+  }
+
   loadWallets() {
     const index = KeystoreIndex.getIndex();
     this.items = index.map((i) => {
       return {
         action: moment(i.created).fromNow(),
-        headline: i.name,
+        title: i.name,
 
-        title: `algoritmo ${i.algorithm}`,
+        headline: `algoritmo ${i.algorithm}`,
         // subtitle: i.,
       };
     });
+
+    this.searchResults = index;
   }
   keystoreIndexItem = new KeystoreIndex();
   save(item) {
@@ -475,7 +484,7 @@ export default class WalletComponent extends Vue {
     passphrase: string
   ) {
     //  empty ks
-    let secureKS =[];
+    let secureKS = [];
     // validate
 
     const kp = wallet.getP256();
@@ -488,14 +497,16 @@ export default class WalletComponent extends Vue {
     // Store P256 pvk
     // @ts-ignore
     await DriveSession.setSecure(
-      ks.address + ':P256',
-      kp.getPrivate('hex'),
+      ks.address,
+      'P256',
+      kp.getPrivate('hex')
     );
     // Store secp256k1
     // @ts-ignore
     await DriveSession.setSecure(
-      ks.address + ':ES256K',
-      swarmKeypair.getPrivate('hex'),
+      ks.address,
+      'ES256K',
+      swarmKeypair.getPrivate('hex')
     );
 
     // Create IPFS key storage lock
@@ -550,7 +561,7 @@ export default class WalletComponent extends Vue {
       if (this.walletType === 'secp256k1') {
         keys = wallet.getES256K();
         keystoreIndexItem = {
-          algorithm: 'secp256k1',
+          algorithm: AlgorithmType.ES256K,
           created: new Date(),
           name: this.walletDescription,
           keystore: this.keystore,
@@ -572,7 +583,7 @@ export default class WalletComponent extends Vue {
         );
         // needs to use JWE to secure RSA
         keystoreIndexItem = {
-          algorithm: 'RSA',
+          algorithm: AlgorithmType.RSA,
           created: new Date(),
           name: this.walletDescription,
           keystore: {
@@ -581,6 +592,12 @@ export default class WalletComponent extends Vue {
           },
           xdvType: this.walletType,
         } as KeystoreIndex;
+
+        await DriveSession.setSecure(
+          this.walletDescription,
+          'RSA',
+          rsaKeyExports.pemAsPrivate
+        );
       }
       this.loading = false;
       this.valid = true;

@@ -1,3 +1,4 @@
+import { AlgorithmType } from './AlgorithmType';
 import { base64 } from 'ethers/utils';
 import { decrypt, encrypt, PrivateKey } from 'eciesjs';
 import {
@@ -8,6 +9,7 @@ import {
     Wallet
     } from 'xdvplatform-tools';
 import { DriveSession } from './DriveSession';
+import { ec } from 'elliptic';
 import { JWE } from 'node-jose';
 import { JWK } from 'node-jose';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
@@ -16,47 +18,30 @@ import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 const ec = require('elliptic').ec;
 const cbor = require('cbor-sync');
 
-export interface XDVMessageConfig {
-    address: string;
-    feed: any;
-}
 
 
 export class MessageIO {
 
-    constructor(private wallet: Wallet, private swarmFeed: any) {
+    constructor(private keypair: ec.KeyPair, private recipientKeypair: any, private swarmFeed: any) {
 
     }
 
-    async sendEncryptedCommPayload(shareInfo: XDVMessageConfig, documentPayload: SwarmNodeSignedContent) {
-        const resolver = await DriveSession.createDIDResolver(
-            this.swarmFeed,
-            shareInfo.feed
-        );
-
-        const did = resolver.resolve(
-            `did:xdv:${shareInfo.address}`
-        ) as DIDDocument;
-        const pub = did.publicKey[0].publicKeyJwk;
-
-        const kp = this.wallet.getP256();
-        const kpSuite = await KeyConvert.getP256(kp);
+    async sendEncryptedCommPayload(userAddress: string, documentPayload: SwarmNodeSignedContent) {
+        
+        const kpSuite = await KeyConvert.getP256(this.keypair);
 
         // get document from reference
         const document = await this.swarmFeed.bzz.downloadFile(
             documentPayload.ref
         );
-    
 
-        const p256 = new ec('p256');
-        const pubk = await JWK.asKey(pub, 'jwk');
-     
         const encDoc  = await JWE
-        .createEncrypt([pubk])
+        .createEncrypt([this.recipientKeypair])
         .update(Buffer.from((document)))
         .final();
 
-        // upload11
+        debugger
+        // upload
         const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
 
         // signed message from user
@@ -66,20 +51,18 @@ export class MessageIO {
                 ref: encDocUrl
             }, {
                 iss: this.swarmFeed.user,
-                sub: shareInfo.address,
+                sub: userAddress,
                 aud: this.swarmFeed.user,
             } as any);
 
         const feedHash = await this.swarmFeed.bzzFeed.createManifest({
             user: this.swarmFeed.user,
-            name: `${this.swarmFeed.user}:${shareInfo.address}`
+            name: `${this.swarmFeed.user}:${userAddress}`
         });
         const duplexClient = new MessagingTimelineDuplexClient(this.swarmFeed, feedHash);
 
-        // topic is user did
-        const topic = did.id;
 
-        const topicInstance = duplexClient.createSubject(topic);
+        const topicInstance = duplexClient.createSubject();
 
         const decoded = JWTService.decodeWithSignature(signed);
         await topicInstance.send(signed, decoded.signatures);

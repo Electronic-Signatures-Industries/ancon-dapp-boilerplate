@@ -1,3 +1,5 @@
+import { AlgorithmType } from './AlgorithmType';
+
 export interface EncKeyRef {
     [index : string]: {
         enc: string;
@@ -17,11 +19,11 @@ export class KeystoreIndex {
         localStorage.setItem('xdv:index:keys',JSON.stringify(index));
     }
 
-    encryptedKeysByAddress: EncKeyRef;
+    publicKeyFromDID?: any;
     address?: string;
     keystore: any | string;
     name: string;
     created: Date = new Date();
-    algorithm: string;
+    algorithm: AlgorithmType;
     xdvType: string;
 }

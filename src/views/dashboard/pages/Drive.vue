@@ -20,9 +20,8 @@
           clearable
           hide-details
           hide-selected
-          item-text="name"
-          item-value="name"
           label="Buscar carteras"
+          @change="loadSession"
           solo
         >
           <template v-slot:no-data>
@@ -71,17 +70,18 @@
               <v-form v-model="form" autocomplete="off">
                 <v-row>
                   <v-col cols="12" md="12">
-                    <v-text-field
+                    <v-select
                       required
-                      @input="readMagicLink"
-                      v-model="shareInfo.feed"
-                      label="Enlace"
-                    ></v-text-field>
-                    <v-text-field
-                      required
-                      v-model="shareInfo.address"
-                      label="Direccion"
-                    ></v-text-field>
+                      :items="publicWallets"
+                      v-model="shareInfo.recipients"
+                      label="Receptor"
+                      item-text="name"
+                      item-value="name"
+                      return-object
+                      single-line
+
+                    ></v-select>
+
                     <v-select
                       v-model="select"
                       :items="wallets"
@@ -127,68 +127,7 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <!-- 
-        <v-dialog v-model="didDialog" max-width="500px">
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon>
-              <v-icon>mdi-file-key</v-icon>
-            </v-btn>
-          </template>
-          <v-card>
-            <v-card-title>
-              <span class="headline">Crear DID</span>
-            </v-card-title>
 
-            <v-card-text>
-              <v-form v-model="form" autocomplete="off">
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <v-select
-                      v-model="select"
-                      :hint="`${select.algorithm}`"
-                      :items="wallets"
-                      item-text="name"
-                      item-value="name"
-                      label="Cartera Digital"
-                      persistent-hint
-                      return-object
-                      single-line
-                    >
-                    </v-select>
-                    <v-text-field
-                      required
-                      v-model="password"
-                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                      :type="showPassword ? 'text' : 'password'"
-                      label="Clave"
-                      class="input-group--focused"
-                      @click:append="showPassword = !showPassword"
-                      :error="validations.password"
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="close"
-                >Cancelar</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="createDID"
-                >Generar</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-dialog> -->
         <v-dialog v-model="selectWalletDialog" max-width="500px">
           <v-card>
             <v-card-title>
@@ -342,7 +281,7 @@
           class="pink--text"
         >
           <template v-for="(item, index) in items">
-            <v-list-item :key="index">
+            <v-list-item :key="item.subtitle">
               <v-list-item-content>
                 <v-list-item-title v-text="item.title"></v-list-item-title>
                 <v-list-item-subtitle
@@ -427,6 +366,7 @@ import { MessageIO } from './MessageIO';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import { ec } from 'elliptic';
 import { async } from 'rxjs/internal/scheduler/async';
+import { AlgorithmType } from './AlgorithmType';
 const cbor = require('cbor-sync');
 
 @Component({})
@@ -452,31 +392,13 @@ export default class DriveComponent extends Vue {
   shareInfo = {
     address: '',
     feed: '',
+    recipients: {},
   };
   menuitems: any[] = [];
-  items = [
-    {
-      action: 'Hace 15 min',
-      headline: 'Certificado de salvoconducto',
-      title: 'RUC 18-17-17 DV 25',
-      subtitle: 'Salvoconducto para empresa, creado falta firmar',
-    },
-    {
-      action: '1 de Mayo de 2020',
-      headline: 'Documento para solicitud de permiso de construccion',
-      title: 'Empresas La Constructora',
-      subtitle: 'Documento firmado',
-    },
-    {
-      action: '1 de Junio de 2020',
-      headline: 'Gaceta Oficial',
-      title: 'Uso de mascarillas',
-      subtitle: 'Almacenado para posterior firmado',
-    },
-  ];
+  items = [];
   showMenu = false;
   selectWalletDialog = false;
-  select: KeystoreIndex = new KeystoreIndex();
+  select: KeystoreIndex = null;
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
   selectedItem = new SwarmNodeSignedContent();
@@ -484,39 +406,27 @@ export default class DriveComponent extends Vue {
   tab = 0;
   itemsClone = [];
   search = '';
+  publicWallets = [];
   hasCopyRef = false;
 
   handleMenu(item) {}
   handleCopyDIDReference(item) {
     let ref;
     if (item.didReference) {
-      ref = `${item.didReference.address},${item.didReference.feed}`;
-      ref = cbor.encode({ link: ref });
-      ref = bs58.encode(ref);
-      copy(ref);
+      copy(item.didReference.did);
       this.hasCopyRef = true;
     }
   }
 
-  readCopyDIDReference(reference) {
-    let ref = bs58.decode(reference);
-    ref = cbor.decode(ref);
-    this.shareInfo.address = ref.link.split(',')[0];
-    this.shareInfo.feed = ref.link.split(',')[1];
-  }
 
-  readMagicLink(link) {
-    try {
-      this.readCopyDIDReference(link);
-    } catch (e) {
-      // no - op
-    }
-  }
-
-  async mounted() {
+  async loadSession() {
+    if (!this.select) return;
     this.loading = true;
-
-    this.loadWallets();
+    DriveSession.set(
+      `did:xdv:${this.select.address}`,
+      this.select.address,
+      this.select.name,
+    );
 
     // set existing wallets
     this.menuitems = this.wallets.map((i) => {
@@ -526,15 +436,26 @@ export default class DriveComponent extends Vue {
       };
     });
 
-    if (DriveSession.has()) {
-      this.driveSession = DriveSession.get();
-      this.select = this.wallets.find(
-        (i) => i.name === this.driveSession.ksName
-      );
+    this.driveSession = DriveSession.get();
+    this.selectWalletDialog = false;
+    await this.loadDirectory();
 
-      this.selectWalletDialog = false;
-    } else {
-      return;
+    this.loading = false;
+  }
+  async mounted() {
+    this.loading = true;
+
+    this.loadWallets();
+    // set existing wallets
+    this.menuitems = this.wallets.map((i) => {
+      return {
+        title: `${i.name}`,
+        handler: () => this.changeWallet(i),
+      };
+    });
+
+    if (!this.select) {
+        this.select = this.wallets[0];
     }
     if (DriveSession.has()) {
       await this.loadDirectory();
@@ -544,9 +465,13 @@ export default class DriveComponent extends Vue {
 
   loadWallets() {
     this.wallets = KeystoreIndex.getIndex().filter(
-      (i) => i.algorithm !== 'RSA'
+      (i) => i.algorithm !== AlgorithmType.RSA
     );
-  }
+    this.publicWallets = KeystoreIndex.getIndex().filter(
+      (i) => i.publicKeyFromDID
+    );
+    
+}
 
   openShareDialog(item) {
     this.shareDialog = true;
@@ -560,27 +485,31 @@ export default class DriveComponent extends Vue {
     const wallet = await DriveSession.browserUnlock(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
+      this.loading = false;
       return;
     }
     this.validations.password = false;
-    const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
 
-    // resolve DID
-    const pvk = await DriveSession.getPrivateKey(
-      `${ks.address}:ES256K`,
+    // from
+    const mySwarmKeys: any = await DriveSession.getPrivateKey(
+      ks.address,
+      'ES256K',
       this.password,
-      DriveSession.KeystoreInMem
-    );
-    const ES256k = new ec('secp256k1');
-
-    const swarmFeed = await DriveSession.getSwarmNodeClient(
-      ES256k.keyFromPrivate(pvk)
     );
 
-    const messageIO = new MessageIO(wallet, swarmFeed);
+   // user
+   debugger
+    const userKp = await DriveSession.getPrivateKey(
+      this.shareInfo.recipients.name,
+      'P256_JWK_PUBLIC',
+      this.password
+    );
+
+    const swarmFeed = await DriveSession.getSwarmNodeClient(mySwarmKeys);
+    const messageIO = new MessageIO(mySwarmKeys, userKp, swarmFeed);
 
     await messageIO.sendEncryptedCommPayload(
-      this.shareInfo,
+      this.sh.recipients.address,
       this.selectedDocument.item as SwarmNodeSignedContent
     );
 
@@ -613,19 +542,19 @@ export default class DriveComponent extends Vue {
   }
 
   filter() {
-    if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
-    const mapping = {
-      did: 0,
-      file_document: 1,
-      fe: 2,
-      vc: 3,
-    };
-    const type = Object.keys(mapping)[this.tab];
-    this.items = this.itemsClone.filter((i) => i.type === type);
+    // if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
+    // const mapping = {
+    //   did: 0,
+    //   file_document: 1,
+    //   fe: 2,
+    //   vc: 3,
+    // };
+    // const type = Object.keys(mapping)[this.tab];
+    // this.items = this.itemsClone.filter((i) => i.type === type);
   }
 
   async loadDirectory() {
-    this.loading =  false;
+    this.loading = false;
     const swarmFeed = DriveSession.getSwarmNodeQueryable(this.select.address);
 
     const feed = await swarmFeed.bzzFeed.createManifest({
@@ -644,17 +573,18 @@ export default class DriveComponent extends Vue {
     } catch (e) {
       return;
     }
+
     this.indexjson = content;
     this.items = [];
     this.items = [
       {
         type: 'did',
-        didReference: { address: this.driveSession.address, feed },
+        didReference: { did: 'did:xdv:' + swarmFeed.user, address: swarmFeed.user },
         item: content,
         action: moment(content.created).fromNow(),
         headline: content.id,
         title: 'DID',
-        subtitle: `direccion ${this.driveSession.address} enlace ${feed}`,
+        subtitle: `direccion ${swarmFeed.user} enlace ${feed}`,
       } as any,
     ];
 
@@ -693,12 +623,12 @@ export default class DriveComponent extends Vue {
 
   async createDocumentNode() {
     const ks = this.select;
-this.loading = true;
+    this.loading = true;
     const wallet = await DriveSession.browserUnlock(ks, this.password);
     //    const wallet = await this.browserUnlock(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
-      this.loading=false;
+      this.loading = false;
       return;
     }
     this.validations.password = false;
