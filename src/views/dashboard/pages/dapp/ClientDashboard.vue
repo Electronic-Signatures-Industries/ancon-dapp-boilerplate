@@ -57,11 +57,7 @@
 
                 <v-form ref="form" v-model="valid" lazy-validation>
                   <v-col class="d-flex" cols="12" sm="12">
-                    <v-text-field
-                      v-model="notary"
-                      label="Enviar a"
-                      required
-                    />
+                    <v-text-field v-model="notary" label="Enviar a" required />
                   </v-col>
                   <v-col class="d-flex" cols="12" sm="12">
                     <v-text-field v-model="nombre" label="Nombre" required />
@@ -125,7 +121,7 @@
         </template>
         <template v-slot:item.certfiles="{ item }">
           <v-col
-            v-if="!!getActions(item).find(i => i.text.indexOf('cert') > -1)"
+            v-if="!!getActions(item).find((i) => i.text.indexOf('cert') > -1)"
           >
             <v-btn
               icon
@@ -141,7 +137,7 @@
             <v-col class="d-flex" cols="12" sm="6">
               <v-select
                 v-model="action"
-                :items="getActions(item).filter(i => !!i.skipTasks === false)"
+                :items="getActions(item).filter((i) => !!i.skipTasks === false)"
                 item-text="text"
                 item-value="callback"
                 single-line
@@ -177,7 +173,7 @@
                       target="_blank"
                       :to="{
                         name: 'Navegador PDF',
-                        params: { name: f.path, id: f.hash }
+                        params: { name: f.path, id: f.hash },
                       }"
                       >{{ f.path }}</router-link
                     >
@@ -225,26 +221,24 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Vue } from 'vue-property-decorator';
 
-import { ethers } from "ethers";
-import EthCrypto from "eth-crypto";
-import * as ipfs from "ipfs-http-client";
-import { EventFilter } from "@decent-bet/solido";
-import { filter } from "rxjs/operators";
-import { forkJoin } from "rxjs";
-import { BigNumber } from "ethers/utils";
-import {
-  SolidoSingleton,
-} from "../../components/core/SolidoSingleton";
+import { ethers } from 'ethers';
+import EthCrypto from 'eth-crypto';
+import * as ipfs from 'ipfs-http-client';
+import { EventFilter } from '@decent-bet/solido';
+import { filter } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
+import { BigNumber } from 'ethers/utils';
+import { SolidoSingleton } from '../../components/core/SolidoSingleton';
 
-import { MiddlewareOptions } from "../../../../libs";
-const PromiseFileReader = require("promise-file-reader");
+import { MiddlewareOptions } from '../../../../libs';
+const PromiseFileReader = require('promise-file-reader');
 
-const md5 = require("js-md5");
+const md5 = require('js-md5');
 
 @Component({
-  name: "ClientDashboard"
+  name: 'ClientDashboard',
 })
 export default class ClientDashboard extends Vue {
   valid = false;
@@ -253,19 +247,19 @@ export default class ClientDashboard extends Vue {
     {
       state: -1,
       skipTasks: true,
-      text: "Ver archivos",
-      callback: this.handleFiles
+      text: 'Ver archivos',
+      callback: this.handleFiles,
     },
     {
       state: 6,
-      text: "Ver archivos certificados",
+      text: 'Ver archivos certificados',
       callback: this.handleCertFiles,
-      skipTasks: true
+      skipTasks: true,
     },
     {
       state: 3,
-      text: "Enviar pago de certificado",
-      callback: this.paymentSent
+      text: 'Enviar pago de certificado',
+      callback: this.paymentSent,
     },
     // {
     //   state: 6,
@@ -274,17 +268,17 @@ export default class ClientDashboard extends Vue {
     // },
     {
       state: 1,
-      text: "Cancelar",
-      callback: this.cancelRequest
-    }
+      text: 'Cancelar',
+      callback: this.cancelRequest,
+    },
   ];
 
-  nombre = "";
-  apellido = "";
-  email = "";
-  description = "";
+  nombre = '';
+  apellido = '';
+  email = '';
+  description = '';
 
-  notary = "";
+  notary = '';
   notaries = [];
 
   selected = [];
@@ -302,7 +296,7 @@ export default class ClientDashboard extends Vue {
   currentItem = null;
 
   files: any = [];
-  search = "";
+  search = '';
 
   ipfsFiles: any;
   host: string;
@@ -311,12 +305,12 @@ export default class ClientDashboard extends Vue {
 
   getActions(item) {
     return this.actions.filter(
-      i => i.state === -1 || i.state === item.decoded.statusInt
+      (i) => i.state === -1 || i.state === item.decoded.statusInt
     );
   }
 
   hasStatus(status) {
-    return !!this.actions.filter(i => i.state === status);
+    return !!this.actions.filter((i) => i.state === status);
   }
 
   exitDialog() {
@@ -329,7 +323,7 @@ export default class ClientDashboard extends Vue {
       address,
       email,
       name,
-      lastname
+      lastname,
     } = await this.solidoProps.storage.getUserModel();
     this.email = email;
     this.nombre = name;
@@ -360,24 +354,23 @@ export default class ClientDashboard extends Vue {
 
     this.headers = [
       {
-        text: "Tx",
-        align: "left",
+        text: 'Tx',
+        align: 'left',
         sortable: true,
-        value: "txShort"
+        value: 'txShort',
       },
-      { text: "Id", value: "decoded.id" },
-      { text: "Estado", value: "decoded.status" },
-      { text: "Correo", value: "decoded.email" },
-      { text: "Nombre", value: "decoded.name" },
-      { text: "Apellido", value: "decoded.lastName" },
-      { text: "Docs", value: "files", sortable: false },
-      { text: "Docs Cert", value: "certfiles", sortable: false },
-      { text: "Tareas", value: "action", sortable: false }
+      { text: 'Id', value: 'decoded.id' },
+      { text: 'Estado', value: 'decoded.status' },
+      { text: 'Correo', value: 'decoded.email' },
+      { text: 'Nombre', value: 'decoded.name' },
+      { text: 'Apellido', value: 'decoded.lastName' },
+      { text: 'Docs', value: 'files', sortable: false },
+      { text: 'Docs Cert', value: 'certfiles', sortable: false },
+      { text: 'Tareas', value: 'action', sortable: false },
     ];
 
-    this.documentHeaders = [{ text: "Archivo", value: "name" }];
+    this.documentHeaders = [{ text: 'Archivo', value: 'name' }];
     await this.fetchDocuments();
-
 
     this.loading = false;
     // await this.signClaim();
@@ -394,7 +387,7 @@ export default class ClientDashboard extends Vue {
     const publicKey = ethers.utils.recoverPublicKey(hash, sig);
 
     const data: any = await EthCrypto.encryptWithPublicKey(
-      publicKey.replace("0x", ""),
+      publicKey.replace('0x', ''),
       values
     );
 
@@ -447,7 +440,7 @@ export default class ClientDashboard extends Vue {
       apellido,
       {
         gasLimit: gas,
-        gasPrice: 20000000000 // 10 Gwei
+        gasPrice: 20000000000, // 10 Gwei
       }
     );
 
@@ -468,7 +461,7 @@ export default class ClientDashboard extends Vue {
       id,
       {
         gasLimit: gas,
-        gasPrice: 10000000000 // 10 Gwei
+        gasPrice: 10000000000, // 10 Gwei
       }
     );
 
@@ -492,7 +485,7 @@ export default class ClientDashboard extends Vue {
       recipient,
       {
         gasLimit: gas,
-        gasPrice: 10000000000 // 10 Gwei
+        gasPrice: 10000000000, // 10 Gwei
       }
     );
 
@@ -516,7 +509,7 @@ export default class ClientDashboard extends Vue {
       recipient,
       {
         gasLimit: gas,
-        gasPrice: 10000000000 // 10 Gwei
+        gasPrice: 10000000000, // 10 Gwei
       }
     );
 
@@ -529,27 +522,27 @@ export default class ClientDashboard extends Vue {
   getStatus(value) {
     switch (value) {
       case 0:
-        return "Ninguno";
+        return 'Ninguno';
       case 1:
-        return "Creado";
+        return 'Creado';
       case 2:
-        return "Aceptado";
+        return 'Aceptado';
       case 3:
-        return "Certificado";
+        return 'Certificado';
       case 4:
-        return "Pago de certificado enviado";
+        return 'Pago de certificado enviado';
       case 5:
-        return "Pago recibido, esperando liberacion";
+        return 'Pago recibido, esperando liberacion';
       case 6:
-        return "Certificados liberados";
+        return 'Certificados liberados';
       // case 7:
       //   return "Certificados recibidos";
       case 8:
-        return "Rechazado";
+        return 'Rechazado';
       case 9:
-        return "Cancelado";
+        return 'Cancelado';
       default:
-        return "None";
+        return 'None';
     }
   }
 
@@ -557,8 +550,8 @@ export default class ClientDashboard extends Vue {
     const filterOptions: EventFilter<any> = {
       pageOptions: {
         limit: 100,
-        offset: 0
-      }
+        offset: 0,
+      },
     };
     const { Documents } = this.solidoProps.ethereum.contracts;
 
@@ -569,11 +562,11 @@ export default class ClientDashboard extends Vue {
     );
 
     filter.fromBlock = 0;
-    filter.toBlock = "latest";
+    filter.toBlock = 'latest';
 
     const logs = await Documents.instance.provider.getLogs(filter);
     const interfaceUtils = new ethers.utils.Interface(Documents.abi);
-    const parsed = logs.map(async l => {
+    const parsed = logs.map(async (l) => {
       const { values } = interfaceUtils.parseLog(l);
       const doc = await Documents.methods.recipientDocuments(
         values.recipient,
@@ -605,12 +598,13 @@ export default class ClientDashboard extends Vue {
           lastName: ethers.utils.parseBytes32String(doc.lastName),
           files,
           certFiles,
-          statusInt: new BigNumber(doc.status).toNumber()
-        }
+          statusInt: new BigNumber(doc.status).toNumber(),
+        },
       };
     });
     this.items = await forkJoin(parsed).toPromise();
   }
+
 }
 
 // handle.sed'

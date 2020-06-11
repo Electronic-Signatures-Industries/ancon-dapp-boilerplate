@@ -1,4 +1,5 @@
 import { base64 } from 'ethers/utils';
+import { decrypt, encrypt, PrivateKey } from 'eciesjs';
 import {
     DIDDocument,
     JOSEService,
@@ -7,9 +8,13 @@ import {
     Wallet
     } from 'xdvplatform-tools';
 import { DriveSession } from './DriveSession';
+import { JWE } from 'node-jose';
+import { JWK } from 'node-jose';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import { PartialChapter } from '@erebos/timeline';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
+const ec = require('elliptic').ec;
+const cbor = require('cbor-sync');
 
 export interface XDVMessageConfig {
     address: string;
@@ -34,17 +39,24 @@ export class MessageIO {
         ) as DIDDocument;
         const pub = did.publicKey[0].publicKeyJwk;
 
-        const kp = this.wallet.getES256K();
-        const kpSuite = await KeyConvert.getES256K(kp);
+        const kp = this.wallet.getP256();
+        const kpSuite = await KeyConvert.getP256(kp);
 
         // get document from reference
-        const document = await this.swarmFeed.bzz.downloadData(
+        const document = await this.swarmFeed.bzz.downloadFile(
             documentPayload.ref
         );
-        // encrypt and store
-        const encDoc = await JOSEService.encrypt(pub, document.content);
+    
 
-        // upload
+        const p256 = new ec('p256');
+        const pubk = await JWK.asKey(pub, 'jwk');
+     
+        const encDoc  = await JWE
+        .createEncrypt([pubk])
+        .update(Buffer.from((document)))
+        .final();
+
+        // upload11
         const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
 
         // signed message from user
@@ -95,10 +107,13 @@ export class MessageIO {
                     interval: 5000,
                 })
                 .subscribe((c: PartialChapter<SwarmNodeSignedContent>[]) => {
-                    c.forEach(callback);
+                    c.forEach(m => callback({
+                        ...m,
+                        feedHash
+                    }));
                 });
 
-            return { ...i, unsubscribe, currentUser: swarmFeed.user };
+            return { ...i, feedHash, did, unsubscribe, currentUser: swarmFeed.user };
         });
     }
 }

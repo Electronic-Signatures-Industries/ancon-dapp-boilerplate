@@ -16,6 +16,7 @@
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "^1.0.2",
     "@decent-bet/solido": "^1.1.6",
+    "@decent-bet/webcrypto-keychain": "^1.0.4",
     "@erebos/bzz-feed": "^0.13.2",
     "@erebos/bzz-node": "^0.13.0",
     "@erebos/hex": "^0.13.0",
@@ -41,6 +42,8 @@
     "did-jwt": "4.2.0",
     "did-jwt-vc": "^0.1.3",
     "did-resolver": "^1.1.0",
+    "eccrypto": "^1.1.3",
+    "eciesjs": "^0.3.6",
     "elliptic": "^6.5.2",
     "es6-shim": "^0.35.5",
     "eth-crypto": "^1.5.2",
@@ -57,8 +60,10 @@
     "mermaid": "^8.5.0",
     "moment": "^2.26.0",
     "node-forge": "^0.9.1",
+    "node-jose": "^1.1.4",
     "promise-file-reader": "^1.0.2",
     "rxjs": "^6.5.4",
+    "session-keystore": "^1.0.1",
     "share-api-polyfill": "^1.0.11",
     "solido-provider-ethers": "^1.1.1",
     "styled-components": "^5.0.1",
@@ -82,7 +87,7 @@
     "vuex": "^3.1.2",
     "web-streams-polyfill": "^2.1.0",
     "web3": "^1.2.6",
-    "xdvplatform-tools": "^1.1.20",
+    "xdvplatform-tools": "^1.1.21",
     "xmlbuilder2": "^2.1.2"
   },
   "devDependencies": {

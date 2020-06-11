@@ -1,3 +1,8 @@
+export interface EncKeyRef {
+    [index : string]: {
+        enc: string;
+    }
+}
 export class KeystoreIndex {
     static getIndex(): KeystoreIndex[] {
         const idx = localStorage.getItem('xdv:index:keys');
@@ -12,7 +17,8 @@ export class KeystoreIndex {
         localStorage.setItem('xdv:index:keys',JSON.stringify(index));
     }
 
-
+    encryptedKeysByAddress: EncKeyRef;
+    address?: string;
     keystore: any | string;
     name: string;
     created: Date = new Date();

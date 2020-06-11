@@ -3,10 +3,10 @@
     <v-progress-linear
       indeterminate
       v-if="loading"
-      color="teal"
+      color="indigo"
     ></v-progress-linear>
     <v-card class="mx-auto">
-      <v-toolbar color="deep-purple accent-4" dark>
+<v-toolbar color="deep-purple accent-4" dark>
         <v-menu bottom left>
           <template v-slot:activator="{ on }">
             <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
@@ -14,7 +14,7 @@
 
           <v-list>
             <v-list-item
-              v-for="(item, i) in activeSubscriptions"
+              v-for="(item, i) in menuitems"
               :key="i"
               @click="item.handler"
             >
@@ -22,33 +22,79 @@
             </v-list-item>
           </v-list>
         </v-menu>
-
-        <v-toolbar-title>
-          <v-row>
-            <v-col>
-              Mensajeria
-            </v-col>
-            <v-col>
-              <div v-if="activeSubscriptions.length === 1">
-                - una subscripcion activa
-              </div>
-              <div v-if="activeSubscriptions.length > 1">
-                &nbsp; - {{ activeSubscriptions.length }} subscripciones activas
-              </div>
-            </v-col></v-row
-          >
-        </v-toolbar-title>
+        <v-toolbar-title>Mensajes</v-toolbar-title>
 
         <v-spacer></v-spacer>
-        <v-dialog v-model="shareDialog" max-width="500px">
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon>
-              <v-icon>mdi-file-send</v-icon>
-            </v-btn>
+        <v-autocomplete
+          v-model="model"
+          :items="items"
+          :loading="isLoading"
+          :search-input.sync="search"
+          chips
+          clearable
+          hide-details
+          hide-selected
+          item-text="name"
+          item-value="symbol"
+          label="Search for a coin..."
+          solo
+        >
+          <template v-slot:no-data>
+            <v-list-item>
+              <v-list-item-title>
+                Search for your favorite
+                <strong>Cryptocurrency</strong>
+              </v-list-item-title>
+            </v-list-item>
           </template>
-          <v-card>
+          <template v-slot:selection="{ attr, on, item, selected }">
+            <v-chip
+              v-bind="attr"
+              :input-value="selected"
+              color="blue-grey"
+              class="white--text"
+              v-on="on"
+            >
+              <v-icon left>mdi-coin</v-icon>
+              <span v-text="item.name"></span>
+            </v-chip>
+          </template>
+          <template v-slot:item="{ item }">
+            <v-list-item-avatar
+              color="indigo"
+              class="headline font-weight-light white--text"
+            >
+              {{ item.name.charAt(0) }}
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title v-text="item.name"></v-list-item-title>
+              <v-list-item-subtitle v-text="item.symbol"></v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon>mdi-coin</v-icon>
+            </v-list-item-action>
+          </template>
+        </v-autocomplete>
+
+        <template v-slot:extension>
+       
+ <v-dialog v-model="shareDialog" max-width="500px">
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="blue"
+                dark
+                small
+                absolute
+                bottom
+                left
+                fab
+              >
+                <v-icon v-on="on">mdi-call-received</v-icon>
+              </v-btn>
+            </template>   <v-card>
             <v-card-title>
-              <span class="headline">Subscribir</span>
+              <span v-if="receivedUI" class="headline">Subscribir</span>
+              <span v-if="!receivedUI" class="headline">Ingresar clave</span>
             </v-card-title>
 
             <v-card-text>
@@ -57,11 +103,13 @@
                   <v-col cols="12" md="12">
                     <v-text-field
                       required
+                      v-if="receivedUI"
                       v-model="shareInfo.feed"
-                      label="Enlace"
+                      label="Enlace"  @input="readMagicLink"
                     ></v-text-field>
                     <v-text-field
                       required
+                      v-if="receivedUI"
                       v-model="shareInfo.address"
                       label="Direccion"
                     ></v-text-field>
@@ -103,36 +151,38 @@
               <v-btn
                 color="blue darken-1"
                 text
+                v-if="receivedUI"
                 :disabled="loading"
                 @click="subscribe"
                 >Subscribir</v-btn
               >
+
+              <v-btn
+                color="blue darken-1"
+                text
+                v-if="!receivedUI"
+                :disabled="loading"
+                @click="download"
+                >Ingresar</v-btn
+              >
             </v-card-actions>
           </v-card>
         </v-dialog>
+          <v-tabs v-model="tab" @change="filter" align-with-title>
+            <v-tabs-slider color="yellow"></v-tabs-slider>
+            <v-tab>
+              Identidad Digital
+            </v-tab>
+            <v-tab>
+              Firma Calificada
+            </v-tab>
+            <v-tab>
+              Otros
+            </v-tab>
+          </v-tabs>
+        </template>
       </v-toolbar>
-      <!--
-      <v-list subheader>
-        <v-subheader>Document compartidos recientes</v-subheader>
 
-        <v-list-item v-for="item in items" :key="item.title">
-          <v-list-item-avatar>
-            <v-img :src="item.avatar"></v-img>
-          </v-list-item-avatar>
-
-          <v-list-item-content>
-            <v-list-item-title v-text="item.title"></v-list-item-title>
-          </v-list-item-content>
-
-          <v-list-item-icon>
-            <v-icon :color="item.active ? 'deep-purple accent-4' : 'grey'"
-              >mdi-message-text</v-icon
-            >
-          </v-list-item-icon>
-        </v-list-item>
-      </v-list>
-
-      <v-divider></v-divider> -->
       <v-list two-line>
         <v-list-item-group
           v-model="selected"
@@ -157,16 +207,13 @@
                   <v-list-item-action-text
                     v-text="item.action"
                   ></v-list-item-action-text>
-                  <v-icon v-if="!active" color="grey lighten-1">
-                    mdi-star
+                  <v-icon
+                    @click="openDownloadDialog(item)"
+                    v-if="!active"
+                    color="green lighten-1"
+                  >
+                    mdi-download
                   </v-icon>
-                  <!--
-                  <v-icon v-else color="yellow">
-                    mdi-star
-                  </v-icon>
-                  <v-icon color="green" @click="openShareDialog(item)">
-                    mdi-share
-                  </v-icon> -->
                 </v-list-item-action>
               </template>
             </v-list-item>
@@ -207,15 +254,21 @@ import { createKeyPair, sign } from '@erebos/secp256k1';
 import { MiddlewareOptions, XDVMiddleware } from '../../../libs';
 import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
-import { arrayify, BigNumber } from 'ethers/utils';
+import { JWE, JWK } from 'node-jose';
+const eccrypto = require('eccrypto');
+
+import { arrayify, BigNumber, base64 } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin } from 'rxjs';
 import { DriveSession } from './DriveSession';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 import { PartialChapter } from '@erebos/timeline';
-import { MessageIO } from './MessageIO';
 const bs58 = require('bs58');
+import { MessageIO } from './MessageIO';
+import { DriveSwarmManager } from './DriveSwarmManager';
+const cbor = require('cbor-sync');
+import { encrypt, decrypt, PrivateKey } from 'eciesjs';
 
 @Component({})
 export default class MessagingComponent extends Vue {
@@ -237,20 +290,14 @@ export default class MessagingComponent extends Vue {
   selectedDocument = {};
   selected = [];
   shareDialog = false;
+  receivedUI = true;
   shareInfo = {
-    address: '0xe957653a4b075543b0e14b7dcd93807ea82cc517',
-    feed: '120ddc6359bba7bf789db6ff18042d5dbd496fe4892900d9be0fa7de33639479',
+    address: '',
+    feed: '',
   };
   subscriptions = [];
   activeSubscriptions: any[] = [];
-  items = [
-    {
-      active: true,
-      title: 'No hay mensajes pendientes',
-      //headline: 'From',
-      //subtitle: 'Age'
-    },
-  ];
+  items = [];
   selectWalletDialog = false;
   select: KeystoreIndex = new KeystoreIndex();
   wallets: KeystoreIndex[] = [];
@@ -260,13 +307,6 @@ export default class MessagingComponent extends Vue {
     this.loadWallets();
     this.select = this.wallets[0];
 
-    // // set existing wallets
-    // this.activeSubscriptions = this.wallets.map((i) => {
-    //   return {
-    //     title: `${i.name} - ${i.algorithm}`,
-    //     handler: () => this.changeWallet(i),
-    //   };
-    // });
     if (localStorage.getItem('xdv:messaging:subs')) {
       await this.loadSubscriptions();
     }
@@ -280,14 +320,37 @@ export default class MessagingComponent extends Vue {
     );
   }
 
+  openDownloadDialog(item) {
+    this.shareDialog = true;
+    this.selectedDocument = item;
+    this.receivedUI = false;
+  }
+
   openShareDialog(item) {
     this.shareDialog = true;
     this.selectedDocument = item;
   }
 
+  readCopyDIDReference(reference) {
+    let ref = bs58.decode(reference);
+    ref = cbor.decode(ref);
+    this.shareInfo.address = ref.link.split(',')[0];
+    this.shareInfo.feed = ref.link.split(',')[1];
+  }
+
+  readMagicLink(link) {
+    try {
+      this.readCopyDIDReference(link);
+    } catch (e) {
+      // no - op
+    }
+  }
+
   async subscribe() {
     const ks = this.select;
     this.loading = true;
+
+    this.readMagicLink(this.shareInfo.feed);
 
     const wallet = await DriveSession.browserUnlock(ks, this.password);
     if (!wallet) {
@@ -298,7 +361,7 @@ export default class MessagingComponent extends Vue {
     // const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
 
     // resolve DID
-    const { swarmFeed } = await DriveSession.getSwarmNodeClient(wallet);
+    const  swarmFeed  = await DriveSession.getSwarmNodeClient(wallet.getES256K());
     const resolver = await DriveSession.createDIDResolver(
       swarmFeed,
       this.shareInfo.feed
@@ -315,23 +378,6 @@ export default class MessagingComponent extends Vue {
       user: this.shareInfo.address,
       name: `${this.shareInfo.address}:${swarmFeed.user}`,
     });
-    // const duplexClient = new MessagingTimelineDuplexClient(swarmFeed, feedHash);
-
-    // const u = duplexClient
-    //   .subscribe()
-    //   .live({
-    //     interval: 5000,
-    //   })
-    //   .subscribe((m: PartialChapter<string>) => {
-    //     this.items.push({
-    //       // active: true,
-    //       title: m.author,
-    //       headline: m.content,
-    //       action: moment(m.timestamp).fromNow(),
-    //       subtitle: `firma ${m.signature}`,
-    //     });
-    //   });
-    // this.activeSubscriptions = [...this.activeSubscriptions, u];
     this.loading = false;
     this.shareDialog = false;
 
@@ -363,13 +409,17 @@ export default class MessagingComponent extends Vue {
 
     const subs = MessageIO.loadSubscriptions((m: any) => {
       const decoded = JWTService.decodeWithSignature(m.content);
-      console.log(decoded)
       this.items.push({
         // active: true,
+        item: { ...decoded, feed: m.feedHash, address: m.author },
         headline: `${decoded.payload.contentType}`,
         title: decoded.payload.name,
         action: moment(m.timestamp).fromNow(),
-        subtitle: `firma ${decoded.signature} peso ${new BigNumber(decoded.payload.size).toNumber().toLocaleString()} kb`,
+        subtitle: `firma ${decoded.signature} peso ${new BigNumber(
+          decoded.payload.size
+        )
+          .toNumber()
+          .toLocaleString()} bytes`,
       });
     });
 
@@ -392,6 +442,72 @@ export default class MessagingComponent extends Vue {
     this.select = i;
   }
 
+  async download() {
+    const ks = this.select;
+    this.loading = true;
+
+    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    if (!wallet) {
+      this.validations.password = 'Clave invalida';
+      return;
+    }
+    this.validations.password = false;
+    const item = this.selectedDocument.item.payload;
+
+    // resolve DID
+    const keypair = wallet.getES256K();
+    const swarmFeed = await DriveSession.getSwarmNodeClient(keypair);
+
+    const kp = wallet.getP256();
+    const kpSuite = await KeyConvert.getP256(kp);
+
+    // const resolver = await DriveSession.createDIDResolver(
+    //   swarmFeed,
+    //   item.feed
+    // );
+
+    // const did = resolver.resolve(`did:xdv:${this.selectedDocument.item.address}`) as DIDDocument;
+    // const pub = did.publicKey[0].publicKeyJwk;
+
+    // fetch and decrypt
+    // get document from reference
+
+    const document = await swarmFeed.bzz.downloadData(item.ref);
+    const res = await JWE.createDecrypt(
+      await JWK.asKey(kpSuite.jwk, 'jwk')
+    ).decrypt(document.cipher);
+    // const verfied = await JWTService.verify(
+    //   item.did.publicKey[0].publicKeyJwk,
+    //   res,
+    //   swarmFeed.user
+    // );
+    var a = new TextDecoder('utf-8').decode(res.plaintext);
+    const obj = JSON.parse(a);
+    const file = new File([base64.decode(obj.content)], obj.name, {
+      type: obj.contentType,
+    });
+
+    await this.downloadFile(file, file.name);
+
+
+
+    this.shareDialog = false;
+    this.loading = false;
+  }
+
+  async downloadFile(blob: Blob, name: string) {
+    try {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+      a.click();
+      a.remove();
+    } catch (e) {
+      throw new Error('No se pudo convertir el archivo');
+    }
+  }
   async unlock() {
     const ks = this.select;
     this.loading = true;
@@ -403,15 +519,9 @@ export default class MessagingComponent extends Vue {
     }
     this.validations.password = false;
 
-    const kp = wallet.getES256K();
-    const { swarmFeed, feedHash } = await DriveSession.getSwarmNodeClient(
-      wallet
-    );
     DriveSession.set(
-      feedHash,
-      `did:xdv:${swarmFeed.user}`,
-      kp.getPublic('array'),
-      swarmFeed.user,
+      `did:xdv:${ks.address}`,
+      ks.address,
       ks.name
     );
 

@@ -10,7 +10,7 @@ export class MessagingTimelineDuplexClient {
         private swarmFeed: any, private feed: string) {
     }
 
-    createSubject(topicName: string) {
+    createSubject(topicName?: string) {
         // In this example we are Alice communicating with Bob
         const writer = new TimelineWriter({
             bzz: this.swarmFeed.bzzFeed,
