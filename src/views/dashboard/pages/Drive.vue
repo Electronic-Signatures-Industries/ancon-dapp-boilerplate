@@ -8,7 +8,7 @@
 
     <v-card class="mx-auto">
       <v-toolbar color="pink" dark>
-        <v-toolbar-title>Documentos </v-toolbar-title>
+        <v-toolbar-title>Documents </v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
@@ -21,14 +21,14 @@
           hide-selected
           item-text="name"
           return-object
-          label="Buscar carteras"
+          label="Search documents or pick wallet"
           @input="loadSession"
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Buscar carteras o documentos
+                Search documents or pick wallet
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -66,7 +66,7 @@
         <v-dialog v-model="shareDialog" max-width="500px">
           <v-card>
             <v-card-title>
-              <span class="headline">Compartir</span>
+              <span class="headline">Publish to recipients</span>
             </v-card-title>
 
             <v-card-text>
@@ -77,14 +77,14 @@
                       required
                       :items="publicWallets"
                       v-model="shareInfo.recipients"
-                      label="Receptor"
+                      label="Recipients"
                       item-text="name"
                       item-value="name"
                       return-object
                       single-line
                     ></v-select>
 
-                    <v-select
+                    <!-- <v-select
                       v-model="select"
                       :items="wallets"
                       item-text="name"
@@ -94,13 +94,13 @@
                       return-object
                       single-line
                     >
-                    </v-select>
+                    </v-select> -->
                     <v-text-field
                       required
                       v-model="password"
                       :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                       :type="showPassword ? 'text' : 'password'"
-                      label="Clave"
+                      label="Passphrase"
                       class="input-group--focused"
                       @click:append="showPassword = !showPassword"
                       :error="validations.password"
@@ -117,14 +117,14 @@
                 text
                 :disabled="loading"
                 @click="shareDialog = false"
-                >Cancelar</v-btn
+                >Cancel</v-btn
               >
               <v-btn
                 color="blue darken-1"
                 text
                 :disabled="loading"
                 @click="share"
-                >Compartir</v-btn
+                >Share</v-btn
               >
             </v-card-actions>
           </v-card>
@@ -195,7 +195,7 @@
             </template>
             <v-card>
               <v-card-title>
-                <span class="headline">Subir documentos verificable</span>
+                <span class="headline">Upload</span>
               </v-card-title>
 
               <v-card-text>
@@ -207,13 +207,13 @@
                         v-model="files"
                         multiple
                         show-size
-                        label="Archivos"
+                        label="Files"
                       ></v-file-input>
                     </v-col>
                   </v-row>
                   <v-row>
                     <v-col cols="12" md="12">
-                      <v-select
+                      <!-- <v-select
                         v-model="select"
                         item-text="name"
                         item-value="name"
@@ -223,13 +223,13 @@
                         return-object
                         single-line
                       >
-                      </v-select>
+                      </v-select> -->
                       <v-text-field
                         required
                         v-model="password"
                         :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                         :type="showPassword ? 'text' : 'password'"
-                        label="Clave"
+                        label="Passphrase"
                         class="input-group--focused"
                         @click:append="showPassword = !showPassword"
                         :error="validations.password"
@@ -246,14 +246,14 @@
                   :disabled="loading"
                   text
                   @click="close"
-                  >Cancelar</v-btn
+                  >Cancel</v-btn
                 >
                 <v-btn
                   color="blue darken-1"
                   :disabled="loading"
                   text
                   @click="createDocumentNode"
-                  >Guardar</v-btn
+                  >Publish</v-btn
                 >
               </v-card-actions>
             </v-card>
@@ -264,13 +264,13 @@
               DID
             </v-tab>
             <v-tab>
-              Documentos
+              Documents
             </v-tab>
             <v-tab>
-              Facturas
+              Invoices
             </v-tab>
             <v-tab>
-              Documentos VC
+              Isssued Verifiable Claims
             </v-tab>
           </v-tabs>
         </template>
@@ -586,7 +586,7 @@ export default class DriveComponent extends Vue {
         action: moment(content.created).fromNow(),
         headline: content.id,
         title: 'DID',
-        subtitle: `direccion ${swarmFeed.user} enlace ${feed}`,
+        subtitle: `address ${swarmFeed.user} feed ${feed}`,
       } as any,
     ];
 
@@ -614,7 +614,7 @@ export default class DriveComponent extends Vue {
             subtitle: `hash ${reference.hash.replace(
               '0x',
               ''
-            )} firma ${s.replace('0x', '')}`,
+            )} signature ${s.replace('0x', '')}`,
           };
         });
         this.items = [...this.items, ...item] as any[];

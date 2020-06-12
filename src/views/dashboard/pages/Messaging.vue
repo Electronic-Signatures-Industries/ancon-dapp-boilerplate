@@ -7,7 +7,7 @@
     ></v-progress-linear>
     <v-card class="mx-auto">
       <v-toolbar color="deep-teal accent-4" dark>
-        <v-toolbar-title>Mensajes</v-toolbar-title>
+        <v-toolbar-title>Subscriptions</v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
@@ -23,13 +23,13 @@
           hide-selected
           item-text="name"
           return-object
-          label="Buscar carteras"
+          label="Add subscriptions or select wallet"
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Buscar carteras o documentos
+                Add subscriptions or select wallet
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -76,15 +76,15 @@
         </v-autocomplete>
         <template v-slot:extension>
           <v-dialog v-model="shareDialog" max-width="500px">
-            <template v-slot:activator="{ on }">
+            <!-- <template v-slot:activator="{ on }">
               <v-btn color="blue" dark small absolute bottom left fab>
                 <v-icon v-on="on">mdi-call-received</v-icon>
               </v-btn>
-            </template>
+            </template> -->
             <v-card>
               <v-card-title>
-                <span v-if="receivedUI" class="headline">Subscribir</span>
-                <span v-if="!receivedUI" class="headline">Ingresar clave</span>
+                <span v-if="receivedUI" class="headline">Passphrase</span>
+                <span v-if="!receivedUI" class="headline">Passphrase</span>
               </v-card-title>
 
               <v-card-text>
@@ -113,7 +113,7 @@
                   text
                   :disabled="loading"
                   @click="shareDialog = false"
-                  >Cancelar</v-btn
+                  >Cancel</v-btn
                 >
                 <v-btn
                   color="blue darken-1"
@@ -121,7 +121,7 @@
                   v-if="receivedUI"
                   :disabled="loading"
                   @click="addSub"
-                  >Subscribir</v-btn
+                  >Add</v-btn
                 >
 
                 <v-btn
@@ -348,6 +348,7 @@ tab = 0;
       this.subscriptions = [
         ...existing,
         {
+          name: ks.name,
           // feedHash,
           user: ks.address,
           from: from.name.split(':')[2],
@@ -377,7 +378,7 @@ tab = 0;
         headline: `${decoded.payload.reference.contentType}`,
         title: decoded.payload.reference.name,
         action: moment(m.timestamp).fromNow(),
-        subtitle: `firma ${decoded.signature} peso ${new BigNumber(
+        subtitle: `signature ${decoded.signature} size ${new BigNumber(
           decoded.payload.reference.size
         )
           .toNumber()
@@ -395,7 +396,7 @@ tab = 0;
         title: `${subscription.from.substring(
           0,
           20
-        )}... -> ${subscription.user.substring(0, 20)}...`,
+        )}... -> ${subscription.name}`,
       });
     });
 

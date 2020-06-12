@@ -7,7 +7,7 @@ w<template>
     ></v-progress-linear>
     <v-card class="mx-auto" tile>
       <v-toolbar color="blue" dark>
-        <v-toolbar-title>Cartera Digital</v-toolbar-title>
+        <v-toolbar-title>Wallet</v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
@@ -72,7 +72,7 @@ w<template>
 
             <v-card>
               <v-card-title>
-                <span class="headline">Nueva cartera digital</span>
+                <span class="headline">Add new wallet</span>
               </v-card-title>
 
               <v-card-text>
@@ -80,7 +80,7 @@ w<template>
                   <v-expansion-panels v-model="selectedPanel">
                     <v-expansion-panel>
                       <v-expansion-panel-header class="display-1"
-                        >Tipo de cartera</v-expansion-panel-header
+                        >Type</v-expansion-panel-header
                       >
                       <v-expansion-panel-content>
                         <v-row>
@@ -91,7 +91,7 @@ w<template>
                                   <v-radio
                                     v-on="on"
                                     class="font-weight-medium"
-                                    label="Firma Calificada (Pruebas)"
+                                    label="Qualified Signature (Self Signed)"
                                     color="red"
                                     value="rsa"
                                   ></v-radio>
@@ -104,7 +104,7 @@ w<template>
                                   <v-radio
                                     v-on="on"
                                     class="font-weight-medium"
-                                    label="Blockchain e Identidad Digital"
+                                    label="Decentralized Identity"
                                     color="orange"
                                     value="default"
                                   ></v-radio>
@@ -115,7 +115,7 @@ w<template>
                           </v-col>
                           <v-col cols="12" md="5">
                             <v-text-field
-                              label="Nombre de cartera"
+                              label="Name"
                               value=""
                               v-model="walletDescription"
                               class="input-group--focused"
@@ -127,7 +127,7 @@ w<template>
                                 showPassword ? 'mdi-eye' : 'mdi-eye-off'
                               "
                               :type="showPassword ? 'text' : 'password'"
-                              label="Clave"
+                              label="Passphrase"
                               class="input-group--focused"
                               @input="handlePasswordUpdate"
                               @click:append="showPassword = !showPassword"
@@ -140,7 +140,7 @@ w<template>
                                 showPassword ? 'mdi-eye' : 'mdi-eye-off'
                               "
                               :type="showPassword ? 'text' : 'password'"
-                              label="Confirmar clave"
+                              label="Confirm passphrase"
                               class="input-group--focused"
                               @click:append="showPassword = !showPassword"
                               @input="handlePasswordUpdate"
@@ -193,7 +193,7 @@ w<template>
                               color="blue darken-1"
                               text
                               @click="createKeys"
-                              >Generar llaves</v-btn
+                              >Generate</v-btn
                             ></v-col
                           ></v-row
                         >
@@ -265,12 +265,12 @@ w<template>
                         </v-row>
                       </v-expansion-panel-content></v-expansion-panel
                     >
-                    <v-expansion-panel>
+                    <!-- <v-expansion-panel>
                       <v-expansion-panel-header class="display-1"
                         >Avanzado</v-expansion-panel-header
                       >
                       <v-expansion-panel-content> </v-expansion-panel-content
-                    ></v-expansion-panel>
+                    ></v-expansion-panel> -->
                   </v-expansion-panels>
                 </v-form>
               </v-card-text>
@@ -278,14 +278,14 @@ w<template>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="blue darken-1" text @click="close"
-                  >Cancelar</v-btn
+                  >Cancel</v-btn
                 >
                 <v-btn
                   color="blue darken-1"
                   :disabled="!valid"
                   text
                   @click="save"
-                  >Guardar</v-btn
+                  >Save</v-btn
                 >
               </v-card-actions>
             </v-card>
@@ -293,13 +293,13 @@ w<template>
           <v-tabs v-model="tab" @change="filter" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab>
-              Identidad Digital
+              Wallets
             </v-tab>
             <v-tab>
-              Firma Calificada
+              Hardware / Imported Wallets
             </v-tab>
             <v-tab>
-              Otros
+              Public DIDs
             </v-tab>
           </v-tabs>
         </template>
@@ -433,7 +433,7 @@ export default class WalletComponent extends Vue {
         action: moment(i.created).fromNow(),
         title: i.name,
 
-        headline: `direccion ${i.address}`,
+        headline: `address ${i.address}`,
         // subtitle: i.,
       };
     });
