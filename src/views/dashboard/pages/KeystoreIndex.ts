@@ -1,10 +1,3 @@
-import { AlgorithmType } from './AlgorithmType';
-
-export interface EncKeyRef {
-    [index : string]: {
-        enc: string;
-    }
-}
 export class KeystoreIndex {
     static getIndex(): KeystoreIndex[] {
         const idx = localStorage.getItem('xdv:index:keys');
@@ -21,9 +14,7 @@ export class KeystoreIndex {
 
     publicKeyFromDID?: any;
     address?: string;
-    keystore: any | string;
+    keystore: string;
     name: string;
     created: Date = new Date();
-    algorithm: AlgorithmType;
-    xdvType: string;
 }

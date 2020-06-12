@@ -8,12 +8,12 @@ import {
     KeyConvert,
     Wallet
     } from 'xdvplatform-tools';
-import { DriveSession } from './DriveSession';
 import { ec } from 'elliptic';
 import { JWE } from 'node-jose';
 import { JWK } from 'node-jose';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import { PartialChapter } from '@erebos/timeline';
+import { Session } from './Session';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 const ec = require('elliptic').ec;
 const cbor = require('cbor-sync');
@@ -27,7 +27,7 @@ export class MessageIO {
     }
 
     async sendEncryptedCommPayload(userAddress: string, documentPayload: any, hash: string) {
-        
+
         const kpSuite = await KeyConvert.getP256(this.keypair);
 
         // get document from reference
@@ -46,10 +46,10 @@ export class MessageIO {
         let payload = new Response(document);
         let buf = await payload.arrayBuffer();
         // is a cbor content
-        const encDoc  = await JWE
-        .createEncrypt([this.recipientKeypair])
-        .update(Buffer.from(buf))
-        .final();
+        const encDoc = await JWE
+            .createEncrypt([this.recipientKeypair])
+            .update(Buffer.from(buf))
+            .final();
 
         // upload
         const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
@@ -65,11 +65,13 @@ export class MessageIO {
                 aud: this.swarmFeed.user,
             } as any);
 
-        const feedHash = await this.swarmFeed.bzzFeed.createManifest({
-            user: this.swarmFeed.user,
-            name: `messaging`
-        });
-        const duplexClient = new MessagingTimelineDuplexClient(this.swarmFeed, feedHash);
+        // const feedHash = await this.swarmFeed.bzzFeed.createManifest({
+        //     user: this.swarmFeed.user,
+        //     name: `messaging`
+        // });
+        const duplexClient = new MessagingTimelineDuplexClient(this.swarmFeed, this.swarmFeed.user,
+            'messaging'
+        );
 
 
         const topicInstance = duplexClient.createSubject();
@@ -86,27 +88,28 @@ export class MessageIO {
     static loadSubscriptions(callback: (message) => {}) {
         const subs = JSON.parse(localStorage.getItem('xdv:messaging:subs'));
         return subs.map((i) => {
-            const { did, feedHash, pub } = i;
-            const swarmFeed = DriveSession.getSwarmNodeQueryable(pub);
+            const { feedHash, user } = i;
+            const swarmFeed = Session.getSwarmNodeQueryable(user);
 
             const duplexClient = new MessagingTimelineDuplexClient(
                 swarmFeed,
-                feedHash
+                user,
+                'messaging'
             );
 
             const unsubscribe = duplexClient
                 .subscribe()
-                .live({
+                .pollLatestChapter({
                     interval: 5000,
                 })
-                .subscribe((c: PartialChapter<SwarmNodeSignedContent>[]) => {
-                    c.forEach(m => callback({
+                .subscribe(m=> {
+                 callback({
                         ...m,
                         feedHash
-                    }));
+                    });
                 });
 
-            return { ...i, feedHash, did, unsubscribe, currentUser: swarmFeed.user };
+            return { ...i, feedHash, unsubscribe, currentUser: swarmFeed.user };
         });
     }
 }

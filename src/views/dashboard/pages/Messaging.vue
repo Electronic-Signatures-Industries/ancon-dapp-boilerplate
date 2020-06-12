@@ -6,44 +6,30 @@
       color="indigo"
     ></v-progress-linear>
     <v-card class="mx-auto">
-<v-toolbar color="deep-purple accent-4" dark>
-        <v-menu bottom left>
-          <template v-slot:activator="{ on }">
-            <v-app-bar-nav-icon v-on="on"></v-app-bar-nav-icon>
-          </template>
-
-          <v-list>
-            <v-list-item
-              v-for="(item, i) in menuitems"
-              :key="i"
-              @click="item.handler"
-            >
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+      <v-toolbar color="deep-teal accent-4" dark>
         <v-toolbar-title>Mensajes</v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
-          v-model="model"
-          :items="items"
-          :loading="isLoading"
-          :search-input.sync="search"
+          v-model="multiselect"
+          :items="wallets"
+          :loading="loading"
           chips
+          :search-input.sync="search"
           clearable
+          multiple
           hide-details
+          @input="addSub"
           hide-selected
           item-text="name"
-          item-value="symbol"
-          label="Search for a coin..."
+          return-object
+          label="Buscar carteras"
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Search for your favorite
-                <strong>Cryptocurrency</strong>
+                Buscar carteras o documentos
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -51,11 +37,22 @@
             <v-chip
               v-bind="attr"
               :input-value="selected"
-              color="blue-grey"
+              color="blue accent-5"
               class="white--text"
               v-on="on"
             >
-              <v-icon left>mdi-coin</v-icon>
+              <v-icon left>mdi-wallet</v-icon>
+              <span v-text="item.name"></span>
+            </v-chip>
+            <v-chip
+              v-if="from"
+              v-bind="attr"
+              :input-value="from"
+              color="green accent-5"
+              class="white--text"
+              v-on="on"
+            >
+              <v-icon left>mdi-wallet</v-icon>
               <span v-text="item.name"></span>
             </v-chip>
           </template>
@@ -64,120 +61,84 @@
               color="indigo"
               class="headline font-weight-light white--text"
             >
-              {{ item.name.charAt(0) }}
+              {{ item.address }}
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle v-text="item.symbol"></v-list-item-subtitle>
+              <v-list-item-subtitle
+                v-text="item.address"
+              ></v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon>mdi-coin</v-icon>
             </v-list-item-action>
           </template>
         </v-autocomplete>
-
         <template v-slot:extension>
-       
- <v-dialog v-model="shareDialog" max-width="500px">
+          <v-dialog v-model="shareDialog" max-width="500px">
             <template v-slot:activator="{ on }">
-              <v-btn
-                color="blue"
-                dark
-                small
-                absolute
-                bottom
-                left
-                fab
-              >
+              <v-btn color="blue" dark small absolute bottom left fab>
                 <v-icon v-on="on">mdi-call-received</v-icon>
               </v-btn>
-            </template>   <v-card>
-            <v-card-title>
-              <span v-if="receivedUI" class="headline">Subscribir</span>
-              <span v-if="!receivedUI" class="headline">Ingresar clave</span>
-            </v-card-title>
+            </template>
+            <v-card>
+              <v-card-title>
+                <span v-if="receivedUI" class="headline">Subscribir</span>
+                <span v-if="!receivedUI" class="headline">Ingresar clave</span>
+              </v-card-title>
 
-            <v-card-text>
-              <v-form v-model="form" autocomplete="off">
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <v-text-field
-                      required
-                      v-if="receivedUI"
-                      v-model="shareInfo.feed"
-                      label="Enlace"  @input="readMagicLink"
-                    ></v-text-field>
-                    <v-text-field
-                      required
-                      v-if="receivedUI"
-                      v-model="shareInfo.address"
-                      label="Direccion"
-                    ></v-text-field>
-                    <v-select
-                      v-model="select"
-                      :hint="`${select.algorithm}`"
-                      :items="wallets"
-                      item-text="name"
-                      label="Cartera Digital"
-                      persistent-hint
-                      return-object
-                      single-line
-                    >
-                    </v-select>
-                    <v-text-field
-                      required
-                      v-model="password"
-                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                      :type="showPassword ? 'text' : 'password'"
-                      label="Clave"
-                      class="input-group--focused"
-                      @click:append="showPassword = !showPassword"
-                      :error="validations.password"
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
+              <v-card-text>
+                <v-form v-model="form" autocomplete="off">
+                  <v-row>
+                    <v-col cols="12" md="12">
+                      <v-text-field
+                        required
+                        v-model="password"
+                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                        :type="showPassword ? 'text' : 'password'"
+                        label="Clave"
+                        class="input-group--focused"
+                        @click:append="showPassword = !showPassword"
+                        :error="validations.password"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-form>
+              </v-card-text>
 
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="shareDialog = false"
-                >Cancelar</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                text
-                v-if="receivedUI"
-                :disabled="loading"
-                @click="subscribe"
-                >Subscribir</v-btn
-              >
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="blue darken-1"
+                  text
+                  :disabled="loading"
+                  @click="shareDialog = false"
+                  >Cancelar</v-btn
+                >
+                <v-btn
+                  color="blue darken-1"
+                  text
+                  v-if="receivedUI"
+                  :disabled="loading"
+                  @click="addSub"
+                  >Subscribir</v-btn
+                >
 
-              <v-btn
-                color="blue darken-1"
-                text
-                v-if="!receivedUI"
-                :disabled="loading"
-                @click="download"
-                >Ingresar</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-          <v-tabs v-model="tab" @change="filter" align-with-title>
+                <v-btn
+                  color="blue darken-1"
+                  text
+                  v-if="!receivedUI"
+                  :disabled="loading"
+                  @click="download"
+                  >Ingresar</v-btn
+                >
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-tabs v-model="tab"  align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
-            <v-tab>
-              Identidad Digital
-            </v-tab>
-            <v-tab>
-              Firma Calificada
-            </v-tab>
-            <v-tab>
-              Otros
+            <v-tab v-for="item in activeSubscriptions" :key="item.title">
+              {{ item.title }}
             </v-tab>
           </v-tabs>
         </template>
@@ -260,7 +221,7 @@ const eccrypto = require('eccrypto');
 import { arrayify, BigNumber, base64 } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin } from 'rxjs';
-import { DriveSession } from './DriveSession';
+import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 import { PartialChapter } from '@erebos/timeline';
@@ -289,23 +250,30 @@ export default class MessagingComponent extends Vue {
   mnemonic = [];
   selectedDocument = {};
   selected = [];
+  from = null;
   shareDialog = false;
   receivedUI = true;
   shareInfo = {
     address: '',
     feed: '',
+    recipients: {
+      name: '',
+    },
   };
+  search = '';
+  multiselect = [];
   subscriptions = [];
   activeSubscriptions: any[] = [];
   items = [];
   selectWalletDialog = false;
-  select: KeystoreIndex = new KeystoreIndex();
+  select: KeystoreIndex = null;
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
-
+tab = 0;
   async mounted() {
     this.loadWallets();
-    this.select = this.wallets[0];
+    this.multiselect = [];
+    // this.multiselect = [this.wallets[0]];
 
     if (localStorage.getItem('xdv:messaging:subs')) {
       await this.loadSubscriptions();
@@ -331,13 +299,6 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
-  readCopyDIDReference(reference) {
-    let ref = bs58.decode(reference);
-    ref = cbor.decode(ref);
-    this.shareInfo.address = ref.link.split(',')[0];
-    this.shareInfo.feed = ref.link.split(',')[1];
-  }
-
   readMagicLink(link) {
     try {
       this.readCopyDIDReference(link);
@@ -346,90 +307,95 @@ export default class MessagingComponent extends Vue {
     }
   }
 
-  async subscribe() {
-    const ks = this.select;
-    this.loading = true;
+  async addSub() {
+    if (this.multiselect.length === 2) {
+      if (this.shareDialog === false && this.password.length === 0) {
+        this.shareDialog = true;
+        return;
+      }
 
-    this.readMagicLink(this.shareInfo.feed);
+      const ks = this.multiselect[0];
+      const from = this.multiselect[1];
+      this.loading = true;
 
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      return;
+      const wallet = await Session.getWalletFromKeystore(ks, this.password);
+      if (!wallet) {
+        this.validations.password = 'Clave invalida';
+        this.loading = false;
+        return;
+      }
+      this.validations.password = false;
+
+      const swarmFeed = await Session.getSwarmNodeQueryable(ks.address);
+
+      // from
+      const user = await Wallet.getPublicKey(from.name, 'P256_JWK_PUBLIC');
+
+      // user
+      const keys = await wallet.getKeyPair(
+        ks.keystore,
+        'ES256K',
+        this.password
+      );
+
+      this.loading = false;
+      this.shareDialog = false;
+
+      // store subscriptions
+      const existing = JSON.parse(
+        localStorage.getItem('xdv:messaging:subs') || `[]`
+      );
+      this.subscriptions = [
+        ...existing,
+        {
+          // feedHash,
+          user: ks.address,
+          from: from.name.split(':')[2],
+        },
+      ];
+
+      // store
+      localStorage.setItem(
+        'xdv:messaging:subs',
+        JSON.stringify(this.subscriptions)
+      );
+      await this.loadSubscriptions();
     }
-    this.validations.password = false;
-    // const feed = this.driveSession.feed.feedHash || this.driveSession.feed;
-
-    // from
-    const user = await DriveSession.getPublicKey(
-      this.shareInfo.recipients.name,
-      'P256_JWK_PUBLIC',
-    );
-
-   // user
-    const mySwarmKeys = await DriveSession.getPrivateKey(
-      ks.address,
-      'ES256K',
-      this.password
-    );
-    const feedHash = await swarmFeed.bzzFeed.createManifest({
-      user: this.shareInfo.address,
-      name: `messaging`,
-    });
-    this.loading = false;
-    this.shareDialog = false;
-
-    // store subscriptions
-    const existing = JSON.parse(
-      localStorage.getItem('xdv:messaging:subs') || `[]`
-    );
-    this.subscriptions = [
-      ...existing,
-      {
-        feedHash,
-        did,
-        pub,
-      },
-    ];
-
-    // store
-    localStorage.setItem(
-      'xdv:messaging:subs',
-      JSON.stringify(this.subscriptions)
-    );
-    await this.loadSubscriptions();
   }
 
   async loadSubscriptions() {
     this.loading = true;
 
     // resolve DID
-
+    const self = this;
     const subs = MessageIO.loadSubscriptions((m: any) => {
       const decoded = JWTService.decodeWithSignature(m.content);
-      this.items.push({
+
+      self.items.push({
         // active: true,
-        item: { ...decoded, feed: m.feedHash, address: m.author },
-        headline: `${decoded.payload.contentType}`,
-        title: decoded.payload.name,
+        item: { ...decoded, feed: '', address: m.author },
+        headline: `${decoded.payload.reference.contentType}`,
+        title: decoded.payload.reference.name,
         action: moment(m.timestamp).fromNow(),
         subtitle: `firma ${decoded.signature} peso ${new BigNumber(
-          decoded.payload.size
+          decoded.payload.reference.size
         )
           .toNumber()
           .toLocaleString()} bytes`,
       });
     });
 
-    this.activeSubscriptions = [];
+    self.activeSubscriptions = [];
     subs.forEach((subscription, index) => {
-      const topic = subscription.did;
       this.activeSubscriptions.push({
         handler: () => {
           subscription.unsubscribe();
           this.activeSubscriptions.splice(index);
         },
-        title: `${topic.id} -> ${subscription.currentUser}`,
+        title: `${subscription.from.substring(
+          0,
+          20
+        )}... -> ${subscription.user.substring(0, 20)}...`,
       });
     });
 
@@ -444,7 +410,7 @@ export default class MessagingComponent extends Vue {
     const ks = this.select;
     this.loading = true;
 
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    const wallet = await Session.getWalletFromKeystore(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       return;
@@ -454,12 +420,12 @@ export default class MessagingComponent extends Vue {
 
     // resolve DID
     const keypair = wallet.getES256K();
-    const swarmFeed = await DriveSession.getSwarmNodeClient(keypair);
+    const swarmFeed = await Session.getSwarmNodeClient(keypair);
 
     const kp = wallet.getP256();
     const kpSuite = await KeyConvert.getP256(kp);
 
-    // const resolver = await DriveSession.createDIDResolver(
+    // const resolver = await Session.createDIDResolver(
     //   swarmFeed,
     //   item.feed
     // );
@@ -487,8 +453,6 @@ export default class MessagingComponent extends Vue {
 
     await this.downloadFile(file, file.name);
 
-
-
     this.shareDialog = false;
     this.loading = false;
   }
@@ -510,18 +474,14 @@ export default class MessagingComponent extends Vue {
     const ks = this.select;
     this.loading = true;
 
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    const wallet = await Session.getWalletFromKeystore(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       return;
     }
     this.validations.password = false;
 
-    DriveSession.set(
-      `did:xdv:${ks.address}`,
-      ks.address,
-      ks.name
-    );
+    Session.set(`did:xdv:${ks.address}`, ks.address, ks.name);
 
     this.loading = false;
     this.selectWalletDialog = false;

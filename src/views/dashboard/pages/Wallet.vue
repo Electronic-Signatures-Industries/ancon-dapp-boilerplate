@@ -106,10 +106,10 @@ w<template>
                                     class="font-weight-medium"
                                     label="Blockchain e Identidad Digital"
                                     color="orange"
-                                    value="secp256k1"
+                                    value="default"
                                   ></v-radio>
                                 </template>
-                                <span>secp256k1</span>
+                                <span>default</span>
                               </v-tooltip>
                             </v-radio-group>
                           </v-col>
@@ -311,7 +311,7 @@ w<template>
           class="blue--text"
         >
           <template v-for="(item, index) in items">
-            <v-list-item :key="index">
+            <v-list-item :key="item.address">
               <template v-slot:default="{ active }">
                 <v-list-item-content>
                   <v-list-item-title v-text="item.title"></v-list-item-title>
@@ -359,7 +359,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import { ethers } from 'ethers';
 import moment from 'moment';
-import { DriveSession } from './DriveSession';
+import { Session } from './Session';
 import { JWK } from 'node-jose';
 import { pubKeyToAddress } from '@erebos/keccak256';
 import { AlgorithmType } from './AlgorithmType';
@@ -371,7 +371,8 @@ import copy from 'copy-to-clipboard';
       if (val && val.indexOf('did:xdv:') === 0) {
         this.loading = true;
         // fetch DID
-        await DriveSession.resolveAndStoreDID(val);
+        await Session.resolveAndStoreDID(val);
+        await this.loadWallets();
         this.loading = false;
       } else {
         // no op
@@ -432,7 +433,7 @@ export default class WalletComponent extends Vue {
         action: moment(i.created).fromNow(),
         title: i.name,
 
-        headline: `algoritmo ${i.algorithm}`,
+        headline: `direccion ${i.address}`,
         // subtitle: i.,
       };
     });
@@ -469,7 +470,7 @@ export default class WalletComponent extends Vue {
   filter() {
     if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
     const mapping = {
-      secp256k1: 0,
+      default: 0,
       rsa: 1,
       fe: 2,
       vc: 3,
@@ -483,47 +484,16 @@ export default class WalletComponent extends Vue {
     wallet: Wallet,
     passphrase: string
   ) {
-    //  empty ks
-    let secureKS = [];
-    // validate
-
-    const kp = wallet.getP256();
-    const kpJwk = await KeyConvert.getP256(kp);
-
-    // Store P256 Public Key
-    kpJwk.jwk = (await JWK.asKey(kpJwk.jwk, 'jwk')).toJSON();
-    const swarmFeed =  DriveSession.getSwarmNodeClient(swarmKeypair);
-
-    // Store P256 pvk
-    // @ts-ignore
-    await DriveSession.setSecure(
-      ks.address,
-      'P256',
-      kp.getPrivate('hex')
-    );
-    // Store secp256k1
-    // @ts-ignore
-    await DriveSession.setSecure(
-      ks.address,
-      'ES256K',
-      swarmKeypair.getPrivate('hex')
-    );
-
-    // Create IPFS key storage lock
+    // const swarmKeypair = await wallet.getKeyPair(ks.keystore, 'ES256K');
+    const keypairExports = await wallet.getKeyPairExports(ks.keystore, 'P25');
+    const swarmFeed = Session.getSwarmNodeClient(swarmKeypair);
     const session = `did:xdv:${swarmFeed.user}`;
-
-    const ldCrypto = await KeyConvert.createLinkedDataJsonFormat(
-      LDCryptoTypes.JWK,
-      { publicJwk: kpJwk.jwk } as any,
-      false
-    );
-
     const did = new DIDDocument();
-    const pub = { owner: swarmFeed.user, ...ldCrypto };
+    const pub = { owner: swarmFeed.user, ...keypairExports.P256.ldJsonPublic };
     did.id = session;
     did.publicKey = [pub];
     did.authentication = [pub as any];
-
+    // debugger;
     const didIndex = { ...did, tag: 'main_did' };
     const references = {
       'index.json': didIndex,
@@ -535,7 +505,7 @@ export default class WalletComponent extends Vue {
       defaultPath: 'index.json',
     });
 
-    DriveSession.set(did.id, swarmFeed.user, ks.name);
+    Session.set(did.id, swarmFeed.user, ks.name);
     this.loading = false;
   }
 
@@ -546,27 +516,19 @@ export default class WalletComponent extends Vue {
       this.walletDescription.length > 0 &&
       this.password === this.confirmPassword
     ) {
-      let mnemonic = await Wallet.generateMnemonic();
-      this.keystore = await Wallet.createHDWallet({
-        password: this.password,
-        mnemonic,
-      });
-      let wallet = new Wallet(
-        mnemonic,
-        await ethers.Wallet.fromEncryptedJson(this.keystore, this.password)
-      );
+      let { id, wallet } = await Session.createWallet(this.password);
+      let mnemonic = wallet.mnemonic;
       let keys;
       let keystoreIndexItem: KeystoreIndex;
 
-      if (this.walletType === 'secp256k1') {
-        keys = wallet.getES256K();
+      if (this.walletType === 'default') {
         keystoreIndexItem = {
-          algorithm: AlgorithmType.ES256K,
           created: new Date(),
           name: this.walletDescription,
-          keystore: this.keystore,
-          xdvType: this.walletType,
+          keystore: id,
         } as KeystoreIndex;
+
+        const keys = await wallet.getKeyPair(id, 'ES256K', this.password);
 
         keystoreIndexItem.address = pubKeyToAddress(keys.getPublic('array'));
         await this.createDID(keystoreIndexItem, keys, wallet, this.password);
@@ -574,30 +536,24 @@ export default class WalletComponent extends Vue {
       this.mnemonic = mnemonic.split(' ');
 
       if (this.walletType === 'rsa') {
-        keys = await Wallet.getRSA256Standalone();
         const rsaKeyExports = await KeyConvert.getX509RSA(keys);
         const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
           rsaKeyExports.pemAsPrivate,
           rsaKeyExports.pemAsPublic,
           this.x509Info
         );
-        // needs to use JWE to secure RSA
-        keystoreIndexItem = {
-          algorithm: AlgorithmType.RSA,
-          created: new Date(),
-          name: this.walletDescription,
-          keystore: {
-            key: rsaKeyExports.pemAsPrivate,
-            cert: selfSignedCert,
-          },
-          xdvType: this.walletType,
-        } as KeystoreIndex;
 
-        await DriveSession.setSecure(
-          this.walletDescription,
+        await Session.setSecure(
+          `${this.walletDescription}:import:X509`,
           'RSA',
           rsaKeyExports.pemAsPrivate
         );
+
+        keystoreIndexItem = {
+          created: new Date(),
+          name: this.walletDescription,
+          keystore: id,
+        } as KeystoreIndex;
       }
       this.loading = false;
       this.valid = true;

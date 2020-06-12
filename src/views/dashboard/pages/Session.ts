@@ -1,3 +1,4 @@
+import moment from 'moment';
 import SessionKeystore from 'session-keystore';
 import { AlgorithmType } from './AlgorithmType';
 import { BzzFeed } from '@erebos/bzz-feed';
@@ -16,38 +17,60 @@ const keyHandler = new KeyHandler(keyStore);
 const KEY = 'xdv:drive:session';
 
 export type AlgorithmTypeString = keyof typeof AlgorithmType;
-export class DriveSession {
+export class Session {
     static KeystoreInMem = new SessionKeystore();
 
 
-    public static async resolveAndStoreDID(did: string) {
+    public static getWalletFromKeystore(keystore: KeystoreIndex, password: string) {
+        return Wallet.browserUnlock(keystore.keystore, password, Session.KeystoreInMem, keyHandler);
+    }
+
+    public static async createWallet(password: string){
+        const { uniqueId, wallet } = await Wallet.createWebWallet(
+            password,
+            this.KeystoreInMem,
+            keyHandler,
+            [
+                AlgorithmType.ED25519,
+                AlgorithmType.ES256K,
+                AlgorithmType.P256,
+                AlgorithmType.RSA
+            ]
+        );
+        await wallet.getKeyPairExports(uniqueId, 'ED25519');
+        // await wallet.getKeyPairExports(uniqueId, 'P256');
+        // await wallet.getKeyPairExports(uniqueId, 'ES256K');
+       // await wallet.getKeyPairExports(uniqueId, 'RSA');
+
+        return { id: uniqueId, wallet } as { id: String; wallet: Wallet };
+    }
+    public static async resolveAndStoreDID( did: string) {
         const user = did.split(':')[2];
         // resolve DID
-        const swarmFeed = await DriveSession.getSwarmNodeQueryable(user);
+        const swarmFeed = await Session.getSwarmNodeQueryable(user);
 
         const feedHash = await swarmFeed.bzzFeed.createManifest({
             user,
             name: did,
         });
-        const resolver = await DriveSession.createDIDResolver(
+        const resolver = await Session.createDIDResolver(
             swarmFeed,
             feedHash
         );
         const document = resolver.resolve(did) as DIDDocument;
         const pub = document.publicKey[0].publicKeyJwk;
 
-
-        await DriveSession.setSecure(
+        await Wallet.setPublicKey(
             did,
             'P256_JWK_PUBLIC',
-            JSON.stringify(pub)
+            JSON.stringify(pub) as any
         );
 
         // Get Key Store Index
         const localkeystoreIndex = KeystoreIndex.getIndex();
         const key = new KeystoreIndex();
         key.address = user;
-        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
+//        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
         key.keystore = '';
         key.created = new Date();
         key.publicKeyFromDID = pub;
@@ -62,7 +85,7 @@ export class DriveSession {
 
     }
     public static async getPublicKey(id: string, algorithm: string) {
-        return DriveSession.getPrivateKey(id, algorithm, '');
+        return Session.getPrivateKey(id, algorithm, '');
     }
     public static async getPrivateKey(id: string, algorithm: string, password?: string) {
         let pvk = '';
@@ -96,20 +119,7 @@ export class DriveSession {
         // Write value
         return keyHandler.writeSecureValue(key, value);
     }
-    static async browserUnlock(keystore: KeystoreIndex, password: string) {
-        try {
-            const base = await ethers.Wallet.fromEncryptedJson(
-                keystore.keystore,
-                password
-            );
-            return new Wallet(base.mnemonic, base);
-        } catch (e) {
-            console.log(e);
-        }
-        return null;
-    }
-
-
+    
     static getSwarmNodeClient(keypair: ec.KeyPair) {
         console.log(pubKeyToAddress(keypair.getPublic('array')))
         const user = pubKeyToAddress(keypair.getPublic('array'));

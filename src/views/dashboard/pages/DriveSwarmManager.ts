@@ -7,12 +7,12 @@ import {
     KeyConvert,
     Wallet
     } from 'xdvplatform-tools';
-import { DriveSession } from './DriveSession';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import { PartialChapter } from '@erebos/timeline';
+import { Session } from './Session';
 import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 const cbor = require('cbor-sync');
@@ -20,7 +20,6 @@ const cbor = require('cbor-sync');
 export interface PushFilesOptions {
     encrypt?: boolean;
     files: File[];
-    password: string;
     queueName: string;
     address: string;
 }
@@ -36,15 +35,12 @@ export class DriveSwarmManager {
 
     async pushFiles(options: PushFilesOptions) {
 
-        const pvk = await DriveSession.getPrivateKey(
-            options.address,
+        const kp = await this.wallet.getKeyPair(
+            this.wallet.id,
             'ES256K',
-            options.password,
+            ''
         );
-
-        const ES256k = new ec('secp256k1');
-        const kp = ES256k.keyFromPrivate(pvk);
-        const swarmFeed =  DriveSession.getSwarmNodeClient(
+        const swarmFeed =  Session.getSwarmNodeClient(
             kp);
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();

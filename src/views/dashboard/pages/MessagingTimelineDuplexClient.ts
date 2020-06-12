@@ -8,14 +8,14 @@ import { Subject } from 'rxjs';
 
 export class MessagingTimelineDuplexClient {
     constructor(
-        private swarmFeed: any, private feed: string) {
+        private swarmFeed: any, private user: string, private feedName: string) {
     }
 
     createSubject(topicName?: string) {
         // In this example we are Alice communicating with Bob
         const writer = new TimelineWriter({
             bzz: this.swarmFeed.bzzFeed,
-            feed: this.feed,
+            feed: { user: this.user, name: this.feedName},
         });
 
         const send =  (content, signature) => {
@@ -43,7 +43,8 @@ export class MessagingTimelineDuplexClient {
     subscribe() {
         const reader = new TimelineReader({
             bzz: this.swarmFeed.bzzFeed,
-            feed: this.feed,
+            feed: { user: this.user, name: this.feedName},
+
         }); // 10 seconds
         // .subscribe(chapters => {
         //     chapters.forEach(c => {

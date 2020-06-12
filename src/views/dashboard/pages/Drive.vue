@@ -53,7 +53,9 @@
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle v-text="item.address"></v-list-item-subtitle>
+              <v-list-item-subtitle
+                v-text="item.address"
+              ></v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
               <v-icon>mdi-coin</v-icon>
@@ -80,7 +82,6 @@
                       item-value="name"
                       return-object
                       single-line
-
                     ></v-select>
 
                     <v-select
@@ -359,7 +360,7 @@ import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { forkJoin, Unsubscribable } from 'rxjs';
-import { DriveSession } from './DriveSession';
+import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
@@ -404,7 +405,7 @@ export default class DriveComponent extends Vue {
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
   selectedItem = new SwarmNodeSignedContent();
-  driveSession = {};
+  session = {};
   tab = 0;
   itemsClone = [];
   search = '';
@@ -421,17 +422,16 @@ export default class DriveComponent extends Vue {
     }
   }
 
-
   async loadSession() {
     if (!this.select) return;
     this.loading = true;
     if (this.sub) {
       this.sub.unsubscribe();
     }
-    DriveSession.set(
+    Session.set(
       `did:xdv:${this.select.address}`,
       this.select.address,
-      this.select.name,
+      this.select.name
     );
 
     // // set existing wallets
@@ -442,7 +442,7 @@ export default class DriveComponent extends Vue {
     //   };
     // });
 
-    this.driveSession = DriveSession.get();
+    this.session = Session.get();
     this.selectWalletDialog = false;
     await this.loadDirectory();
 
@@ -461,7 +461,7 @@ export default class DriveComponent extends Vue {
       };
     });
 
-    if (DriveSession.has()) {
+    if (Session.has()) {
       await this.loadDirectory();
     }
     this.loading = false;
@@ -469,13 +469,12 @@ export default class DriveComponent extends Vue {
 
   loadWallets() {
     this.wallets = KeystoreIndex.getIndex().filter(
-      (i) => i.algorithm !== AlgorithmType.RSA
+      (i) => i.address
     );
     this.publicWallets = KeystoreIndex.getIndex().filter(
-      (i) => i.publicKeyFromDID
+      (i) => i.name.indexOf('did:xdv:')>-1
     );
-    
-}
+  }
 
   openShareDialog(item) {
     this.shareDialog = true;
@@ -486,7 +485,7 @@ export default class DriveComponent extends Vue {
     const ks = this.select;
     this.loading = true;
 
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    const wallet = await Session.getWalletFromKeystore(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       this.loading = false;
@@ -495,25 +494,21 @@ export default class DriveComponent extends Vue {
     this.validations.password = false;
 
     // from
-    const mySwarmKeys: ec.KeyPair = await DriveSession.getPrivateKey(
-      ks.address,
-      'ES256K',
-      this.password,
-    );
+    const keys = await wallet.getKeyPair(ks.keystore, 'ES256K', this.password);
 
-   // user
-    const userKp = await DriveSession.getPublicKey(
+    // user
+    const userKp = await Wallet.getPublicKey(
       this.shareInfo.recipients.name,
-      'P256_JWK_PUBLIC',
+      'P256_JWK_PUBLIC'
     );
 
-    const swarmFeed = DriveSession.getSwarmNodeClient(mySwarmKeys);
-    const messageIO = new MessageIO(mySwarmKeys, userKp, swarmFeed);
+    const swarmFeed = Session.getSwarmNodeClient(keys);
+    const messageIO = new MessageIO(keys, userKp, swarmFeed);
 
     await messageIO.sendEncryptedCommPayload(
       this.shareInfo.recipients.address,
       this.selectedDocument.item,
-      this.selectedDocument.item.txs,
+      this.selectedDocument.item.txs
     );
 
     this.loading = false;
@@ -529,16 +524,16 @@ export default class DriveComponent extends Vue {
     const ks = this.select;
     this.loading = true;
 
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
+    const wallet = await Session.getWalletFromKeystore(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       return;
     }
     this.validations.password = false;
 
-    const kp = wallet.getES256K();
-    const swarmFeed =  DriveSession.getSwarmNodeClient(kp);
-    DriveSession.set(`did:xdv:${swarmFeed.user}`, swarmFeed.user, ks.name);
+    const keys = await wallet.getKeyPair(ks.keystore, 'ES256K', this.password);
+    const swarmFeed = Session.getSwarmNodeClient(keys);
+    Session.set(`did:xdv:${swarmFeed.user}`, swarmFeed.user, ks.name);
 
     this.loading = false;
     this.selectWalletDialog = false;
@@ -558,7 +553,8 @@ export default class DriveComponent extends Vue {
 
   async loadDirectory() {
     this.loading = false;
-    const swarmFeed = DriveSession.getSwarmNodeQueryable(this.select.address);
+    if (!this.select) return;
+    const swarmFeed = Session.getSwarmNodeQueryable(this.select.address);
 
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
@@ -582,7 +578,10 @@ export default class DriveComponent extends Vue {
     this.items = [
       {
         type: 'did',
-        didReference: { did: 'did:xdv:' + swarmFeed.user, address: swarmFeed.user },
+        didReference: {
+          did: 'did:xdv:' + swarmFeed.user,
+          address: swarmFeed.user,
+        },
         item: content,
         action: moment(content.created).fromNow(),
         headline: content.id,
@@ -595,28 +594,32 @@ export default class DriveComponent extends Vue {
       user: swarmFeed.user,
       name: 'tx-document-tree',
     });
-   this.sub = await DriveSwarmManager.subscribe(swarmFeed, queue, (content) => {
-      console.log(content);
-      const item = content.metadata.map((reference) => {
-        const s = ethers.utils.joinSignature({
-          r: '0x' + reference.signature.r,
-          s: '0x' + reference.signature.s,
-          recoveryParam: reference.signature.recoveryParam,
+    this.sub = await DriveSwarmManager.subscribe(
+      swarmFeed,
+      queue,
+      (content) => {
+        console.log(content);
+        const item = content.metadata.map((reference) => {
+          const s = ethers.utils.joinSignature({
+            r: '0x' + reference.signature.r,
+            s: '0x' + reference.signature.s,
+            recoveryParam: reference.signature.recoveryParam,
+          });
+          return {
+            item: { txs: content.txs, reference },
+            type: 'file_document',
+            action: moment(reference.lastModified).fromNow(),
+            title: reference.name,
+            headline: reference.contentType,
+            subtitle: `hash ${reference.hash.replace(
+              '0x',
+              ''
+            )} firma ${s.replace('0x', '')}`,
+          };
         });
-        return {
-          item: { txs: content.txs, reference },
-          type: 'file_document',
-          action: moment(reference.lastModified).fromNow(),
-          title: reference.name,
-          headline: reference.contentType,
-          subtitle: `hash ${reference.hash.replace('0x', '')} firma ${s.replace(
-            '0x',
-            ''
-          )}`,
-        };
-      });
-      this.items = [...this.items, ...item] as any[];
-    });
+        this.items = [...this.items, ...item] as any[];
+      }
+    );
   }
 
   close() {
@@ -627,8 +630,7 @@ export default class DriveComponent extends Vue {
   async createDocumentNode() {
     const ks = this.select;
     this.loading = true;
-    const wallet = await DriveSession.browserUnlock(ks, this.password);
-    //    const wallet = await this.browserUnlock(ks, this.password);
+    const wallet = await Session.getWalletFromKeystore(ks, this.password);
     if (!wallet) {
       this.validations.password = 'Clave invalida';
       this.loading = false;
@@ -637,10 +639,9 @@ export default class DriveComponent extends Vue {
     this.validations.password = false;
     this.loading = true;
 
-    const driveManager = new DriveSwarmManager(wallet, DriveSession.get());
+    const driveManager = new DriveSwarmManager(wallet, Session.get());
     await driveManager.pushFiles({
       address: ks.address,
-      password: this.password,
       files: this.files,
       queueName: 'documents',
     });
