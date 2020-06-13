@@ -20,6 +20,7 @@
           multiple
           hide-details
           @input="addSub"
+          @change="saveSelection"
           hide-selected
           item-text="name"
           return-object
@@ -135,7 +136,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-tabs v-model="tab"  align-with-title>
+          <v-tabs v-model="tab" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab v-for="item in activeSubscriptions" :key="item.title">
               {{ item.title }}
@@ -170,7 +171,7 @@
                   ></v-list-item-action-text>
                   <v-icon
                     @click="openDownloadDialog(item)"
-                    v-if="!active"
+                    v-if="!active && multiselect.length > 0"
                     color="green lighten-1"
                   >
                     mdi-download
@@ -261,31 +262,35 @@ export default class MessagingComponent extends Vue {
     },
   };
   search = '';
-  multiselect = [];
+  multiselect: KeystoreIndex[] = [];
   subscriptions = [];
   activeSubscriptions: any[] = [];
   items = [];
   selectWalletDialog = false;
-  select: KeystoreIndex = null;
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
-tab = 0;
+  tab = 0;
   async mounted() {
     this.loadWallets();
     this.multiselect = [];
-    // this.multiselect = [this.wallets[0]];
+
+    if (localStorage.getItem('xdv:messaging:currentWallet')) {
+      const ks = JSON.parse(
+        localStorage.getItem('xdv:messaging:currentWallet')
+      );
+      this.multiselect.push(ks);
+    }
 
     if (localStorage.getItem('xdv:messaging:subs')) {
       await this.loadSubscriptions();
     }
+
     this.loading = true;
     this.loading = false;
   }
 
   loadWallets() {
-    this.wallets = KeystoreIndex.getIndex().filter(
-      (i) => i.algorithm !== 'RSA'
-    );
+    this.wallets = KeystoreIndex.getIndex();
   }
 
   openDownloadDialog(item) {
@@ -297,14 +302,6 @@ tab = 0;
   openShareDialog(item) {
     this.shareDialog = true;
     this.selectedDocument = item;
-  }
-
-  readMagicLink(link) {
-    try {
-      this.readCopyDIDReference(link);
-    } catch (e) {
-      // no - op
-    }
   }
 
   async addSub() {
@@ -364,6 +361,12 @@ tab = 0;
     }
   }
 
+  saveSelection() {
+    localStorage.setItem(
+      'xdv:messaging:currentWallet',
+      JSON.stringify(this.multiselect[0])
+    );
+  }
   async loadSubscriptions() {
     this.loading = true;
 
@@ -393,10 +396,13 @@ tab = 0;
           subscription.unsubscribe();
           this.activeSubscriptions.splice(index);
         },
-        title: `${subscription.from.substring(
+        title: `${subscription.user.substring(
           0,
           20
-        )}... -> ${subscription.name}`,
+        )}...${subscription.user.substring(
+          subscription.user.length - 10,
+          subscription.user.length
+        )}`,
       });
     });
 
@@ -404,58 +410,65 @@ tab = 0;
   }
   async changeWallet(i: KeystoreIndex) {
     this.selectWalletDialog = true;
-    this.select = i;
+    this.multiselect = [];
+    this.multiselect.push(i);
   }
 
   async download() {
-    const ks = this.select;
+    const ks = this.multiselect[0];
     this.loading = true;
 
-    const wallet = await Session.getWalletFromKeystore(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      return;
+    try {
+      const wallet = await Session.getWalletFromKeystore(ks, this.password);
+      if (!wallet) {
+        this.validations.password = 'Clave invalida';
+        this.loading = false;
+        return;
+      }
+      this.validations.password = false;
+      const item = this.selectedDocument.item.payload;
+
+      // user
+      const keypair = await wallet.getKeyPair(
+        ks.keystore,
+        'ES256K',
+        this.password
+      );
+      // user
+      const kpSuite = await wallet.getKeyPairExports(ks.keystore, 'P256');
+      const swarmFeed = await Session.getSwarmNodeClient(keypair);
+
+      // fetch and decrypt
+      // get document from reference
+      const encrypted = await swarmFeed.bzz.downloadData(item.ref, {
+        mode: 'raw',
+      });
+      let res = await JWE.createDecrypt(
+        await JWK.asKey(kpSuite.P256.jwk, 'jwk')
+      ).decrypt(encrypted.cipher);
+
+      // is a cbor content
+      // const verfied = await JWTService.verify(
+      //   item.did.publicKey[0].publicKeyJwk,
+      //   res,
+      //   swarmFeed.user
+      // );
+      const obj = cbor.decode(res.plaintext);
+      const file = new File([base64.decode(obj.content)], obj.name, {
+        type: obj.contentType,
+      });
+    this.selectedDocument.item.downloaded = obj;
+
+      await this.downloadFile(file, file.name);
+    } catch (e) {
+      console.log(e);
     }
-    this.validations.password = false;
-    const item = this.selectedDocument.item.payload;
-
-    // resolve DID
-    const keypair = wallet.getES256K();
-    const swarmFeed = await Session.getSwarmNodeClient(keypair);
-
-    const kp = wallet.getP256();
-    const kpSuite = await KeyConvert.getP256(kp);
-
-    // const resolver = await Session.createDIDResolver(
-    //   swarmFeed,
-    //   item.feed
-    // );
-
-    // const did = resolver.resolve(`did:xdv:${this.selectedDocument.item.address}`) as DIDDocument;
-    // const pub = did.publicKey[0].publicKeyJwk;
-
-    // fetch and decrypt
-    // get document from reference
-
-    const document = await swarmFeed.bzz.downloadData(item.ref);
-    const res = await JWE.createDecrypt(
-      await JWK.asKey(kpSuite.jwk, 'jwk')
-    ).decrypt(document.cipher);
-    // const verfied = await JWTService.verify(
-    //   item.did.publicKey[0].publicKeyJwk,
-    //   res,
-    //   swarmFeed.user
-    // );
-    var a = new TextDecoder('utf-8').decode(res.plaintext);
-    const obj = JSON.parse(a);
-    const file = new File([base64.decode(obj.content)], obj.name, {
-      type: obj.contentType,
-    });
-
-    await this.downloadFile(file, file.name);
 
     this.shareDialog = false;
     this.loading = false;
+     
+
+  
   }
 
   async downloadFile(blob: Blob, name: string) {
@@ -472,7 +485,7 @@ tab = 0;
     }
   }
   async unlock() {
-    const ks = this.select;
+    const ks = this.multiselect[0];
     this.loading = true;
 
     const wallet = await Session.getWalletFromKeystore(ks, this.password);

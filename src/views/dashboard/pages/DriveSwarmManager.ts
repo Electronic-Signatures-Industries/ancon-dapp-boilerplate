@@ -40,7 +40,7 @@ export class DriveSwarmManager {
             'ES256K',
             ''
         );
-        const swarmFeed =  Session.getSwarmNodeClient(
+        const swarmFeed = Session.getSwarmNodeClient(
             kp);
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();
@@ -79,6 +79,10 @@ export class DriveSwarmManager {
         const queueHash = await swarmFeed.bzzFeed.createManifest({
             user: swarmFeed.user,
             name: moment().unix().toString()
+        });
+
+        const documentSignatures = contents.map(i => {
+            return { hash: i.reference.hash, signature: i.reference.signature };
         })
 
         console.log({
@@ -90,9 +94,8 @@ export class DriveSwarmManager {
         let directory = {};
         contents.forEach(i => {
             const cborRef = {
-                [`${i.reference.hash}/cbor`]: {
+                [`${i.reference.hash}`]: {
                     data: i.ref,
-                    contentType: 'application/cbor'
                 }
             }
             // console.log(item)
@@ -126,7 +129,10 @@ export class DriveSwarmManager {
         const refUnderlyingHash = await swarmFeed.bzz.uploadData({
             block: current + 1,
             rootHash: current === 1 ? parentHash : rootHash,
-            parentHash: 0,
+            parentHash,
+            xdv: 'test',
+            version: '1.0.0-rc.1',
+            documentSignatures,
             txs: underlyingHash,
             metadata: contents.map(i => i.reference),
             timestamp: moment().unix()

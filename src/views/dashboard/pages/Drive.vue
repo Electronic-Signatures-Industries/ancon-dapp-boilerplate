@@ -508,7 +508,8 @@ export default class DriveComponent extends Vue {
     await messageIO.sendEncryptedCommPayload(
       this.shareInfo.recipients.address,
       this.selectedDocument.item,
-      this.selectedDocument.item.txs
+      this.selectedDocument.item.txs,
+      this.selectedDocument.item.index
     );
 
     this.loading = false;
@@ -599,14 +600,14 @@ export default class DriveComponent extends Vue {
       queue,
       (content) => {
         console.log(content);
-        const item = content.metadata.map((reference) => {
+        const item = content.metadata.map((reference, index) => {
           const s = ethers.utils.joinSignature({
             r: '0x' + reference.signature.r,
             s: '0x' + reference.signature.s,
             recoveryParam: reference.signature.recoveryParam,
           });
           return {
-            item: { txs: content.txs, reference },
+            item: { txs: content.txs, reference, index },
             type: 'file_document',
             action: moment(reference.lastModified).fromNow(),
             title: reference.name,

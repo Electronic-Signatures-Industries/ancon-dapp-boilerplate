@@ -26,7 +26,7 @@ export class MessageIO {
 
     }
 
-    async sendEncryptedCommPayload(userAddress: string, documentPayload: any, hash: string) {
+    async sendEncryptedCommPayload(userAddress: string, documentPayload: any, hash: string, entry: number) {
 
         const kpSuite = await KeyConvert.getP256(this.keypair);
 
@@ -34,27 +34,32 @@ export class MessageIO {
         const ref = await this.swarmFeed.bzz.downloadData(
             hash
         );
-
         // download ref raw
-        const document = await this.swarmFeed.bzz.download(
+        const index: any = await this.swarmFeed.bzz.downloadData(
             ref.entries[0].hash,
             {
                 mode: 'raw'
             }
         );
+        const document: any = await this.swarmFeed.bzz.download(
+            index.entries[entry].hash,
+            {
+                mode: 'raw'
+            }
+        );
+        let buf = await document.arrayBuffer();
 
-        let payload = new Response(document);
-        let buf = await payload.arrayBuffer();
         // is a cbor content
         const encDoc = await JWE
             .createEncrypt([this.recipientKeypair])
-            .update(Buffer.from(buf))
+            .update(buf)
             .final();
 
         // upload
         const encDocUrl = await this.swarmFeed.bzz.uploadData({ cipher: encDoc });
 
         // signed message from user
+        documentPayload.txs = undefined;
         const signed = await JWTService.sign(kpSuite.pem,
             {
                 ...documentPayload,

@@ -485,11 +485,12 @@ export default class WalletComponent extends Vue {
     passphrase: string
   ) {
     // const swarmKeypair = await wallet.getKeyPair(ks.keystore, 'ES256K');
-    const keypairExports = await wallet.getKeyPairExports(ks.keystore, 'P25');
+    const keypairExports = await wallet.getKeyPairExports(ks.keystore, 'P256');
     const swarmFeed = Session.getSwarmNodeClient(swarmKeypair);
     const session = `did:xdv:${swarmFeed.user}`;
     const did = new DIDDocument();
     const pub = { owner: swarmFeed.user, ...keypairExports.P256.ldJsonPublic };
+    pub.publicKeyJwk.d = undefined;
     did.id = session;
     did.publicKey = [pub];
     did.authentication = [pub as any];
