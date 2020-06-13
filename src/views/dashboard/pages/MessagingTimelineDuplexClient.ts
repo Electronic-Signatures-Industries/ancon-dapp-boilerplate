@@ -11,47 +11,43 @@ export class MessagingTimelineDuplexClient {
         private swarmFeed: any, private user: string, private feedName: string) {
     }
 
-    createSubject(topicName?: string) {
-        // In this example we are Alice communicating with Bob
+    /**
+     * Create subject
+     */
+    createSubject() {
         const writer = new TimelineWriter({
             bzz: this.swarmFeed.bzzFeed,
             feed: { user: this.user, name: this.feedName},
         });
 
         const send =  (content, signature) => {
-
-
             const pushMessage =   writer.createAddChapter({
                 author: this.swarmFeed.user,
                 type: 'application/json',
                 protocol: 'timeline',
                 content,
-
                 signature,
                 version: '1.0.0',
                 timestamp: moment().unix()
             });
 
          pushMessage({ content })
-//            await writer.setLatestChapterID(pushMessage.id)
         }
 
         return { send };
     }
 
 
+    /**
+     * Subscribe
+     */
     subscribe() {
         const reader = new TimelineReader({
             bzz: this.swarmFeed.bzzFeed,
             feed: { user: this.user, name: this.feedName},
 
-        }); // 10 seconds
-        // .subscribe(chapters => {
-        //     chapters.forEach(c => {
-        //         console.log(`New message from Alice: ${c.content}`)
-        //     })
-        // })
-
+        });
+ 
         return reader;
     }
 

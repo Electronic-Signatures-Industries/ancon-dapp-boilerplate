@@ -121,8 +121,8 @@
                   text
                   v-if="receivedUI"
                   :disabled="loading"
-                  @click="addSub"
-                  >Add</v-btn
+                  @click="login"
+                  >OK</v-btn
                 >
 
                 <v-btn
@@ -217,17 +217,15 @@ import { MiddlewareOptions, XDVMiddleware } from '../../../libs';
 import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
 import { JWE, JWK } from 'node-jose';
-const eccrypto = require('eccrypto');
-
 import { arrayify, BigNumber, base64 } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
 import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 import { PartialChapter } from '@erebos/timeline';
 const bs58 = require('bs58');
-import { MessageIO } from './MessageIO';
+import { SubscriptionManager } from './SubscriptionManager';
 import { DriveSwarmManager } from './DriveSwarmManager';
 const cbor = require('cbor-sync');
 import { encrypt, decrypt, PrivateKey } from 'eciesjs';
@@ -270,6 +268,8 @@ export default class MessagingComponent extends Vue {
   wallets: KeystoreIndex[] = [];
   solidoProps: XDVMiddleware | MiddlewareOptions;
   tab = 0;
+  passphraseSubject: Subject<any> = new Subject();
+
   async mounted() {
     this.loadWallets();
     this.multiselect = [];
@@ -279,6 +279,7 @@ export default class MessagingComponent extends Vue {
         localStorage.getItem('xdv:messaging:currentWallet')
       );
       this.multiselect.push(ks);
+      Session.setWallet(ks.keystore, this.onAskPassphrase);
     }
 
     if (localStorage.getItem('xdv:messaging:subs')) {
@@ -304,39 +305,34 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
-  async addSub() {
-    if (this.multiselect.length === 2) {
-      if (this.shareDialog === false && this.password.length === 0) {
-        this.shareDialog = true;
-        return;
-      }
+  onAskPassphrase(onMatch: any) {
+    this.shareDialog = true;
 
+    return new Promise((resolve, reject) => {
+      this.passphraseSubject.subscribe((i) => {
+        if (onMatch(i)) {
+          resolve(true);
+          return;
+        }
+
+        this.validations.password = 'Invalid passphrase';
+        this.loading = false;
+        reject('Invalid passphrase');
+      });
+    });
+  }
+
+  login() {
+    this.passphraseSubject.next(this.password);
+  }
+  async addSub() {
+    const { wallet } = Session;
+    if (this.multiselect.length === 2) {
+       
       const ks = this.multiselect[0];
       const from = this.multiselect[1];
       this.loading = true;
-
-      const wallet = await Session.getWalletFromKeystore(ks, this.password);
-      if (!wallet) {
-        this.validations.password = 'Clave invalida';
-        this.loading = false;
-        return;
-      }
-      this.validations.password = false;
-
-      const swarmFeed = await Session.getSwarmNodeQueryable(ks.address);
-
-      // from
-      const user = await Wallet.getPublicKey(from.name, 'P256_JWK_PUBLIC');
-
-      // user
-      const keys = await wallet.getKeyPair(
-        ks.keystore,
-        'ES256K',
-        this.password
-      );
-
-      this.loading = false;
-      this.shareDialog = false;
+      
 
       // store subscriptions
       const existing = JSON.parse(
@@ -372,7 +368,7 @@ export default class MessagingComponent extends Vue {
 
     // resolve DID
     const self = this;
-    const subs = MessageIO.loadSubscriptions((m: any) => {
+    const subs = Session.subscriptions.loadSubscriptions((m: any) => {
       const decoded = JWTService.decodeWithSignature(m.content);
 
       self.items.push({
@@ -418,34 +414,18 @@ export default class MessagingComponent extends Vue {
     const ks = this.multiselect[0];
     this.loading = true;
 
-    try {
-      const wallet = await Session.getWalletFromKeystore(ks, this.password);
-      if (!wallet) {
-        this.validations.password = 'Clave invalida';
-        this.loading = false;
-        return;
-      }
-      this.validations.password = false;
+    const { wallet } = Session;
+    try { 
       const item = this.selectedDocument.item.payload;
 
       // user
-      const keypair = await wallet.getKeyPair(
-        ks.keystore,
-        'ES256K',
-        this.password
-      );
-      // user
-      const kpSuite = await wallet.getKeyPairExports(ks.keystore, 'P256');
-      const swarmFeed = await Session.getSwarmNodeClient(keypair);
-
+      const swarmFeed = await wallet.getSwarmNodeClient(ks.address)
       // fetch and decrypt
       // get document from reference
       const encrypted = await swarmFeed.bzz.downloadData(item.ref, {
         mode: 'raw',
       });
-      let res = await JWE.createDecrypt(
-        await JWK.asKey(kpSuite.P256.jwk, 'jwk')
-      ).decrypt(encrypted.cipher);
+      let res = await wallet.decryptJWE('P256', encrypted);
 
       // is a cbor content
       // const verfied = await JWTService.verify(
@@ -457,7 +437,7 @@ export default class MessagingComponent extends Vue {
       const file = new File([base64.decode(obj.content)], obj.name, {
         type: obj.contentType,
       });
-    this.selectedDocument.item.downloaded = obj;
+      this.selectedDocument.item.downloaded = obj;
 
       await this.downloadFile(file, file.name);
     } catch (e) {
@@ -466,9 +446,6 @@ export default class MessagingComponent extends Vue {
 
     this.shareDialog = false;
     this.loading = false;
-     
-
-  
   }
 
   async downloadFile(blob: Blob, name: string) {
@@ -483,23 +460,6 @@ export default class MessagingComponent extends Vue {
     } catch (e) {
       throw new Error('No se pudo convertir el archivo');
     }
-  }
-  async unlock() {
-    const ks = this.multiselect[0];
-    this.loading = true;
-
-    const wallet = await Session.getWalletFromKeystore(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      return;
-    }
-    this.validations.password = false;
-
-    Session.set(`did:xdv:${ks.address}`, ks.address, ks.name);
-
-    this.loading = false;
-    this.selectWalletDialog = false;
-    //    this.loadSubscriptions();
   }
 }
 </script>
