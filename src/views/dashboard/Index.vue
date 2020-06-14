@@ -89,7 +89,7 @@ export default class DashboardIndex extends Vue {
             networkId: self.onboard.getState().network,
             account: self.onboard.getState().address,
           });
-          SolidoSingleton.setProps(pro  ps);
+          SolidoSingleton.setProps(props);
           self.canInit = init;
           self.$router.push({ path: 'wallet' });
         }, 800);
