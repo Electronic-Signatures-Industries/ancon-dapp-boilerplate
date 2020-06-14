@@ -1,6 +1,4 @@
-import { initializeEthrDID, initializeOffchainEthrDID } from './ethrdid';
-import { initIPFS, initSwarm } from './userconfig';
-import { Issuer } from 'did-jwt-vc';
+import { Issuer } from './did-vc-jwt-sep256k1';
 import { merge } from 'rxjs';
 import { Resolver } from 'did-resolver';
 import { setupSolido, SetupSolidoOptions } from './setupSolido';
@@ -9,7 +7,6 @@ import {
   IpldClient,
   DIDDocumentBuilder,
   DIDMethodXDV,
-  Pubsub,
 } from 'xdvplatform-tools';
 
 export interface StorageMiddleware {
@@ -54,45 +51,45 @@ export interface XDVMiddleware {
 
 export const initXdvMiddleware = async options => {
 
-  const config = {
-    Addresses: {
-      Swarm: [
-        "/dns4/xdvmessaging.auth2factor.com/tcp/443/wss/p2p-webrtc-star/",
-        '/ip4/0.0.0.0/tcp/0',
-        '/ip4/190.34.226.207/tcp/4001/p2p/QmWquNJVDxGEefcyPLTULKwkgJEmMDjgurokma9Kwa7BME'
-      ],
-      API: '/dns4/ipfs.auth2factor.com/tcp/443',
-      Gateway: '/dns4/ipfs.infura.io/tcp/5001'
-    },
-    Discovery: {
-      webRTCStar: {
-        Enabled: false
-      }
-    },
-    "Bootstrap": [
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-        "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
-    ],
-    AutoNAT: {},
-    Pubsub: {
-      Router: "gossipsub"
-    },
-    EXPERIMENTAL: {
-      pubsub: false
-    }
+  // const config = {
+  //   Addresses: {
+  //     Swarm: [
+  //       "/dns4/xdvmessaging.auth2factor.com/tcp/443/wss/p2p-webrtc-star/",
+  //       '/ip4/0.0.0.0/tcp/0',
+  //       '/ip4/190.34.226.207/tcp/4001/p2p/QmWquNJVDxGEefcyPLTULKwkgJEmMDjgurokma9Kwa7BME'
+  //     ],
+  //     API: '/dns4/ipfs.auth2factor.com/tcp/443',
+  //     Gateway: '/dns4/ipfs.infura.io/tcp/5001'
+  //   },
+  //   Discovery: {
+  //     webRTCStar: {
+  //       Enabled: false
+  //     }
+  //   },
+  //   "Bootstrap": [
+  //       "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+  //       "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+  //       "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+  //       "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+  //       "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+  //   ],
+  //   AutoNAT: {},
+  //   Pubsub: {
+  //     Router: "gossipsub"
+  //   },
+  //   EXPERIMENTAL: {
+  //     pubsub: false
+  //   }
 
-  }
-  const ipld = new IpldClient();
-  const comm = new Pubsub(ipld);
-  // sawait comm.initialize(config);
+  // }
+  // const ipld = new IpldClient();
+  // const comm = new Pubsub(ipld);
+  // // sawait comm.initialize(config);
 
   return {
-    ipld,
-    didxdv: new DIDMethodXDV(ipld),
-    comm,
+    // ipld,
+    // didxdv: new DIDMethodXDV(ipld),
+    // comm,
     offchain: true
   };
 }

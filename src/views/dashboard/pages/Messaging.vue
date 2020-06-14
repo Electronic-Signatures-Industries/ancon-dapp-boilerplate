@@ -5,6 +5,7 @@
       v-if="loading"
       color="indigo"
     ></v-progress-linear>
+    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-card class="mx-auto">
       <v-toolbar color="deep-teal accent-4" dark>
         <v-toolbar-title>Subscriptions</v-toolbar-title>
@@ -112,7 +113,6 @@
                 <v-btn
                   color="blue darken-1"
                   text
-                  :disabled="loading"
                   @click="shareDialog = false"
                   >Cancel</v-btn
                 >
@@ -120,7 +120,6 @@
                   color="blue darken-1"
                   text
                   v-if="receivedUI"
-                  :disabled="loading"
                   @click="login"
                   >OK</v-btn
                 >
@@ -305,19 +304,12 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
-  onAskPassphrase(onMatch: any) {
+  onAskPassphrase() {
     this.shareDialog = true;
 
     return new Promise((resolve, reject) => {
-      this.passphraseSubject.subscribe((i) => {
-        if (onMatch(i)) {
-          resolve(true);
-          return;
-        }
-
-        this.validations.password = 'Invalid passphrase';
-        this.loading = false;
-        reject('Invalid passphrase');
+      this.passphraseSubject.subscribe(p => {
+        resolve(p);
       });
     });
   }
@@ -425,7 +417,7 @@ export default class MessagingComponent extends Vue {
       const encrypted = await swarmFeed.bzz.downloadData(item.ref, {
         mode: 'raw',
       });
-      let res = await wallet.decryptJWE('P256', encrypted);
+      let [err, res] = await wallet.decryptJWE('P256', encrypted);
 
       // is a cbor content
       // const verfied = await JWTService.verify(

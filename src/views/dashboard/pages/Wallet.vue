@@ -5,6 +5,8 @@ w<template>
       v-if="loading"
       color="blue accent-4"
     ></v-progress-linear>
+    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
+
     <v-card class="mx-auto" tile>
       <v-toolbar color="blue" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
@@ -206,9 +208,7 @@ w<template>
                       <v-expansion-panel-content>
                         <v-row v-if="walletType === 'rsa'">
                           <v-col cols="12" md="12">
-                            <v-textarea
-                              v-model="keystoreIndexItem.keystore.cert"
-                            ></v-textarea>
+                            <v-textarea v-model="cert"></v-textarea>
                           </v-col>
                         </v-row>
 
@@ -277,9 +277,7 @@ w<template>
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="close"
-                  >Cancel</v-btn
-                >
+                <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
                 <v-btn
                   color="blue darken-1"
                   :disabled="!valid"
@@ -287,6 +285,39 @@ w<template>
                   @click="save"
                   >Save</v-btn
                 >
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog v-model="loginDialog" max-width="500px">
+            <v-card>
+              <v-card-title>
+                <span class="headline">Passphrase</span>
+              </v-card-title>
+
+              <v-card-text>
+                <v-form v-model="form" autocomplete="off">
+                  <v-row>
+                    <v-col cols="12" md="12">
+                      <v-text-field
+                        required
+                        v-model="password"
+                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                        :type="showPassword ? 'text' : 'password'"
+                        class="input-group--focused"
+                        @click:append="showPassword = !showPassword"
+                        :error="validations.password"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-form>
+              </v-card-text>
+
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text @click="loginDialog = false"
+                  >Cancel</v-btn
+                >
+                <v-btn color="blue darken-1" text @click="login">OK</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -360,10 +391,9 @@ import { KeystoreIndex } from './KeystoreIndex';
 import { ethers } from 'ethers';
 import moment from 'moment';
 import { Session } from './Session';
-import { JWK } from 'node-jose';
 import { pubKeyToAddress } from '@erebos/keccak256';
-import { AlgorithmType } from './AlgorithmType';
 import copy from 'copy-to-clipboard';
+import { Subject } from 'rxjs';
 
 @Component({
   watch: {
@@ -381,6 +411,9 @@ import copy from 'copy-to-clipboard';
   },
 })
 export default class WalletComponent extends Vue {
+  loginDialog: boolean = false;
+  alertMessage = '';
+  alertType = 'warning';
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -404,6 +437,8 @@ export default class WalletComponent extends Vue {
   showPassword = false;
   password = '';
   mnemonic = [];
+  cert = '';
+  form = {};
   selectedPanel = 0;
   itemsClone = [];
   tab = 0;
@@ -414,10 +449,25 @@ export default class WalletComponent extends Vue {
     },
   ];
 
+  passphraseSubject: Subject<any> = new Subject();
+
+  onAskPassphrase() {
+    this.loginDialog = true;
+debugger
+    return new Promise((resolve, reject) => {
+      debugger
+      this.passphraseSubject.subscribe((p) => {
+        resolve(p);
+      });
+    });
+  }
+
+  login() {
+    this.passphraseSubject.next(this.password);
+  }
   async mounted() {
     this.loading = true;
     this.loadWallets();
-    this.keystoreIndexItem.keystore = {};
     this.loading = false;
     this.walletType = 'rsa';
   }
@@ -453,7 +503,9 @@ export default class WalletComponent extends Vue {
     this.keystoreIndexItem = new KeystoreIndex();
     this.loadWallets();
     this.loading = false;
-    //   this.model = { ...item };
+    this.walletDescription = '';
+    this.password = '';
+    this.confirmPassword = '';
   }
   close(item) {
     this.dialog = false;
@@ -484,17 +536,15 @@ export default class WalletComponent extends Vue {
     wallet: Wallet,
     passphrase: string
   ) {
-    // const swarmKeypair = await wallet.getKeyPair(ks.keystore, 'ES256K');
-    const keypairExports = await wallet.getKeyPairExports(ks.keystore, 'P256');
-    const swarmFeed = Session.getSwarmNodeClient(swarmKeypair);
+    const keypairExports = await wallet.getPrivateKeyExports('P256');
+    const swarmFeed = await wallet.getSwarmNodeClient(ks.address, 'ES256K', 'https://ipfs.auth2factor.com/');
     const session = `did:xdv:${swarmFeed.user}`;
     const did = new DIDDocument();
-    const pub = { owner: swarmFeed.user, ...keypairExports.P256.ldJsonPublic };
+    const pub = { owner: swarmFeed.user, ...keypairExports.ldJsonPublic };
     pub.publicKeyJwk.d = undefined;
     did.id = session;
     did.publicKey = [pub];
     did.authentication = [pub as any];
-    // debugger;
     const didIndex = { ...did, tag: 'main_did' };
     const references = {
       'index.json': didIndex,
@@ -507,7 +557,6 @@ export default class WalletComponent extends Vue {
     });
 
     Session.set(did.id, swarmFeed.user, ks.name);
-    this.loading = false;
   }
 
   async createKeys() {
@@ -517,49 +566,76 @@ export default class WalletComponent extends Vue {
       this.walletDescription.length > 0 &&
       this.password === this.confirmPassword
     ) {
-      let { id, wallet } = await Session.createWallet(this.password);
+      const wallet = new Wallet();
       let mnemonic = wallet.mnemonic;
       let keys;
       let keystoreIndexItem: KeystoreIndex;
-
-      if (this.walletType === 'default') {
-        keystoreIndexItem = {
-          created: new Date(),
-          name: this.walletDescription,
-          keystore: id,
-        } as KeystoreIndex;
-
-        const keys = await wallet.getKeyPair(id, 'ES256K', this.password);
-
-        keystoreIndexItem.address = pubKeyToAddress(keys.getPublic('array'));
-        await this.createDID(keystoreIndexItem, keys, wallet, this.password);
-      }
-      this.mnemonic = mnemonic.split(' ');
-
-      if (this.walletType === 'rsa') {
-        const rsaKeyExports = await KeyConvert.getX509RSA(keys);
-        const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
-          rsaKeyExports.pemAsPrivate,
-          rsaKeyExports.pemAsPublic,
-          this.x509Info
+      try {
+        this.alertMessage = 'Creating keys...please wait';
+        this.alertType = 'info';
+        let { id } = await wallet.createWallet(
+          this.password,
+          this.onAskPassphrase,
+          mnemonic
         );
+        this.passphraseSubject.next(this.password);
 
-        await Session.setSecure(
-          `${this.walletDescription}:import:X509`,
-          'RSA',
-          rsaKeyExports.pemAsPrivate
-        );
+        if (this.walletType === 'default') {
+          keystoreIndexItem = {
+            created: new Date(),
+            name: this.walletDescription,
+            keystore: id,
+          } as KeystoreIndex;
 
-        keystoreIndexItem = {
-          created: new Date(),
-          name: this.walletDescription,
-          keystore: id,
-        } as KeystoreIndex;
+          this.alertMessage = 'Creating DID...please wait';
+          this.alertType = 'info';
+          const keys = await wallet.getPrivateKey('ES256K');
+          keystoreIndexItem.address = pubKeyToAddress(keys.getPublic('array'));
+          await this.createDID(keystoreIndexItem, keys, wallet, this.password);
+        }
+        this.mnemonic = wallet.mnemonic.split(' ');
+
+        if (this.walletType === 'rsa') {
+          const keys = await Wallet.getRSA256Standalone()
+          const rsaKeyExports = await KeyConvert.getX509RSA(keys);
+          const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
+            rsaKeyExports.pemAsPrivate,
+            rsaKeyExports.pemAsPublic,
+            this.x509Info
+          );
+
+          await Session.wallet.setPublicKey(
+            `import:X509:${this.walletDescription}`,
+            'RSA',
+            rsaKeyExports.pemAsPrivate
+          );
+
+          keystoreIndexItem = {
+            created: new Date(),
+            name: this.walletDescription,
+            keystore: `:import:X509:${this.walletDescription}`,
+          } as KeystoreIndex;
+        }
+        this.loading = false;
+        this.valid = true;
+        this.keystoreIndexItem = keystoreIndexItem;
+        this.selectedPanel = 1;
+
+        this.alertMessage = 'Completed';
+        this.alertType = 'info';
+        setTimeout(() => {
+          this.alertMessage = '';
+        }, 1500);
+      } catch (e) {
+        console.log(e);
+        this.alertMessage = e.message;
+        this.alertType = 'error';
+        setTimeout(() => {
+          this.loading = false;
+          this.dialog = false;
+          this.alertMessage = '';
+        }, 1500);
       }
-      this.loading = false;
-      this.valid = true;
-      this.keystoreIndexItem = keystoreIndexItem;
-      this.selectedPanel = 1;
     }
   }
 

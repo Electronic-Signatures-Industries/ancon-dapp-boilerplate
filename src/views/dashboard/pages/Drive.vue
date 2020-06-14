@@ -5,6 +5,7 @@
       v-if="loading"
       color="pink"
     ></v-progress-linear>
+    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
     <v-card class="mx-auto">
       <v-toolbar color="pink" dark>
@@ -364,7 +365,6 @@ import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
-import { MessageIO } from './MessageIO';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import { ec } from 'elliptic';
 import { async } from 'rxjs/internal/scheduler/async';

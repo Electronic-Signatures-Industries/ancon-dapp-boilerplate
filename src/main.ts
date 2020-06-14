@@ -26,10 +26,6 @@ Vue.prototype.$loadOnchainDependencies = function(options: MiddlewareOptions) {
   return initMiddleware(options);
 };
 
-Vue.prototype.$loadXdvDependencies = function(options: MiddlewareOptions) {
-  return initXdvMiddleware(options);
-};
-
 // @ts-ignore
 new Vue({
   router,

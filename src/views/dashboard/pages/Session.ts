@@ -4,7 +4,7 @@ import { SubscriptionManager } from './SubscriptionManager';
 
 const KEY = 'xdv:drive:session';
 export class Session {
-    static wallet:  Wallet;
+    static wallet:  Wallet = new Wallet();
     static subscriptions: SubscriptionManager;
 
     public static setWallet(id: string,  onPassphrase: any){

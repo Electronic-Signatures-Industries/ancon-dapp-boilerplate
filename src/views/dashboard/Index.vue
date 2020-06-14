@@ -9,11 +9,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
-import {
-  IpldClient,
-  DIDDocumentBuilder,
-  DIDMethodXDV,
-} from 'xdvplatform-tools';
+import { DIDDocumentBuilder, DIDMethodXDV } from 'xdvplatform-tools';
 import { SolidoSingleton } from './components/core/SolidoSingleton';
 import Onboard from 'bnc-onboard';
 import Web3 from 'web3';
@@ -40,7 +36,6 @@ export default class DashboardIndex extends Vue {
   _network = 3;
   _address = '';
   canInit = false;
-  ipld: IpldClient;
 
   get address() {
     return localStorage.getItem('address');
@@ -69,19 +64,6 @@ export default class DashboardIndex extends Vue {
   }
 
   async mounted() {
-    new IpldClient();
-    if (
-      this.$route.path.indexOf('xdv') > -1
-    ) {
-      const props = await (this as any).$loadXdvDependencies({
-        networkId: this.network,
-        account: this.address,
-      });
-      SolidoSingleton.setProps(props);
-      this.canInit = true;
-
-      return;
-    }
 
     this.onboard = Onboard({
       dappId: (Vue as any).appconfig.BLOCKNATIVE_API_KEY,
@@ -107,9 +89,9 @@ export default class DashboardIndex extends Vue {
             networkId: self.onboard.getState().network,
             account: self.onboard.getState().address,
           });
-          SolidoSingleton.setProps(props);
+          SolidoSingleton.setProps(pro  ps);
           self.canInit = init;
-          self.$router.push({ path: 'client' });
+          self.$router.push({ path: 'wallet' });
         }, 800);
       }
     } else {
