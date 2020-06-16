@@ -95,7 +95,7 @@ import {
   DGen,
   Emisor,
   Receptor,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalIndex from './widgets/totales/Totales.vue';
 import Countries from './widgets/Countries.vue';

@@ -76,7 +76,7 @@ import {
   TasaITBMS,
   ITBMS,
   Receptor,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Countries from '../Countries.vue';
 import GenRucType from './RucType.vue';

@@ -62,7 +62,7 @@ import {
   OtrosImpuestos,
   CodigoRetencion,
   Precio,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

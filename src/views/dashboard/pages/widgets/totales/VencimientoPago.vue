@@ -59,7 +59,7 @@ import {
   OtrosImpuestos,
   CodigoRetencion,
   VencimientoPago,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 

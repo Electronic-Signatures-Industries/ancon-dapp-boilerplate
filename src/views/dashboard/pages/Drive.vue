@@ -22,7 +22,7 @@
           hide-selected
           item-text="name"
           return-object
-          label="Search documents or pick wallet"
+          label="Search documents or select wallet"
           @input="loadSession"
           solo
         >
@@ -64,201 +64,28 @@
           </template>
         </v-autocomplete>
 
-        <v-dialog v-model="shareDialog" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="headline">Publish to recipients</span>
-            </v-card-title>
+        <xdv-unlock
+          v-model="password"
+          :show="canUnlock"
+          @input="login"
+        ></xdv-unlock>
 
-            <v-card-text>
-              <v-form v-model="form" autocomplete="off">
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <v-select
-                      required
-                      :items="publicWallets"
-                      v-model="shareInfo.recipients"
-                      label="Recipients"
-                      item-text="name"
-                      item-value="name"
-                      return-object
-                      single-line
-                    ></v-select>
+        <xdv-upload
+          :show="canUpload"
+          v-model="files"
+          @input="createDocumentNode"
+        ></xdv-upload>
 
-                    <!-- <v-select
-                      v-model="select"
-                      :items="wallets"
-                      item-text="name"
-                      item-value="name"
-                      label="Cartera Digital"
-                      persistent-hint
-                      return-object
-                      single-line
-                    >
-                    </v-select> -->
-                    <v-text-field
-                      required
-                      v-model="password"
-                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                      :type="showPassword ? 'text' : 'password'"
-                      label="Passphrase"
-                      class="input-group--focused"
-                      @click:append="showPassword = !showPassword"
-                      :error="validations.password"
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="shareDialog = false"
-                >Cancel</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="share"
-                >Share</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="selectWalletDialog" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="headline">Ingrese clave para acceder cartera</span>
-            </v-card-title>
-
-            <v-card-text>
-              <v-form v-model="form" autocomplete="off">
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <v-select
-                      v-model="select"
-                      :items="wallets"
-                      item-text="name"
-                      item-value="name"
-                      label="Cartera Digital"
-                      persistent-hint
-                      return-object
-                      single-line
-                    >
-                    </v-select>
-                    <v-text-field
-                      required
-                      v-model="password"
-                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                      :type="showPassword ? 'text' : 'password'"
-                      label="Clave"
-                      class="input-group--focused"
-                      @click:append="showPassword = !showPassword"
-                      :error="validations.password"
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="selectWalletDialog = false"
-                >Cancelar</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                text
-                :disabled="loading"
-                @click="unlock"
-                >Acceder</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
+        <xdv-send
+          :show="canSend"
+          @input="share"
+          :addresses="publicWallets"
+          v-model="shareInfo.recipients"
+        ></xdv-send>
         <template v-slot:extension>
-          <v-dialog v-model="fileDialog" max-width="500px">
-            <template v-slot:activator="{ on }">
-              <v-btn color="blue" dark small absolute bottom left fab>
-                <v-icon v-on="on">mdi-text-box-plus</v-icon>
-              </v-btn>
-            </template>
-            <v-card>
-              <v-card-title>
-                <span class="headline">Upload</span>
-              </v-card-title>
-
-              <v-card-text>
-                <v-form v-model="form" autocomplete="off">
-                  <v-row>
-                    <v-col cols="12" md="12">
-                      <v-file-input
-                        prepend-icon="mdi-paperclip"
-                        v-model="files"
-                        multiple
-                        show-size
-                        label="Files"
-                      ></v-file-input>
-                    </v-col>
-                  </v-row>
-                  <v-row>
-                    <v-col cols="12" md="12">
-                      <!-- <v-select
-                        v-model="select"
-                        item-text="name"
-                        item-value="name"
-                        label="Cartera Digital"
-                        persistent-hint
-                        :items="wallets"
-                        return-object
-                        single-line
-                      >
-                      </v-select> -->
-                      <v-text-field
-                        required
-                        v-model="password"
-                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'"
-                        label="Passphrase"
-                        class="input-group--focused"
-                        @click:append="showPassword = !showPassword"
-                        :error="validations.password"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="blue darken-1"
-                  :disabled="loading"
-                  text
-                  @click="close"
-                  >Cancel</v-btn
-                >
-                <v-btn
-                  color="blue darken-1"
-                  :disabled="loading"
-                  text
-                  @click="createDocumentNode"
-                  >Publish</v-btn
-                >
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+          <v-btn color="blue" dark small absolute bottom left fab>
+            <v-icon @click="canUpload = true">mdi-text-box-plus</v-icon>
+          </v-btn>
           <v-tabs v-model="tab" @change="filter" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab>
@@ -349,8 +176,8 @@ import {
   JOSEService,
   JWTService,
   PublicKey,
-} from 'xdvplatform-tools';
-import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
+} from 'xdvplatform-wallet';
+import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import moment from 'moment';
@@ -360,18 +187,27 @@ import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
-import { forkJoin, Unsubscribable } from 'rxjs';
+import { forkJoin, Unsubscribable, Subject } from 'rxjs';
 import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
 import { DriveSwarmManager } from './DriveSwarmManager';
 import { ec } from 'elliptic';
-import { async } from 'rxjs/internal/scheduler/async';
-import { AlgorithmType } from './AlgorithmType';
+import Unlock from './Unlock.vue';
+import Upload from './Upload.vue';
+import SendTo from './Recipients.vue';
+import { SubscriptionManager } from './SubscriptionManager';
+import { filter, mergeMap } from 'rxjs/operators';
 const cbor = require('cbor-sync');
 
-@Component({})
+@Component({
+  components: {
+    'xdv-unlock': Unlock,
+    'xdv-upload': Upload,
+    'xdv-send': SendTo,
+  },
+})
 export default class DriveComponent extends Vue {
   loading = false;
   indexjson = null;
@@ -389,6 +225,8 @@ export default class DriveComponent extends Vue {
   showPassword = false;
   password = '';
   mnemonic = [];
+  alertMessage = '';
+  alertType = '';
   selectedDocument = {};
   selected = [];
   shareDialog = false;
@@ -408,10 +246,19 @@ export default class DriveComponent extends Vue {
   session = {};
   tab = 0;
   itemsClone = [];
-  search = '';
+  canSend = false;
+  canUpload = false;
+  canUnlock = false;
   publicWallets = [];
   hasCopyRef = false;
   sub: Unsubscribable;
+  wallet = new Wallet();
+
+  passphraseSubject: Subject<any> = new Subject();
+
+  login() {
+    this.passphraseSubject.next(this.password);
+  }
 
   handleMenu(item) {}
   handleCopyDIDReference(item) {
@@ -423,88 +270,79 @@ export default class DriveComponent extends Vue {
   }
 
   async loadSession() {
-    if (!this.select) return;
-    this.loading = true;
-    if (this.sub) {
-      this.sub.unsubscribe();
+    if (this.select) {
+      Session.set(this.select);
+    } else if (Session.has()) {
+      this.select = Session.get();
+    } else {
+      return;
     }
-    Session.set(
-      `did:xdv:${this.select.address}`,
-      this.select.address,
-      this.select.name
-    );
 
-    // // set existing wallets
-    // this.menuitems = this.wallets.map((i) => {
-    //   return {
-    //     title: `${i.name}`,
-    //     handler: () => this.changeWallet(i),
-    //   };
-    // });
-
-    this.session = Session.get();
-    this.selectWalletDialog = false;
-    await this.loadDirectory();
-
-    this.loading = false;
+    // open
+    await this.wallet.open(this.select.keystore);
   }
 
   async mounted() {
-    this.loading = true;
-
     this.loadWallets();
-    // set existing wallets
-    this.menuitems = this.wallets.map((i) => {
-      return {
-        title: `${i.name}`,
-        handler: () => this.changeWallet(i),
-      };
+
+    this.wallet.onRequestPassphrase.subscribe(async (i) => {
+      this.canUnlock = true;
+      this.loading = true;
+      if (i.type === 'wallet') {
+        this.passphraseSubject.subscribe((passphrase) =>
+          this.wallet.onRequestPassphrase2.next({ type: 'ui', passphrase })
+        );
+      } else {
+        this.canUnlock = false;
+        // set existing wallets
+        this.menuitems = this.wallets.map((i) => {
+          return {
+            title: `${i.name}`,
+            handler: () => this.changeWallet(i),
+          };
+        });
+        if (Session.has()) {
+          await this.loadDirectory();
+        }
+        this.loading = false;
+      }
     });
 
-    if (Session.has()) {
-      await this.loadDirectory();
-    }
-    this.loading = false;
+    await this.loadSession();
   }
 
   loadWallets() {
-    this.wallets = KeystoreIndex.getIndex().filter(
-      (i) => i.address
-    );
+    this.wallets = KeystoreIndex.getIndex().filter((i) => i.address);
     this.publicWallets = KeystoreIndex.getIndex().filter(
-      (i) => i.name.indexOf('did:xdv:')>-1
+      (i) => i.name.indexOf('did:xdv:') > -1
     );
   }
 
   openShareDialog(item) {
-    this.shareDialog = true;
+    this.canSend = true;
     this.selectedDocument = item;
   }
 
   async share() {
-    const ks = this.select;
     this.loading = true;
 
-    const wallet = await Session.getWalletFromKeystore(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      this.loading = false;
-      return;
-    }
-    this.validations.password = false;
-
-    // from
-    const keys = await wallet.getKeyPair(ks.keystore, 'ES256K', this.password);
+    // open
+    //    await this.wallet.open(this.select.keystore, this.onAskPassphrase);
 
     // user
-    const userKp = await Wallet.getPublicKey(
-      this.shareInfo.recipients.name,
-      'P256_JWK_PUBLIC'
+    const userKp = await this.wallet.getPublicKey(
+      this.shareInfo.recipients.name
+    );
+    this.alertMessage =
+      'Connecting to Swarm at https://ipfs.auth2factor.com/...';
+    const swarmFeed = await this.wallet.getSwarmNodeClient(
+      ks.address,
+      'ES256K',
+      'https://ipfs.auth2factor.com/'
     );
 
-    const swarmFeed = Session.getSwarmNodeClient(keys);
-    const messageIO = new MessageIO(keys, userKp, swarmFeed);
-
+    const messageIO = new SubscriptionManager(this.wallet, userKp, swarmFeed);
+    this.alertMessage = 'Encrypting and sending message...';
     await messageIO.sendEncryptedCommPayload(
       this.shareInfo.recipients.address,
       this.selectedDocument.item,
@@ -521,25 +359,6 @@ export default class DriveComponent extends Vue {
     this.select = i;
   }
 
-  async unlock() {
-    const ks = this.select;
-    this.loading = true;
-
-    const wallet = await Session.getWalletFromKeystore(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      return;
-    }
-    this.validations.password = false;
-
-    const keys = await wallet.getKeyPair(ks.keystore, 'ES256K', this.password);
-    const swarmFeed = Session.getSwarmNodeClient(keys);
-    Session.set(`did:xdv:${swarmFeed.user}`, swarmFeed.user, ks.name);
-
-    this.loading = false;
-    this.selectWalletDialog = false;
-  }
-
   filter() {
     // if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
     // const mapping = {
@@ -553,15 +372,17 @@ export default class DriveComponent extends Vue {
   }
 
   async loadDirectory() {
-    this.loading = false;
     if (!this.select) return;
-    const swarmFeed = Session.getSwarmNodeQueryable(this.select.address);
 
+    this.loading = true;
+
+    const swarmFeed = await this.wallet.getSwarmNodeQueryable(
+      this.select.address
+    );
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
       name: 'did:xdv:' + swarmFeed.user,
     });
-
     let content;
     try {
       let { body } = await swarmFeed.bzzFeed.getContent(feed, {
@@ -630,23 +451,16 @@ export default class DriveComponent extends Vue {
 
   async createDocumentNode() {
     const ks = this.select;
-    this.loading = true;
-    const wallet = await Session.getWalletFromKeystore(ks, this.password);
-    if (!wallet) {
-      this.validations.password = 'Clave invalida';
-      this.loading = false;
-      return;
-    }
-    this.validations.password = false;
-    this.loading = true;
 
-    const driveManager = new DriveSwarmManager(wallet, Session.get());
+    this.loading = true;
+    const driveManager = new DriveSwarmManager(this.wallet);
     await driveManager.pushFiles({
       address: ks.address,
       files: this.files,
       queueName: 'documents',
     });
     this.loading = false;
+    this.canUpload = false;
     this.close();
     this.tab = 1;
   }

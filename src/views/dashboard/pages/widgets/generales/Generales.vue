@@ -331,7 +331,7 @@ import {
   FormaPago,
   FormaPagoType,
   DGen,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalFormaPago from './FormaPago.vue';
 import TotalBonificacion from './Bonificacion.vue';

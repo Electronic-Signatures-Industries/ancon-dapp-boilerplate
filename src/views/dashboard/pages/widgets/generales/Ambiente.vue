@@ -15,7 +15,7 @@ import {
   TasaITBMS,
   ITBMS,
   TipoAmbiente,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 

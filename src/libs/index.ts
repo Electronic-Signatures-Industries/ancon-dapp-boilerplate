@@ -7,7 +7,7 @@ import {
   IpldClient,
   DIDDocumentBuilder,
   DIDMethodXDV,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 
 export interface StorageMiddleware {
   getUserModel: any;

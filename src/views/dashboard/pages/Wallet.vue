@@ -5,7 +5,9 @@ w<template>
       v-if="loading"
       color="blue accent-4"
     ></v-progress-linear>
-    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
+    <v-alert :type="alertType" v-if="alertType.length > 0">{{
+      alertMessage
+    }}</v-alert>
 
     <v-card class="mx-auto" tile>
       <v-toolbar color="blue" dark>
@@ -191,14 +193,27 @@ w<template>
                         <v-row
                           ><v-col
                             ><v-btn
-                              :disabled="!valid"
+                              :disabled="disableBtns"
                               color="blue darken-1"
                               text
                               @click="createKeys"
                               >Generate</v-btn
                             ></v-col
-                          ></v-row
-                        >
+                          >
+                          <v-col md="12" cols="12">
+                            <v-alert text color="blue" v-if="loading">
+                              <v-progress-circular
+                                indeterminate
+                                v-if="loading"
+                                color="blue darken-1"
+                              ></v-progress-circular>
+                              {{ alertMessage }}
+                            </v-alert>
+                            <v-alert text color="red" v-if="hasErrors">
+                              {{ alertMessage }}
+                            </v-alert>
+                          </v-col>
+                        </v-row>
                       </v-expansion-panel-content>
                     </v-expansion-panel>
                     <v-expansion-panel>
@@ -277,10 +292,16 @@ w<template>
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
                 <v-btn
                   color="blue darken-1"
-                  :disabled="!valid"
+                  :disabled="disableBtns"
+                  text
+                  @click="close"
+                  >Cancel</v-btn
+                >
+                <v-btn
+                  color="blue darken-1"
+                  :disabled="disableBtns"
                   text
                   @click="save"
                   >Save</v-btn
@@ -288,39 +309,8 @@ w<template>
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-dialog v-model="loginDialog" max-width="500px">
-            <v-card>
-              <v-card-title>
-                <span class="headline">Passphrase</span>
-              </v-card-title>
+          <xdv-unlock :show="canUnlock" v-model="password"></xdv-unlock>
 
-              <v-card-text>
-                <v-form v-model="form" autocomplete="off">
-                  <v-row>
-                    <v-col cols="12" md="12">
-                      <v-text-field
-                        required
-                        v-model="password"
-                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'"
-                        class="input-group--focused"
-                        @click:append="showPassword = !showPassword"
-                        :error="validations.password"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="loginDialog = false"
-                  >Cancel</v-btn
-                >
-                <v-btn color="blue darken-1" text @click="login">OK</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
           <v-tabs v-model="tab" @change="filter" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab>
@@ -342,8 +332,7 @@ w<template>
           class="blue--text"
         >
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.address">
-              <template v-slot:default="{ active }">
+            <v-list-item :key="item.keystore">
                 <v-list-item-content>
                   <v-list-item-title v-text="item.title"></v-list-item-title>
                   <v-list-item-subtitle
@@ -360,14 +349,12 @@ w<template>
                     v-text="item.action"
                   ></v-list-item-action-text>
                   <v-icon
-                    @click="openDownloadDialog(item)"
-                    v-if="!active"
+                    @click="exportToPublic(item)"
                     color="green lighten-1"
                   >
-                    mdi-download
+                    mdi-export
                   </v-icon>
                 </v-list-item-action>
-              </template>
             </v-list-item>
 
             <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
@@ -385,7 +372,7 @@ import {
   KeyConvert,
   LDCryptoTypes,
   DIDDocument,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import { ethers } from 'ethers';
@@ -394,8 +381,12 @@ import { Session } from './Session';
 import { pubKeyToAddress } from '@erebos/keccak256';
 import copy from 'copy-to-clipboard';
 import { Subject } from 'rxjs';
+import Unlock from './Unlock.vue';
 
 @Component({
+  components: {
+    'xdv-unlock': Unlock,
+  },
   watch: {
     async search(val) {
       if (val && val.indexOf('did:xdv:') === 0) {
@@ -413,7 +404,8 @@ import { Subject } from 'rxjs';
 export default class WalletComponent extends Vue {
   loginDialog: boolean = false;
   alertMessage = '';
-  alertType = 'warning';
+  alertType = '';
+  disableBtns = false;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -441,6 +433,8 @@ export default class WalletComponent extends Vue {
   form = {};
   selectedPanel = 0;
   itemsClone = [];
+  hasErrors = false;
+  canUnlock = false;
   tab = 0;
   item = 1;
   items = [
@@ -449,28 +443,40 @@ export default class WalletComponent extends Vue {
     },
   ];
 
+  wallet: Wallet = new Wallet();
   passphraseSubject: Subject<any> = new Subject();
 
-  onAskPassphrase() {
-    this.loginDialog = true;
-debugger
-    return new Promise((resolve, reject) => {
-      debugger
-      this.passphraseSubject.subscribe((p) => {
-        resolve(p);
-      });
+  async mounted() {
+    this.loadWallets();
+
+    this.wallet.onRequestPassphrase.subscribe(async (i) => {
+      this.canUnlock = true;
+      this.loading = true;
+      if (i.type === 'wallet') {
+        this.passphraseSubject.subscribe((passphrase) =>
+          this.wallet.onRequestPassphrase2.next({ type: 'ui', passphrase })
+        );
+      } else {
+        this.canUnlock = false;
+        this.loading = false;
+      }
     });
+
+    //  await this.loadSession();
   }
 
-  login() {
-    this.passphraseSubject.next(this.password);
-  }
-  async mounted() {
-    this.loading = true;
-    this.loadWallets();
-    this.loading = false;
-    this.walletType = 'rsa';
-  }
+  // async loadSession() {
+  //   if (this.select) {
+  //     Session.set(this.select);
+  //   } else if (Session.has()) {
+  //     this.select = Session.get();
+  //   } else {
+  //     return;
+  //   }
+
+  //   // open
+  //   await this.wallet.open(this.select.keystore);
+  // }
 
   copyAddress(address) {
     copy(address);
@@ -479,13 +485,18 @@ debugger
   loadWallets() {
     const index = KeystoreIndex.getIndex();
     this.items = index.map((i) => {
+      let headline = `address ${i.address}`;
+      if (!i.address) {
+        // rsa
+        headline = 'RSA 2048 bits'
+      }
       return {
         action: moment(i.created).fromNow(),
         title: i.name,
-
-        headline: `address ${i.address}`,
+        headline,
         // subtitle: i.,
       };
+
     });
 
     this.searchResults = index;
@@ -537,7 +548,13 @@ debugger
     passphrase: string
   ) {
     const keypairExports = await wallet.getPrivateKeyExports('P256');
-    const swarmFeed = await wallet.getSwarmNodeClient(ks.address, 'ES256K', 'https://ipfs.auth2factor.com/');
+    this.alertMessage =
+      'Connecting to Swarm at https://ipfs.auth2factor.com/...';
+    const swarmFeed = await wallet.getSwarmNodeClient(
+      ks.address,
+      'ES256K',
+      'https://ipfs.auth2factor.com/'
+    );
     const session = `did:xdv:${swarmFeed.user}`;
     const did = new DIDDocument();
     const pub = { owner: swarmFeed.user, ...keypairExports.ldJsonPublic };
@@ -550,18 +567,19 @@ debugger
       'index.json': didIndex,
     };
 
+    this.alertMessage = 'Requesting access to publish...';
     const res = await swarmFeed.publishDirectory({
       name: session,
       contents: swarmFeed.toSwarmPayload(references),
       defaultPath: 'index.json',
     });
 
-    Session.set(did.id, swarmFeed.user, ks.name);
+    Session.set(ks);
   }
 
   async createKeys() {
     this.loading = true;
-    this.valid = false;
+    this.valid = true;
     if (
       this.walletDescription.length > 0 &&
       this.password === this.confirmPassword
@@ -571,13 +589,9 @@ debugger
       let keys;
       let keystoreIndexItem: KeystoreIndex;
       try {
+        this.disableBtns = true;
         this.alertMessage = 'Creating keys...please wait';
-        this.alertType = 'info';
-        let { id } = await wallet.createWallet(
-          this.password,
-          this.onAskPassphrase,
-          mnemonic
-        );
+        let { id } = await wallet.createWallet(this.password, null, mnemonic);
         this.passphraseSubject.next(this.password);
 
         if (this.walletType === 'default') {
@@ -588,7 +602,6 @@ debugger
           } as KeystoreIndex;
 
           this.alertMessage = 'Creating DID...please wait';
-          this.alertType = 'info';
           const keys = await wallet.getPrivateKey('ES256K');
           keystoreIndexItem.address = pubKeyToAddress(keys.getPublic('array'));
           await this.createDID(keystoreIndexItem, keys, wallet, this.password);
@@ -596,7 +609,7 @@ debugger
         this.mnemonic = wallet.mnemonic.split(' ');
 
         if (this.walletType === 'rsa') {
-          const keys = await Wallet.getRSA256Standalone()
+          const keys = await Wallet.getRSA256Standalone();
           const rsaKeyExports = await KeyConvert.getX509RSA(keys);
           const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
             rsaKeyExports.pemAsPrivate,
@@ -604,12 +617,12 @@ debugger
             this.x509Info
           );
 
-          await Session.wallet.setPublicKey(
+          await this.wallet.setImportKey(
             `import:X509:${this.walletDescription}`,
-            'RSA',
             rsaKeyExports.pemAsPrivate
           );
 
+          this.cert = rsaKeyExports.pemAsPrivate;
           keystoreIndexItem = {
             created: new Date(),
             name: this.walletDescription,
@@ -617,16 +630,17 @@ debugger
           } as KeystoreIndex;
         }
         this.loading = false;
-        this.valid = true;
         this.keystoreIndexItem = keystoreIndexItem;
         this.selectedPanel = 1;
 
         this.alertMessage = 'Completed';
-        this.alertType = 'info';
         setTimeout(() => {
           this.alertMessage = '';
         }, 1500);
+        this.disableBtns = false;
       } catch (e) {
+        this.valid = false;
+
         console.log(e);
         this.alertMessage = e.message;
         this.alertType = 'error';

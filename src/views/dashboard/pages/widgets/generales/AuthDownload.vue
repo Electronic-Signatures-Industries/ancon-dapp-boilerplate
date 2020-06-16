@@ -20,7 +20,7 @@
   </v-row>
 </template>
 <script lang="ts">
-import { TypedRFE,  TasaITBMS, ITBMS } from 'xdvplatform-tools';
+import { TypedRFE,  TasaITBMS, ITBMS } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

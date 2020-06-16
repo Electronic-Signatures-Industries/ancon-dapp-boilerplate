@@ -1,13 +1,13 @@
-import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-tools';
+import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
 import { KeystoreIndex } from './KeystoreIndex';
 import { SubscriptionManager } from './SubscriptionManager';
 
 const KEY = 'xdv:drive:session';
 export class Session {
-    static wallet:  Wallet = new Wallet();
+    static wallet: Wallet = new Wallet();
     static subscriptions: SubscriptionManager;
 
-    public static setWallet(id: string,  onPassphrase: any){
+    public static setWallet(id: string, onPassphrase: any) {
         Session.wallet.open(id, onPassphrase);
     }
     public static async resolveAndStoreDID(did: string) {
@@ -36,7 +36,7 @@ export class Session {
         const localkeystoreIndex = KeystoreIndex.getIndex();
         const key = new KeystoreIndex();
         key.address = user;
-//        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
+        //        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
         key.keystore = '';
         key.created = new Date();
         key.publicKeyFromDID = pub;
@@ -50,7 +50,7 @@ export class Session {
         KeystoreIndex.setIndex([...localkeystoreIndex, key]);
 
     }
-    
+
 
 
     static async createDIDResolver(swarmFeed: any, feed: string) {
@@ -76,10 +76,9 @@ export class Session {
 
     static has() {
         try {
-            JSON.parse(localStorage.getItem(
+            return !!JSON.parse(localStorage.getItem(
                 'xdv:drive:session',
             ));
-            return true;
         } catch (e) {
             return false;
         }
@@ -90,24 +89,17 @@ export class Session {
             'xdv:drive:session',
         ));
 
-        if (!!session.address) {
-            session.address = session.did.split(':')[2];
-        }
+        
 
         return session;
     }
 
-    static set(did: string, address: string, ksName: string) {
+    static set(ks: KeystoreIndex) {
 
-        const driveSession = {
-            ksName,
-            did,
-            address,
-        };
 
         localStorage.setItem(
             'xdv:drive:session',
-            JSON.stringify(driveSession)
+            JSON.stringify(ks)
         );
 
     }

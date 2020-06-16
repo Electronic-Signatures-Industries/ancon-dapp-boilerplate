@@ -2,18 +2,18 @@ import moment from 'moment';
 import { count } from 'rxjs/operators';
 import { defaultPath } from 'ethers/utils/hdnode';
 import {
-    DocumentNodeSchema,
-    JWTService,
-    KeyConvert,
-    Wallet
-    } from 'xdvplatform-tools';
+  DocumentNodeSchema,
+  JWTService,
+  KeyConvert,
+  Wallet
+  } from 'xdvplatform-wallet';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import { PartialChapter } from '@erebos/timeline';
 import { Session } from './Session';
-import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
+import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 const cbor = require('cbor-sync');
 
@@ -29,19 +29,14 @@ export interface DriveDocumentRef {
     reference: object;
 }
 export class DriveSwarmManager {
-    constructor(private wallet: Wallet, private driveSession: any) {
+    constructor(private wallet: Wallet) {
 
     }
 
     async pushFiles(options: PushFilesOptions) {
 
-        const kp = await this.wallet.getKeyPair(
-            this.wallet.id,
-            'ES256K',
-            ''
-        );
-        const swarmFeed = Session.getSwarmNodeClient(
-            kp);
+        const swarmFeed = await this.wallet.getSwarmNodeClient(options.address, 'ES256K');
+        const kp = (await this.wallet.getPrivateKey('ES256K'));
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();
             let buf = new Uint8Array(ab);
@@ -104,6 +99,7 @@ export class DriveSwarmManager {
                 ...directory,
             };
         });
+
         const underlyingHash = await swarmFeed.bzz.uploadDirectory(directory, {
             encrypt: true,
         });
@@ -139,7 +135,8 @@ export class DriveSwarmManager {
         }, {
             encrypt: true,
         });
-        await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
+        const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
+        console.log(f)
     }
 
     static async  subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {

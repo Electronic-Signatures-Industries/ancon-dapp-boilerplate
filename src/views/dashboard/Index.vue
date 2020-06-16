@@ -9,7 +9,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
-import { DIDDocumentBuilder, DIDMethodXDV } from 'xdvplatform-tools';
+import { DIDDocumentBuilder, DIDMethodXDV } from 'xdvplatform-wallet';
 import { SolidoSingleton } from './components/core/SolidoSingleton';
 import Onboard from 'bnc-onboard';
 import Web3 from 'web3';

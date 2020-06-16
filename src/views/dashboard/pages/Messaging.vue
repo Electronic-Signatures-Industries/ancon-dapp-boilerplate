@@ -77,64 +77,7 @@
           </template>
         </v-autocomplete>
         <template v-slot:extension>
-          <v-dialog v-model="shareDialog" max-width="500px">
-            <!-- <template v-slot:activator="{ on }">
-              <v-btn color="blue" dark small absolute bottom left fab>
-                <v-icon v-on="on">mdi-call-received</v-icon>
-              </v-btn>
-            </template> -->
-            <v-card>
-              <v-card-title>
-                <span v-if="receivedUI" class="headline">Passphrase</span>
-                <span v-if="!receivedUI" class="headline">Passphrase</span>
-              </v-card-title>
-
-              <v-card-text>
-                <v-form v-model="form" autocomplete="off">
-                  <v-row>
-                    <v-col cols="12" md="12">
-                      <v-text-field
-                        required
-                        v-model="password"
-                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'"
-                        label="Clave"
-                        class="input-group--focused"
-                        @click:append="showPassword = !showPassword"
-                        :error="validations.password"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                </v-form>
-              </v-card-text>
-
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="blue darken-1"
-                  text
-                  @click="shareDialog = false"
-                  >Cancel</v-btn
-                >
-                <v-btn
-                  color="blue darken-1"
-                  text
-                  v-if="receivedUI"
-                  @click="login"
-                  >OK</v-btn
-                >
-
-                <v-btn
-                  color="blue darken-1"
-                  text
-                  v-if="!receivedUI"
-                  :disabled="loading"
-                  @click="download"
-                  >Ingresar</v-btn
-                >
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+       
           <v-tabs v-model="tab" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab v-for="item in activeSubscriptions" :key="item.title">
@@ -184,6 +127,8 @@
         </v-list-item-group>
       </v-list>
     </v-card>
+        <xdv-unlock :show="canUnlock" v-model="password"></xdv-unlock>
+  
   </v-container>
 </template>
 <script lang="ts">
@@ -206,8 +151,8 @@ import {
   JOSEService,
   JWTService,
   PublicKey,
-} from 'xdvplatform-tools';
-import { SwarmFeed } from 'xdvplatform-tools/src/swarm/feed';
+} from 'xdvplatform-wallet';
+import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import moment from 'moment';
@@ -226,10 +171,14 @@ import { PartialChapter } from '@erebos/timeline';
 const bs58 = require('bs58');
 import { SubscriptionManager } from './SubscriptionManager';
 import { DriveSwarmManager } from './DriveSwarmManager';
+import Unlock from './Unlock.vue';
 const cbor = require('cbor-sync');
-import { encrypt, decrypt, PrivateKey } from 'eciesjs';
 
-@Component({})
+@Component({
+  components: {
+    'xdv-unlock': Unlock,
+  }
+})
 export default class MessagingComponent extends Vue {
   loading = false;
 

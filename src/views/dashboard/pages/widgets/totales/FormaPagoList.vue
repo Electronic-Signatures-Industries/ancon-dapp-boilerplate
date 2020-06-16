@@ -55,7 +55,7 @@ import {
   CodigoRetencion,
   FormaPago,
   FormaPagoType,
-} from 'xdvplatform-tools';
+} from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 import TotalFormaPago from './FormaPago.vue';

@@ -10,7 +10,7 @@
   ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE,  Monedas } from 'xdvplatform-tools';
+import { TypedRFE,  Monedas } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

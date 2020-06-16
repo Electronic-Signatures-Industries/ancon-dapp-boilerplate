@@ -9,7 +9,7 @@
   ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE, Destino } from 'xdvplatform-tools';
+import { TypedRFE, Destino } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 
