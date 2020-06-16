@@ -2,11 +2,11 @@ import moment from 'moment';
 import { count } from 'rxjs/operators';
 import { defaultPath } from 'ethers/utils/hdnode';
 import {
-  DocumentNodeSchema,
-  JWTService,
-  KeyConvert,
-  Wallet
-  } from 'xdvplatform-wallet';
+    DocumentNodeSchema,
+    JWTService,
+    KeyConvert,
+    Wallet
+    } from 'xdvplatform-wallet';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
@@ -140,7 +140,9 @@ export class DriveSwarmManager {
     }
 
     static async  subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
-        return swarmFeed.bzzFeed.pollContentHash(feedHash, { changedOnly: true, interval: 2000 }).subscribe(async m => {
+        return swarmFeed.bzzFeed
+        .pollContentHash(feedHash, { changedOnly: true, interval: 5000 })
+        .subscribe(async m => {
             const block = await swarmFeed.bzz.downloadData(m);
             callback(block);
         });

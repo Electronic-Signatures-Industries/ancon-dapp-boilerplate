@@ -276,6 +276,7 @@ export default class MessagingComponent extends Vue {
 
   wallet = new Wallet();
   canUnlock = false;
+  loadingAutocomplete: boolean;
 
   async mounted() {    
     if (!(await Session.hasWalletRefs())) return;
@@ -299,18 +300,24 @@ export default class MessagingComponent extends Vue {
       }
     });
   }
-  async loadSession() {
-    if (this.multiselect) {
-      await Session.set(this.multiselect[0]);
-    } else if (await Session.has()) {
+  
+
+  async loadSession(options = { reset: false }) {
+    this.loadingAutocomplete = true;
+    const hasSession = await Session.has();
+    if (hasSession && options.reset === false) {
       this.multiselect = [];
       this.multiselect.push(await Session.get());
-    } else {
-      return;
+    } else if (this.multiselect[0]) {
+      await Session.set(this.multiselect[0]);
+    } else if (this.wallets && this.wallets.length > 0) {
+      this.multiselect = [];
+      this.multiselect.push(this.wallets[0]);
     }
 
-    // open
-    await this.wallet.open(this.multiselect[0].keystore);
+    if (this.multiselect[0]) await this.wallet.open(this.multiselect[0].keystore);
+
+    this.loadingAutocomplete = false;
   }
 
   async loadWallets() {

@@ -15,7 +15,7 @@
         <v-autocomplete
           v-model="select"
           :items="wallets"
-          :loading="loading"
+          :loading="loadingAutocomplete"
           chips
           clearable
           hide-details
@@ -23,9 +23,10 @@
           item-text="name"
           return-object
           label="Search documents or select wallet"
-          @input="loadSession"
+          ref="debounceLoadSession"
           solo
         >
+          ).subscribe(
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
@@ -82,19 +83,30 @@
           :addresses="publicWallets"
           v-model="shareInfo.recipients"
         ></xdv-send>
+
+
+
+        <xdv-sign
+          :show="canSign"
+          @input="signOrVerify"
+          :wallets="wallets"
+          v-model="signManagerProps"
+        ></xdv-sign>
+
         <template v-slot:extension>
           <v-btn color="red" dark small absolute bottom right fab>
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
               </template>
-           
-           <v-tooltip top>
-               <span>Upload</span>
+
+              <v-tooltip top>
+                <span>Upload</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    dark v-on="on"
+                    dark
+                    v-on="on"
                     @click="canUpload = true"
                     small
                     color="red accent-4"
@@ -103,13 +115,14 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              
-           <v-tooltip top>
-               <span>Send subscription link</span>
+
+              <v-tooltip top>
+                <span>Send subscription link</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    dark v-on="on"
+                    dark
+                    v-on="on"
                     @click="canUpload = true"
                     small
                     color="red accent-4"
@@ -119,13 +132,14 @@
                 </template></v-tooltip
               >
               <v-tooltip top>
-               <span>Send to</span>
+                <span>Send to</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    fab v-if="selected"
-                    dark v-on="on"
-                               @click="openShareDialog(item)"
-
+                    fab
+                    v-if="selected"
+                    dark
+                    v-on="on"
+                    @click="openShareDialog(item)"
                     small
                     color="red accent-4"
                   >
@@ -133,14 +147,16 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              
+
               <v-tooltip top>
-               <span>Copy DID link</span>
+                <span>Copy DID link</span>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-if="selected"
+                  <v-btn
+                    v-if="selected"
                     fab
-                    dark v-on="on"
-                @click="handleCopyDIDReference(item)"
+                    dark
+                    v-on="on"
+                    @click="handleCopyDIDReference(item)"
                     small
                     color="red accent-4"
                   >
@@ -149,13 +165,14 @@
                 </template></v-tooltip
               >
               <v-tooltip top>
-               <span>Sign documents</span>
+                <span>Sign documents</span>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-if="selected"
+                  <v-btn
+                    v-if="selected"
                     fab
-                    dark v-on="on"
-                @click="openSignatureDialog(item)"
-
+                    dark
+                    v-on="on"
+                    @click="openSignatureDialog(item)"
                     small
                     color="red accent-4"
                   >
@@ -165,13 +182,14 @@
               >
 
               <v-tooltip top>
-               <span>Execute chain job</span>
+                <span>Execute chain job</span>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-if="selected"
+                  <v-btn
+                    v-if="selected"
                     fab
-                    dark v-on="on"
-                @click="openChainDialog(item)"
-
+                    dark
+                    v-on="on"
+                    @click="openChainDialog(item)"
                     small
                     color="red accent-4"
                   >
@@ -207,7 +225,6 @@
         >
           <template v-for="(item, index) in items">
             <v-list-item :key="item.headline">
-              <template v-slot:default="{ active }">
                 <v-list-item-content>
                   <v-list-item-title v-text="item.title"></v-list-item-title>
                   <v-list-item-subtitle
@@ -224,52 +241,9 @@
                   <v-list-item-action-text
                     v-text="item.action"
                   ></v-list-item-action-text>
-                  <v-row>
-                    <v-col>
-                      <v-icon
-                        v-if="hasCopyRef && item.type === 'did'"
-                        color="yellow"
-                      >
-                        mdi-clipboard
-                      </v-icon>
-
-                      <v-icon
-                        @click="handleCopyDIDReference(item)"
-                        v-if="!hasCopyRef && item.type === 'did'"
-                        color="grey"
-                      >
-                        mdi-clipboard
-                      </v-icon>
-                    </v-col>
-                    <v-col>
-                      <v-icon
-                        v-if="active && item.type !== 'did'"
-                        color="blue"
-                        @click="openShareDialog(item)"
-                      >
-                        mdi-publish
-                      </v-icon> </v-col
-                    ><v-col>
-                      <v-icon
-                        color="blue"
-                        v-if="active"
-                        @click="openSignatureDialog(item)"
-                      >
-                        mdi-file-certificate
-                      </v-icon>
-                    </v-col>
-                    <v-col
-                      ><v-icon
-                        color="blue"
-                        v-if="active"
-                        @click="openChainDialog(item)"
-                      >
-                        mdi-link-lock
-                      </v-icon>
-                    </v-col></v-row
-                  >
+                 
                 </v-list-item-action>
-              </template></v-list-item
+</v-list-item
             >
 
             <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
@@ -310,7 +284,7 @@ import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
-import { forkJoin, Unsubscribable, Subject } from 'rxjs';
+import { forkJoin, Unsubscribable, Subject, fromEvent } from 'rxjs';
 import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
@@ -321,7 +295,8 @@ import Unlock from './Unlock.vue';
 import Upload from './Upload.vue';
 import SendTo from './Recipients.vue';
 import { SubscriptionManager } from './SubscriptionManager';
-import { filter, mergeMap } from 'rxjs/operators';
+import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
+import SignatureManagementDialog, { SigningOutput } from './SignatureManagementDialog.vue';
 const cbor = require('cbor-sync');
 
 @Component({
@@ -329,10 +304,12 @@ const cbor = require('cbor-sync');
     'xdv-unlock': Unlock,
     'xdv-upload': Upload,
     'xdv-send': SendTo,
+    'xdv-sign': SignatureManagementDialog,
   },
 })
 export default class DriveComponent extends Vue {
   loading = false;
+  loadingAutocomplete = false;
   indexjson = null;
   invalidPassword = false;
   keystore: any | Wallet = null;
@@ -372,13 +349,22 @@ export default class DriveComponent extends Vue {
   canSend = false;
   canUpload = false;
   canUnlock = false;
+
+  canSign = false;
   publicWallets = [];
   hasCopyRef = false;
   sub: Unsubscribable;
   wallet = new Wallet();
 
   passphraseSubject: Subject<any> = new Subject();
-  canSign: boolean;
+  signManagerProps  = {
+    operation: 'sign',
+    specification: 'none',
+    output: { key: 'XDV link', value: SigningOutput.XDVRef},
+    algorithm: '',
+    wallet: new KeystoreIndex(),
+    files: [],
+  };
   canView: boolean;
   canChain: boolean;
 
@@ -386,7 +372,9 @@ export default class DriveComponent extends Vue {
     this.passphraseSubject.next(this.password);
   }
 
-  handleMenu(item) {}
+  async signOrVerify(){
+    this.canSign = false;
+  }
   handleCopyDIDReference(item) {
     let ref;
     if (item.didReference) {
@@ -395,20 +383,29 @@ export default class DriveComponent extends Vue {
     }
   }
 
-  async loadSession() {
-    if (this.select) {
-      await Session.set(this.select);
-    } else if (await Session.has()) {
+  async loadSession(options = { reset: false }) {
+    this.loadingAutocomplete = true;
+    const hasSession = await Session.has();
+    if (hasSession && options.reset === false) {
       this.select = await Session.get();
-    } else {
-      return;
+    } else if (this.select) {
+      await Session.set(this.select);
+    } else if (this.wallets && this.wallets.length > 0) {
+      this.select = this.wallets[0];
     }
 
-    // open
-    await this.wallet.open(this.select.keystore);
+    if (this.select) await this.wallet.open(this.select.keystore);
+
+    this.loadingAutocomplete = false;
   }
 
   async mounted() {
+    const keyup = fromEvent(this.$refs.debounceLoadSession.$el, 'keyup')
+      .pipe(debounceTime(2500))
+      .subscribe(async () => {
+        await this.loadSession({ reset: true });
+      });
+
     if (!(await Session.hasWalletRefs())) return;
     await this.loadWallets();
 
@@ -420,12 +417,10 @@ export default class DriveComponent extends Vue {
         );
       } else {
         this.canUnlock = false;
-        if (await Session.has()) {
-          this.loading = true;
 
-          await this.loadDirectory();
-        }
-        this.loading = false;
+          this.loading = true;
+          await this.loadDirectory(this.select);
+          this.loading = false;
       }
     });
 
@@ -435,9 +430,7 @@ export default class DriveComponent extends Vue {
   async loadWallets() {
     const w = await Session.getWalletRefs();
     this.wallets = w.filter((i) => i.address);
-    this.publicWallets = w.filter(
-      (i) => i.name.indexOf('did:xdv:') > -1
-    );
+    this.publicWallets = w.filter((i) => i.name.indexOf('did:xdv:') > -1);
   }
 
   openSignatureDialog(item) {
@@ -507,13 +500,10 @@ export default class DriveComponent extends Vue {
     // this.items = this.itemsClone.filter((i) => i.type === type);
   }
 
-  async loadDirectory() {
-    if (!this.select) return;
+  async loadDirectory(ks?: KeystoreIndex) {
 
-    this.loading = true;
-
-    const swarmFeed = await this.wallet.getSwarmNodeQueryable(
-      this.select.address
+const swarmFeed = await this.wallet.getSwarmNodeQueryable(
+      ks.address
     );
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
