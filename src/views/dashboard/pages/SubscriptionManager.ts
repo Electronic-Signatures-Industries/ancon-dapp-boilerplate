@@ -1,10 +1,10 @@
 import {
-  DIDDocument,
-  JOSEService,
-  JWTService,
-  KeyConvert,
-  Wallet
-  } from 'xdvplatform-wallet';
+    DIDDocument,
+    JOSEService,
+    JWTService,
+    KeyConvert,
+    Wallet
+    } from 'xdvplatform-wallet';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 const ec = require('elliptic').ec;
 
@@ -33,9 +33,8 @@ export class SubscriptionManager {
             }
         );
         let buf = await document.arrayBuffer();
-
         // is a cbor content
-        const encDoc = await this.wallet.encryptMultipleJWE(
+        const [errEnc, encDoc] = await this.wallet.encryptMultipleJWE(
             [this.recipientKeypair],
             'P256',
             buf,
@@ -47,7 +46,7 @@ export class SubscriptionManager {
 
         // signed message from user
         documentPayload.txs = undefined;
-        const signed = await this.wallet.signJWT('ES256K',
+        const [errSign, signed] = await this.wallet.signJWT('ES256K',
             {
                 ...documentPayload,
                 ref: encDocUrl
@@ -70,11 +69,12 @@ export class SubscriptionManager {
      * Load subscriptions
      * @param callback 
      */
-    public loadSubscriptions(callback: (message) => {}) {
+    public static loadSubscriptions(user: string, callback: (message) => {}) {
         const subs = JSON.parse(localStorage.getItem('xdv:messaging:subs'));
         return subs.map((i) => {
             const { feedHash, user } = i;
-            const swarmFeed = this.wallet.getSwarmNodeQueryable(user);
+            const wallet = new Wallet();
+            const swarmFeed = wallet.getSwarmNodeQueryable(user);
 
             const duplexClient = new MessagingTimelineDuplexClient(
                 swarmFeed,

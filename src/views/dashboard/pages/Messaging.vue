@@ -7,7 +7,7 @@
     ></v-progress-linear>
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-card class="mx-auto">
-      <v-toolbar color="deep-teal accent-4" dark>
+      <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Subscriptions</v-toolbar-title>
 
         <v-spacer></v-spacer>
@@ -77,7 +77,61 @@
           </template>
         </v-autocomplete>
         <template v-slot:extension>
-       
+         <v-btn color="red" dark small absolute bottom right fab>
+            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
+              ><template v-slot:activator>
+                <v-icon>mdi-plus</v-icon>
+              </template>
+           
+           <v-tooltip top>
+               <span>Add subscription link</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark v-on="on"
+                    @click="canUpload = true"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-key-change</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              
+           <v-tooltip top>
+               <span>Subscribe to blockchain job</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark v-on="on"
+                    @click="canUpload = true"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-cloud-sync</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              
+              <v-tooltip top>
+               <span>Subscribe to DGI</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab v-if="selected"
+                    dark v-on="on"
+                               @click="openShareDialog(item)"
+
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-cloud-print</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              
+              
+            </v-speed-dial>
+          </v-btn>
           <v-tabs v-model="tab" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab v-for="item in activeSubscriptions" :key="item.title">
@@ -127,8 +181,11 @@
         </v-list-item-group>
       </v-list>
     </v-card>
-        <xdv-unlock :show="canUnlock" v-model="password"></xdv-unlock>
-  
+    <xdv-unlock
+      v-model="password"
+      :show="canUnlock"
+      @input="login"
+    ></xdv-unlock>
   </v-container>
 </template>
 <script lang="ts">
@@ -177,7 +234,7 @@ const cbor = require('cbor-sync');
 @Component({
   components: {
     'xdv-unlock': Unlock,
-  }
+  },
 })
 export default class MessagingComponent extends Vue {
   loading = false;
@@ -212,34 +269,52 @@ export default class MessagingComponent extends Vue {
   subscriptions = [];
   activeSubscriptions: any[] = [];
   items = [];
-  selectWalletDialog = false;
   wallets: KeystoreIndex[] = [];
-  solidoProps: XDVMiddleware | MiddlewareOptions;
   tab = 0;
+  fab = false;
   passphraseSubject: Subject<any> = new Subject();
 
-  async mounted() {
-    this.loadWallets();
-    this.multiselect = [];
+  wallet = new Wallet();
+  canUnlock = false;
 
-    if (localStorage.getItem('xdv:messaging:currentWallet')) {
-      const ks = JSON.parse(
-        localStorage.getItem('xdv:messaging:currentWallet')
-      );
-      this.multiselect.push(ks);
-      Session.setWallet(ks.keystore, this.onAskPassphrase);
+  async mounted() {    
+    if (!(await Session.hasWalletRefs())) return;
+    await this.loadWallets();
+
+
+    this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
+      this.canUnlock = true;
+      if (i.type === 'wallet') {
+        this.passphraseSubject.subscribe((passphrase) =>
+          this.wallet.onRequestPassphraseWallet.next({ type: 'ui', passphrase })
+        );
+      } else {
+        this.canUnlock = false;
+
+        await this.loadSession();
+
+        if (localStorage.getItem('xdv:messaging:subs')) {
+          await this.loadSubscriptions();
+        }
+      }
+    });
+  }
+  async loadSession() {
+    if (this.multiselect) {
+      await Session.set(this.multiselect[0]);
+    } else if (await Session.has()) {
+      this.multiselect = [];
+      this.multiselect.push(await Session.get());
+    } else {
+      return;
     }
 
-    if (localStorage.getItem('xdv:messaging:subs')) {
-      await this.loadSubscriptions();
-    }
-
-    this.loading = true;
-    this.loading = false;
+    // open
+    await this.wallet.open(this.multiselect[0].keystore);
   }
 
-  loadWallets() {
-    this.wallets = KeystoreIndex.getIndex();
+  async loadWallets() {
+    this.wallets = await Session.getWalletRefs();
   }
 
   openDownloadDialog(item) {
@@ -253,27 +328,14 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
-  onAskPassphrase() {
-    this.shareDialog = true;
-
-    return new Promise((resolve, reject) => {
-      this.passphraseSubject.subscribe(p => {
-        resolve(p);
-      });
-    });
-  }
-
   login() {
     this.passphraseSubject.next(this.password);
   }
   async addSub() {
-    const { wallet } = Session;
     if (this.multiselect.length === 2) {
-       
       const ks = this.multiselect[0];
       const from = this.multiselect[1];
       this.loading = true;
-      
 
       // store subscriptions
       const existing = JSON.parse(
@@ -309,22 +371,25 @@ export default class MessagingComponent extends Vue {
 
     // resolve DID
     const self = this;
-    const subs = Session.subscriptions.loadSubscriptions((m: any) => {
-      const decoded = JWTService.decodeWithSignature(m.content);
+    const subs = SubscriptionManager.loadSubscriptions(
+      this.multiselect[0].address,
+      (m: any) => {
+        const decoded = JWTService.decodeWithSignature(m.content);
 
-      self.items.push({
-        // active: true,
-        item: { ...decoded, feed: '', address: m.author },
-        headline: `${decoded.payload.reference.contentType}`,
-        title: decoded.payload.reference.name,
-        action: moment(m.timestamp).fromNow(),
-        subtitle: `signature ${decoded.signature} size ${new BigNumber(
-          decoded.payload.reference.size
-        )
-          .toNumber()
-          .toLocaleString()} bytes`,
-      });
-    });
+        self.items.push({
+          // active: true,
+          item: { ...decoded, feed: '', address: m.author },
+          headline: `${decoded.payload.reference.contentType}`,
+          title: decoded.payload.reference.name,
+          action: moment(m.timestamp).fromNow(),
+          subtitle: `signature ${decoded.signature} size ${new BigNumber(
+            decoded.payload.reference.size
+          )
+            .toNumber()
+            .toLocaleString()} bytes`,
+        });
+      }
+    );
 
     self.activeSubscriptions = [];
     subs.forEach((subscription, index) => {
@@ -345,28 +410,22 @@ export default class MessagingComponent extends Vue {
 
     this.loading = false;
   }
-  async changeWallet(i: KeystoreIndex) {
-    this.selectWalletDialog = true;
-    this.multiselect = [];
-    this.multiselect.push(i);
-  }
 
   async download() {
     const ks = this.multiselect[0];
     this.loading = true;
 
-    const { wallet } = Session;
-    try { 
+    try {
       const item = this.selectedDocument.item.payload;
 
       // user
-      const swarmFeed = await wallet.getSwarmNodeClient(ks.address)
+      const swarmFeed = await this.wallet.getSwarmNodeClient(ks.address);
       // fetch and decrypt
       // get document from reference
       const encrypted = await swarmFeed.bzz.downloadData(item.ref, {
         mode: 'raw',
       });
-      let [err, res] = await wallet.decryptJWE('P256', encrypted);
+      let [err, res] = await this.wallet.decryptJWE('P256', encrypted);
 
       // is a cbor content
       // const verfied = await JWTService.verify(

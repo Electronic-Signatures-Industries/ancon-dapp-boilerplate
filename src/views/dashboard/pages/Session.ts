@@ -1,19 +1,16 @@
+import moment from 'moment';
+import PouchDB from 'pouchdb';
 import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
 import { KeystoreIndex } from './KeystoreIndex';
 import { SubscriptionManager } from './SubscriptionManager';
-
-const KEY = 'xdv:drive:session';
+let SID = '';
+const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
-    static wallet: Wallet = new Wallet();
-    static subscriptions: SubscriptionManager;
-
-    public static setWallet(id: string, onPassphrase: any) {
-        Session.wallet.open(id, onPassphrase);
-    }
-    public static async resolveAndStoreDID(did: string) {
+    static db = new PouchDB('xdv:session');
+    public static async resolveAndStoreDID(wallet: Wallet, did: string) {
         const user = did.split(':')[2];
         // resolve DID
-        const swarmFeed = Session.wallet.getSwarmNodeQueryable(user);
+        const swarmFeed = wallet.getSwarmNodeQueryable(user);
 
         const feedHash = await swarmFeed.bzzFeed.createManifest({
             user,
@@ -26,14 +23,13 @@ export class Session {
         const document = resolver.resolve(did) as DIDDocument;
         const pub = document.publicKey[0].publicKeyJwk;
 
-        await Session.wallet.setPublicKey(
+        await wallet.setPublicKey(
             did,
             'P256_JWK_PUBLIC',
             JSON.stringify(pub) as any
         );
 
         // Get Key Store Index
-        const localkeystoreIndex = KeystoreIndex.getIndex();
         const key = new KeystoreIndex();
         key.address = user;
         //        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
@@ -42,12 +38,7 @@ export class Session {
         key.publicKeyFromDID = pub;
         key.name = did;
 
-        // store
-        if (localkeystoreIndex.find(i => i.name === key.name)) {
-            // already exists
-            return;
-        }
-        KeystoreIndex.setIndex([...localkeystoreIndex, key]);
+        await Session.setWalletRefs(key);
 
     }
 
@@ -74,35 +65,79 @@ export class Session {
     }
 
 
-    static has() {
+    static async has() {
+
         try {
-            return !!JSON.parse(localStorage.getItem(
-                'xdv:drive:session',
-            ));
+            const item = await this.db.get(SID);
+            return true;
+
         } catch (e) {
             return false;
         }
     }
 
-    static get() {
-        const session = JSON.parse(localStorage.getItem(
-            'xdv:drive:session',
-        ));
-
-        
-
-        return session;
+    static async get() {
+        const item = await this.db.get(SID);
+        const today = moment();
+        const past = moment(item.timestamp);
+        if (today.diff(past, 'minutes') > 5) {
+            return null;
+        }
+        return { ...item.ks };
     }
 
-    static set(ks: KeystoreIndex) {
 
 
-        localStorage.setItem(
-            'xdv:drive:session',
-            JSON.stringify(ks)
-        );
 
+    static async set(ks: KeystoreIndex) {
+        if (SID) {
+            const ref = await this.db.put({
+                _id: SID,
+                _deleted: true,
+            });
+        }
+        const doc = await this.db.post({
+            ks,
+            timestamp: new Date(),
+        });
+
+        SID = doc.id;
     }
 
+    static async hasWalletRefs() {
+        try {
+            const item = await this.db.get(WALLET_REFS_KEY);
+            return true;
+
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static async getWalletRefs() {
+        const doc = await this.db.get(WALLET_REFS_KEY);
+        return doc.refs;
+    }
+
+    static async setWalletRefs(ks: KeystoreIndex) {
+
+        try {
+            const ref = await this.db.get(WALLET_REFS_KEY);
+
+            return this.db.put({
+                _id: WALLET_REFS_KEY,
+                refs: [...ref.refs, ks],
+                _rev: ref._rev,
+                timestamp: new Date(),
+            });
+        } catch (e) {
+            return this.db.put({
+                _id: WALLET_REFS_KEY,
+                refs: [ks],
+                timestamp: new Date(),
+            });
+
+        }
+    }
 
 }
