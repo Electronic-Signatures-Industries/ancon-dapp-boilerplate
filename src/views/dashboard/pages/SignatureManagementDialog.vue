@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="show" max-width="500px">
+  <v-dialog v-model="show" max-width="800px">
     <v-card>
       <v-card-title>
         <span class="headline">Sign documents</span>
@@ -182,14 +182,8 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          color="blue darken-1"
-          text
-          :disabled="value.canExecute"
-          @click="execute"
-          >{{ value.executeLabel || 'Sign' }}</v-btn
-        >
-        <v-btn color="blue darken-1" text @click="change">OK</v-btn>
+        
+                <v-btn color="blue darken-1" text @click="change">OK</v-btn>
         <v-btn color="blue darken-1" text @click="show = false">Close</v-btn>
       </v-card-actions>
     </v-card>

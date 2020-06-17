@@ -6,9 +6,23 @@ import { SubscriptionManager } from './SubscriptionManager';
 let SID = '';
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
-
+    static timeout;
     static async hasUnlock() {
         try {
+            if (Session.timeout)
+                clearTimeout(Session.timeout);
+            Session.timeout = setTimeout(async () => {
+
+                const ref = await this.db.get('xdv:unlock');
+
+                await this.db.put({
+                    _id: 'xdv:unlock',
+                    _rev: ref._rev,
+                    _deleted: true,
+                });
+
+            }, 5 * 60 * 1000);
+
             const item = await this.db.get('xdv:unlock');
             return true;
 
@@ -26,8 +40,9 @@ export class Session {
         let p;
         if (passphrase.length < 1) return;
         try {
+
             const ref = await this.db.get('xdv:unlock');
-            
+
             p = this.db.put({
                 _id: 'xdv:unlock',
                 _rev: ref._rev,
@@ -42,17 +57,10 @@ export class Session {
                 timestamp: new Date(),
             });
         } finally {
-            setTimeout(async () => {
-                await this.db.put({
-                    _id: 'xdv:unlock',
-                    _deleted: true,
-                });
-
-            }, 5 * 60 * 1000);
         }
 
         return p;
-        
+
     }
     static db = new PouchDB('xdv:session');
     public static async resolveAndStoreDID(wallet: Wallet, did: string) {
@@ -124,11 +132,11 @@ export class Session {
         }
     }
 
-    
-    
+
+
 
     static async get() {
-        const item = await this.db.get(SID);
+        const item = await this.db.get('xdv:session');
         const today = moment();
         const past = moment(item.timestamp);
         if (today.diff(past, 'minutes') > 5) {

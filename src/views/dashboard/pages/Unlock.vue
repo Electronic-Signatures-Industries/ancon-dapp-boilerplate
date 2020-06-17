@@ -58,7 +58,7 @@ export default class Unlock extends Vue {
 
   validations: any = { password: false };
   async change() {
-    debugger
+  
     this.$emit('input', this.value);
   }
 
