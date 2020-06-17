@@ -6,6 +6,54 @@ import { SubscriptionManager } from './SubscriptionManager';
 let SID = '';
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
+
+    static async hasUnlock() {
+        try {
+            const item = await this.db.get('xdv:unlock');
+            return true;
+
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static async getUnlock() {
+        const doc = await this.db.get('xdv:unlock');
+        return doc.passphrase;
+    }
+
+    static async setUnlock(passphrase: string) {
+        let p;
+        if (passphrase.length < 1) return;
+        try {
+            const ref = await this.db.get('xdv:unlock');
+            
+            p = this.db.put({
+                _id: 'xdv:unlock',
+                _rev: ref._rev,
+                passphrase,
+                timestamp: new Date(),
+            });
+
+        } catch (e) {
+            p = this.db.put({
+                _id: 'xdv:unlock',
+                passphrase,
+                timestamp: new Date(),
+            });
+        } finally {
+            setTimeout(async () => {
+                await this.db.put({
+                    _id: 'xdv:unlock',
+                    _deleted: true,
+                });
+
+            }, 5 * 60 * 1000);
+        }
+
+        return p;
+        
+    }
     static db = new PouchDB('xdv:session');
     public static async resolveAndStoreDID(wallet: Wallet, did: string) {
         const user = did.split(':')[2];
@@ -68,7 +116,7 @@ export class Session {
     static async has() {
 
         try {
-            const item = await this.db.get(SID);
+            const item = await this.db.get('xdv:session');
             return true;
 
         } catch (e) {
@@ -76,34 +124,43 @@ export class Session {
         }
     }
 
+    
+    
+
     static async get() {
         const item = await this.db.get(SID);
         const today = moment();
         const past = moment(item.timestamp);
         if (today.diff(past, 'minutes') > 5) {
-            return null;
-        }
-        return { ...item.ks };
-    }
-
-
-
-
-    static async set(ks: KeystoreIndex) {
-        if (SID) {
-            const ref = await this.db.put({
-                _id: SID,
-                _deleted: true,
+            await this.db.put({
+                _id: 'xdv:session',
+                _rev: item._rev,
+                timestamp: new Date(),
             });
         }
-        const doc = await this.db.post({
-            ks,
-            timestamp: new Date(),
-        });
-
-        SID = doc.id;
+        return { ...item.currentKeystore };
     }
 
+    static async set(ks: KeystoreIndex) {
+
+        try {
+            const ref = await this.db.get('xdv:session');
+
+            return this.db.put({
+                _id: 'xdv:session',
+                currentKeystore: ks,
+                _rev: ref._rev,
+                timestamp: new Date(),
+            });
+        } catch (e) {
+            return this.db.put({
+                _id: 'xdv:session',
+                currentKeystore: ks,
+                timestamp: new Date(),
+            });
+
+        }
+    }
     static async hasWalletRefs() {
         try {
             const item = await this.db.get(WALLET_REFS_KEY);

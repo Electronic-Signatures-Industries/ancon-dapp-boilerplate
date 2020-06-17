@@ -34,18 +34,31 @@
 <script lang="ts">
 import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Session } from './Session';
 
 @Component({
   name: 'xdv-unlock',
   props: ['value', 'show'],
+  watch: {
+    show: async function( current, old) {
+      if (old === false && current) {
+        const has = await Session.hasUnlock();
+        if (has) {
+          this.$emit('input', await Session.getUnlock());
+          current = false;
+        }
+      }
+    },
+  },
 })
 export default class Unlock extends Vue {
   value: string = '';
-  show = false;
+  show: boolean;
   showPassword = false;
 
   validations: any = { password: false };
-  change() {
+  async change() {
+    debugger
     this.$emit('input', this.value);
   }
 

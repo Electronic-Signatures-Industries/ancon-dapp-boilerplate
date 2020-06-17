@@ -84,12 +84,11 @@
           v-model="shareInfo.recipients"
         ></xdv-send>
 
-
-
         <xdv-sign
+          :wallet="wallet"
           :show="canSign"
           @input="signOrVerify"
-          :wallets="wallets"
+          :wallets="allWallets"
           v-model="signManagerProps"
         ></xdv-sign>
 
@@ -105,6 +104,7 @@
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
+                    v-if="tab === 1"
                     dark
                     v-on="on"
                     @click="canUpload = true"
@@ -116,30 +116,33 @@
                 </template></v-tooltip
               >
 
-              <v-tooltip top>
+              <!-- <v-tooltip top>
                 <span>Send subscription link</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
+                    @click="openShareDialog(selected)"
+
                     dark
                     v-on="on"
                     @click="canUpload = true"
                     small
-                    color="red accent-4"
+                    v-if="selected && selected.type!=='did'"
+                     color="red accent-4"
                   >
                     <v-icon>mdi-key-change</v-icon>
                   </v-btn>
                 </template></v-tooltip
-              >
+              > -->
               <v-tooltip top>
                 <span>Send to</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    v-if="selected"
+                    v-if="tab === 1 && currentItem"
                     dark
                     v-on="on"
-                    @click="openShareDialog(item)"
+                    @click="openShareDialog(currentItem)"
                     small
                     color="red accent-4"
                   >
@@ -152,11 +155,11 @@
                 <span>Copy DID link</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="selected"
+                    v-if="tab === 0"
                     fab
                     dark
                     v-on="on"
-                    @click="handleCopyDIDReference(item)"
+                    @click="handleCopyDIDReference(currentItem)"
                     small
                     color="red accent-4"
                   >
@@ -168,11 +171,11 @@
                 <span>Sign documents</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="selected"
                     fab
                     dark
+                    v-if="tab === 1"
                     v-on="on"
-                    @click="openSignatureDialog(item)"
+                    @click="openSignatureDialog()"
                     small
                     color="red accent-4"
                   >
@@ -185,11 +188,11 @@
                 <span>Execute chain job</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="selected"
                     fab
+                    v-if="tab === 1 && currentItem"
                     dark
                     v-on="on"
-                    @click="openChainDialog(item)"
+                    @click="openChainDialog(currentItem)"
                     small
                     color="red accent-4"
                   >
@@ -217,34 +220,31 @@
         </template>
       </v-toolbar>
 
-      <v-list two-line>
-        <v-list-item-group
-          v-model="selected"
-          active-class="blue lighten-5"
-          class="blue--text"
-        >
+      <v-list two-line flat>
+        <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.headline">
-                <v-list-item-content>
-                  <v-list-item-title v-text="item.title"></v-list-item-title>
-                  <v-list-item-subtitle
-                    @click="openViewerDialog(item)"
-                    class="text--primary"
-                    v-text="item.headline"
-                  ></v-list-item-subtitle>
-                  <v-list-item-subtitle
-                    v-text="item.subtitle"
-                  ></v-list-item-subtitle>
-                </v-list-item-content>
+            <v-list-item :key="item.subtitle" @click="currentItem = item">
+              <v-list-item-content>
+                <v-list-item-title
+                  v-text="item.title"
+                  class="font-weight-medium"
+                ></v-list-item-title>
+                <v-list-item-subtitle
+                  @click="openViewerDialog(item)"
+                  class="text--primary"
+                  v-text="item.headline"
+                ></v-list-item-subtitle>
+                <v-list-item-subtitle
+                  v-text="item.subtitle"
+                ></v-list-item-subtitle>
+              </v-list-item-content>
 
-                <v-list-item-action>
-                  <v-list-item-action-text
-                    v-text="item.action"
-                  ></v-list-item-action-text>
-                 
-                </v-list-item-action>
-</v-list-item
-            >
+              <v-list-item-action>
+                <v-list-item-action-text
+                  v-text="item.action"
+                ></v-list-item-action-text>
+              </v-list-item-action>
+            </v-list-item>
 
             <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
           </template>
@@ -296,7 +296,9 @@ import Upload from './Upload.vue';
 import SendTo from './Recipients.vue';
 import { SubscriptionManager } from './SubscriptionManager';
 import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
-import SignatureManagementDialog, { SigningOutput } from './SignatureManagementDialog.vue';
+import SignatureManagementDialog, {
+  SigningOutput,
+} from './SignatureManagementDialog.vue';
 const cbor = require('cbor-sync');
 
 @Component({
@@ -330,6 +332,7 @@ export default class DriveComponent extends Vue {
   alertType = '';
   selectedDocument = {};
   selected = [];
+  currentItem = {};
   shareDialog = false;
   shareInfo = {
     address: '',
@@ -357,22 +360,38 @@ export default class DriveComponent extends Vue {
   wallet = new Wallet();
 
   passphraseSubject: Subject<any> = new Subject();
-  signManagerProps  = {
+  signManagerProps = {
     operation: 'sign',
     specification: 'none',
-    output: { key: 'XDV link', value: SigningOutput.XDVRef},
+    output: { key: 'XDV link', value: SigningOutput.XDVRef },
     algorithm: '',
+    isBinaryEnabled: true,
     wallet: new KeystoreIndex(),
     files: [],
   };
   canView: boolean;
   canChain: boolean;
+  allWallets: any = [];
 
   login() {
     this.passphraseSubject.next(this.password);
   }
 
-  async signOrVerify(){
+  async signOrVerify() {
+    const ks = this.select;
+
+    this.loading = true;
+    const driveManager = new DriveSwarmManager(this.wallet);
+    // await driveManager.pushFiles({
+    //   address: ks.address,
+    //   files: this.files,
+    //   queueName: 'documents',
+    // });
+
+    this.loading = false;
+    this.canUpload = false;
+    this.tab = 1;
+
     this.canSign = false;
   }
   handleCopyDIDReference(item) {
@@ -408,19 +427,31 @@ export default class DriveComponent extends Vue {
 
     if (!(await Session.hasWalletRefs())) return;
     await this.loadWallets();
-
     this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-      this.canUnlock = true;
-      if (i.type === 'wallet') {
-        this.passphraseSubject.subscribe((passphrase) =>
-          this.wallet.onRequestPassphraseWallet.next({ type: 'ui', passphrase })
-        );
-      } else {
-        this.canUnlock = false;
+      const has = await Session.hasUnlock();
 
-          this.loading = true;
-          await this.loadDirectory(this.select);
-          this.loading = false;
+      this.canUnlock = !has;
+      if (i.type === 'wallet') {
+        if (has) {
+          let passphrase = await Session.getUnlock();
+          this.wallet.onRequestPassphraseWallet.next({
+            type: 'ui',
+            passphrase,
+          });
+        } else {
+          this.passphraseSubject.subscribe(async (passphrase) => {
+            await Session.setUnlock(passphrase);
+            this.canUnlock = false;
+            this.wallet.onRequestPassphraseWallet.next({
+              type: 'ui',
+              passphrase,
+            });
+          });
+        }
+      } else {
+        this.loading = true;
+        await this.loadDirectory(this.select);
+        this.loading = false;
       }
     });
 
@@ -430,6 +461,7 @@ export default class DriveComponent extends Vue {
   async loadWallets() {
     const w = await Session.getWalletRefs();
     this.wallets = w.filter((i) => i.address);
+    this.allWallets = w;
     this.publicWallets = w.filter((i) => i.name.indexOf('did:xdv:') > -1);
   }
 
@@ -489,22 +521,18 @@ export default class DriveComponent extends Vue {
   }
 
   filter() {
-    // if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
-    // const mapping = {
-    //   did: 0,
-    //   file_document: 1,
-    //   fe: 2,
-    //   vc: 3,
-    // };
-    // const type = Object.keys(mapping)[this.tab];
-    // this.items = this.itemsClone.filter((i) => i.type === type);
+    const mapping = {
+      did: 0,
+      file_document: 1,
+      fe: 2,
+      vc: 3,
+    };
+    const type = Object.keys(mapping)[this.tab];
+    this.items = this.itemsClone.filter((i) => i.type === type);
   }
 
   async loadDirectory(ks?: KeystoreIndex) {
-
-const swarmFeed = await this.wallet.getSwarmNodeQueryable(
-      ks.address
-    );
+    const swarmFeed = await this.wallet.getSwarmNodeQueryable(ks.address);
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
       name: 'did:xdv:' + swarmFeed.user,
@@ -566,6 +594,8 @@ const swarmFeed = await this.wallet.getSwarmNodeQueryable(
           };
         });
         this.items = [...this.items, ...item] as any[];
+        this.itemsClone = [...this.items];
+        this.filter();
       }
     );
   }

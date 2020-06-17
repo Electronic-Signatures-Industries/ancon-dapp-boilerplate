@@ -41,9 +41,9 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
   props: ['value', 'show', 'addresses'],
 })
 export default class SendTo extends Vue {
-  value = [];
-  addresses  = [];
-  show = false;
+  value;
+  addresses;
+  show;
   change() {
     this.$emit('input', this.value);
   }

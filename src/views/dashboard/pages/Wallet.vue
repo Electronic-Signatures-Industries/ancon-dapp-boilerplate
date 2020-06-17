@@ -669,15 +669,18 @@ export default class WalletComponent extends Vue {
           );
 
           await this.wallet.setImportKey(
-            `import:X509:${this.walletDescription}`,
-            rsaKeyExports.pemAsPrivate
+            `import:X509:${id}`,
+            {
+              ...rsaKeyExports,
+              selfSignedCert,
+            }
           );
 
-          this.cert = rsaKeyExports.pemAsPrivate;
+          this.cert = `${rsaKeyExports.pemAsPrivate}\r\n${rsaKeyExports.pemAsPublic}\r\n${selfSignedCert}`;
           keystoreIndexItem = {
             created: new Date(),
             name: this.walletDescription,
-            keystore: `:import:X509:${this.walletDescription}`,
+            keystore: id,
           } as KeystoreIndex;
         }
         this.loading = false;

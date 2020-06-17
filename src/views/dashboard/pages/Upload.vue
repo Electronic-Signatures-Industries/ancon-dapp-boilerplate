@@ -38,8 +38,8 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
   props: ['show','value'],
 })
 export default class Upload extends Vue {
-  value: string = '';
-  show = false;
+  value: string;
+  show;
   change() {
     this.$emit('input', this.value);
     this.show = false;
