@@ -77,18 +77,19 @@
           </template>
         </v-autocomplete>
         <template v-slot:extension>
-         <v-btn color="red" dark small absolute bottom right fab>
+          <v-btn color="red" dark small absolute bottom right fab>
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
               </template>
-           
-           <v-tooltip top>
-               <span>Add subscription link</span>
+
+              <v-tooltip top>
+                <span>Add subscription link</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    dark v-on="on"
+                    dark
+                    v-on="on"
                     @click="canUpload = true"
                     small
                     color="red accent-4"
@@ -97,13 +98,14 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              
-           <v-tooltip top>
-               <span>Subscribe to blockchain job</span>
+
+              <v-tooltip top>
+                <span>Subscribe to blockchain job</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    dark v-on="on"
+                    dark
+                    v-on="on"
                     @click="canUpload = true"
                     small
                     color="red accent-4"
@@ -112,15 +114,16 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              
+
               <v-tooltip top>
-               <span>Subscribe to DGI</span>
+                <span>Subscribe to DGI</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    fab v-if="selected"
-                    dark v-on="on"
-                               @click="openShareDialog(item)"
-
+                    fab
+                    v-if="selected"
+                    dark
+                    v-on="on"
+                    @click="openShareDialog(item)"
                     small
                     color="red accent-4"
                   >
@@ -128,8 +131,6 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              
-              
             </v-speed-dial>
           </v-btn>
           <v-tabs v-model="tab" align-with-title>
@@ -181,10 +182,11 @@
         </v-list-item-group>
       </v-list>
     </v-card>
+
     <xdv-unlock
+      @change="onValidLogin"
       v-model="password"
-      :show="canUnlock"
-      @input="login"
+      :wallet="wallet"
     ></xdv-unlock>
   </v-container>
 </template>
@@ -272,35 +274,22 @@ export default class MessagingComponent extends Vue {
   wallets: KeystoreIndex[] = [];
   tab = 0;
   fab = false;
-  passphraseSubject: Subject<any> = new Subject();
 
   wallet = new Wallet();
   canUnlock = false;
   loadingAutocomplete: boolean;
 
-  async mounted() {    
+  async mounted() {
     if (!(await Session.hasWalletRefs())) return;
     await this.loadWallets();
 
 
-    this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-      this.canUnlock = true;
-      if (i.type === 'wallet') {
-        this.passphraseSubject.subscribe((passphrase) =>
-          this.wallet.onRequestPassphraseWallet.next({ type: 'ui', passphrase })
-        );
-      } else {
-        this.canUnlock = false;
+    await this.loadSession();
 
-        await this.loadSession();
-
-        if (localStorage.getItem('xdv:messaging:subs')) {
-          await this.loadSubscriptions();
-        }
-      }
-    });
+    if (localStorage.getItem('xdv:messaging:subs')) {
+      await this.loadSubscriptions();
+    }
   }
-  
 
   async loadSession(options = { reset: false }) {
     this.loadingAutocomplete = true;
@@ -315,7 +304,8 @@ export default class MessagingComponent extends Vue {
       this.multiselect.push(this.wallets[0]);
     }
 
-    if (this.multiselect[0]) await this.wallet.open(this.multiselect[0].keystore);
+    if (this.multiselect[0])
+      await this.wallet.open(this.multiselect[0].keystore);
 
     this.loadingAutocomplete = false;
   }

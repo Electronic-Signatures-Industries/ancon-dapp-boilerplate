@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="show" max-width="800px">
+  <v-dialog v-model="show" max-width="800px" persistent>
     <v-card>
       <v-card-title>
         <span class="headline">Sign documents</span>
@@ -42,10 +42,11 @@
                 </v-tooltip>
               </v-radio-group>
             </v-col>
+
             <v-col cols="6" md="6">
               <v-radio-group
-                v-model="value.specification"
-                label="Specification"
+                v-model="value.presets"
+                label="Presets"
                 column
                 class="font-weight-medium"
               >
@@ -55,12 +56,11 @@
                       v-on="on"
                       class="font-weight-medium"
                       label="None"
-                      @change="filter"
                       color="red"
                       value="none"
                     ></v-radio>
                   </template>
-                  <span>No signing specification applied</span>
+                  <span>No signing presets applied</span>
                 </v-tooltip>
 
                 <v-tooltip bottom>
@@ -68,8 +68,7 @@
                     <v-radio
                       v-on="on"
                       class="font-weight-medium"
-                      label="CMS"
-                      @change="filter"
+                      label="Qualified Signature"
                       color="red"
                       value="cms"
                     ></v-radio>
@@ -82,10 +81,48 @@
                     <v-radio
                       v-on="on"
                       class="font-weight-medium"
-                      label="XmlDsig"
-                      @change="filter"
+                      label="DGI Factura Electronica"
                       color="red"
                       value="xmldsig"
+                    ></v-radio>
+                  </template>
+                  <span>XML Digital Signatures - X509 only</span>
+                </v-tooltip>
+
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-radio
+                      v-on="on"
+                      class="font-weight-medium"
+                      label="W3C Verifiable Claim"
+                      color="red"
+                      value="vc"
+                    ></v-radio>
+                  </template>
+                  <span>Verifiable Claim</span>
+                </v-tooltip>
+
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-radio
+                      v-on="on"
+                      class="font-weight-medium"
+                      label="XDV Document"
+                      color="red"
+                      value="xdv"
+                    ></v-radio>
+                  </template>
+                  <span>XDV</span>
+                </v-tooltip>
+
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-radio
+                      v-on="on"
+                      class="font-weight-medium"
+                      label="Ethereum Signed Typed Data"
+                      color="red"
+                      value="eip712"
                     ></v-radio>
                   </template>
                   <span>XML Digital Signatures - X509 only</span>
@@ -115,7 +152,7 @@
               <v-select
                 required
                 class="font-weight-medium"
-                :items="wallets"
+                :items="displayWallets"
                 v-model="value.wallet"
                 @change="setWalletId"
                 label="Wallet"
@@ -134,7 +171,7 @@
                 :items="algos"
                 v-model="value.algorithm"
                 label="Algorithm"
-                :readonly="value.specification !== 'none'"
+                :readonly="value.presets !== 'none'"
                 single-line
               ></v-select>
             </v-col>
@@ -147,9 +184,10 @@
                 item-text="key"
                 class="font-weight-medium"
                 item-value="value"
-                :readonly="value.specification === 'xmldsig'"
+                :readonly="value.presets === 'xmldsig'"
+                @input="execute"
                 label="Output"
-                single-line @change="execute"
+                single-line
               ></v-select>
             </v-col>
           </v-row>
@@ -182,9 +220,9 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        
-                <v-btn color="blue darken-1" text @click="change">OK</v-btn>
-        <v-btn color="blue darken-1" text @click="show = false">Close</v-btn>
+
+        <v-btn color="blue darken-1" text @click="change">OK</v-btn>
+        <v-btn color="blue darken-1" text @click="onClose">Close</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -196,9 +234,10 @@ import {
   Wallet,
   CMSSigner,
 } from 'xdvplatform-wallet';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import { base64, arrayify } from 'ethers/utils';
+import { Session } from './Session';
 const promiseFileReader = require('promise-file-reader');
 export enum SigningOutput {
   QR,
@@ -208,6 +247,7 @@ export enum SigningOutput {
   Base64,
   PKCS7PEM,
   XMLDSIG,
+  EthereumSignature
 }
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
@@ -217,13 +257,14 @@ export const SignOutput = [
   { key: 'Base 64', value: SigningOutput.Base64 },
   { key: 'CMS - PKCS#7 PEM', value: SigningOutput.PKCS7PEM },
   { key: 'XmlDsig Attached', value: SigningOutput.XMLDSIG },
+  { key: 'Ethereum Signature', value: SigningOutput.EthereumSignature },
 ];
 interface SignatureManagementModel {
   executeLabel: string;
   canExecute: boolean;
   isBinaryEnabled: boolean;
   operation: 'sign' | 'verify';
-  specification: 'none' | 'cms' | 'xmldsig';
+  presets: 'none' | 'cms' | 'xmldsig' | 'vc' | 'xdv' | 'eip712';
   algorithm: AlgorithmTypeString;
   output: any;
   wallet: KeystoreIndex;
@@ -232,71 +273,83 @@ interface SignatureManagementModel {
 
 @Component({
   name: 'xdv-sign',
-  props: ['value', 'wallet', 'show', 'wallets'],
-  watch: {
-    value: async function(
-      current: SignatureManagementModel,
-      old: SignatureManagementModel
-    ) {
-      current.canExecute = true;
-
-      current.isBinaryEnabled = false;
-      if (current.operation === 'verify') {
-        current.isBinaryEnabled = current.output === SigningOutput.QR;
-      } else {
-        current.isBinaryEnabled = true;
-      }
-
-      if (current.files && current.files.length > 0) {
-        if (current.specification === 'xmldsig') {
-          current.canExecute = !!current.files.find((f) =>
-            f.name.toLowerCase().includes('.xml')
-          );
-        }
-      }
-      current.executeLabel = current.operation === 'sign' ? 'Sign' : 'Verify';
-
-    },
-  },
+  props: ['value', 'wallet', 'show'],
 })
 export default class SignatureManagementDialog extends Vue {
   value: SignatureManagementModel;
-
+  z;
   hasErrors = false;
   alertMessage = '';
   loading = false;
-  cloneWallets;
+  displayWallets = [];
+  cloneWallets = [];
   signatureView: string = '';
   wallet: Wallet;
   outputs = SignOutput;
-  wallets: KeystoreIndex[];
   algos: AlgorithmTypeString[] = ['RSA', 'ES256K', 'P256', 'ED25519', 'BLS'];
   show;
 
-  beforeUpdate() {
-    this.cloneWallets = [...this.wallets];
+  @Watch('value.presets')
+  async onChange(presets, oldVal) {
+    if (presets === 'cms') {
+      this.displayWallets = this.cloneWallets.filter((i) => !i.address);
+      this.value.algorithm = 'RSA';
+      this.value.output = SigningOutput.PKCS7PEM;
+    } else if (presets === 'xmldsig') {
+      this.displayWallets = this.cloneWallets.filter((i) => !i.address);
+      this.value.algorithm = 'RSA';
+      this.value.output = SigningOutput.XMLDSIG;
+    } else if (presets === 'vc') {
+      this.displayWallets = this.cloneWallets.filter((i) => i.address);
+      this.value.algorithm = 'ES256K';
+      this.value.output = SigningOutput.VCRef;
+    } else if (presets === 'xdv') {
+      this.displayWallets = this.cloneWallets.filter((i) => i.address);
+      this.value.algorithm = 'ES256K';
+      this.value.output = SigningOutput.XDVRef;
+    } else if (presets === 'eip712') {
+      this.displayWallets = this.cloneWallets.filter((i) => i.address);
+      this.value.algorithm = 'ES256K';
+      this.value.output = SigningOutput.EthereumSignature;
+    } else {
+      this.displayWallets = [...this.cloneWallets];
+    }
+
+   await this.execute();
+}
+
+
+  @Watch('value.wallet')
+  async onWalletChange(value, oldVal){
+    if (value.id && this.value.files && this.value.files.length > 0 && !this.loading) {
+     await this.execute();
+    }
+  }
+
+
+  @Watch('value.files') 
+  async onFilesChange(value, oldVal){
+    if (value && value.length > 0 && this.value.wallet.id && !this.loading) {
+     await this.execute();
+    }
+  }
+
+  async mounted() {
+    const w = await Session.getWalletRefs();
+    this.cloneWallets = [...w];
+    this.displayWallets = [...w];
   }
   change() {
     this.$emit('input', this.value);
   }
-
-  filter() {
-    if (this.value.specification === 'cms') {
-      this.wallets = this.cloneWallets.filter((i) => !i.address);
-      this.value.algorithm = 'RSA';
-      // this.value.output = SigningOutput.PKCS7PEM;
-    } else if (this.value.specification === 'xmldsig') {
-      this.wallets = this.cloneWallets.filter((i) => !i.address);
-      this.value.algorithm = 'RSA';
-      this.value.output = SigningOutput.XMLDSIG;
-    } else {
-      this.wallets = [...this.cloneWallets];
-    }
+  onClose() {
+    this.$emit('close');
   }
 
   setWalletId() {
     this.wallet.id = this.value.wallet.keystore;
   }
+
   async execute() {
     // get algo
     const kp = await this.wallet.getPrivateKey(this.value.algorithm);
@@ -308,7 +361,7 @@ export default class SignatureManagementDialog extends Vue {
       // get content to sign
       if (this.value.isBinaryEnabled) {
         // sign file blobs
-        if (this.value.specification === 'cms') {
+        if (this.value.presets === 'cms' && this.value.files) {
           this.loading = true;
           // sign with CMS, return detached
           const rsaKeys = await this.wallet.getImportKey(
@@ -324,7 +377,7 @@ export default class SignatureManagementDialog extends Vue {
           } catch (e) {
             console.log(e);
           }
-        } else if (this.value.specification === 'xmldsig') {
+        } else if (this.value.presets === 'xmldsig') {
           // sign with xmldsig, return embedded
           const rsaKeyCert = await this.wallet.getImportKey(
             this.value.wallet.keystore
@@ -341,7 +394,8 @@ export default class SignatureManagementDialog extends Vue {
 
       // raw output
       setTimeout(() => {
-      this.loading = false;}, 1000);
+        this.loading = false;
+      }, 1000);
       if (this.value.output === SigningOutput.PKCS7PEM) {
         this.signatureView = result;
       }
@@ -361,12 +415,12 @@ export default class SignatureManagementDialog extends Vue {
         // verify file blobs
       } else {
         // verify content
-        if (this.value.specification === 'cms') {
+        if (this.value.presets === 'cms') {
           // sign with CMS, return detached
           const rsaKeyCert = await this.wallet.getImportKey(
             this.value.wallet.keystore
           );
-        } else if (this.value.specification === 'xmldsig') {
+        } else if (this.value.presets === 'xmldsig') {
           // sign with xmldsig, return embedded
           const rsaKeyCert = await this.wallet.getImportKey(
             this.value.wallet.keystore

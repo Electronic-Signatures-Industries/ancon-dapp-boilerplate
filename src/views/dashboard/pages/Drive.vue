@@ -17,6 +17,7 @@
           :items="wallets"
           :loading="loadingAutocomplete"
           chips
+          @change="loadSession"
           clearable
           hide-details
           hide-selected
@@ -26,7 +27,6 @@
           ref="debounceLoadSession"
           solo
         >
-          ).subscribe(
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
@@ -67,8 +67,8 @@
 
         <xdv-unlock
           v-model="password"
-          :show="canUnlock"
-          @input="login"
+          :wallet="wallet"
+          @load="onUnlock"
         ></xdv-unlock>
 
         <xdv-upload
@@ -88,7 +88,7 @@
           :wallet="wallet"
           :show="canSign"
           @input="signOrVerify"
-          :wallets="allWallets"
+          v-on:close="closeSign"
           v-model="signManagerProps"
         ></xdv-sign>
 
@@ -220,7 +220,7 @@
         </template>
       </v-toolbar>
 
-      <v-list two-line flat>
+      <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.subtitle" @click="currentItem = item">
@@ -362,7 +362,7 @@ export default class DriveComponent extends Vue {
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
     operation: 'sign',
-    specification: 'none',
+    presets: 'none',
     output: { key: 'XDV link', value: SigningOutput.XDVRef },
     algorithm: '',
     isBinaryEnabled: true,
@@ -373,8 +373,13 @@ export default class DriveComponent extends Vue {
   canChain: boolean;
   allWallets: any = [];
 
-  login() {
-    this.passphraseSubject.next(this.password);
+  async onUnlock() {
+
+    await this.loadWallets();
+await this.loadSession({ reset: true });
+    this.loading = true;
+    await this.loadDirectory(this.select);
+    this.loading = false;
   }
 
   async signOrVerify() {
@@ -419,41 +424,37 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
-    const keyup = fromEvent(this.$refs.debounceLoadSession.$el, 'keyup')
+    const keyup = fromEvent(this.$refs.debounceLoadSession.$el, 'keyenter')
       .pipe(debounceTime(2500))
       .subscribe(async () => {
         await this.loadSession({ reset: true });
       });
 
-    if (!(await Session.hasWalletRefs())) return;
     await this.loadWallets();
-    this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-      const has = await Session.hasUnlock();
+    // this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
+    //   const has = await Session.hasUnlock();
 
-      this.canUnlock = !has;
-      if (i.type === 'wallet') {
-        if (has) {
-          let passphrase = await Session.getUnlock();
-          this.wallet.onRequestPassphraseWallet.next({
-            type: 'ui',
-            passphrase,
-          });
-        } else {
-          this.passphraseSubject.subscribe(async (passphrase) => {
-            await Session.setUnlock(passphrase);
-            this.canUnlock = false;
-            this.wallet.onRequestPassphraseWallet.next({
-              type: 'ui',
-              passphrase,
-            });
-          });
-        }
-      } else {
-        this.loading = true;
-        await this.loadDirectory(this.select);
-        this.loading = false;
-      }
-    });
+    //   this.canUnlock = !has;
+    //   if (i.type === 'wallet') {
+    //     if (has) {
+    //       let passphrase = await Session.getUnlock();
+    //       this.wallet.onRequestPassphraseWallet.next({
+    //         type: 'ui',
+    //         passphrase,
+    //       });
+    //     } else {
+    //       this.passphraseSubject.subscribe(async (passphrase) => {
+    //         await Session.setUnlock(passphrase);
+    //         this.canUnlock = false;
+    //         this.wallet.onRequestPassphraseWallet.next({
+    //           type: 'ui',
+    //           passphrase,
+    //         });
+    //       });
+    //     }
+    //   } else {
+    //   }
+    // });
 
     await this.loadSession();
   }
@@ -469,7 +470,9 @@ export default class DriveComponent extends Vue {
     this.canSign = true;
     this.selectedDocument = item;
   }
-
+closeSign(){
+  this.canSign = false;
+}
   openViewerDialog(item) {
     return (key) => {
       this.canView = true;

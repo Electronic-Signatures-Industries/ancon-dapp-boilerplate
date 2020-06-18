@@ -21,10 +21,10 @@ export class Session {
                     _deleted: true,
                 });
 
-            }, 5 * 60 * 1000);
+            }, 15 * 60 * 1000);
 
             const item = await this.db.get('xdv:unlock');
-            return true;
+            return !!item;
 
         } catch (e) {
             return false;
@@ -125,7 +125,7 @@ export class Session {
 
         try {
             const item = await this.db.get('xdv:session');
-            return true;
+            return !!item;
 
         } catch (e) {
             return false;
@@ -146,7 +146,7 @@ export class Session {
                 timestamp: new Date(),
             });
         }
-        return { ...item.currentKeystore };
+        return item.currentKeystore;
     }
 
     static async set(ks: KeystoreIndex) {
@@ -172,7 +172,7 @@ export class Session {
     static async hasWalletRefs() {
         try {
             const item = await this.db.get(WALLET_REFS_KEY);
-            return true;
+            return !!item;
 
         } catch (e) {
             return false;

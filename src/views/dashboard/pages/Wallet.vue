@@ -389,8 +389,10 @@ w<template>
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <xdv-unlock :show="canUnlock" v-model="password"></xdv-unlock>
-      <v-list two-line>
+
+        <xdv-unlock @change="onValidLogin" v-model="password" :wallet="wallet"></xdv-unlock>
+
+       <v-list two-line>
         <v-list-item-group
           v-model="selected"
           active-class="blue lighten-5"
@@ -496,8 +498,7 @@ export default class WalletComponent extends Vue {
   selectedPanel = 0;
   itemsClone = [];
   hasErrors = false;
-  canUnlock = false;
-  tab = 0;
+   tab = 0;
   item = 1;
   fab = false;
   items = [
@@ -507,27 +508,11 @@ export default class WalletComponent extends Vue {
   ];
 
   wallet: Wallet = new Wallet();
-  passphraseSubject: Subject<any> = new Subject();
-
+  
   async mounted() {
     const has = await Session.hasWalletRefs();
     if (!has) return;
     await this.loadWallets();
-
-    this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-      this.canUnlock = true;
-      this.loading = true;
-      if (i.type === 'wallet') {
-        this.passphraseSubject.subscribe((passphrase) =>
-          this.wallet.onRequestPassphraseWallet.next({ type: 'ui', passphrase })
-        );
-      } else {
-        this.canUnlock = false;
-        this.loading = false;
-      }
-    });
-
-    //  await this.loadSession();
   }
 
   copyAddress(address) {

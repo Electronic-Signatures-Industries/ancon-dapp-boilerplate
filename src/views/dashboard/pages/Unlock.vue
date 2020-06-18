@@ -32,15 +32,16 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
+import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Session } from './Session';
+import { Subject } from 'rxjs';
 
 @Component({
   name: 'xdv-unlock',
-  props: ['value', 'show'],
+  props: ['value', 'wallet'],
   watch: {
-    show: async function( current, old) {
+    show: async function(current, old) {
       if (old === false && current) {
         const has = await Session.hasUnlock();
         if (has) {
@@ -53,15 +54,45 @@ import { Session } from './Session';
 })
 export default class Unlock extends Vue {
   value: string = '';
-  show: boolean;
+  show: boolean=false;
   showPassword = false;
-
+  wallet: Wallet;
   validations: any = { password: false };
+  passphraseSubject: Subject<any> = new Subject();
   async change() {
-  
-    this.$emit('input', this.value);
+    this.passphraseSubject.next(this.value);
   }
 
+  async mounted() {
+    
+   this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
+      const has = await Session.hasUnlock();
+ 
+      this.show = !has;
+      if (i.type === 'wallet') {
+        if (has) {
+          let passphrase = await Session.getUnlock();
+          this.wallet.onRequestPassphraseWallet.next({
+            type: 'ui',
+            passphrase,
+          });
+        } else {
+          this.passphraseSubject.subscribe(async (passphrase) => {
+            await Session.setUnlock(passphrase);
+            this.show = false;
+            this.wallet.onRequestPassphraseWallet.next({
+              type: 'ui',
+              passphrase,
+            });
+          });
+        }
+      } else {
+        this.$emit('change', {...i});
+      }
+    });
+ 
+    this.$emit('load')
+  }
   cancel() {
     //  no-op
     this.show = false;
