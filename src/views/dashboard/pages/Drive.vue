@@ -93,7 +93,7 @@
         ></xdv-sign>
 
         <template v-slot:extension>
-          <v-btn color="red" dark small absolute bottom right fab>
+          <v-btn color="red" dark small absolute bottom right fab :disabled="!wallet.id">
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
@@ -173,7 +173,6 @@
                   <v-btn
                     fab
                     dark
-                    v-if="tab === 1"
                     v-on="on"
                     @click="openSignatureDialog()"
                     small
@@ -183,7 +182,7 @@
                   </v-btn>
                 </template></v-tooltip
               >
-
+<!-- 
               <v-tooltip top>
                 <span>Execute chain job</span>
                 <template v-slot:activator="{ on }">
@@ -199,10 +198,10 @@
                     <v-icon>mdi-link-lock</v-icon>
                   </v-btn>
                 </template></v-tooltip
-              >
+              > -->
             </v-speed-dial>
           </v-btn>
-          <v-tabs v-model="tab" @change="filter" align-with-title>
+          <v-tabs v-model="tab" align-with-title>
             <v-tabs-slider color="yellow"></v-tabs-slider>
             <v-tab>
               DID
@@ -275,7 +274,7 @@ import {
   PublicKey,
 } from 'xdvplatform-wallet';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import moment from 'moment';
 import { createKeyPair, sign } from '@erebos/secp256k1';
@@ -374,9 +373,8 @@ export default class DriveComponent extends Vue {
   allWallets: any = [];
 
   async onUnlock() {
-
     await this.loadWallets();
-await this.loadSession({ reset: true });
+    await this.loadSession({ reset: true });
     this.loading = true;
     await this.loadDirectory(this.select);
     this.loading = false;
@@ -387,12 +385,8 @@ await this.loadSession({ reset: true });
 
     this.loading = true;
     const driveManager = new DriveSwarmManager(this.wallet);
-    // await driveManager.pushFiles({
-    //   address: ks.address,
-    //   files: this.files,
-    //   queueName: 'documents',
-    // });
-
+    
+    
     this.loading = false;
     this.canUpload = false;
     this.tab = 1;
@@ -431,30 +425,7 @@ await this.loadSession({ reset: true });
       });
 
     await this.loadWallets();
-    // this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-    //   const has = await Session.hasUnlock();
-
-    //   this.canUnlock = !has;
-    //   if (i.type === 'wallet') {
-    //     if (has) {
-    //       let passphrase = await Session.getUnlock();
-    //       this.wallet.onRequestPassphraseWallet.next({
-    //         type: 'ui',
-    //         passphrase,
-    //       });
-    //     } else {
-    //       this.passphraseSubject.subscribe(async (passphrase) => {
-    //         await Session.setUnlock(passphrase);
-    //         this.canUnlock = false;
-    //         this.wallet.onRequestPassphraseWallet.next({
-    //           type: 'ui',
-    //           passphrase,
-    //         });
-    //       });
-    //     }
-    //   } else {
-    //   }
-    // });
+    
 
     await this.loadSession();
   }
@@ -470,9 +441,9 @@ await this.loadSession({ reset: true });
     this.canSign = true;
     this.selectedDocument = item;
   }
-closeSign(){
-  this.canSign = false;
-}
+  closeSign() {
+    this.canSign = false;
+  }
   openViewerDialog(item) {
     return (key) => {
       this.canView = true;
@@ -523,14 +494,15 @@ closeSign(){
     this.select = i;
   }
 
-  filter() {
+  @Watch('tab')
+  onFilter(current, old) {
     const mapping = {
       did: 0,
       file_document: 1,
       fe: 2,
       vc: 3,
     };
-    const type = Object.keys(mapping)[this.tab];
+    const type = Object.keys(mapping)[current];
     this.items = this.itemsClone.filter((i) => i.type === type);
   }
 
@@ -598,7 +570,6 @@ closeSign(){
         });
         this.items = [...this.items, ...item] as any[];
         this.itemsClone = [...this.items];
-        this.filter();
       }
     );
   }

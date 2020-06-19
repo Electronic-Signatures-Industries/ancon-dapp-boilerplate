@@ -390,9 +390,13 @@ w<template>
         </v-card>
       </v-dialog>
 
-        <xdv-unlock @change="onValidLogin" v-model="password" :wallet="wallet"></xdv-unlock>
+        <xdv-unlock
+          v-model="password"
+          :wallet="wallet"
+          @load="onUnlock"
+        ></xdv-unlock>
 
-       <v-list two-line>
+      <v-list two-line flat style="z-index:-5">
         <v-list-item-group
           v-model="selected"
           active-class="blue lighten-5"
@@ -498,7 +502,7 @@ export default class WalletComponent extends Vue {
   selectedPanel = 0;
   itemsClone = [];
   hasErrors = false;
-   tab = 0;
+  tab = 0;
   item = 1;
   fab = false;
   items = [
@@ -508,12 +512,18 @@ export default class WalletComponent extends Vue {
   ];
 
   wallet: Wallet = new Wallet();
-  
+
   async mounted() {
     const has = await Session.hasWalletRefs();
     if (!has) return;
     await this.loadWallets();
   }
+
+
+  async onUnlock() {
+    await this.loadWallets();
+  }
+
 
   copyAddress(address) {
     copy(address);
@@ -653,13 +663,10 @@ export default class WalletComponent extends Vue {
             this.x509Info
           );
 
-          await this.wallet.setImportKey(
-            `import:X509:${id}`,
-            {
-              ...rsaKeyExports,
-              selfSignedCert,
-            }
-          );
+          await this.wallet.setImportKey(`import:X509:${id}`, {
+            ...rsaKeyExports,
+            selfSignedCert,
+          });
 
           this.cert = `${rsaKeyExports.pemAsPrivate}\r\n${rsaKeyExports.pemAsPublic}\r\n${selfSignedCert}`;
           keystoreIndexItem = {

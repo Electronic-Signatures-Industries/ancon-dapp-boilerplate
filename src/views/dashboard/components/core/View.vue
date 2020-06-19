@@ -1,10 +1,8 @@
 <template>
-  <div>
-    <v-content v-if="!!solidoProps">
+    <v-content fluid>
       <router-view />
       <dashboard-core-footer />
     </v-content>
-  </div>
 </template>
 
 <script lang="ts">
@@ -20,7 +18,6 @@ import { SolidoSingleton } from "./SolidoSingleton";
 export default class DashboardCoreView extends Vue {
   solidoProps = null;
   async mounted() {
-    this.solidoProps = await SolidoSingleton.getProps();
   }
 }
 </script>

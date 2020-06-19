@@ -14,7 +14,7 @@
           </v-list-item>
         </v-list>
       </v-menu> -->
-      <v-toolbar-title class="headline">XDV - v1.0.0-rc.1</v-toolbar-title>
+      <v-toolbar-title class="headline">XDV - v1.0.0-rc.2</v-toolbar-title>
 
       <v-spacer></v-spacer>
             <v-btn

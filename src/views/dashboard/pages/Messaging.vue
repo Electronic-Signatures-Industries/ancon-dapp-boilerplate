@@ -8,7 +8,7 @@
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-card class="mx-auto">
       <v-toolbar color="black accent-4" dark>
-        <v-toolbar-title>Subscriptions</v-toolbar-title>
+        <v-toolbar-title>Subscriptions and events</v-toolbar-title>
 
         <v-spacer></v-spacer>
         <v-autocomplete
@@ -39,7 +39,7 @@
             <v-chip
               v-bind="attr"
               :input-value="selected"
-              color="blue accent-5"
+              color="green accent-5"
               class="white--text"
               v-on="on"
             >
@@ -50,7 +50,7 @@
               v-if="from"
               v-bind="attr"
               :input-value="from"
-              color="green accent-5"
+              color="blue accent-5"
               class="white--text"
               v-on="on"
             >
@@ -141,8 +141,7 @@
           </v-tabs>
         </template>
       </v-toolbar>
-
-      <v-list two-line>
+      <v-list two-line flat style="z-index:-5">
         <v-list-item-group
           v-model="selected"
           active-class="indigo lighten-5"
@@ -182,12 +181,12 @@
         </v-list-item-group>
       </v-list>
     </v-card>
+        <xdv-unlock
+          v-model="password"
+          :wallet="wallet"
+          @load="onUnlock"
+        ></xdv-unlock>
 
-    <xdv-unlock
-      @change="onValidLogin"
-      v-model="password"
-      :wallet="wallet"
-    ></xdv-unlock>
   </v-container>
 </template>
 <script lang="ts">
@@ -280,15 +279,19 @@ export default class MessagingComponent extends Vue {
   loadingAutocomplete: boolean;
 
   async mounted() {
-    if (!(await Session.hasWalletRefs())) return;
+   await this.onUnlock();
+  }
+
+
+  async onUnlock() {
     await this.loadWallets();
-
-
-    await this.loadSession();
-
+    await this.loadSession({ reset: true });
+    this.loading = true;
+    
     if (localStorage.getItem('xdv:messaging:subs')) {
       await this.loadSubscriptions();
     }
+    this.loading = false;
   }
 
   async loadSession(options = { reset: false }) {

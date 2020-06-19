@@ -1,15 +1,14 @@
 <template>
   <v-app>
-    <dashboard-core-app-bar v-if="canInit" />
+    <dashboard-core-app-bar  />
     <!-- <dashboard-core-drawer v-if="canInit" /> -->
-    <dashboard-core-view v-if="canInit" />
+    <dashboard-core-view  />
   </v-app>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 
-import { DIDDocumentBuilder, DIDMethodXDV } from 'xdvplatform-wallet';
 import { SolidoSingleton } from './components/core/SolidoSingleton';
 import Onboard from 'bnc-onboard';
 import Web3 from 'web3';
@@ -65,53 +64,54 @@ export default class DashboardIndex extends Vue {
 
   async mounted() {
 
-    this.onboard = Onboard({
-      dappId: (Vue as any).appconfig.BLOCKNATIVE_API_KEY,
-      networkId: this.defaultNetwork,
-      subscriptions: this.onboardSync,
-      walletSelect: undefined,
-      walletCheck: undefined,
-    });
+this.canInit = true;
+    // this.onboard = Onboard({
+    //   dappId: (Vue as any).appconfig.BLOCKNATIVE_API_KEY,
+    //   networkId: this.defaultNetwork,
+    //   subscriptions: this.onboardSync,
+    //   walletSelect: undefined,
+    //   walletCheck: undefined,
+    // });
 
-    if (!(window as any).ethereum) {
-      this.$router.push({ path: 'onboard' });
-    } else if (localStorage.getItem('selectedWallet') === null) {
-      // display onboard.js
+    // if (!(window as any).ethereum) {
+    //   this.$router.push({ path: 'onboard' });
+    // } else if (localStorage.getItem('selectedWallet') === null) {
+    //   // display onboard.js
 
-      const hasSelected = await this.onboard.walletSelect();
-      if (!hasSelected) {
-        // need to select
-      } else {
-        const self = this;
-        const init = await this.onboard.walletCheck();
-        setTimeout(async () => {
-          const props = await (self as any).$loadOnchainDependencies({
-            networkId: self.onboard.getState().network,
-            account: self.onboard.getState().address,
-          });
-          SolidoSingleton.setProps(props);
-          self.canInit = init;
-          self.$router.push({ path: 'wallet' });
-        }, 800);
-      }
-    } else {
-      // get the selectedWallet value from local storage
-      const previouslySelectedWallet = window.localStorage.getItem(
-        'selectedWallet'
-      );
+    //   const hasSelected = await this.onboard.walletSelect();
+    //   if (!hasSelected) {
+    //     // need to select
+    //   } else {
+    //     const self = this;
+    //     const init = await this.onboard.walletCheck();
+    //     setTimeout(async () => {
+    //       const props = await (self as any).$loadOnchainDependencies({
+    //         networkId: self.onboard.getState().network,
+    //         account: self.onboard.getState().address,
+    //       });
+    //       SolidoSingleton.setProps(props);
+    //       self.canInit = init;
+    //       self.$router.push({ path: 'wallet' });
+    //     }, 800);
+    //   }
+    // } else {
+    //   // get the selectedWallet value from local storage
+    //   const previouslySelectedWallet = window.localStorage.getItem(
+    //     'selectedWallet'
+    //   );
 
-      // call wallet select with that value if it exists
-      if (previouslySelectedWallet != null) {
-        await this.onboard.walletSelect(previouslySelectedWallet);
-      }
-      const props = await (this as any).$loadOnchainDependencies({
-        networkId: this.network,
-        account: this.address,
-      });
-      await (window as any).ethereum.enable();
-      SolidoSingleton.setProps(props);
-      this.canInit = true;
-    }
+    //   // call wallet select with that value if it exists
+    //   if (previouslySelectedWallet != null) {
+    //     await this.onboard.walletSelect(previouslySelectedWallet);
+    //   }
+    //   const props = await (this as any).$loadOnchainDependencies({
+    //     networkId: this.network,
+    //     account: this.address,
+    //   });
+    //   await (window as any).ethereum.enable();
+    //   SolidoSingleton.setProps(props);
+    //   this.canInit = true;
+    // }
   }
 }
 </script>
