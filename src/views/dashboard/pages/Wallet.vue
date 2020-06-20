@@ -638,8 +638,6 @@ export default class WalletComponent extends Vue {
         this.disableBtns = true;
         this.alertMessage = 'Creating keys...please wait';
         let { id } = await wallet.createWallet(this.password, null, mnemonic);
-        this.passphraseSubject.next(this.password);
-
         if (this.walletType === 'default') {
           keystoreIndexItem = {
             created: new Date(),
