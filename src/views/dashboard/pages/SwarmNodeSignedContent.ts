@@ -11,4 +11,6 @@ export class SwarmNodeSignedContent {
     hash: string;
     signature?: string | ec.Signature;
     cipher?: string;
+    documentPubCert?: string;
+    documentSignature?: string;
 }

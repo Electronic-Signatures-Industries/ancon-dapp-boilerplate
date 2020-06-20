@@ -4,6 +4,7 @@ import index from './views/dashboard/Index.vue';
 import MessagingComponent from './views/dashboard/pages/Messaging.vue';
 import Router from 'vue-router';
 import TemplateEditor from './views/dashboard/pages/TemplateEditor.vue';
+import ViewerComponent from './views/dashboard/pages/Viewer.vue';
 import Vue from 'vue';
 import WalletComponent from './views/dashboard/pages/Wallet.vue';
 // @ts-ignore
@@ -53,6 +54,12 @@ export default new Router({
           name: "wallet",
           // @ts-ignore
           component: WalletComponent
+        },
+        {
+          path: "viewer",
+          name: "viewer",
+          // @ts-ignore
+          component: ViewerComponent,
         },
       ]
     },

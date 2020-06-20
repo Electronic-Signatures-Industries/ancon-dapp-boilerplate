@@ -5,7 +5,8 @@ import {
     validate,
     validateOrReject
     } from 'class-validator';
-
+import { Wallet } from 'xdvplatform-wallet';
+const cbor = require('cbor-sync');
 export class XDVFileFormat {
     @IsBase64()
     content: string;
@@ -18,7 +19,7 @@ export class XDVFileFormat {
 }
 
 export class ShareUtils {
-   
+
 
     static async openXDVLink(blob: Blob, name: string) {
         try {
@@ -70,6 +71,44 @@ export class ShareUtils {
         } catch (e) {
             throw new Error('No se pudo convertir el archivo');
         }
+    }
+
+
+    static async openEphimeralLink(address: string, txs: string, entry: number) {
+        const wallet = new Wallet();
+        const swarmFeed = await wallet.getSwarmNodeQueryable(address);
+
+        // get document from reference
+        const ref = await swarmFeed.bzz.downloadData(
+            txs
+        );
+        // download ref raw
+        const documentCbor: any = await swarmFeed.bzz.download(
+            ref.entries[0].hash,
+            {
+                mode: 'raw'
+            }
+        );
+        const indexDocument = await documentCbor.arrayBuffer();
+        const document = cbor.decode(Buffer.from(indexDocument));
+        const base64Content = (document).content;
+
+
+        const arr = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0))
+        const buf = Buffer.from(arr);
+
+        // send to viewer
+        const blob = new Blob(
+            [buf],
+            { type: document.contentType }
+        );
+
+        // const f = new File([blob], document.name);
+
+        return {
+            document,
+            downloadFile: () => ShareUtils.openXDVLink(blob, document.name)
+        };
     }
 
     /**

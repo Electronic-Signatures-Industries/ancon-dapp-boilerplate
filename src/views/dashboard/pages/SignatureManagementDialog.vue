@@ -205,7 +205,7 @@
               ></v-textarea>
             </v-col>
             <v-col cols="2" rows="2">
-              <v-row>
+              <!-- <v-row>
                 <v-col>
                   <v-tooltip top>
                     <span>Download</span>
@@ -223,14 +223,14 @@
                     </template></v-tooltip
                   >
                 </v-col>
-              </v-row>
+              </v-row> -->
               <v-row>
                 <v-col>
                   <v-tooltip top>
-                    <span>Share XDV Link</span>
+                    <span>Share XDV</span>
                     <template v-slot:activator="{ on }">
                       <v-btn
-                        fab
+                        fab :disabled="loading"
                         dark
                         v-on="on"
                         @click="uploadAndShareLink"
@@ -289,6 +289,7 @@
               </v-list>
             </v-col>
           </v-row>
+
           <v-row>
             <v-col md="12" cols="12">
               <v-alert text color="blue" v-if="loading">
@@ -316,8 +317,6 @@
         <v-btn color="blue darken-1" text @click="onClose">Close</v-btn>
       </v-card-actions>
     </v-card>
-
-    
   </v-dialog>
 </template>
 <script lang="ts">
@@ -337,13 +336,14 @@ import { create } from 'xmlbuilder2';
 import { SigningOutput } from './SigningOutput';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import Unlock from './Unlock.vue';
+import 'share-api-polyfill';
+import copy from 'copy-to-clipboard';
 
-export const PDF_API_URL = 'http://localhost:8081/';
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
   { key: 'JWT', value: SigningOutput.JWT },
   //  { key: 'VC link', value: SigningOutput.VCRef },
-  { key: 'XDV link', value: SigningOutput.XDVRef },
+  { key: 'XDV', value: SigningOutput.XDVRef },
   { key: 'Base 64', value: SigningOutput.Base64 },
   { key: 'CMS - PKCS#7 PEM', value: SigningOutput.PKCS7PEM },
   { key: 'XmlDsig Attached', value: SigningOutput.XMLDSIG },
@@ -390,7 +390,34 @@ export default class SignatureManagementDialog extends Vue {
   contentValidated: XDVFileFormat;
   verificationReport: any = [];
   skipExecute: boolean;
+  sharedUrl = '';
 
+  shareWith() {
+    navigator.share(
+      {
+        title: 'XDV',
+        text: 'Sharing this signed document that you requested',
+        url: this.sharedUrl,
+      },
+      {
+        copy: true,
+        email: true,
+        print: true,
+        sms: true,
+        messenger: true,
+        facebook: true,
+        whatsapp: true,
+        twitter: true,
+        linkedin: true,
+        telegram: true,
+        skype: true,
+      }
+    );
+  }
+
+  copyTo() {
+    copy(this.sharedUrl);
+  }
   @Watch('value.operation')
   async onChangeOps(ops, oldVal) {
     this.signingOptions = ops === 'sign' ? true : false;
@@ -497,6 +524,7 @@ export default class SignatureManagementDialog extends Vue {
     this.$emit('input', this.value);
   }
   onClose() {
+    this.signatureView = '';
     this.cloneWallets = [];
     this.displayWallets = [];
     this.$emit('close');
@@ -518,6 +546,7 @@ export default class SignatureManagementDialog extends Vue {
     });
   }
 
+  /** Opens XDV file format, test only */
   async openXDVCompactSignature(blob: Blob) {
     if (blob.name.indexOf('.xdv') > -1) {
       const ab = await blob.text();
@@ -526,6 +555,7 @@ export default class SignatureManagementDialog extends Vue {
     return null;
   }
 
+  /** Downloads XDV file format, test only */
   async downloadXDVCompactSignature() {
     await ShareUtils.downloadFileFromObject(
       {
@@ -535,12 +565,18 @@ export default class SignatureManagementDialog extends Vue {
     );
   }
 
+  /**
+   * Uploads as XDV compatible format and sends jwt based link
+   */
   async uploadAndShareLink() {
     this.skipExecute = true;
     this.alertMessage = '';
+    this.alertType = '';
     this.loading = true;
     try {
-      const address =  this.cloneWallets.find(i => i.keystore === this.wallet.id).address;
+      const address = this.cloneWallets.find(
+        (i) => i.keystore === this.wallet.id
+      ).address;
       this.operationType = 'Publishing files to Swarm and signing...';
       //  await this.wallet.open(this.value.wallet.keystore);
       const driveManager = new DriveSwarmManager(this.wallet);
@@ -549,15 +585,20 @@ export default class SignatureManagementDialog extends Vue {
         files: [this.value.files],
         queueName: 'documents',
         signedPreset: this.value.output,
+        documentSignature: this.shareFormat.signature,
+        documentPubCert: this.shareFormat.pubCert,
       });
       this.operationType = 'Creating link to share...';
 
-      await driveManager.shareEphimeralLink(address, txs, 0);
+      const jwt = await driveManager.shareEphimeralLink(address, txs, 0);
+      this.sharedUrl = `${location.protocol}${location.host}/#/xdv/viewer?link=${jwt}`;
+      this.shareWith();
     } catch (e) {
       console.log(e);
       this.alertType = 'red';
       this.alertMessage = e.message;
     } finally {
+      this.onClose();
       this.loading = false;
       this.skipExecute = false;
     }
@@ -573,7 +614,7 @@ export default class SignatureManagementDialog extends Vue {
     const keyExports = await this.wallet.getPrivateKeyExports(
       this.value.algorithm
     );
-    
+
     let result;
     if (!this.value.files) return;
     if (this.value.operation === 'sign') {
@@ -662,22 +703,16 @@ export default class SignatureManagementDialog extends Vue {
         this.signatureView = result;
       }
     } else {
-      const formUrlEncode = (payload) =>
-        Object.keys(payload)
-          .map((key) => {
-            return (
-              encodeURIComponent(key) + '=' + encodeURIComponent(payload[key])
-            );
-          })
-          .join('&');
-
+      let sharedSignedDocument = this.shareFormat;
+      if (!sharedSignedDocument) {
+        sharedSignedDocument = await this.openXDVCompactSignature(
+          this.value.files
+        );
+      }
       // verify content
       switch (this.value.output) {
         case SigningOutput.PKCS7PEM:
           this.loading = true;
-          let sharedSignedDocument = await this.openXDVCompactSignature(
-            this.value.files
-          );
 
           try {
             const payload = {
@@ -709,10 +744,6 @@ export default class SignatureManagementDialog extends Vue {
           this.loading = true;
 
           try {
-            sharedSignedDocument = await this.openXDVCompactSignature(
-              this.value.files
-            );
-
             const payload = {
               signature: sharedSignedDocument.signature,
               from: this.value.wallet.address,

@@ -15,6 +15,7 @@ import { forkJoin } from 'rxjs';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import { PartialChapter } from '@erebos/timeline';
 import { Session } from './Session';
+import { ShareUtils } from './ShareUtils';
 import { SigningOutput } from './SigningOutput';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
@@ -25,6 +26,8 @@ export interface PushFilesOptions {
     files: File[] | File;
     queueName: string;
     address: string;
+    documentSignature: string,
+    documentPubCert: string,
     basicAuthentication?: string;
     signedPreset?: SigningOutput
 }
@@ -56,58 +59,32 @@ export class DriveSwarmManager {
         const indexDocument = await documentCbor.arrayBuffer();
         const document = cbor.decode(Buffer.from(indexDocument));
         const base64Content = (document).content;
-     
-        // sign with eddsa
-       const kp = this.wallet.getEd25519();
-       const sig = kp.sign(Buffer.from(atob(base64Content))).toHex();
-       const  keypairExports = await KeyConvert.createLinkedDataJsonFormat(LDCryptoTypes.Ed25519,{
-           privBytes: () => null,
-           pubBytes: ()=> kp.getPublic()
-       }, false);
-       const id = `did:xdv:${swarmFeed.user}:${txs}:${entry}`;
-       const did = new DIDDocument();
-       const pub = { owner: swarmFeed.user, ...keypairExports };
-       did.id = id;
-       did.publicKey = [pub];
-       const payload = {
-           sig,
-           did,
-       };
-      const t1 = cbor.encode(payload);
-      console.log(Buffer.from(t1).toString('base64'));
-      const [res] = await this.wallet.signJWT('ES256K', payload, {
-          iss: swarmFeed.user,
-          sub: id,
-          aud: 'xdvmessaging.auth2factor.com'
-      });
-      return res;
+
+        // sign with eddsa for XDV share spec, only file contents
+        const kp = this.wallet.getEd25519();
+        const sig = kp.sign(Buffer.from(atob(base64Content))).toHex();
+        const keypairExports = await KeyConvert.createLinkedDataJsonFormat(LDCryptoTypes.Ed25519, {
+            privBytes: () => null,
+            pubBytes: () => kp.getPublic()
+        }, false);
+        const id = `did:xdv:${swarmFeed.user}:${txs}:${entry}`;
+        const did = new DIDDocument();
+        const pub = { owner: swarmFeed.user, ...keypairExports };
+        did.id = id;
+        did.publicKey = [pub];
+        const payload = {
+            sig,
+            did,
+        };
+        const [res] = await this.wallet.signJWT('ES256K', payload, {
+            iss: swarmFeed.user,
+            sub: id,
+            aud: 'xdvmessaging.auth2factor.com'
+        });
+        return res;
     }
 
 
-    async openEphimeralLink(options: PushFilesOptions, txs: string, entry: number) {
-        const swarmFeed = await this.wallet.getSwarmNodeClient(options.address, 'ES256K');
-
-        // get document from reference
-        const ref = await swarmFeed.bzz.downloadData(
-            txs
-        );
-        // download ref raw
-        const index: any = await swarmFeed.bzz.downloadData(
-            ref.entries[0].hash,
-            {
-                mode: 'raw'
-            }
-        );
-        const document: any = await swarmFeed.bzz.download(
-            index.entries[entry].hash,
-            {
-                mode: 'raw'
-            }
-        );
-        let buf = await document.arrayBuffer();
-    
-        // send to viewer
-    }
 
     async pushFiles(options: PushFilesOptions) {
 
@@ -127,6 +104,8 @@ export class DriveSwarmManager {
                 content: ethers.utils.base64.encode(buf),
                 signature,
                 hash,
+                documentPubCert: options.documentPubCert,
+                documentSignature: options.documentSignature,
                 signaturePreset: options.signedPreset,
             } as SwarmNodeSignedContent;
         });
@@ -138,8 +117,14 @@ export class DriveSwarmManager {
                     ...i,
                 });
 
-            const { contentType, name, size, signature, hash, lastModified, signaturePreset } = i;
-            return { ref, reference: { contentType, name, size, signature, hash, lastModified, signaturePreset } };
+            const { contentType, name, size, signature, hash, lastModified, signaturePreset,
+                documentPubCert, documentSignature } = i;
+            return {
+                ref, reference: {
+                    contentType, name, size, signature, hash, lastModified, signaturePreset,
+                    documentPubCert, documentSignature
+                }
+            };
         });
 
 
