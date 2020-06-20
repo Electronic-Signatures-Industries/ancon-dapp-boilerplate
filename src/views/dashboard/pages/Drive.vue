@@ -296,8 +296,8 @@ import SendTo from './Recipients.vue';
 import { SubscriptionManager } from './SubscriptionManager';
 import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
 import SignatureManagementDialog, {
-  SigningOutput,
 } from './SignatureManagementDialog.vue';
+import { SigningOutput } from './SigningOutput';
 const cbor = require('cbor-sync');
 
 @Component({
