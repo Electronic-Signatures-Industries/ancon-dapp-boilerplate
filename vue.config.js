@@ -1,7 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   chainWebpack: (config) => {
-     config.plugins.delete('fork-ts-checker')
+    // config.plugins.delete('fork-ts-checker')
     // ...
   },
   devServer: {

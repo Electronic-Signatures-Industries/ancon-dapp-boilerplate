@@ -67,11 +67,36 @@ w<template>
         </v-autocomplete>
 
         <template v-slot:extension>
-          <v-btn color="red" dark small absolute bottom right fab>
+          <v-btn
+            color="red"
+            dark
+            small
+            absolute
+            bottom
+            right
+            fab
+            style="z-index:5"
+          >
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
               </template>
+              <v-tooltip top>
+                <span>Set as default</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-if="currentItem"
+                    v-on="on"
+                    @click="setDefault"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-star</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
               <v-tooltip top>
                 <span>Create wallet</span>
                 <template v-slot:activator="{ on }">
@@ -87,7 +112,21 @@ w<template>
                   </v-btn>
                 </template></v-tooltip
               >
-
+              <v-tooltip top>
+                <span>Link wallet</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-on="on"
+                    @click="dialog = true"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-wallet-plus</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
               <v-tooltip top>
                 <span>Copy address</span>
                 <template v-slot:activator="{ on }">
@@ -106,14 +145,30 @@ w<template>
               >
 
               <v-tooltip top>
-                <span>Import wallet</span>
+                <span>Add RSA</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="selected"
+                    v-if="currentItem"
                     fab
                     dark
                     v-on="on"
-                    @click="openImportDialog(item)"
+                    @click="addRSA(item)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-import</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Generate CSR</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="currentItem"
+                    fab
+                    dark
+                    v-on="on"
+                    @click="generateCSR(item)"
                     small
                     color="red accent-4"
                   >
@@ -156,7 +211,12 @@ w<template>
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
           <v-card-title>
-            <span class="headline">Add new wallet</span>
+            <span class="headline" v-if="walletType !== 'rsa'"
+              >Add new wallet</span
+            >
+            <span class="headline" v-if="walletType === 'rsa'"
+              >Add X509 / RSA</span
+            >
           </v-card-title>
 
           <v-card-text>
@@ -167,37 +227,8 @@ w<template>
                     >Type</v-expansion-panel-header
                   >
                   <v-expansion-panel-content>
-                    <v-row>
-                      <v-col cols="12" md="6">
-                        <v-radio-group v-model="walletType" column>
-                          <v-tooltip bottom>
-                            <template v-slot:activator="{ on }">
-                              <v-radio
-                                v-on="on"
-                                class="font-weight-medium"
-                                label="Qualified Signature (Self Signed)"
-                                color="red"
-                                value="rsa"
-                              ></v-radio>
-                            </template>
-                            <span>RSA, 2048 bits</span>
-                          </v-tooltip>
-
-                          <v-tooltip bottom>
-                            <template v-slot:activator="{ on }">
-                              <v-radio
-                                v-on="on"
-                                class="font-weight-medium"
-                                label="Decentralized Identity"
-                                color="orange"
-                                value="default"
-                              ></v-radio>
-                            </template>
-                            <span>default</span>
-                          </v-tooltip>
-                        </v-radio-group>
-                      </v-col>
-                      <v-col cols="12" md="5">
+                    <v-row v-if="walletType !== 'rsa'">
+                      <v-col cols="12" md="12">
                         <v-text-field
                           label="Name"
                           value=""
@@ -390,20 +421,16 @@ w<template>
         </v-card>
       </v-dialog>
 
-        <xdv-unlock
-          v-model="password"
-          :wallet="wallet"
-          @load="onUnlock"
-        ></xdv-unlock>
+      <xdv-unlock
+        v-model="password"
+        :wallet="wallet"
+        @load="onUnlock"
+      ></xdv-unlock>
 
       <v-list two-line flat style="z-index:-5">
-        <v-list-item-group
-          v-model="selected"
-          active-class="blue lighten-5"
-          class="blue--text"
-        >
+        <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.keystore">
+            <v-list-item :key="item.keystore" @click="currentItem = item">
               <v-list-item-content>
                 <v-list-item-title v-text="item.title"></v-list-item-title>
                 <v-list-item-subtitle
@@ -419,9 +446,16 @@ w<template>
                 <v-list-item-action-text
                   v-text="item.action"
                 ></v-list-item-action-text>
-                <!-- <v-icon @click="exportToPublic(item)" color="green lighten-1">
-                  mdi-export
-                </v-icon> -->
+                <v-icon v-if="item.isDefault" color="yellow accent-5">
+                  mdi-star
+                </v-icon>
+                <v-icon
+                  v-if="item.importedKeys"
+                  @click="exportToPublic(item)"
+                  color="blue accent-5"
+                >
+                  mdi-wallet
+                </v-icon>
               </v-list-item-action>
             </v-list-item>
 
@@ -441,7 +475,7 @@ import {
   LDCryptoTypes,
   DIDDocument,
 } from 'xdvplatform-wallet';
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import { ethers } from 'ethers';
 import moment from 'moment';
@@ -474,6 +508,7 @@ export default class WalletComponent extends Vue {
   alertMessage = '';
   alertType = '';
   disableBtns = false;
+  lastDefault: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -487,7 +522,7 @@ export default class WalletComponent extends Vue {
   search = '';
   keystore: any | Wallet = null;
   rsaKey: any = {};
-  walletType: string = '';
+  walletType: string = 'default';
   valid = false;
   dialog = false;
   x509Info: X509Info = new X509Info();
@@ -504,6 +539,7 @@ export default class WalletComponent extends Vue {
   hasErrors = false;
   tab = 0;
   item = 1;
+  currentItem = null;
   fab = false;
   items = [
     {
@@ -514,17 +550,25 @@ export default class WalletComponent extends Vue {
   wallet: Wallet = new Wallet();
 
   async mounted() {
-    const has = await Session.hasWalletRefs();
-    if (!has) return;
-    await this.loadWallets();
+    // const index = await Session.getWalletRefs();
+    // const unlocked = await Session.hasUnlock();
+    // const hasSession = await Session.has();
+    // if (!index.length === 0) {
+    //   return;
+    // }
+    // this.currentItem = index.find((i) => i.address);
+    // await this.setDefault();
+    // await this.loadWallets();
   }
-
 
   async onUnlock() {
     await this.loadWallets();
   }
 
-
+  addRSA() {
+    this.walletType = 'rsa';
+    this.dialog = true;
+  }
   copyAddress(address) {
     copy(address);
   }
@@ -532,13 +576,20 @@ export default class WalletComponent extends Vue {
   async loadWallets() {
     const index = await Session.getWalletRefs();
     if (!index) return;
+    const session = await Session.get();
+
     this.items = index.map((i) => {
       let headline = `address ${i.address}`;
       if (!i.address) {
         // rsa
         headline = 'RSA 2048 bits';
       }
+      const isDefault = i.keystore === session.keystore;
+
+      this.lastDefault = i.keystore;
       return {
+        wallet: i,
+        isDefault,
         action: moment(i.created).fromNow(),
         title: i.name,
         headline,
@@ -549,6 +600,23 @@ export default class WalletComponent extends Vue {
     this.searchResults = index;
   }
   keystoreIndexItem = new KeystoreIndex();
+
+  async setDefault() {
+    const id = this.currentItem.wallet
+      ? this.currentItem.wallet.keystore
+      : this.currentItem.keystore;
+    await this.wallet.open(id);
+
+      this.currentItem.isDefault = true;
+      this.lastDefault = id;
+    
+    await Session.set({ 
+      ...this.currentItem.wallet,
+      lastDefault: id
+    });
+
+    await this.loadWallets();
+  }
 
   async save(item) {
     this.loading = true;
@@ -575,16 +643,17 @@ export default class WalletComponent extends Vue {
       this.valid = true;
     }
   }
-
-  filter() {
+  @Watch('tab')
+  filter(current, old) {
+    debugger;
     if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
     const mapping = {
       default: 0,
-      rsa: 1,
-      fe: 2,
-      vc: 3,
+      did: 1,
+      hw: 2,
+      cert: 3,
     };
-    const type = Object.keys(mapping)[this.tab];
+    const type = Object.keys(mapping)[current];
     this.items = this.itemsClone.filter((i) => i.walletType === type);
   }
   async createDID(
