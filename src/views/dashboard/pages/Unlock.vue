@@ -107,7 +107,6 @@ export default class Unlock extends Vue {
     if (!this.wallet) return;
     this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
       const has = await Session.hasUnlock();
-
       this.show = !has;
       if (i.type === 'wallet') {
         if (has) {

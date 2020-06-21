@@ -125,7 +125,7 @@ export class Session {
 
         try {
             const item = await this.db.get('xdv:session');
-            return !!item;
+            return item.currentKeystore !== undefined;
 
         } catch (e) {
             return false;
@@ -137,15 +137,6 @@ export class Session {
 
     static async get() {
         const item = await this.db.get('xdv:session');
-        const today = moment();
-        const past = moment(item.timestamp);
-        if (today.diff(past, 'minutes') > 5) {
-            await this.db.put({
-                _id: 'xdv:session',
-                _rev: item._rev,
-                timestamp: new Date(),
-            });
-        }
         return item.currentKeystore;
     }
 

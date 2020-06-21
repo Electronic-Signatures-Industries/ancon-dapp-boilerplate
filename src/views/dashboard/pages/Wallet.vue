@@ -227,8 +227,8 @@ w<template>
                     >Type</v-expansion-panel-header
                   >
                   <v-expansion-panel-content>
-                    <v-row v-if="walletType !== 'rsa'">
-                      <v-col cols="12" md="12">
+                    <v-row>
+                      <v-col cols="12" md="12" v-if="walletType !== 'rsa'">
                         <v-text-field
                           label="Name"
                           value=""
@@ -446,16 +446,25 @@ w<template>
                 <v-list-item-action-text
                   v-text="item.action"
                 ></v-list-item-action-text>
-                <v-icon v-if="item.isDefault" color="yellow accent-5">
-                  mdi-star
-                </v-icon>
-                <v-icon
-                  v-if="item.importedKeys"
-                  @click="exportToPublic(item)"
-                  color="blue accent-5"
-                >
-                  mdi-wallet
-                </v-icon>
+                <v-row>
+                  <v-col>
+                    <v-icon v-if="item.isDefault" color="yellow accent-5">
+                      mdi-star
+                    </v-icon></v-col
+                  ><v-col>
+                    <v-icon v-if="item.hasRSAKeys" color="blue accent-5">
+                      mdi-key
+                    </v-icon></v-col
+                  ><v-col>
+                    <v-icon v-if="item.hasHWKeys" color="green accent-5">
+                      mdi-key
+                    </v-icon></v-col
+                  ><v-col>
+                    <v-icon v-if="item.hasEthereumKeys" color="pink accent-5">
+                      mdi-key
+                    </v-icon></v-col
+                  >
+                </v-row>
               </v-list-item-action>
             </v-list-item>
 
@@ -482,7 +491,7 @@ import moment from 'moment';
 import { Session } from './Session';
 import { pubKeyToAddress } from '@erebos/keccak256';
 import copy from 'copy-to-clipboard';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 import Unlock from './Unlock.vue';
 
 @Component({
@@ -550,9 +559,12 @@ export default class WalletComponent extends Vue {
   wallet: Wallet = new Wallet();
 
   async mounted() {
+    await this.loadWallets();
+
     // const index = await Session.getWalletRefs();
     // const unlocked = await Session.hasUnlock();
     // const hasSession = await Session.has();
+
     // if (!index.length === 0) {
     //   return;
     // }
@@ -560,9 +572,28 @@ export default class WalletComponent extends Vue {
     // await this.setDefault();
     // await this.loadWallets();
   }
-
   async onUnlock() {
+    this.loading = true;
+
+    await this.loadSession({ reset: true });
     await this.loadWallets();
+
+    this.loading = false;
+  }
+
+  async loadSession(options = { reset: false }) {
+    this.loading = true;
+    let ks = this.items[0].wallet;
+    const hasSession = await Session.has();
+    if (hasSession && options.reset === false) {
+      ks = await Session.get();
+    } else if (ks) {
+      await Session.set(ks);
+    }
+
+    if (ks) await this.wallet.open(ks.keystore);
+
+    this.loading = false;
   }
 
   addRSA() {
@@ -577,8 +608,12 @@ export default class WalletComponent extends Vue {
     const index = await Session.getWalletRefs();
     if (!index) return;
     const session = await Session.get();
+    if (!session) {
+      await this.wallet.open(index[0].keystore);
+      return;
+    }
 
-    this.items = index.map((i) => {
+    const promises = index.map(async (i) => {
       let headline = `address ${i.address}`;
       if (!i.address) {
         // rsa
@@ -586,17 +621,20 @@ export default class WalletComponent extends Vue {
       }
       const isDefault = i.keystore === session.keystore;
 
+      let hasRSAKeys = await this.hasRSAKeys(i.keystore);
       this.lastDefault = i.keystore;
       return {
+        hasRSAKeys,
         wallet: i,
         isDefault,
         action: moment(i.created).fromNow(),
         title: i.name,
         headline,
-        // subtitle: i.,
+        // subtitle: `id ${(i.keystore || '').substring(0, 8)}...`,
       };
     });
 
+    this.items = await forkJoin(promises).toPromise();
     this.searchResults = index;
   }
   keystoreIndexItem = new KeystoreIndex();
@@ -607,12 +645,12 @@ export default class WalletComponent extends Vue {
       : this.currentItem.keystore;
     await this.wallet.open(id);
 
-      this.currentItem.isDefault = true;
-      this.lastDefault = id;
-    
-    await Session.set({ 
+    this.currentItem.isDefault = true;
+    this.lastDefault = id;
+
+    await Session.set({
       ...this.currentItem.wallet,
-      lastDefault: id
+      lastDefault: id,
     });
 
     await this.loadWallets();
@@ -621,11 +659,12 @@ export default class WalletComponent extends Vue {
   async save(item) {
     this.loading = true;
 
-    await Session.setWalletRefs(this.keystoreIndexItem);
-
+    if (this.walletType !== 'rsa') {
+      await Session.setWalletRefs(this.keystoreIndexItem);
+      this.keystoreIndexItem = new KeystoreIndex();
+    }
     this.dialog = false;
     this.mnemonic = [];
-    this.keystoreIndexItem = new KeystoreIndex();
     await this.loadWallets();
     this.loading = false;
     this.walletDescription = '';
@@ -643,9 +682,19 @@ export default class WalletComponent extends Vue {
       this.valid = true;
     }
   }
+
+  async hasRSAKeys(id) {
+    try {
+      if (!id) return false;
+      const rsaKeys = await this.wallet.getImportKey(`import:X509:${id}`);
+      console.log(rsaKeys, id);
+      return rsaKeys !== null;
+    } catch (e) {
+      return false;
+    }
+  }
   @Watch('tab')
   filter(current, old) {
-    debugger;
     if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
     const mapping = {
       default: 0,
@@ -693,76 +742,86 @@ export default class WalletComponent extends Vue {
   }
 
   async createKeys() {
-    this.loading = true;
-    this.valid = true;
-    if (
-      this.walletDescription.length > 0 &&
-      this.password === this.confirmPassword
-    ) {
-      const wallet = new Wallet();
-      let mnemonic = wallet.mnemonic;
-      let keys;
-      let keystoreIndexItem: KeystoreIndex;
-      try {
-        this.disableBtns = true;
-        this.alertMessage = 'Creating keys...please wait';
-        let { id } = await wallet.createWallet(this.password, null, mnemonic);
-        if (this.walletType === 'default') {
-          keystoreIndexItem = {
-            created: new Date(),
-            name: this.walletDescription,
-            keystore: id,
-          } as KeystoreIndex;
+    const wallet = new Wallet();
+    let mnemonic = wallet.mnemonic;
+    let keys;
+    let id;
+    let keystoreIndexItem: KeystoreIndex;
+    try {
+      this.alertType = '';
+      this.alertMessage = '';
 
-          this.alertMessage = 'Creating DID...please wait';
-          const keys = await wallet.getPrivateKey('ES256K');
-          keystoreIndexItem.address = pubKeyToAddress(keys.getPublic('array'));
-          await this.createDID(keystoreIndexItem, keys, wallet, this.password);
-        }
-        this.mnemonic = wallet.mnemonic.split(' ');
+      this.loading = true;
+      this.valid = true;
 
-        if (this.walletType === 'rsa') {
-          const keys = await Wallet.getRSA256Standalone();
+      this.disableBtns = true;
+      switch (this.walletType) {
+        case 'rsa':
+          this.alertMessage = 'Creating keys...please wait';
+
+          keys = await Wallet.getRSA256Standalone();
           const rsaKeyExports = await KeyConvert.getX509RSA(keys);
+          this.alertMessage = 'Creating certificate...please wait';
+
           const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
             rsaKeyExports.pemAsPrivate,
             rsaKeyExports.pemAsPublic,
             this.x509Info
           );
-
+          id = this.currentItem.keystore || this.currentItem.wallet.keystore;
           await this.wallet.setImportKey(`import:X509:${id}`, {
             ...rsaKeyExports,
             selfSignedCert,
           });
+          break;
+        default:
+          if (
+            this.walletDescription.length > 0 &&
+            this.password === this.confirmPassword
+          ) {
+            this.alertMessage = 'Creating keys...please wait';
+            const w = await wallet.createWallet(this.password, null, mnemonic);
+            id = w.id;
 
-          this.cert = `${rsaKeyExports.pemAsPrivate}\r\n${rsaKeyExports.pemAsPublic}\r\n${selfSignedCert}`;
-          keystoreIndexItem = {
-            created: new Date(),
-            name: this.walletDescription,
-            keystore: id,
-          } as KeystoreIndex;
-        }
-        this.loading = false;
-        this.keystoreIndexItem = keystoreIndexItem;
-        this.selectedPanel = 1;
+            keystoreIndexItem = {
+              created: new Date(),
+              name: this.walletDescription,
+              keystore: id,
+            } as KeystoreIndex;
 
-        this.alertMessage = 'Completed';
-        setTimeout(() => {
-          this.alertMessage = '';
-        }, 1500);
-        this.disableBtns = false;
-      } catch (e) {
-        this.valid = false;
+            this.alertMessage = 'Creating DID...please wait';
+            keys = await wallet.getPrivateKey('ES256K');
+            keystoreIndexItem.address = pubKeyToAddress(
+              keys.getPublic('array')
+            );
+            this.mnemonic = wallet.mnemonic.split(' ');
 
-        console.log(e);
-        this.alertMessage = e.message;
-        this.alertType = 'error';
-        setTimeout(() => {
-          this.loading = false;
-          this.dialog = false;
-          this.alertMessage = '';
-        }, 1500);
+            await this.createDID(
+              keystoreIndexItem,
+              keys,
+              wallet,
+              this.password
+            );
+          }
+          break;
       }
+
+      this.loading = false;
+      this.keystoreIndexItem = keystoreIndexItem;
+      this.selectedPanel = 1;
+
+      this.alertMessage = 'Completed';
+      setTimeout(() => {
+        this.alertMessage = '';
+      }, 1500);
+      this.disableBtns = false;
+    } catch (e) {
+      this.valid = false;
+      this.alertMessage = e.message;
+      this.alertType = 'error';
+    } finally {
+      this.loading = false;
+      this.valid = false;
     }
   }
 
