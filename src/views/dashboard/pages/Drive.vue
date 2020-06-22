@@ -614,7 +614,7 @@ export default class DriveComponent extends Vue {
               _id: `${swarmFeed.user}:${block.txs}:${index}`,
               item: { txs: block.txs, reference, index },
               type: 'file_document',
-              action: moment(reference.created).fromNow(),
+              action: moment(reference.lastModified).fromNow(),
               title: reference.name,
               headline: reference.contentType,
               subtitle: `hash ${reference.hash.replace(

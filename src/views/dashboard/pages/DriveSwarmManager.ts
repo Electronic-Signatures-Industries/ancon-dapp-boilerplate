@@ -96,7 +96,6 @@ export class DriveSwarmManager {
         });
 
         const jwt = res[0] || res[1];
-        debugger
         const refHash = await swarmFeed.bzz.uploadData(jwt, {
             encrypt: true
         });

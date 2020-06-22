@@ -96,7 +96,7 @@ export class ShareUtils {
             txs
         );
         // download ref raw
-        const documentCbor: any = await swarmFeed.bzz.download(
+        let documentCbor: any = await swarmFeed.bzz.download(
             ref.entries[0].hash,
             {
                 mode: 'raw'
@@ -116,6 +116,13 @@ export class ShareUtils {
             const buf = await temp.arrayBuffer();
             document = cbor.decode(Buffer.from(buf));
         } catch(e) {
+            documentCbor = await swarmFeed.bzz.download(
+                ref.entries[0].hash,
+                {
+                    mode: 'raw'
+                }
+            );
+     
             indexDocument = await documentCbor.arrayBuffer();
             document = cbor.decode(Buffer.from(indexDocument));
         }
