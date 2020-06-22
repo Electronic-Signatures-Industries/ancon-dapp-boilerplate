@@ -75,7 +75,7 @@
                   >
                 </v-col>
               </v-row>
-              <v-row>
+              <!-- <v-row>
                 <v-col>
                   <v-tooltip top>
                     <span>Verify document signatures</span>
@@ -93,7 +93,7 @@
                     </template></v-tooltip
                   >
                 </v-col>
-              </v-row>
+              </v-row> -->
             </v-col>
           </v-row>
 
@@ -207,7 +207,8 @@ export default class ViewerComponent extends Vue {
     this.loading = true;
     try {
       this.operationType = 'Downloading...';
-      const { payload } = JWTService.decodeWithSignature(this.linkJwt);
+    
+      const payload = await ShareUtils.openEphemeralLinkIndex(decodeURIComponent(this.linkJwt));
       this.payload = payload;
       let documentSignature = payload.sig;
       let swarmContentIndex = payload.did.id.split(':');

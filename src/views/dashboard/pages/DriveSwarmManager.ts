@@ -59,7 +59,7 @@ export class DriveSwarmManager {
         let document;
         if (fromManifest) {
             indexDocument = await documentCbor.json();
-            const temp  = await swarmFeed.bzz.download(
+            const temp = await swarmFeed.bzz.download(
                 indexDocument.entries[entry].hash,
                 {
                     mode: 'raw'
@@ -89,14 +89,18 @@ export class DriveSwarmManager {
             sig,
             did,
         };
-        const [jwt] = await this.wallet.signJWT('ES256K', payload, {
+        const res = await this.wallet.signJWT('ES256K', payload, {
             iss: swarmFeed.user,
             sub: id,
             aud: 'xdvmessaging.auth2factor.com'
         });
 
-
-        const sharedUrl = `${location.protocol}//${location.host}/#/xdv/viewer?link=${jwt}`;
+        const jwt = res[0] || res[1];
+        debugger
+        const refHash = await swarmFeed.bzz.uploadData(jwt, {
+            encrypt: true
+        });
+        const sharedUrl = `${location.protocol}//${location.host}/#/xdv/viewer?link=${address};${refHash}`;
 
         // @ts-ignore
         navigator.share(
