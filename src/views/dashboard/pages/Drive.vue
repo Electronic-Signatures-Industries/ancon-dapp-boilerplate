@@ -113,7 +113,6 @@
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
-                    v-if="tab === 1"
                     dark
                     v-on="on"
                     @click="canUpload = true"
@@ -143,8 +142,25 @@
                   </v-btn>
                 </template></v-tooltip
               > -->
+
               <v-tooltip top>
-                <span>Send to</span>
+                <span>Share link</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    v-if="tab === 1 && currentItem"
+                    dark
+                    v-on="on"
+                    @click="shareTo(currentItem)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-link-box-variant</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Send encrypted to</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
@@ -587,33 +603,40 @@ export default class DriveComponent extends Vue {
       queue,
       async (block: XVDSwarmNodeBlock) => {
         console.log(block);
-        const p = block.metadata.map(async (reference: SwarmNodeSignedContent, index) => {
-          const s = ethers.utils.joinSignature({
-            r: '0x' + reference.signature.r,
-            s: '0x' + reference.signature.s,
-            recoveryParam: reference.signature.recoveryParam,
-          });
-          const item = {
-            _id: `${swarmFeed.user}:${block.txs}:${index}`,
-            item: { txs: block.txs, reference, index },
-            type: 'file_document',
-            action: moment(reference.created).fromNow(),
-            title: reference.name,
-            headline: reference.contentType,
-            subtitle: `hash ${reference.hash.replace(
-              '0x',
-              ''
-            )} signature ${s.replace('0x', '')}`,
-          };
-          await this.cache.setCachedDocuments(
-            swarmFeed.user,
-            reference.created,
-            item
-          );
-        });
+        const p = block.metadata.map(
+          async (reference: SwarmNodeSignedContent, index) => {
+            const s = ethers.utils.joinSignature({
+              r: '0x' + reference.signature.r,
+              s: '0x' + reference.signature.s,
+              recoveryParam: reference.signature.recoveryParam,
+            });
+            const item = {
+              _id: `${swarmFeed.user}:${block.txs}:${index}`,
+              item: { txs: block.txs, reference, index },
+              type: 'file_document',
+              action: moment(reference.created).fromNow(),
+              title: reference.name,
+              headline: reference.contentType,
+              subtitle: `hash ${reference.hash.replace(
+                '0x',
+                ''
+              )} signature ${s.replace('0x', '')}`,
+            };
+            await this.cache.setCachedDocuments(
+              swarmFeed.user,
+              reference.created,
+              item
+            );
+          }
+        );
         await forkJoin(p).toPromise();
       }
     );
+  }
+
+  async shareTo(item) {
+    const driveManager = new DriveSwarmManager(this.wallet);
+    await driveManager.shareEphemeralLink(item.address, item.item.txs, item.item.index, true);
   }
 
   close() {

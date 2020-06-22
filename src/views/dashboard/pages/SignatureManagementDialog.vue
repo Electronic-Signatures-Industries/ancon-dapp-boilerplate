@@ -103,7 +103,7 @@
                   <span>Verifiable Claim</span>
                 </v-tooltip> -->
 
-                <v-tooltip bottom>
+                <!-- <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-radio
                       v-on="on"
@@ -127,7 +127,7 @@
                     ></v-radio>
                   </template>
                   <span>XML Digital Signatures - X509 only</span>
-                </v-tooltip>
+                </v-tooltip> -->
               </v-radio-group>
             </v-col>
           </v-row>
@@ -149,7 +149,7 @@
               ></v-textarea>
             </v-col>
           </v-row>
-          <v-row v-if="signingOptions">
+          <v-row v-if="value.presets === 'none'">
             <v-col cols="6" md="6">
               <v-select
                 required
@@ -281,7 +281,7 @@
               <v-alert text color="blue" v-if="loading">
                 <v-progress-circular
                   indeterminate
-                  v-if="lo.ading"
+                  v-if="loading"
                   color="blue darken-1"
                 ></v-progress-circular>
                 {{ operationType }} ...
@@ -323,7 +323,7 @@ import { SigningOutput } from './SigningOutput';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import Unlock from './Unlock.vue';
 import 'share-api-polyfill';
-import copy from 'copy-to-clipboard';
+
 
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
@@ -373,34 +373,7 @@ export default class SignatureManagementDialog extends Vue {
   contentValidated: XDVFileFormat;
   verificationReport: any = [];
   skipExecute: boolean;
-  sharedUrl = '';
-
-  shareWith() {
-    navigator.share(
-      {
-        title: 'XDV',
-        text: 'Sharing this signed document that you requested',
-        url: this.sharedUrl,
-      },
-      {
-        copy: true,
-        email: true,
-        print: true,
-        sms: true,
-        messenger: true,
-        facebook: true,
-        whatsapp: true,
-        twitter: true,
-        linkedin: true,
-        telegram: true,
-        skype: true,
-      }
-    );
-  }
-
-  copyTo() {
-    copy(this.sharedUrl);
-  }
+  
   @Watch('value.operation')
   async onChangeOps(ops, oldVal) {
     this.signingOptions = ops === 'sign' ? true : false;
@@ -502,21 +475,24 @@ export default class SignatureManagementDialog extends Vue {
     this.$emit('close');
   }
 
-
-
   addVerificationReport({ SimpleReport }) {
-    this.verificationReport = [ {
+    this.verificationReport = [
+      {
         subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
         headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
-      }];
-    this.verificationReport = [...SimpleReport.Signature.Errors.map((e) => {
-      return {
-        isError: true,
-        //subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
-        //headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
-        title: e,
-      };
-    }), ...this.verificationReport];
+      },
+    ];
+    this.verificationReport = [
+      ...SimpleReport.Signature.Errors.map((e) => {
+        return {
+          isError: true,
+          //subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
+          //headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
+          title: e,
+        };
+      }),
+      ...this.verificationReport,
+    ];
   }
 
   /** Opens XDV file format, test only */
@@ -547,7 +523,7 @@ export default class SignatureManagementDialog extends Vue {
     this.alertType = '';
     this.loading = true;
     try {
-      const address =(await  Session.get()).address;
+      const address = (await Session.get()).address;
       this.operationType = 'Publishing files to Swarm and signing...';
       //  await this.wallet.open(this.value.wallet.keystore);
       const driveManager = new DriveSwarmManager(this.wallet);
@@ -561,9 +537,7 @@ export default class SignatureManagementDialog extends Vue {
       });
       this.operationType = 'Creating link to share...';
 
-      const jwt = await driveManager.shareEphimeralLink(address, txs, 0);
-      this.sharedUrl = `${location.protocol}${location.host}/#/xdv/viewer?link=${jwt}`;
-      this.shareWith();
+      await driveManager.shareEphemeralLink(address, txs, 0);
     } catch (e) {
       console.log(e);
       this.alertType = 'red';
@@ -576,7 +550,7 @@ export default class SignatureManagementDialog extends Vue {
   }
 
   async execute() {
-      const address =(await  Session.get()).address;
+    const address = (await Session.get()).address;
 
     const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
 
@@ -716,7 +690,7 @@ export default class SignatureManagementDialog extends Vue {
           try {
             const payload = {
               signature: sharedSignedDocument.signature,
-              from:  address,
+              from: address,
               token: '12345',
               certificate: btoa(sharedSignedDocument.pubCert),
               filename: 'fe.xml',

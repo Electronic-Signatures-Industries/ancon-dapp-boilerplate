@@ -11,20 +11,21 @@ import { forkJoin } from 'rxjs';
 import { PushFilesOptions } from './PushFilesOptions';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
+import 'share-api-polyfill';
 const cbor = require('cbor-sync');
 
-export   interface XVDSwarmNodeBlock{
+export interface XVDSwarmNodeBlock {
     block: number;
     rootHash: string;
     parentHash: string;
-    xdv: 'test'|'main';
+    xdv: 'test' | 'main';
     version: string;
     documentSignatures: DocumentSig[];
     txs: string;
     metadata: SwarmNodeSignedContent[];
     timestamp: number;
 };
-export interface DocumentSig{
+export interface DocumentSig {
     hash: string;
     signature: ec.Signature | string;
 }
@@ -38,7 +39,8 @@ export class DriveSwarmManager {
     }
 
 
-    async shareEphimeralLink(address: string, txs: string, entry: number) {
+    /** Shares a ephimeral */
+    async shareEphemeralLink(address: string, txs: string, entry: number, fromManifest: boolean) {
         const swarmFeed = await this.wallet.getSwarmNodeClient(address, 'ES256K');
 
         // get document from reference
@@ -52,8 +54,23 @@ export class DriveSwarmManager {
                 mode: 'raw'
             }
         );
-        const indexDocument = await documentCbor.arrayBuffer();
-        const document = cbor.decode(Buffer.from(indexDocument));
+
+        let indexDocument;
+        let document;
+        if (fromManifest) {
+            indexDocument = await documentCbor.json();
+            const temp  = await swarmFeed.bzz.download(
+                indexDocument.entries[entry].hash,
+                {
+                    mode: 'raw'
+                }
+            );
+            const buf = await temp.arrayBuffer();
+            document = cbor.decode(Buffer.from(buf));
+        } else {
+            indexDocument = await documentCbor.arrayBuffer();
+            document = cbor.decode(Buffer.from(indexDocument));
+        }
         const base64Content = (document).content;
 
         // sign with eddsa for XDV share spec, only file contents
@@ -72,12 +89,30 @@ export class DriveSwarmManager {
             sig,
             did,
         };
-        const [res] = await this.wallet.signJWT('ES256K', payload, {
+        const [jwt] = await this.wallet.signJWT('ES256K', payload, {
             iss: swarmFeed.user,
             sub: id,
             aud: 'xdvmessaging.auth2factor.com'
         });
-        return res;
+
+
+        const sharedUrl = `${location.protocol}//${location.host}/#/xdv/viewer?link=${jwt}`;
+
+        // @ts-ignore
+        navigator.share(
+            {
+                title: 'XDV',
+                text: 'Sharing this signed document that you requested',
+                url: sharedUrl,
+            },
+            // @ts-ignore
+            {
+                // @ts-ignore
+                copy: true, email: true, print: true, sms: true, smessenger: true,
+                // @ts-ignore
+                facebook: true, whatsapp: true, twitter: true, linkedin: true, telegram: true, skype: true,
+            }
+        );
     }
 
 
@@ -196,7 +231,7 @@ export class DriveSwarmManager {
         });
         const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
         return {
-           ...block,
+            ...block,
         }
     }
 

@@ -161,6 +161,7 @@ import Unlock from './Unlock.vue';
 import { SigningOutput } from './SigningOutput';
 import { create } from 'xmlbuilder2';
 import { ShareUtils, XDVFileFormat } from './ShareUtils';
+import { ec, eddsa } from 'elliptic';
 const cbor = require('cbor-sync');
 
 export interface ShareableSignedContent {
@@ -183,6 +184,7 @@ export default class ViewerComponent extends Vue {
   verificationReport: any = null;
   downloadableContent: () => Promise<void>;
   operationType: string;
+  payload: any;
 
   async mounted() {
     const currentLocation = location;
@@ -204,8 +206,9 @@ export default class ViewerComponent extends Vue {
     this.alertType = '';
     this.loading = true;
     try {
-        this.operationType = 'Downloading...';
+      this.operationType = 'Downloading...';
       const { payload } = JWTService.decodeWithSignature(this.linkJwt);
+      this.payload = payload;
       let documentSignature = payload.sig;
       let swarmContentIndex = payload.did.id.split(':');
       let swarmContent = {
@@ -214,7 +217,7 @@ export default class ViewerComponent extends Vue {
         entryIndex: parseInt(swarmContentIndex[4], 10) as number,
       };
       this.fromOwner = swarmContent.from;
-      const res = await ShareUtils.openEphimeralLink(
+      const res = await ShareUtils.openEphemeralLink(
         swarmContent.from,
         swarmContent.txs,
         swarmContent.entryIndex
@@ -222,7 +225,6 @@ export default class ViewerComponent extends Vue {
 
       this.document = res.document;
       this.downloadableContent = res.downloadFile;
-
       this.sharedSignedDocument = {
         signature: this.document.documentSignature,
         pubCert: this.document.documentPubCert,
@@ -239,6 +241,7 @@ export default class ViewerComponent extends Vue {
 
   async verify() {
     // verify content
+    this.verificationReport = [];
     switch (this.document.signaturePreset) {
       case SigningOutput.PKCS7PEM:
         this.loading = true;
@@ -296,23 +299,40 @@ export default class ViewerComponent extends Vue {
           alert(e.message);
         }
         break;
-      default:
-        return;
     }
-
+  
+    const eddsaImpl = new eddsa('ed25519');
+    const pubKey = bs58.decode(this.payload.did.publicKey[0].publicKeyBase58);
+    const pubString = Buffer.from(pubKey).toString('hex');
+    const kp = eddsaImpl.keyFromPublic(pubString);
+    const results = kp.verify(Buffer.from(atob(this.document.content)), this.payload.sig);
+    const isVerified = results;
+    this.verificationReport.push({
+      title: `Valid content signed by ${this.fromOwner}`,
+      subtitle:`Ed25519 public keys from ${this.payload.did.id}`,
+      headline: `Signature ${this.payload.sig}`,
+    });
     this.loading = false;
   }
 
   addVerificationReport({ SimpleReport }) {
-    this.verificationReport = [];
-    this.verificationReport = SimpleReport.Signature.Errors.map((e) => {
-      return {
-        isError: true,
+    this.verificationReport = [
+      {
         subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
         headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
-        title: e,
-      };
-    });
+      },
+    ];
+    this.verificationReport = [
+      ...SimpleReport.Signature.Errors.map((e) => {
+        return {
+          isError: true,
+          //subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
+          //headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
+          title: e,
+        };
+      }),
+      ...this.verificationReport,
+    ];
   }
 }
 </script>

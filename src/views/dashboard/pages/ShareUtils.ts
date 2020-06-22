@@ -74,7 +74,7 @@ export class ShareUtils {
     }
 
 
-    static async openEphimeralLink(address: string, txs: string, entry: number) {
+    static async openEphemeralLink(address: string, txs: string, entry: number) {
         const wallet = new Wallet();
         const swarmFeed = await wallet.getSwarmNodeQueryable(address);
 
@@ -89,8 +89,23 @@ export class ShareUtils {
                 mode: 'raw'
             }
         );
-        const indexDocument = await documentCbor.arrayBuffer();
-        const document = cbor.decode(Buffer.from(indexDocument));
+ 
+        let indexDocument;
+        let document;
+        try {
+            indexDocument = await documentCbor.json();
+            const temp  = await swarmFeed.bzz.download(
+                indexDocument.entries[entry].hash,
+                {
+                    mode: 'raw'
+                }
+            );
+            const buf = await temp.arrayBuffer();
+            document = cbor.decode(Buffer.from(buf));
+        } catch(e) {
+            indexDocument = await documentCbor.arrayBuffer();
+            document = cbor.decode(Buffer.from(indexDocument));
+        }
         const base64Content = (document).content;
 
 
