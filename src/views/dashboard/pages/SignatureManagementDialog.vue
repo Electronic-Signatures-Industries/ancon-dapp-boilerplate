@@ -150,22 +150,7 @@
             </v-col>
           </v-row>
           <v-row v-if="signingOptions">
-            <v-col cols="4" md="4">
-              <v-select
-                required
-                class="font-weight-medium"
-                :items="displayWallets"
-                v-model="value.wallet"
-                @change="setWalletId"
-                label="Wallet"
-                dense
-                item-text="name"
-                item-value="name"
-                return-object
-                single-line
-              ></v-select>
-            </v-col>
-            <v-col cols="4" md="4">
+            <v-col cols="6" md="6">
               <v-select
                 required
                 dense
@@ -178,7 +163,7 @@
               ></v-select>
             </v-col>
 
-            <v-col cols="4" md="4">
+            <v-col cols="6" md="6">
               <v-select
                 dense
                 required
@@ -230,7 +215,8 @@
                     <span>Share XDV</span>
                     <template v-slot:activator="{ on }">
                       <v-btn
-                        fab :disabled="loading"
+                        fab
+                        :disabled="loading"
                         dark
                         v-on="on"
                         @click="uploadAndShareLink"
@@ -295,7 +281,7 @@
               <v-alert text color="blue" v-if="loading">
                 <v-progress-circular
                   indeterminate
-                  v-if="loading"
+                  v-if="lo.ading"
                   color="blue darken-1"
                 ></v-progress-circular>
                 {{ operationType }} ...
@@ -358,7 +344,6 @@ interface SignatureManagementModel {
   presets: 'none' | 'cms' | 'xmldsig' | 'vc' | 'xdv' | 'eip712';
   algorithm: AlgorithmTypeString;
   output: any;
-  wallet: KeystoreIndex;
   files: File[] | File;
 }
 
@@ -376,8 +361,6 @@ export default class SignatureManagementDialog extends Vue {
   signingOptions = true;
   alertMessage = '';
   loading = false;
-  displayWallets = [];
-  cloneWallets = [];
   signatureView: string = '';
   wallet: Wallet;
   outputs = SignOutput;
@@ -503,10 +486,6 @@ export default class SignatureManagementDialog extends Vue {
     }
   }
   async beforeUpdate() {
-    this.displayWallets = [
-      this.cloneWallets.find((i) => i.keystore === this.wallet.id),
-      ...this.cloneWallets.filter((i) => !i.address),
-    ];
     const has = await Session.hasUnlock();
     if (!has) {
       await this.wallet.open(this.wallet.id);
@@ -514,36 +493,30 @@ export default class SignatureManagementDialog extends Vue {
   }
   async mounted() {
     const w = await Session.getWalletRefs();
-    this.cloneWallets = [...w];
-    this.displayWallets = [
-      this.cloneWallets.find((i) => i.keystore === this.wallet.id),
-      ...this.cloneWallets.filter((i) => !i.address),
-    ];
   }
   change() {
     this.$emit('input', this.value);
   }
   onClose() {
     this.signatureView = '';
-    this.cloneWallets = [];
-    this.displayWallets = [];
     this.$emit('close');
   }
 
-  setWalletId() {
-    // this.wallet.id = this.value.wallet.keystore;k
-  }
+
 
   addVerificationReport({ SimpleReport }) {
-    this.verificationReport = [];
-    this.verificationReport = SimpleReport.Signature.Errors.map((e) => {
-      return {
-        isError: true,
+    this.verificationReport = [ {
         subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
         headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
+      }];
+    this.verificationReport = [...SimpleReport.Signature.Errors.map((e) => {
+      return {
+        isError: true,
+        //subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
+        //headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
         title: e,
       };
-    });
+    }), ...this.verificationReport];
   }
 
   /** Opens XDV file format, test only */
@@ -574,9 +547,7 @@ export default class SignatureManagementDialog extends Vue {
     this.alertType = '';
     this.loading = true;
     try {
-      const address = this.cloneWallets.find(
-        (i) => i.keystore === this.wallet.id
-      ).address;
+      const address =(await  Session.get()).address;
       this.operationType = 'Publishing files to Swarm and signing...';
       //  await this.wallet.open(this.value.wallet.keystore);
       const driveManager = new DriveSwarmManager(this.wallet);
@@ -605,6 +576,8 @@ export default class SignatureManagementDialog extends Vue {
   }
 
   async execute() {
+      const address =(await  Session.get()).address;
+
     const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
 
     const has = await Session.hasUnlock();
@@ -618,19 +591,17 @@ export default class SignatureManagementDialog extends Vue {
     let result;
     if (!this.value.files) return;
     if (this.value.operation === 'sign') {
-      if (this.value.wallet.name === undefined) return;
       // get content to sign
       if (this.value.isBinaryEnabled) {
         // sign file blobs
         if (
-          !this.value.wallet.address &&
           this.value.algorithm === 'RSA' &&
           this.value.output === SigningOutput.PKCS7PEM
         ) {
           this.loading = true;
           // sign with CMS, return detached
           const rsaKeys = await this.wallet.getImportKey(
-            `import:X509:${this.value.wallet.keystore}`
+            `import:X509:${this.wallet.id}`
           );
           try {
             let data = await this.value.files.arrayBuffer();
@@ -650,13 +621,12 @@ export default class SignatureManagementDialog extends Vue {
             console.log(e);
           }
         } else if (
-          !this.value.wallet.address &&
           this.value.algorithm === 'RSA' &&
           this.value.output === SigningOutput.XMLDSIG
         ) {
           // sign with xmldsig, return embedded
           const rsaKeys = await this.wallet.getImportKey(
-            `import:X509:${this.value.wallet.keystore}`
+            `import:X509:${this.wallet.id}`
           );
           try {
             let data = await this.value.files.text();
@@ -717,7 +687,7 @@ export default class SignatureManagementDialog extends Vue {
           try {
             const payload = {
               signature: sharedSignedDocument.signature,
-              from: this.value.wallet.address,
+              from: address,
               contents: sharedSignedDocument.content,
               token: '12345',
               filename: this.value.files.name.replace('.xdv', '.p7'),
@@ -746,7 +716,7 @@ export default class SignatureManagementDialog extends Vue {
           try {
             const payload = {
               signature: sharedSignedDocument.signature,
-              from: this.value.wallet.address,
+              from:  address,
               token: '12345',
               certificate: btoa(sharedSignedDocument.pubCert),
               filename: 'fe.xml',

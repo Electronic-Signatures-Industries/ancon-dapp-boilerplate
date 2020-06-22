@@ -93,7 +93,16 @@
         ></xdv-sign>
 
         <template v-slot:extension>
-          <v-btn color="red" dark small absolute bottom right fab :disabled="!wallet.id">
+          <v-btn
+            color="red"
+            dark
+            small
+            absolute
+            bottom
+            right
+            fab
+            :disabled="!wallet.id"
+          >
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
@@ -182,7 +191,7 @@
                   </v-btn>
                 </template></v-tooltip
               >
-<!-- 
+              <!-- 
               <v-tooltip top>
                 <span>Execute chain job</span>
                 <template v-slot:activator="{ on }">
@@ -288,16 +297,17 @@ import { Session } from './Session';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
-import { DriveSwarmManager } from './DriveSwarmManager';
+import { DriveSwarmManager, XVDSwarmNodeBlock } from './DriveSwarmManager';
 import { ec } from 'elliptic';
 import Unlock from './Unlock.vue';
 import Upload from './Upload.vue';
 import SendTo from './Recipients.vue';
 import { SubscriptionManager } from './SubscriptionManager';
 import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
-import SignatureManagementDialog, {
-} from './SignatureManagementDialog.vue';
+import SignatureManagementDialog from './SignatureManagementDialog.vue';
 import { SigningOutput } from './SigningOutput';
+import { async } from 'rxjs/internal/scheduler/async';
+import { CacheService } from './CacheService';
 const cbor = require('cbor-sync');
 
 @Component({
@@ -371,6 +381,7 @@ export default class DriveComponent extends Vue {
   canView: boolean;
   canChain: boolean;
   allWallets: any = [];
+  cache = new CacheService();
 
   async onUnlock() {
     await this.loadWallets();
@@ -385,8 +396,7 @@ export default class DriveComponent extends Vue {
 
     this.loading = true;
     const driveManager = new DriveSwarmManager(this.wallet);
-    
-    
+
     this.loading = false;
     this.canUpload = false;
     this.tab = 1;
@@ -425,9 +435,17 @@ export default class DriveComponent extends Vue {
       });
 
     await this.loadWallets();
-    
 
     await this.loadSession();
+    this.itemsClone = [];
+    await this.cache.initialize();
+    this.cache.subscribeCache(
+      this.select.address,
+      (i) => i.address === this.select.address,
+      (e, i) => {
+        this.itemsClone.push(i.doc);
+      }
+    );
   }
 
   async loadWallets() {
@@ -495,7 +513,7 @@ export default class DriveComponent extends Vue {
   }
 
   @Watch('tab')
-  onFilter(current, old) {
+  onFilter2(current, old) {
     const mapping = {
       did: 0,
       file_document: 1,
@@ -505,14 +523,26 @@ export default class DriveComponent extends Vue {
     const type = Object.keys(mapping)[current];
     this.items = this.itemsClone.filter((i) => i.type === type);
   }
-
+  @Watch('itemsClone')
+  onFilter(current, old) {
+    const mapping = {
+      did: 0,
+      file_document: 1,
+      fe: 2,
+      vc: 3,
+    };
+    const type = Object.keys(mapping)[this.tab];
+    this.items = this.itemsClone.filter((i) => i.type === type);
+  }
   async loadDirectory(ks?: KeystoreIndex) {
-    const swarmFeed = await this.wallet.getSwarmNodeQueryable(ks.address);
+    const { address } = ks;
+    const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
     const feed = await swarmFeed.bzzFeed.createManifest({
-      user: swarmFeed.user,
-      name: 'did:xdv:' + swarmFeed.user,
+      user: address,
+      name: 'did:xdv:' + address,
     });
     let content;
+    //   if (info.doc_count === 0) {
     try {
       let { body } = await swarmFeed.bzzFeed.getContent(feed, {
         path: 'index.json',
@@ -528,10 +558,11 @@ export default class DriveComponent extends Vue {
     this.items = [];
     this.items = [
       {
+        _id: `${address}:${content.id}`,
         type: 'did',
         didReference: {
-          did: 'did:xdv:' + swarmFeed.user,
-          address: swarmFeed.user,
+          did: 'did:xdv:' + address,
+          address: address,
         },
         item: content,
         action: moment(content.created).fromNow(),
@@ -541,6 +572,12 @@ export default class DriveComponent extends Vue {
       } as any,
     ];
 
+    await this.cache.setCachedDocuments(
+      swarmFeed.user,
+      content.created,
+      this.items[0]
+    );
+    // }
     const queue = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
       name: 'tx-document-tree',
@@ -548,18 +585,19 @@ export default class DriveComponent extends Vue {
     this.sub = await DriveSwarmManager.subscribe(
       swarmFeed,
       queue,
-      (content) => {
-        console.log(content);
-        const item = content.metadata.map((reference, index) => {
+      async (block: XVDSwarmNodeBlock) => {
+        console.log(block);
+        const p = block.metadata.map(async (reference: SwarmNodeSignedContent, index) => {
           const s = ethers.utils.joinSignature({
             r: '0x' + reference.signature.r,
             s: '0x' + reference.signature.s,
             recoveryParam: reference.signature.recoveryParam,
           });
-          return {
-            item: { txs: content.txs, reference, index },
+          const item = {
+            _id: `${swarmFeed.user}:${block.txs}:${index}`,
+            item: { txs: block.txs, reference, index },
             type: 'file_document',
-            action: moment(reference.lastModified).fromNow(),
+            action: moment(reference.created).fromNow(),
             title: reference.name,
             headline: reference.contentType,
             subtitle: `hash ${reference.hash.replace(
@@ -567,9 +605,13 @@ export default class DriveComponent extends Vue {
               ''
             )} signature ${s.replace('0x', '')}`,
           };
+          await this.cache.setCachedDocuments(
+            swarmFeed.user,
+            reference.created,
+            item
+          );
         });
-        this.items = [...this.items, ...item] as any[];
-        this.itemsClone = [...this.items];
+        await forkJoin(p).toPromise();
       }
     );
   }

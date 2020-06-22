@@ -3,6 +3,7 @@ import PouchDB from 'pouchdb';
 import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
 import { KeystoreIndex } from './KeystoreIndex';
 import { SubscriptionManager } from './SubscriptionManager';
+PouchDB.plugin(require('pouchdb-find'));
 let SID = '';
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
@@ -63,6 +64,7 @@ export class Session {
 
     }
     static db = new PouchDB('xdv:session');
+
     public static async resolveAndStoreDID(wallet: Wallet, did: string) {
         const user = did.split(':')[2];
         // resolve DID
@@ -99,7 +101,6 @@ export class Session {
     }
 
 
-
     static async createDIDResolver(swarmFeed: any, feed: string) {
         let { body } = await swarmFeed.bzzFeed.getContent(feed, {
             path: 'index.json',
@@ -133,8 +134,7 @@ export class Session {
     }
 
 
-
-
+    
     static async get() {
         const item = await this.db.get('xdv:session');
         return item.currentKeystore;

@@ -1,10 +1,6 @@
 import moment from 'moment';
-import { count } from 'rxjs/operators';
-import { defaultPath } from 'ethers/utils/hdnode';
 import {
     DIDDocument,
-    DocumentNodeSchema,
-    JWTService,
     KeyConvert,
     LDCryptoTypes,
     Wallet
@@ -12,29 +8,29 @@ import {
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
-import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
-import { PartialChapter } from '@erebos/timeline';
-import { Session } from './Session';
-import { ShareUtils } from './ShareUtils';
-import { SigningOutput } from './SigningOutput';
+import { PushFilesOptions } from './PushFilesOptions';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 const cbor = require('cbor-sync');
 
-export interface PushFilesOptions {
-    encrypt?: boolean;
-    files: File[] | File;
-    queueName: string;
-    address: string;
-    documentSignature: string,
-    documentPubCert: string,
-    basicAuthentication?: string;
-    signedPreset?: SigningOutput
+export   interface XVDSwarmNodeBlock{
+    block: number;
+    rootHash: string;
+    parentHash: string;
+    xdv: 'test'|'main';
+    version: string;
+    documentSignatures: DocumentSig[];
+    txs: string;
+    metadata: SwarmNodeSignedContent[];
+    timestamp: number;
+};
+export interface DocumentSig{
+    hash: string;
+    signature: ec.Signature | string;
 }
-
 export interface DriveDocumentRef {
     ref: any;
-    reference: object;
+    reference: SwarmNodeSignedContent;
 }
 export class DriveSwarmManager {
     constructor(private wallet: Wallet) {
@@ -94,7 +90,7 @@ export class DriveSwarmManager {
             let ab = await (i as Blob).arrayBuffer();
             let buf = new Uint8Array(ab);
             const hash = ethers.utils.keccak256(buf) as string;
-            const signature = kp.sign(hash.replace('0x', ''));
+            const signature = kp.sign(Buffer.from(buf));
 
             return {
                 contentType: i.type,
@@ -104,6 +100,7 @@ export class DriveSwarmManager {
                 content: ethers.utils.base64.encode(buf),
                 signature,
                 hash,
+                created: moment().unix(),
                 documentPubCert: options.documentPubCert,
                 documentSignature: options.documentSignature,
                 signaturePreset: options.signedPreset,
@@ -118,11 +115,11 @@ export class DriveSwarmManager {
                 });
 
             const { contentType, name, size, signature, hash, lastModified, signaturePreset,
-                documentPubCert, documentSignature } = i;
+                documentPubCert, documentSignature, created } = i;
             return {
                 ref, reference: {
                     contentType, name, size, signature, hash, lastModified, signaturePreset,
-                    documentPubCert, documentSignature
+                    documentPubCert, documentSignature, created
                 }
             };
         });
@@ -146,7 +143,6 @@ export class DriveSwarmManager {
             user: swarmFeed.user,
             name: 'documents',
         })
-        const directoryFixedHash = queueHash;
         // upload as directory
         let directory = {};
         contents.forEach(i => {
@@ -184,7 +180,7 @@ export class DriveSwarmManager {
             rootHash = res.rootHash;
         } catch (error) {
         }
-        const refUnderlyingHash = await swarmFeed.bzz.uploadData({
+        const block: XVDSwarmNodeBlock = {
             block: current + 1,
             rootHash: current === 1 ? parentHash : rootHash,
             parentHash,
@@ -194,12 +190,13 @@ export class DriveSwarmManager {
             txs: underlyingHash,
             metadata: contents.map(i => i.reference),
             timestamp: moment().unix()
-        }, {
+        };
+        const refUnderlyingHash = await swarmFeed.bzz.uploadData(block, {
             encrypt: true,
         });
         const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
         return {
-            txs: underlyingHash,
+           ...block,
         }
     }
 

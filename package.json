@@ -51,6 +51,7 @@
     "node-jose": "^1.1.4",
     "peer-id": "^0.13.12",
     "pouchdb": "^7.2.1",
+    "pouchdb-find": "^7.2.1",
     "promise-file-reader": "^1.0.2",
     "rxjs": "^6.5.4",
     "share-api-polyfill": "^1.0.11",
