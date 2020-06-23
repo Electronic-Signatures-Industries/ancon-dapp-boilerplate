@@ -3,14 +3,14 @@ import PouchDB from 'pouchdb';
 import QRCodeModal from '@walletconnect/qrcode-modal';
 import WalletConnect from '@walletconnect/client';
 import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
-import { KeystoreIndex } from './KeystoreIndex';
+import { DIDSigner, KeystoreIndex } from './KeystoreIndex';
 
 PouchDB.plugin(require('pouchdb-find'));
 
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
     static timeout;
-  static walletConnect:WalletConnect;
+    static walletConnect: WalletConnect;
     static async hasUnlock() {
         try {
             if (Session.timeout)
@@ -33,6 +33,21 @@ export class Session {
         } catch (e) {
             return false;
         }
+    }
+
+    static async sign(data: Buffer, address: string, signerType: DIDSigner) {
+        if (signerType === DIDSigner.Walletconnect) {
+            const msgParams = [data.toString('hex'), address];
+            Session.walletConnect = new WalletConnect({
+                bridge: 'https://bridge.walletconnect.org', // Required
+                qrcodeModal: QRCodeModal,
+              });
+          
+            // Sign personal message
+            return Session.walletConnect
+                .signPersonalMessage(msgParams);
+        }
+        return null;
     }
 
     static async getUnlock() {
@@ -184,14 +199,14 @@ export class Session {
             const ref = await this.db.get(WALLET_REFS_KEY);
             return this.db.put({
                 _id: WALLET_REFS_KEY,
-                refs: {...ref.refs, [ks.keystore]: ks},
+                refs: { ...ref.refs, [ks.keystore]: ks },
                 _rev: ref._rev,
                 timestamp: new Date(),
             });
         } catch (e) {
             return this.db.put({
                 _id: WALLET_REFS_KEY,
-                refs: {[ks.keystore]: ks},
+                refs: { [ks.keystore]: ks },
                 timestamp: new Date(),
             });
 

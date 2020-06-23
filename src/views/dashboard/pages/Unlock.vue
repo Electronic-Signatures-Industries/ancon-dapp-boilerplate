@@ -71,7 +71,8 @@ import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Session } from './Session';
 import { Subject } from 'rxjs';
-
+import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
+import { ethers }  from 'ethers';
 @Component({
   name: 'xdv-unlock',
   props: ['value', 'txview', 'wallet'],
@@ -105,6 +106,27 @@ export default class Unlock extends Vue {
 
   async mounted() {
     if (!this.wallet) return;
+
+    this.wallet.onSignExternal.subscribe(async ({isDIDSigner, payload, next}) => {
+      const wallets = await Session.getWalletRefs();
+
+      const ks = wallets.find(
+        (i) => i.keystore === this.wallet.id
+      ) as KeystoreIndex;
+      // if (isDIDSigner && ks.defaultDIDSigner>-1) {
+      //   const signature = await Session.sign(
+      //     payload,
+      //     ks.linkedExternalKeystores.walletconnect.address,
+      //     ks.defaultDIDSigner
+      //   );
+      //   next({
+      //     signature:ethers.utils.splitSignature(signature),
+      //     isEnabled: true,
+      //   });
+      //   return;
+      // }
+      next({ isEnabled: false });
+    });
     this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
       const has = await Session.hasUnlock();
       this.show = !has;

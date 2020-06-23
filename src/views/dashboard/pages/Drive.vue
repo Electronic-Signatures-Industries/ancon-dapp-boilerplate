@@ -300,7 +300,7 @@ import {
 } from 'xdvplatform-wallet';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
 import moment from 'moment';
 import { createKeyPair, sign } from '@erebos/secp256k1';
 import { MiddlewareOptions, XDVMiddleware } from '../../../libs';
@@ -650,12 +650,18 @@ export default class DriveComponent extends Vue {
   }
 
   async createDocumentNode() {
-    const ks = this.select;
+    const wallets = await Session.getWalletRefs();
 
+    const ks = wallets.find(
+      (i) => i.keystore === this.wallet.id
+    ) as KeystoreIndex;
     this.loading = true;
     const driveManager = new DriveSwarmManager(this.wallet);
     await driveManager.pushFiles({
-      address: ks.address,
+      address:
+        ks.defaultDIDSigner === DIDSigner.XDV
+          ? ks.address
+          : ks.linkedExternalKeystores.walletconnect.address,
       files: this.files,
       queueName: 'documents',
     });

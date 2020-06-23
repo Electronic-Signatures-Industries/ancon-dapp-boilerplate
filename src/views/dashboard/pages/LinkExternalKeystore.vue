@@ -201,7 +201,7 @@ export default class LinkExternalKeystore extends Vue {
     } else {
       const chain = Session.walletConnect.chainId;
       const address = Session.walletConnect.accounts[0];
-        const keystore = {
+      const keystore = {
         ...this.keystore,
         linkedExternalKeystores: {
           ...this.keystore.linkedExternalKeystores,
@@ -271,8 +271,7 @@ export default class LinkExternalKeystore extends Vue {
           ...this.keystore.linkedExternalKeystores,
           walletconnect: {
             connected: false,
-          ...this.keystore.linkedExternalKeystores.walletconnect,
-
+            ...this.keystore.linkedExternalKeystores.walletconnect,
           },
         },
       };
@@ -290,7 +289,8 @@ export default class LinkExternalKeystore extends Vue {
 
     await Session.setWalletRefs(keystore, true);
   }
-  change() {
+  async change() {
+    await this.setDefaultSignerProtocol();
     this.$emit('input', this.value);
   }
 }
