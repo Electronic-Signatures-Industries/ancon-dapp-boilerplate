@@ -82,6 +82,8 @@
   "devDependencies": {
     "@mdi/font": "^5.0.45",
     "@mdi/js": "^5.0.45",
+    "@types/pouchdb": "^6.4.0",
+    "@types/pouchdb-find": "^6.3.5",
     "@vue/cli-plugin-babel": "^4.1.2",
     "@vue/cli-plugin-e2e-cypress": "^4.1.2",
     "@vue/cli-plugin-eslint": "^4.1.2",
