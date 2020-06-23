@@ -1,13 +1,16 @@
 import moment from 'moment';
 import PouchDB from 'pouchdb';
+import QRCodeModal from '@walletconnect/qrcode-modal';
+import WalletConnect from '@walletconnect/client';
 import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
 import { KeystoreIndex } from './KeystoreIndex';
-import { SubscriptionManager } from './SubscriptionManager';
+
 PouchDB.plugin(require('pouchdb-find'));
-let SID = '';
+
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 export class Session {
     static timeout;
+  static walletConnect:WalletConnect;
     static async hasUnlock() {
         try {
             if (Session.timeout)
@@ -134,7 +137,7 @@ export class Session {
     }
 
 
-    
+
     static async get() {
         const item = await this.db.get('xdv:session');
         return item.currentKeystore;
@@ -172,24 +175,23 @@ export class Session {
 
     static async getWalletRefs() {
         const doc = await this.db.get(WALLET_REFS_KEY);
-        return doc.refs;
+        return Object.values(doc.refs);
     }
 
-    static async setWalletRefs(ks: KeystoreIndex) {
+    static async setWalletRefs(ks: KeystoreIndex, update: boolean = false) {
 
         try {
             const ref = await this.db.get(WALLET_REFS_KEY);
-
             return this.db.put({
                 _id: WALLET_REFS_KEY,
-                refs: [...ref.refs, ks],
+                refs: {...ref.refs, [ks.keystore]: ks},
                 _rev: ref._rev,
                 timestamp: new Date(),
             });
         } catch (e) {
             return this.db.put({
                 _id: WALLET_REFS_KEY,
-                refs: [ks],
+                refs: {[ks.keystore]: ks},
                 timestamp: new Date(),
             });
 

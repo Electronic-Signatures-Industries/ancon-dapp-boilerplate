@@ -1,4 +1,4 @@
-w<template>
+<template>
   <v-container>
     <v-progress-linear
       indeterminate
@@ -87,7 +87,7 @@ w<template>
                   <v-btn
                     fab
                     dark
-                    v-if="currentItem"
+                    v-if="currentKeystore"
                     v-on="on"
                     @click="setDefault"
                     small
@@ -112,34 +112,20 @@ w<template>
                   </v-btn>
                 </template></v-tooltip
               >
+
               <v-tooltip top>
-                <span>Link wallet</span>
+                <span>Link external</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     fab
+                    v-if="currentKeystore"
                     dark
                     v-on="on"
-                    @click="dialog = true"
+                    @click="linkDialog = true"
                     small
                     color="red accent-4"
                   >
-                    <v-icon>mdi-wallet-plus</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Copy address</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="selected"
-                    dark
-                    v-on="on"
-                    @click="openImportDialog(item)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-clipboard</v-icon>
+                    <v-icon>mdi-key-link</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
@@ -148,7 +134,7 @@ w<template>
                 <span>Add RSA</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="currentItem"
+                    v-if="currentKeystore"
                     fab
                     dark
                     v-on="on"
@@ -156,7 +142,7 @@ w<template>
                     small
                     color="red accent-4"
                   >
-                    <v-icon>mdi-import</v-icon>
+                    <v-icon>mdi-file-lock</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
@@ -164,7 +150,7 @@ w<template>
                 <span>Generate CSR</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="currentItem"
+                    v-if="currentKeystore"
                     fab
                     dark
                     v-on="on"
@@ -172,7 +158,7 @@ w<template>
                     small
                     color="red accent-4"
                   >
-                    <v-icon>mdi-import</v-icon>
+                    <v-icon>mdi-server</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
@@ -341,7 +327,7 @@ w<template>
                     <v-row v-if="walletType !== 'rsa'">
                       <v-row>
                         <v-col>
-                          Mnemonico
+                          Mnemonic
                         </v-col>
                       </v-row>
                       <v-row>
@@ -420,7 +406,13 @@ w<template>
           </v-card-actions>
         </v-card>
       </v-dialog>
-
+      <xdv-link-external-keystore
+        v-model="linkExternals"
+        :show="linkDialog"
+        :keystore="currentKeystore"
+        @input="loadWallets"
+      >
+      </xdv-link-external-keystore>
       <xdv-unlock
         v-model="password"
         :wallet="wallet"
@@ -430,7 +422,10 @@ w<template>
       <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
-            <v-list-item :key="item.keystore" @click="currentItem = item">
+            <v-list-item
+              :key="item.keystore"
+              @click="currentKeystore = item.wallet"
+            >
               <v-list-item-content>
                 <v-list-item-title v-text="item.title"></v-list-item-title>
                 <v-list-item-subtitle
@@ -447,21 +442,21 @@ w<template>
                   v-text="item.action"
                 ></v-list-item-action-text>
                 <v-row>
-                  <v-col>
-                    <v-icon v-if="item.isDefault" color="yellow accent-5">
+                  <v-col v-if="item.isDefault">
+                    <v-icon color="yellow accent-5">
                       mdi-star
                     </v-icon></v-col
-                  ><v-col>
-                    <v-icon v-if="item.hasRSAKeys" color="blue accent-5">
-                      mdi-key
+                  ><v-col v-if="item.hasRSAKeys">
+                    <v-icon color="blue accent-5">
+                      mdi-file-lock
                     </v-icon></v-col
-                  ><v-col>
-                    <v-icon v-if="item.hasHWKeys" color="green accent-5">
-                      mdi-key
+                  ><v-col v-if="item.hasLedger">
+                    <v-icon color="green accent-5">
+                      mdi-link-lock
                     </v-icon></v-col
-                  ><v-col>
-                    <v-icon v-if="item.hasEthereumKeys" color="pink accent-5">
-                      mdi-key
+                  ><v-col v-if="item.hasWalletConnect">
+                    <v-icon color="pink accent-5">
+                      mdi-cellphone-lock
                     </v-icon></v-col
                   >
                 </v-row>
@@ -485,7 +480,7 @@ import {
   DIDDocument,
 } from 'xdvplatform-wallet';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner, X509Signer } from './KeystoreIndex';
 import { ethers } from 'ethers';
 import moment from 'moment';
 import { Session } from './Session';
@@ -493,10 +488,12 @@ import { pubKeyToAddress } from '@erebos/keccak256';
 import copy from 'copy-to-clipboard';
 import { Subject, forkJoin } from 'rxjs';
 import Unlock from './Unlock.vue';
+import LinkExternalKeystore from './LinkExternalKeystore.vue';
 
 @Component({
   components: {
     'xdv-unlock': Unlock,
+    'xdv-link-external-keystore': LinkExternalKeystore,
   },
   watch: {
     async search(val) {
@@ -518,6 +515,7 @@ export default class WalletComponent extends Vue {
   alertType = '';
   disableBtns = false;
   lastDefault: any;
+  linkDialog = false;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -529,7 +527,6 @@ export default class WalletComponent extends Vue {
   searchResults = [];
   selected = {};
   search = '';
-  keystore: any | Wallet = null;
   rsaKey: any = {};
   walletType: string = 'default';
   valid = false;
@@ -540,15 +537,29 @@ export default class WalletComponent extends Vue {
   confirmPassword = '';
   showPassword = false;
   password = '';
+  currentItem: {
+    isDefault;
+    hasPKCS11;
+    hasRSAKeys;
+    hasWalletConnect;
+    hasLedger;
+    wallet;
+  } = {};
   mnemonic = [];
+  1;
   cert = '';
+  linkExternals = {
+    defaultDIDSigner: DIDSigner.XDV,
+    defaultX509Signer: X509Signer.XDV,
+    type: 'walletconnect',
+  };
   form = {};
   selectedPanel = 0;
   itemsClone = [];
   hasErrors = false;
   tab = 0;
   item = 1;
-  currentItem = null;
+  currentKeystore: KeystoreIndex = {};
   fab = false;
   items = [
     {
@@ -560,17 +571,6 @@ export default class WalletComponent extends Vue {
 
   async mounted() {
     await this.loadWallets();
-
-    // const index = await Session.getWalletRefs();
-    // const unlocked = await Session.hasUnlock();
-    // const hasSession = await Session.has();
-
-    // if (!index.length === 0) {
-    //   return;
-    // }
-    // this.currentItem = index.find((i) => i.address);
-    // await this.setDefault();
-    // await this.loadWallets();
   }
   async onUnlock() {
     this.loading = true;
@@ -580,7 +580,6 @@ export default class WalletComponent extends Vue {
 
     this.loading = false;
   }
-
   async loadSession(options = { reset: false }) {
     this.loading = true;
     let ks = this.items[0].wallet;
@@ -605,6 +604,7 @@ export default class WalletComponent extends Vue {
   }
 
   async loadWallets() {
+    this.linkDialog = false;
     const index = await Session.getWalletRefs();
     if (!index) return;
     const session = await Session.get();
@@ -613,7 +613,7 @@ export default class WalletComponent extends Vue {
       return;
     }
 
-    const promises = index.map(async (i) => {
+    const promises = index.map(async (i: KeystoreIndex) => {
       let headline = `address ${i.address}`;
       if (!i.address) {
         // rsa
@@ -622,9 +622,16 @@ export default class WalletComponent extends Vue {
       const isDefault = i.keystore === session.keystore;
 
       let hasRSAKeys = await this.hasRSAKeys(i.keystore);
+      i.linkedExternalKeystores = i.linkedExternalKeystores || {};
+      const hasWalletConnect = !!i.linkedExternalKeystores.walletconnect;
+      const hasLedger = !!i.linkedExternalKeystores.ledger;
+      const hasPKCS11 = !!i.linkedExternalKeystores.pkcs11;
       this.lastDefault = i.keystore;
       return {
+        hasPKCS11,
         hasRSAKeys,
+        hasWalletConnect,
+        hasLedger,
         wallet: i,
         isDefault,
         action: moment(i.created).fromNow(),
@@ -640,16 +647,14 @@ export default class WalletComponent extends Vue {
   keystoreIndexItem = new KeystoreIndex();
 
   async setDefault() {
-    const id = this.currentItem.wallet
-      ? this.currentItem.wallet.keystore
-      : this.currentItem.keystore;
+    const id = this.currentKeystore;
     await this.wallet.open(id);
 
-    this.currentItem.isDefault = true;
+  //  this.currentItem.isDefault = true;
     this.lastDefault = id;
 
     await Session.set({
-      ...this.currentItem.wallet,
+      ...this.currentKeystore,
       lastDefault: id,
     });
 
@@ -768,7 +773,9 @@ export default class WalletComponent extends Vue {
             rsaKeyExports.pemAsPublic,
             this.x509Info
           );
-          id = this.currentItem.keystore || this.currentItem.wallet.keystore;
+          id =
+            this.currentKeystore.keystore ||
+            this.currentKeystore.wallet.keystore;
           await this.wallet.setImportKey(`import:X509:${id}`, {
             ...rsaKeyExports,
             selfSignedCert,

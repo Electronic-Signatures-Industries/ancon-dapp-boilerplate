@@ -244,7 +244,8 @@ export default class ViewerComponent extends Vue {
   async verify() {
     // verify content
     this.verificationReport = [];
-    switch (this.document.signaturePreset) {
+  
+  switch (this.document.signaturePreset) {
       case SigningOutput.PKCS7PEM:
         this.loading = true;
         this.operationType = 'Verifying...';

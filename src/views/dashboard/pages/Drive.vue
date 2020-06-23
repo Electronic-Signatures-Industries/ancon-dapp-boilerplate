@@ -636,7 +636,12 @@ export default class DriveComponent extends Vue {
 
   async shareTo(item) {
     const driveManager = new DriveSwarmManager(this.wallet);
-    await driveManager.shareEphemeralLink(item.address, item.item.txs, item.item.index, true);
+    await driveManager.shareEphemeralLink(
+      item.address,
+      item.item.txs,
+      item.item.index,
+      true
+    );
   }
 
   close() {
