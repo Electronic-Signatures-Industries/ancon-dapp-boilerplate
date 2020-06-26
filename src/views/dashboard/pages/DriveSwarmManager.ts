@@ -42,7 +42,6 @@ export class DriveSwarmManager {
     /** Shares a ephimeral */
     async shareEphemeralLink(address: string, txs: string, entry: number, fromManifest: boolean) {
         const swarmFeed = await this.wallet.getSwarmNodeClient(address, 'ES256K');
-
         // get document from reference
         const ref = await swarmFeed.bzz.downloadData(
             txs
@@ -57,20 +56,20 @@ export class DriveSwarmManager {
 
         let indexDocument;
         let document;
-        if (fromManifest) {
-            indexDocument = await documentCbor.json();
-            const temp = await swarmFeed.bzz.download(
-                indexDocument.entries[entry].hash,
-                {
-                    mode: 'raw'
-                }
-            );
-            const buf = await temp.arrayBuffer();
-            document = cbor.decode(Buffer.from(buf));
-        } else {
+        // if (!fromManifest) {
+        //     indexDocument = await documentCbor.json();
+        //     const temp = await swarmFeed.bzz.download(
+        //         indexDocument.entries[entry].hash,
+        //         {
+        //             mode: 'raw'
+        //         }
+        //     );
+        //     const buf = await temp.arrayBuffer();
+        //     document = cbor.decode(Buffer.from(buf));
+        // } else {
             indexDocument = await documentCbor.arrayBuffer();
             document = cbor.decode(Buffer.from(indexDocument));
-        }
+        // }
         const base64Content = (document).content;
 
         // sign with eddsa for XDV share spec, only file contents
@@ -89,13 +88,13 @@ export class DriveSwarmManager {
             sig,
             did,
         };
-        const res = await this.wallet.signJWT('ES256K', payload, {
+        const [e, res] = await this.wallet.signJWT('ES256K', payload, {
             iss: swarmFeed.user,
             sub: id,
             aud: 'xdvmessaging.auth2factor.com'
         });
 
-        const jwt = res[0] || res[1];
+        const jwt = res;
         const refHash = await swarmFeed.bzz.uploadData(jwt, {
             encrypt: true
         });
@@ -128,7 +127,7 @@ export class DriveSwarmManager {
             let ab = await (i as Blob).arrayBuffer();
             let buf = new Uint8Array(ab);
             const hash = ethers.utils.keccak256(buf) as string;
-            const signature = kp.sign(Buffer.from(buf));
+            const signature = kp.sign(Buffer.from(hash));
 
             return {
                 contentType: i.type,

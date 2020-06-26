@@ -658,10 +658,7 @@ export default class DriveComponent extends Vue {
     this.loading = true;
     const driveManager = new DriveSwarmManager(this.wallet);
     await driveManager.pushFiles({
-      address:
-        ks.defaultDIDSigner === DIDSigner.XDV
-          ? ks.address
-          : ks.linkedExternalKeystores.walletconnect.address,
+      address: ks.address,
       files: this.files,
       queueName: 'documents',
     });

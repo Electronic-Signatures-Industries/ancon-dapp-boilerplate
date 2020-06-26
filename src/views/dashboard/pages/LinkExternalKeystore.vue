@@ -182,15 +182,12 @@ export default class LinkExternalKeystore extends Vue {
   alertType: string = '';
 
   async linkLedger() {
-    debugger;
 
     const transport = await TransportWebUSB.open();
     const eth = new Eth(transport);
 
-    debugger;
     const addr = await eth.getAddress("44'/60'/0'/0/0");
 
-    debugger;
   }
 
   async linkWalletconnect() {

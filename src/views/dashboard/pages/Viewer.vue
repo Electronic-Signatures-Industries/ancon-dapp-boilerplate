@@ -207,7 +207,6 @@ export default class ViewerComponent extends Vue {
     this.loading = true;
     try {
       this.operationType = 'Downloading...';
-    
       const payload = await ShareUtils.openEphemeralLinkIndex(decodeURIComponent(this.linkJwt));
       this.payload = payload;
       let documentSignature = payload.sig;

@@ -47,6 +47,9 @@ export class Session {
             return Session.walletConnect
                 .signPersonalMessage(msgParams);
         }
+        if (signerType === DIDSigner.Ledger) {
+            
+        }
         return null;
     }
 

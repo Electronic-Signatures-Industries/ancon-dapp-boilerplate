@@ -107,24 +107,32 @@ export default class Unlock extends Vue {
   async mounted() {
     if (!this.wallet) return;
 
+    const getAddressFromDIDSigner = (ks: KeystoreIndex, signerReq: DIDSigner) => {
+      switch (signerReq){
+        case DIDSigner.Walletconnect:
+          return ks.linkedExternalKeystores.walletconnect.address;
+        case DIDSigner.Ledger:
+          return ks.linkedExternalKeystores.ledger.address;
+      }
+    }
     this.wallet.onSignExternal.subscribe(async ({isDIDSigner, payload, next}) => {
-      const wallets = await Session.getWalletRefs();
-
-      const ks = wallets.find(
-        (i) => i.keystore === this.wallet.id
-      ) as KeystoreIndex;
-      // if (isDIDSigner && ks.defaultDIDSigner>-1) {
-      //   const signature = await Session.sign(
-      //     payload,
-      //     ks.linkedExternalKeystores.walletconnect.address,
-      //     ks.defaultDIDSigner
-      //   );
-      //   next({
-      //     signature:ethers.utils.splitSignature(signature),
-      //     isEnabled: true,
-      //   });
-      //   return;
-      // }
+// const wallets = await Session.getWalletRefs();
+//       const ks = wallets.find(
+//         (i) => i.keystore === this.wallet.id
+//       ) as KeystoreIndex;
+//       const address = getAddressFromDIDSigner(ks, ks.defaultDIDSigner)
+//       if (isDIDSigner && ks.defaultDIDSigner>-1) {
+//         const signature = await Session.sign(
+//           payload,
+//           address,
+//           ks.defaultDIDSigner
+//         );
+//         next({
+//           signature,
+//           isEnabled: true,
+//         });
+//         return;
+//       }
       next({ isEnabled: false });
     });
     this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
