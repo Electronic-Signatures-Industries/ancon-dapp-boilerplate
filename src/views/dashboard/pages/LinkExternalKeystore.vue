@@ -121,7 +121,7 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
+import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import WalletConnect from '@walletconnect/client';
 import QRCodeModal from '@walletconnect/qrcode-modal';

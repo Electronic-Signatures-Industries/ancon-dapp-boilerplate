@@ -12,26 +12,25 @@
 
         <v-spacer></v-spacer>
         <v-autocomplete
-          v-model="multiselect"
+          v-model="toAddress"
           :items="wallets"
           :loading="loading"
           chips
           :search-input.sync="search"
           clearable
-          multiple
           hide-details
           @input="addSub"
           @change="saveSelection"
           hide-selected
           item-text="name"
           return-object
-          label="Add subscriptions or select wallet"
+          label="Select address to subscribe"
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Add subscriptions or select wallet
+                Select address to subscribe
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -167,7 +166,7 @@
                   ></v-list-item-action-text>
                   <v-icon
                     @click="openDownloadDialog(item)"
-                    v-if="!active && multiselect.length > 0"
+                    v-if="!active"
                     color="green lighten-1"
                   >
                     mdi-download
@@ -196,20 +195,15 @@ import {
   DGen,
   Emisor,
   Receptor,
-  IpldClient,
   DIDDocumentBuilder,
-  DIDMethodXDV,
-  X509Info,
-  Wallet,
   LDCryptoTypes,
-  KeyConvert,
   DIDNodeSchema,
   DIDDocument,
   DocumentNodeSchema,
-  JOSEService,
   JWTService,
   PublicKey,
 } from 'xdvplatform-wallet';
+import { Wallet } from 'xdvplatform-wallet/src';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
@@ -266,7 +260,7 @@ export default class MessagingComponent extends Vue {
     },
   };
   search = '';
-  multiselect: KeystoreIndex[] = [];
+  toAddress: KeystoreIndex = {} as any;
   subscriptions = [];
   activeSubscriptions: any[] = [];
   items = [];
@@ -296,25 +290,18 @@ export default class MessagingComponent extends Vue {
 
   async loadSession(options = { reset: false }) {
     this.loadingAutocomplete = true;
-    const hasSession = await Session.has();
-    if (hasSession && options.reset === false) {
-      this.multiselect = [];
-      this.multiselect.push(await Session.get());
-    } else if (this.multiselect[0]) {
-      await Session.set(this.multiselect[0]);
-    } else if (this.wallets && this.wallets.length > 0) {
-      this.multiselect = [];
-      this.multiselect.push(this.wallets[0]);
+    const { currentKeystore } = await Session.getSessionInfo();
+    if (currentKeystore) {
+      await this.wallet.open(currentKeystore.keystore);
     }
-
-    if (this.multiselect[0])
-      await this.wallet.open(this.multiselect[0].keystore);
-
     this.loadingAutocomplete = false;
+    this.loading = false;
+    return currentKeystore;
+
   }
 
   async loadWallets() {
-    this.wallets = await Session.getWalletRefs();
+    this.wallets = (await Session.getWalletRefs()) as KeystoreIndex[];
   }
 
   openDownloadDialog(item) {
@@ -328,13 +315,13 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
-  login() {
-    this.passphraseSubject.next(this.password);
-  }
+
   async addSub() {
-    if (this.multiselect.length === 2) {
-      const ks = this.multiselect[0];
-      const from = this.multiselect[1];
+    const { currentKeystore } = await Session.getSessionInfo();
+
+    if (this.toAddress) {
+      const ks = currentKeystore;
+      const from = this.toAddress;
       this.loading = true;
 
       // store subscriptions
@@ -361,18 +348,18 @@ export default class MessagingComponent extends Vue {
   }
 
   saveSelection() {
-    localStorage.setItem(
-      'xdv:messaging:currentWallet',
-      JSON.stringify(this.multiselect[0])
-    );
+    
   }
   async loadSubscriptions() {
     this.loading = true;
+    const { currentKeystore } = await Session.getSessionInfo();
+
 
     // resolve DID
     const self = this;
     const subs = SubscriptionManager.loadSubscriptions(
-      this.multiselect[0].address,
+      currentKeystore.address,
+      // @ts-ignore
       (m: any) => {
         const decoded = JWTService.decodeWithSignature(m.content);
 
@@ -412,10 +399,13 @@ export default class MessagingComponent extends Vue {
   }
 
   async download() {
-    const ks = this.multiselect[0];
+    const { currentKeystore } = await Session.getSessionInfo();
+
+    const ks =currentKeystore;
     this.loading = true;
 
     try {
+      // @ts-ignore
       const item = this.selectedDocument.item.payload;
 
       // user
@@ -437,6 +427,7 @@ export default class MessagingComponent extends Vue {
       const file = new File([base64.decode(obj.content)], obj.name, {
         type: obj.contentType,
       });
+      // @ts-ignore
       this.selectedDocument.item.downloaded = obj;
 
       await this.downloadFile(file, file.name);

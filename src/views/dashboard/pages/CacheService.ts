@@ -1,5 +1,5 @@
-import find from "pouchdb-find";
-import PouchDB from "pouchdb";
+import find from 'pouchdb-find';
+import PouchDB from 'pouchdb';
 
 type CacheContent = string;
 
@@ -101,6 +101,7 @@ export class CacheService {
       .changes({
         since: 0,
         filter,
+        limit: 20,
         live: true,
         include_docs: true,
       })

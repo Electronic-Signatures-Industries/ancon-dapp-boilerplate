@@ -14,7 +14,7 @@
           </v-list-item>
         </v-list>
       </v-menu> -->
-      <v-toolbar-title class="headline">XDV - v1.0.0-rc.2</v-toolbar-title>
+      <v-toolbar-title class="headline">XDV - v1.0.0-rc.3</v-toolbar-title>
 
       <v-spacer></v-spacer>
             <v-btn
@@ -41,7 +41,7 @@
       >
         <v-icon>mdi-wallet</v-icon>
       </v-btn>
-      <v-btn
+      <!-- <v-btn
         :to="{
           name: 'Editor',
         }"
@@ -49,7 +49,7 @@
       >
         <v-icon>mdi-rocket</v-icon>
       </v-btn>
-      <!-- <v-btn
+    <v-btn 
         :to="{
           name: 'Admin',
         }"

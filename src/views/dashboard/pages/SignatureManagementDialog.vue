@@ -312,7 +312,7 @@ import {
   Wallet,
   CMSSigner,
   XmlDsig,
-} from 'xdvplatform-wallet';
+} from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';
 import { base64, arrayify } from 'ethers/utils';
@@ -323,7 +323,6 @@ import { SigningOutput } from './SigningOutput';
 import { DriveSwarmManager } from './DriveSwarmManager';
 import Unlock from './Unlock.vue';
 import 'share-api-polyfill';
-
 
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
@@ -373,7 +372,7 @@ export default class SignatureManagementDialog extends Vue {
   contentValidated: XDVFileFormat;
   verificationReport: any = [];
   skipExecute: boolean;
-  
+
   @Watch('value.operation')
   async onChangeOps(ops, oldVal) {
     this.signingOptions = ops === 'sign' ? true : false;
@@ -459,9 +458,9 @@ export default class SignatureManagementDialog extends Vue {
     }
   }
   async beforeUpdate() {
-    const has = await Session.hasUnlock();
-    if (!has) {
-      await this.wallet.open(this.wallet.id);
+    let { currentKeystore } = await Session.getSessionInfo();
+    if (!currentKeystore) {
+      await this.wallet.open(currentKeystore.keystore);
     }
   }
   async mounted() {
@@ -497,7 +496,10 @@ export default class SignatureManagementDialog extends Vue {
 
   /** Opens XDV file format, test only */
   async openXDVCompactSignature(blob: Blob) {
+    // @ts-ignore
+
     if (blob.name.indexOf('.xdv') > -1) {
+      // @ts-ignore
       const ab = await blob.text();
       return JSON.parse(ab) as XDVFileFormat;
     }
@@ -510,6 +512,7 @@ export default class SignatureManagementDialog extends Vue {
       {
         ...this.shareFormat,
       },
+      // @ts-ignore
       this.value.files.name + '.xdv'
     );
   }
@@ -523,12 +526,14 @@ export default class SignatureManagementDialog extends Vue {
     this.alertType = '';
     this.loading = true;
     try {
-      const address = (await Session.get()).address;
+      const address = (await Session.getSessionInfo()).currentKeystore.address;
       this.operationType = 'Publishing files to Swarm and signing...';
       //  await this.wallet.open(this.value.wallet.keystore);
       const driveManager = new DriveSwarmManager(this.wallet);
       const { txs } = await driveManager.pushFiles({
         address,
+        // @ts-ignore
+
         files: [this.value.files],
         queueName: 'documents',
         signedPreset: this.value.output,
@@ -550,12 +555,12 @@ export default class SignatureManagementDialog extends Vue {
   }
 
   async execute() {
-    const address = (await Session.get()).address;
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
+    const address = currentKeystore.address;
 
     const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
 
-    const has = await Session.hasUnlock();
-    if (!has && this.value.algorithm.length === 0) return;
+    if (!unlock && this.value.algorithm.length === 0) return;
     // get algo
     const kp = await this.wallet.getPrivateKey(this.value.algorithm);
     const keyExports = await this.wallet.getPrivateKeyExports(
@@ -574,10 +579,11 @@ export default class SignatureManagementDialog extends Vue {
         ) {
           this.loading = true;
           // sign with CMS, return detached
-          const rsaKeys = await this.wallet.getImportKey(
+          const rsaKeys: any = await this.wallet.getImportKey(
             `import:X509:${this.wallet.id}`
           );
           try {
+            // @ts-ignore
             let data = await this.value.files.arrayBuffer();
             result = CMSSigner.sign(
               rsaKeys.key.selfSignedCert,
@@ -599,10 +605,12 @@ export default class SignatureManagementDialog extends Vue {
           this.value.output === SigningOutput.XMLDSIG
         ) {
           // sign with xmldsig, return embedded
-          const rsaKeys = await this.wallet.getImportKey(
+          const rsaKeys: any = await this.wallet.getImportKey(
             `import:X509:${this.wallet.id}`
           );
           try {
+            // @ts-ignore
+
             let data = await this.value.files.text();
             const signedDocuments = await XmlDsig.signFEDocument(
               rsaKeys.key.pemAsPrivate,
@@ -650,6 +658,8 @@ export default class SignatureManagementDialog extends Vue {
       let sharedSignedDocument = this.shareFormat;
       if (!sharedSignedDocument) {
         sharedSignedDocument = await this.openXDVCompactSignature(
+          // @ts-ignore
+
           this.value.files
         );
       }
@@ -664,6 +674,7 @@ export default class SignatureManagementDialog extends Vue {
               from: address,
               contents: sharedSignedDocument.content,
               token: '12345',
+              // @ts-ignore
               filename: this.value.files.name.replace('.xdv', '.p7'),
               certificate: btoa(sharedSignedDocument.pubCert),
             };

@@ -30,7 +30,6 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

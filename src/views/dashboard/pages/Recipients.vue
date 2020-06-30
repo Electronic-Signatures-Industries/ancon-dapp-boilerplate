@@ -13,7 +13,7 @@
                 required
                 :items="addresses"
                 v-model="value"
-                label="To" multiple
+                label="To"  
                 item-text="name"
                 item-value="name"
                 return-object
@@ -33,7 +33,7 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
+import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
@@ -45,7 +45,7 @@ export default class SendTo extends Vue {
   addresses;
   show;
   change() {
-    this.$emit('input', this.value);
+    this.$emit('input', [this.value]);
   }
 }
 </script>

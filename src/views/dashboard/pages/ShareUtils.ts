@@ -5,7 +5,7 @@ import {
     validate,
     validateOrReject
     } from 'class-validator';
-import { JWTService, Wallet } from 'xdvplatform-wallet';
+import { JWTService, Wallet } from 'xdvplatform-wallet/src';
 const cbor = require('cbor-sync');
 export class XDVFileFormat {
     @IsBase64()

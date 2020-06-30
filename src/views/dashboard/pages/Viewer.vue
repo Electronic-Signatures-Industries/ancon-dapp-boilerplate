@@ -124,9 +124,7 @@ import {
   DGen,
   Emisor,
   Receptor,
-  IpldClient,
   DIDDocumentBuilder,
-  DIDMethodXDV,
   X509Info,
   Wallet,
   LDCryptoTypes,
@@ -137,7 +135,7 @@ import {
   JOSEService,
   JWTService,
   PublicKey,
-} from 'xdvplatform-wallet';
+} from 'xdvplatform-wallet/src';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { KeystoreIndex } from './KeystoreIndex';

@@ -2,38 +2,18 @@ import moment from 'moment';
 import PouchDB from 'pouchdb';
 import QRCodeModal from '@walletconnect/qrcode-modal';
 import WalletConnect from '@walletconnect/client';
-import { DIDDocument, KeyConvert, Wallet } from 'xdvplatform-wallet';
+import { DIDDocument, Wallet } from 'xdvplatform-wallet/src';
 import { DIDSigner, KeystoreIndex } from './KeystoreIndex';
 
 PouchDB.plugin(require('pouchdb-find'));
 
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
+
 export class Session {
     static timeout;
     static walletConnect: WalletConnect;
-    static async hasUnlock() {
-        try {
-            if (Session.timeout)
-                clearTimeout(Session.timeout);
-            Session.timeout = setTimeout(async () => {
+    static db = new PouchDB('xdv:session');
 
-                const ref = await this.db.get('xdv:unlock');
-
-                await this.db.put({
-                    _id: 'xdv:unlock',
-                    _rev: ref._rev,
-                    _deleted: true,
-                });
-
-            }, 15 * 60 * 1000);
-
-            const item = await this.db.get('xdv:unlock');
-            return !!item;
-
-        } catch (e) {
-            return false;
-        }
-    }
 
     static async sign(data: Buffer, address: string, signerType: DIDSigner) {
         if (signerType === DIDSigner.Walletconnect) {
@@ -41,50 +21,18 @@ export class Session {
             Session.walletConnect = new WalletConnect({
                 bridge: 'https://bridge.walletconnect.org', // Required
                 qrcodeModal: QRCodeModal,
-              });
-          
+            });
+
             // Sign personal message
             return Session.walletConnect
                 .signPersonalMessage(msgParams);
         }
         if (signerType === DIDSigner.Ledger) {
-            
+
         }
         return null;
     }
 
-    static async getUnlock() {
-        const doc = await this.db.get('xdv:unlock');
-        return doc.passphrase;
-    }
-
-    static async setUnlock(passphrase: string) {
-        let p;
-        if (passphrase.length < 1) return;
-        try {
-
-            const ref = await this.db.get('xdv:unlock');
-
-            p = this.db.put({
-                _id: 'xdv:unlock',
-                _rev: ref._rev,
-                passphrase,
-                timestamp: new Date(),
-            });
-
-        } catch (e) {
-            p = this.db.put({
-                _id: 'xdv:unlock',
-                passphrase,
-                timestamp: new Date(),
-            });
-        } finally {
-        }
-
-        return p;
-
-    }
-    static db = new PouchDB('xdv:session');
 
     public static async resolveAndStoreDID(wallet: Wallet, did: string) {
         const user = did.split(':')[2];
@@ -112,7 +60,7 @@ export class Session {
         const key = new KeystoreIndex();
         key.address = user;
         //        key.algorithm = AlgorithmType.P256_JWK_PUBLIC;
-        key.keystore = '';
+        key.keystore = did;
         key.created = new Date();
         key.publicKeyFromDID = pub;
         key.name = did;
@@ -143,44 +91,65 @@ export class Session {
     }
 
 
-    static async has() {
+    /**
+     * Gets keystore from session db
+     */
+    static async getSessionInfo(): Promise<{
+        currentKeystore: KeystoreIndex;
+        unlock: boolean;
 
+    }> {
         try {
             const item = await this.db.get('xdv:session');
-            return item.currentKeystore !== undefined;
-
+            return { ...item } as any;
         } catch (e) {
-            return false;
+            return { currentKeystore: null, unlock: null };
         }
     }
 
-
-
-    static async get() {
-        const item = await this.db.get('xdv:session');
-        return item.currentKeystore;
-    }
-
-    static async set(ks: KeystoreIndex) {
-
+    /**
+     * Sets a keystore index, if keystore is diff, then clears unlock (unlock set to false)
+     * @param ks 
+     */
+    static async set({ ks, unlock = undefined }: any & {
+        ks: KeystoreIndex;
+        unlock: any;
+    }) {
+        const templ = {
+            _id: 'xdv:session',
+            currentKeystore: ks,
+            unlock,
+            timestamp: new Date(),
+        };
         try {
-            const ref = await this.db.get('xdv:session');
+            let ref: any & {
+                currentKeystore: KeystoreIndex;
+                unlock: boolean;
 
-            return this.db.put({
-                _id: 'xdv:session',
-                currentKeystore: ks,
-                _rev: ref._rev,
-                timestamp: new Date(),
-            });
+            } = await this.db.get('xdv:session');
+            if (ks.keystore !== ref.currentKeystore.keystore) {
+                // if diff, then clear unlock=false
+                ref = await this.db.put({
+                    _id: 'xdv:session',
+                    _deleted: true,
+                    _rev: ref._rev,
+                });
+            }
+            // @ts-ignore
+            templ._rev = ref._rev;
+            if (unlock !== undefined) {
+                templ.unlock = unlock;
+            }
+            return this.db.put(templ);
         } catch (e) {
-            return this.db.put({
-                _id: 'xdv:session',
-                currentKeystore: ks,
-                timestamp: new Date(),
-            });
+            return this.db.put(templ);
 
         }
     }
+
+    /**
+     * Checks to see if there are available wallets
+     */
     static async hasWalletRefs() {
         try {
             const item = await this.db.get(WALLET_REFS_KEY);
@@ -192,14 +161,19 @@ export class Session {
     }
 
     static async getWalletRefs() {
-        const doc = await this.db.get(WALLET_REFS_KEY);
+        const doc: any = await this.db.get(WALLET_REFS_KEY);
         return Object.values(doc.refs);
     }
 
+    /**
+     * Sets wallet keystore
+     * @param ks Keystore Item
+     * @param update if update otherwise create
+     */
     static async setWalletRefs(ks: KeystoreIndex, update: boolean = false) {
 
         try {
-            const ref = await this.db.get(WALLET_REFS_KEY);
+            const ref: any = await this.db.get(WALLET_REFS_KEY);
             return this.db.put({
                 _id: WALLET_REFS_KEY,
                 refs: { ...ref.refs, [ks.keystore]: ks },

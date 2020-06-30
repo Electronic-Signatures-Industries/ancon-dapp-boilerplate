@@ -50,7 +50,7 @@
                   :type="showPassword ? 'text' : 'password'"
                   class="input-group--focused"
                   @click:append="showPassword = !showPassword"
-                  :error="validations.value"
+                  :error="validations.password"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -67,21 +67,21 @@
   </v-content>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet';
+import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Session } from './Session';
 import { Subject } from 'rxjs';
 import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
-import { ethers }  from 'ethers';
+import { ethers } from 'ethers';
 @Component({
   name: 'xdv-unlock',
   props: ['value', 'txview', 'wallet'],
   watch: {
     show: async function(current, old) {
       if (old === false && current) {
-        const has = await Session.hasUnlock();
-        if (has) {
-          this.$emit('input', await Session.getUnlock());
+        const { unlock } = await Session.getSessionInfo();
+        if (unlock) {
+          //        this.$emit('input', unlock);
           current = false;
         }
       }
@@ -100,68 +100,83 @@ export default class Unlock extends Vue {
   payload: any = null;
   canRequestTx: boolean = false;
   accepted: any;
+  sub1: any;
+  sub2: any;
+  sub3: any;
   async change() {
     this.passphraseSubject.next(this.value);
+    const self = this;
+    setTimeout(() => {
+      self.validations.password = true
+    }, 1000);
   }
 
   async mounted() {
     if (!this.wallet) return;
 
-    const getAddressFromDIDSigner = (ks: KeystoreIndex, signerReq: DIDSigner) => {
-      switch (signerReq){
+    const getAddressFromDIDSigner = (
+      ks: KeystoreIndex,
+      signerReq: DIDSigner
+    ) => {
+      switch (signerReq) {
         case DIDSigner.Walletconnect:
           return ks.linkedExternalKeystores.walletconnect.address;
         case DIDSigner.Ledger:
           return ks.linkedExternalKeystores.ledger.address;
       }
-    }
-    this.wallet.onSignExternal.subscribe(async ({isDIDSigner, payload, next}) => {
-// const wallets = await Session.getWalletRefs();
-//       const ks = wallets.find(
-//         (i) => i.keystore === this.wallet.id
-//       ) as KeystoreIndex;
-//       const address = getAddressFromDIDSigner(ks, ks.defaultDIDSigner)
-//       if (isDIDSigner && ks.defaultDIDSigner>-1) {
-//         const signature = await Session.sign(
-//           payload,
-//           address,
-//           ks.defaultDIDSigner
-//         );
-//         next({
-//           signature,
-//           isEnabled: true,
-//         });
-//         return;
-//       }
-      next({ isEnabled: false });
-    });
-    this.wallet.onRequestPassphraseSubscriber.subscribe(async (i) => {
-      const has = await Session.hasUnlock();
-      this.show = !has;
-      if (i.type === 'wallet') {
-        if (has) {
-          let passphrase = await Session.getUnlock();
-          this.wallet.onRequestPassphraseWallet.next({
-            type: 'ui',
-            passphrase,
-          });
-        } else {
-          this.passphraseSubject.subscribe(async (passphrase) => {
-            await Session.setUnlock(passphrase);
-            this.show = false;
-            this.wallet.onRequestPassphraseWallet.next({
-              type: 'ui',
-              passphrase,
-            });
-          });
-        }
-      } else if (i.type === 'request_tx') {
-        this.canRequestTx = true;
-        this.payload = JSON.stringify(i.payload);
-      } else {
-        this.$emit('change', { ...i });
+    };
+
+    // Handle subscriptions
+    if (this.sub1) this.sub1.unsubscribe();
+    if (this.sub2) this.sub2.unsubscribe();
+    if (this.sub3) this.sub3.unsubscribe();
+    this.sub1 = this.wallet.onSignExternal.subscribe(
+      async ({ isDIDSigner, payload, next }) => {
+        // const wallets = await Session.getWalletRefs();
+        //       const ks = wallets.find(
+        //         (i) => i.keystore === this.wallet.id
+        //       ) as KeystoreIndex;
+        //       const address = getAddressFromDIDSigner(ks, ks.defaultDIDSigner)
+        //       if (isDIDSigner && ks.defaultDIDSigner>-1) {
+        //         const signature = await Session.sign(
+        //           payload,
+        //           address,
+        //           ks.defaultDIDSigner
+        //         );
+        //         next({
+        //           signature,
+        //           isEnabled: true,
+        //         });
+        //         return;
+        //       }
+        next({ isEnabled: false });
       }
-    });
+    );
+    this.sub2 = this.wallet.onRequestPassphraseSubscriber.subscribe(
+      async (i) => {
+        let { currentKeystore, unlock } = await Session.getSessionInfo();
+        this.show = false === !!this.wallet.mnemonic;
+        if (i.type === 'wallet') {
+          if (this.show) {
+            this.sub3 = this.passphraseSubject.subscribe(async (passphrase) => {
+              await Session.set({
+                ks: currentKeystore,
+                unlock: true,
+              });
+              this.wallet.onRequestPassphraseWallet.next({
+                type: 'ui',
+                passphrase,
+              });
+            });
+          }
+        } else if (i.type === 'request_tx') {
+          this.canRequestTx = true;
+          this.payload = JSON.stringify(i.payload);
+        } else {
+          this.$emit('change', { ...i });
+        }
+      }
+    );
 
     this.$emit('load');
   }

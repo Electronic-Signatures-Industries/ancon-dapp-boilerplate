@@ -4,9 +4,10 @@ import {
     JWTService,
     KeyConvert,
     Wallet
-    } from 'xdvplatform-wallet';
+    } from 'xdvplatform-wallet/src';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 const ec = require('elliptic').ec;
+const cbor = require('cbor-sync');
 
 
 export class SubscriptionManager {
@@ -16,29 +17,30 @@ export class SubscriptionManager {
 
     async sendEncryptedCommPayload(userAddress: string, documentPayload: any, hash: string, entry: number) {
         // get document from reference
+        // get document from reference
         const ref = await this.swarmFeed.bzz.downloadData(
             hash
         );
         // download ref raw
-        const index: any = await this.swarmFeed.bzz.downloadData(
-            ref.entries[0].hash,
+        const documentCbor: any = await this.swarmFeed.bzz.download(
+            ref.entries[entry].hash,
             {
                 mode: 'raw'
             }
         );
-        const document: any = await this.swarmFeed.bzz.download(
-            index.entries[entry].hash,
-            {
-                mode: 'raw'
-            }
-        );
-        let buf = await document.arrayBuffer();
+
+        let indexDocument;
+        let document;
+
+        indexDocument = await documentCbor.arrayBuffer();
+        document = cbor.decode(Buffer.from(indexDocument));
+        // }
+        const base64Content = (document).content;
         // is a cbor content
-        const [errEnc, encDoc] = await this.wallet.encryptMultipleJWE(
-            [this.recipientKeypair],
+        const [errEnc, encDoc] = await this.wallet.encryptJWE(
             'P256',
-            buf,
-            true
+            Buffer.from(base64Content),
+            this.recipientKeypair,
         );
 
         // upload
@@ -87,8 +89,8 @@ export class SubscriptionManager {
                 .pollLatestChapter({
                     interval: 5000,
                 })
-                .subscribe(m=> {
-                 callback({
+                .subscribe(m => {
+                    callback({
                         ...m,
                         feedHash
                     });

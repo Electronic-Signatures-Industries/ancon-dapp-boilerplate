@@ -1,17 +1,15 @@
 import moment from 'moment';
-import {
-    DIDDocument,
-    KeyConvert,
-    LDCryptoTypes,
-    Wallet
-    } from 'xdvplatform-wallet';
+import { DIDDocument, LDCryptoTypes } from 'xdvplatform-wallet';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
+import { KeyConvert } from 'xdvplatform-wallet/src';
 import { PushFilesOptions } from './PushFilesOptions';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
+import { Wallet } from 'xdvplatform-wallet/src';
 import 'share-api-polyfill';
+
 const cbor = require('cbor-sync');
 
 export interface XVDSwarmNodeBlock {
@@ -123,6 +121,7 @@ export class DriveSwarmManager {
 
         const swarmFeed = await this.wallet.getSwarmNodeClient(options.address, 'ES256K');
         const kp = (await this.wallet.getPrivateKey('ES256K'));
+        // @ts-ignore
         const documents = options.files.map(async (i) => {
             let ab = await (i as Blob).arrayBuffer();
             let buf = new Uint8Array(ab);
@@ -161,7 +160,8 @@ export class DriveSwarmManager {
             };
         });
 
-
+debugger
+        // @ts-ignore
         return await this.appendTreeNode(swarmFeed, splitIntoCborAndReferences);
     }
 
@@ -231,6 +231,8 @@ export class DriveSwarmManager {
         const refUnderlyingHash = await swarmFeed.bzz.uploadData(block, {
             encrypt: true,
         });
+        debugger
+        
         const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
         return {
             ...block,

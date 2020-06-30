@@ -284,20 +284,16 @@ import {
   DGen,
   Emisor,
   Receptor,
-  IpldClient,
   DIDDocumentBuilder,
-  DIDMethodXDV,
-  X509Info,
-  Wallet,
   LDCryptoTypes,
-  KeyConvert,
   DIDNodeSchema,
   DIDDocument,
   DocumentNodeSchema,
-  JOSEService,
   JWTService,
   PublicKey,
 } from 'xdvplatform-wallet';
+import { Wallet } from 'xdvplatform-wallet/src';
+
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
@@ -401,9 +397,9 @@ export default class DriveComponent extends Vue {
 
   async onUnlock() {
     await this.loadWallets();
-    await this.loadSession({ reset: true });
+ const ks =   await this.loadSession({ reset: true });
     this.loading = true;
-    await this.loadDirectory(this.select);
+    await this.loadDirectory(ks);
     this.loading = false;
   }
 
@@ -429,21 +425,23 @@ export default class DriveComponent extends Vue {
 
   async loadSession(options = { reset: false }) {
     this.loadingAutocomplete = true;
-    const hasSession = await Session.has();
-    if (hasSession && options.reset === false) {
-      this.select = await Session.get();
+    const { currentKeystore } = await Session.getSessionInfo();
+    if (currentKeystore && options.reset === false) {
+      this.select = currentKeystore;
+
+      await this.wallet.open(this.select.keystore);
     } else if (this.select) {
-      await Session.set(this.select);
-    } else if (this.wallets && this.wallets.length > 0) {
-      this.select = this.wallets[0];
+      await Session.set({ ks: this.select } as any);
+      await this.wallet.open(this.select.keystore);
     }
-
-    if (this.select) await this.wallet.open(this.select.keystore);
-
     this.loadingAutocomplete = false;
+    this.loading = false;
+    return currentKeystore;
+
   }
 
   async mounted() {
+    // @ts-ignore
     const keyup = fromEvent(this.$refs.debounceLoadSession.$el, 'keyenter')
       .pipe(debounceTime(2500))
       .subscribe(async () => {
@@ -451,13 +449,13 @@ export default class DriveComponent extends Vue {
       });
 
     await this.loadWallets();
+    const ks = await this.loadSession();
 
-    await this.loadSession();
     this.itemsClone = [];
     await this.cache.initialize();
     this.cache.subscribeCache(
-      this.select.address,
-      (i) => i.address === this.select.address,
+      ks.address,
+      (i) => i.address === ks.address,
       (e, i) => {
         this.itemsClone.push(i.doc);
       }
@@ -466,9 +464,12 @@ export default class DriveComponent extends Vue {
 
   async loadWallets() {
     const w = await Session.getWalletRefs();
-    this.wallets = w.filter((i) => i.address);
+    // @ts-ignore
+    this.wallets = w.filter((i: KeystoreIndex) => i.address);
     this.allWallets = w;
-    this.publicWallets = w.filter((i) => i.name.indexOf('did:xdv:') > -1);
+    this.publicWallets = w.filter(
+      (i: KeystoreIndex) => i.name.indexOf('did:xdv:') > -1
+    );
   }
 
   openSignatureDialog(item) {
@@ -494,18 +495,19 @@ export default class DriveComponent extends Vue {
   }
   async share() {
     this.loading = true;
-
+    const { currentKeystore } = await Session.getSessionInfo();
     // open
     //    await this.wallet.open(this.select.keystore, this.onAskPassphrase);
 
     // user
     const userKp = await this.wallet.getPublicKey(
-      this.shareInfo.recipients.name
+      // @ts-ignore
+      this.shareInfo.recipients[0].name
     );
     this.alertMessage =
       'Connecting to Swarm at https://ipfs.auth2factor.com/...';
     const swarmFeed = await this.wallet.getSwarmNodeClient(
-      ks.address,
+      currentKeystore.address,
       'ES256K',
       'https://ipfs.auth2factor.com/'
     );
@@ -513,9 +515,13 @@ export default class DriveComponent extends Vue {
     const messageIO = new SubscriptionManager(this.wallet, userKp, swarmFeed);
     this.alertMessage = 'Encrypting and sending message...';
     await messageIO.sendEncryptedCommPayload(
-      this.shareInfo.recipients.address,
+      // @ts-ignore
+      this.shareInfo.recipients[0].address,
+      // @ts-ignore
       this.selectedDocument.item,
+      // @ts-ignore
       this.selectedDocument.item.txs,
+      // @ts-ignore
       this.selectedDocument.item.index
     );
 
@@ -550,6 +556,7 @@ export default class DriveComponent extends Vue {
     const type = Object.keys(mapping)[this.tab];
     this.items = this.itemsClone.filter((i) => i.type === type);
   }
+
   async loadDirectory(ks?: KeystoreIndex) {
     const { address } = ks;
     const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
@@ -605,9 +612,13 @@ export default class DriveComponent extends Vue {
         console.log(block);
         const p = block.metadata.map(
           async (reference: SwarmNodeSignedContent, index) => {
+            // @ts-ignore
             const s = ethers.utils.joinSignature({
+              // @ts-ignore
               r: '0x' + reference.signature.r,
+              // @ts-ignore
               s: '0x' + reference.signature.s,
+              // @ts-ignore
               recoveryParam: reference.signature.recoveryParam,
             });
             const item = {
@@ -653,7 +664,7 @@ export default class DriveComponent extends Vue {
     const wallets = await Session.getWalletRefs();
 
     const ks = wallets.find(
-      (i) => i.keystore === this.wallet.id
+      (i: KeystoreIndex) => i.keystore === this.wallet.id
     ) as KeystoreIndex;
     this.loading = true;
     const driveManager = new DriveSwarmManager(this.wallet);

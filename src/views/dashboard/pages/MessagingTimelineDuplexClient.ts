@@ -1,10 +1,5 @@
 import moment from 'moment';
-import { BzzFeed } from '@erebos/bzz-feed';
-import { BzzNode } from '@erebos/bzz-node';
-import { Chapter, TimelineReader, TimelineWriter } from '@erebos/timeline';
-import { createKeyPair, sign } from '@erebos/secp256k1';
-import { pubKeyToAddress } from '@erebos/keccak256';
-import { Subject } from 'rxjs';
+import { TimelineReader, TimelineWriter } from '@erebos/timeline';
 
 export class MessagingTimelineDuplexClient {
     constructor(

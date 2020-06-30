@@ -422,10 +422,7 @@
       <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
-            <v-list-item
-              :key="item.keystore"
-              @click="currentKeystore = item.wallet"
-            >
+            <v-list-item :key="item.keystore" @click="currentKeystore = item">
               <v-list-item-content>
                 <v-list-item-title v-text="item.title"></v-list-item-title>
                 <v-list-item-subtitle
@@ -471,14 +468,9 @@
   </v-container>
 </template>
 <script lang="ts">
-import {
-  X509Info,
-  Wallet,
-  X509,
-  KeyConvert,
-  LDCryptoTypes,
-  DIDDocument,
-} from 'xdvplatform-wallet';
+import { Wallet, X509, LDCryptoTypes, DIDDocument } from 'xdvplatform-wallet';
+import { X509Info, KeyConvert } from 'xdvplatform-wallet/src/index';
+
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex, DIDSigner, X509Signer } from './KeystoreIndex';
 import { ethers } from 'ethers';
@@ -538,15 +530,14 @@ export default class WalletComponent extends Vue {
   showPassword = false;
   password = '';
   currentItem: {
-    isDefault;
-    hasPKCS11;
-    hasRSAKeys;
-    hasWalletConnect;
-    hasLedger;
-    wallet;
-  } = {};
+    isDefault?;
+    hasPKCS11?;
+    hasRSAKeys?;
+    hasWalletConnect?;
+    hasLedger?;
+  } & KeystoreIndex = {} as any;
   mnemonic = [];
-  1;
+
   cert = '';
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
@@ -559,9 +550,9 @@ export default class WalletComponent extends Vue {
   hasErrors = false;
   tab = 0;
   item = 1;
-  currentKeystore: KeystoreIndex = {};
+  currentKeystore: KeystoreIndex = {} as KeystoreIndex;
   fab = false;
-  items = [
+  items: any & KeystoreIndex[] = [
     {
       title: 'No wallets found, please add one',
     },
@@ -582,15 +573,9 @@ export default class WalletComponent extends Vue {
   }
   async loadSession(options = { reset: false }) {
     this.loading = true;
-    let ks = this.items[0].wallet;
-    const hasSession = await Session.has();
-    if (hasSession && options.reset === false) {
-      ks = await Session.get();
-    } else if (ks) {
-      await Session.set(ks);
-    }
+    
 
-    if (ks) await this.wallet.open(ks.keystore);
+    // if (ks) await this.wallet.open(ks.keystore);
 
     this.loading = false;
   }
@@ -605,13 +590,11 @@ export default class WalletComponent extends Vue {
 
   async loadWallets() {
     this.linkDialog = false;
-    const index = await Session.getWalletRefs();
+    // @ts-ignore
+
+    const index: KeystoreIndex[] = await Session.getWalletRefs();
     if (!index) return;
-    const session = await Session.get();
-    if (!session) {
-      await this.wallet.open(index[0].keystore);
-      return;
-    }
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
 
     const promises = index.map(async (i: KeystoreIndex) => {
       let headline = `address ${i.address}`;
@@ -619,8 +602,10 @@ export default class WalletComponent extends Vue {
         // rsa
         headline = 'RSA 2048 bits';
       }
-      const isDefault = i.keystore === session.keystore;
-
+      const isDefault = currentKeystore && currentKeystore.isDefault &&
+      currentKeystore.keystore === i.keystore;
+      console.log(currentKeystore.isDefault
+        )
       let hasRSAKeys = await this.hasRSAKeys(i.keystore);
       i.linkedExternalKeystores = i.linkedExternalKeystores || {};
       const hasWalletConnect = !!i.linkedExternalKeystores.walletconnect;
@@ -632,7 +617,7 @@ export default class WalletComponent extends Vue {
         hasRSAKeys,
         hasWalletConnect,
         hasLedger,
-        wallet: i,
+        ...i,
         isDefault,
         action: moment(i.created).fromNow(),
         title: i.name,
@@ -647,15 +632,17 @@ export default class WalletComponent extends Vue {
   keystoreIndexItem = new KeystoreIndex();
 
   async setDefault() {
-    const id = this.currentKeystore;
-    await this.wallet.open(id);
+    const id = this.currentKeystore.keystore;
+   // await this.wallet.open(id);
 
-  //  this.currentItem.isDefault = true;
+    //  this.currentItem.isDefault = true;
     this.lastDefault = id;
 
     await Session.set({
-      ...this.currentKeystore,
-      lastDefault: id,
+      ks: {
+        ...this.currentKeystore,
+        isDefault: true,
+      },
     });
 
     await this.loadWallets();
@@ -663,7 +650,6 @@ export default class WalletComponent extends Vue {
 
   async save(item) {
     this.loading = true;
-
     if (this.walletType !== 'rsa') {
       await Session.setWalletRefs(this.keystoreIndexItem);
       this.keystoreIndexItem = new KeystoreIndex();
@@ -743,23 +729,23 @@ export default class WalletComponent extends Vue {
       defaultPath: 'index.json',
     });
 
-    Session.set(ks);
+    Session.set({ ks });
   }
 
   async createKeys() {
+    this.alertType = '';
+    this.alertMessage = '';
+
+    this.loading = true;
+    this.valid = true;
+
+    this.disableBtns = true;
     const wallet = new Wallet();
     let mnemonic = wallet.mnemonic;
     let keys;
     let id;
     let keystoreIndexItem: KeystoreIndex;
     try {
-      this.alertType = '';
-      this.alertMessage = '';
-
-      this.loading = true;
-      this.valid = true;
-
-      this.disableBtns = true;
       switch (this.walletType) {
         case 'rsa':
           this.alertMessage = 'Creating keys...please wait';
@@ -773,9 +759,7 @@ export default class WalletComponent extends Vue {
             rsaKeyExports.pemAsPublic,
             this.x509Info
           );
-          id =
-            this.currentKeystore.keystore ||
-            this.currentKeystore.wallet.keystore;
+          id = this.currentKeystore.keystore;
           await this.wallet.setImportKey(`import:X509:${id}`, {
             ...rsaKeyExports,
             selfSignedCert,
@@ -787,7 +771,7 @@ export default class WalletComponent extends Vue {
             this.password === this.confirmPassword
           ) {
             this.alertMessage = 'Creating keys...please wait';
-            const w = await wallet.createWallet(this.password, null, mnemonic);
+            const w = await wallet.createWallet(this.password, mnemonic);
             id = w.id;
 
             keystoreIndexItem = {
@@ -829,12 +813,6 @@ export default class WalletComponent extends Vue {
     } finally {
       this.loading = false;
       this.valid = false;
-    }
-  }
-
-  async handleRsaWallet() {
-    if (this.walletType === 'rsa') {
-      this.keystore = await Wallet.getRSA256Standalone();
     }
   }
 }

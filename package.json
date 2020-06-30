@@ -64,10 +64,7 @@
     "uport-base64url": "^3.0.2-alpha.0",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
-    "vue-codemirror": "^4.0.6",
-    "vue-form-json-schema": "^2.5.3",
     "vue-i18n": "^8.15.3",
-    "vue-mermaid": "0.0.12",
     "vue-pdf": "^4.0.8",
     "vue-property-decorator": "^8.3.0",
     "vue-qrcode-reader": "^2.1.1",
@@ -81,7 +78,7 @@
     "web-eid": "0.0.8",
     "web-streams-polyfill": "^2.1.0",
     "web3": "^1.2.6",
-    "xdvplatform-wallet": "^1.0.2",
+    "xdvplatform-wallet": "^2.0.10",
     "xmlbuilder2": "^2.1.2"
   },
   "devDependencies": {

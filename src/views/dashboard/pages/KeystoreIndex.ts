@@ -42,6 +42,7 @@ export enum X509Signer {
     XDV
 }
 export class KeystoreIndex {
+    isDefault?: boolean;
     linkedExternalKeystores?: LinkedExternalKeystores;
     defaultDIDSigner?: DIDSigner;
     defaultX509Signer?: X509Signer;
