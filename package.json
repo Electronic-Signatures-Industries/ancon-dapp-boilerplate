@@ -1,6 +1,6 @@
 {
   "name": "xdv-ui-client",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve --open",
@@ -78,7 +78,7 @@
     "web-eid": "0.0.8",
     "web-streams-polyfill": "^2.1.0",
     "web3": "^1.2.6",
-    "xdvplatform-wallet": "^2.0.11",
+    "xdvplatform-wallet": "^2.0.12",
     "xmlbuilder2": "^2.1.2"
   },
   "devDependencies": {
