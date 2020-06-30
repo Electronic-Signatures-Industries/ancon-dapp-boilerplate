@@ -21,6 +21,11 @@ export class XDVFileFormat {
 export class ShareUtils {
 
 
+    /**
+     * Opens an XDV shared link
+     * @param blob 
+     * @param name 
+     */
     static async openXDVLink(blob: Blob, name: string) {
         try {
             const url = window.URL.createObjectURL(blob);
@@ -36,7 +41,7 @@ export class ShareUtils {
     }
 
     /**
-     * Creates a XDV Link 
+     * Creates a XDV shared link 
      * @param blob 
      * @param name 
      */
@@ -87,6 +92,7 @@ export class ShareUtils {
 
         return payload;
     }
+    
     static async openEphemeralLink(address: string, txs: string, entry: number) {
         const wallet = new Wallet();
         const swarmFeed = await wallet.getSwarmNodeQueryable(address);

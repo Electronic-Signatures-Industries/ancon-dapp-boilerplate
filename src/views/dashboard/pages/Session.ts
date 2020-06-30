@@ -34,9 +34,16 @@ export class Session {
     }
 
 
-    public static async resolveAndStoreDID(wallet: Wallet, did: string) {
+    /**
+     * Resolves and stores a DID in wallet
+     * @param wallet Wallet
+     * @param did DID id
+     * @param name Name to save DID as
+     */
+    public static async resolveAndStoreDID(wallet: Wallet, did: string, name: string = did) {
         const user = did.split(':')[2];
         // resolve DID
+        debugger
         const swarmFeed = wallet.getSwarmNodeQueryable(user);
 
         const feedHash = await swarmFeed.bzzFeed.createManifest({
@@ -51,7 +58,7 @@ export class Session {
         const pub = document.publicKey[0].publicKeyJwk;
 
         await wallet.setPublicKey(
-            did,
+            did + (new Date()).getTime(),
             'P256_JWK_PUBLIC',
             JSON.stringify(pub) as any
         );
@@ -63,7 +70,7 @@ export class Session {
         key.keystore = did;
         key.created = new Date();
         key.publicKeyFromDID = pub;
-        key.name = did;
+        key.name = name;
 
         await Session.setWalletRefs(key);
 

@@ -25,13 +25,13 @@
           hide-selected
           item-text="name"
           item-value="name"
-          label="Search wallet or add DID"
+          label="Search wallet"
           solo
         >
           <template v-slot:no-data>
             <v-list-item>
               <v-list-item-title>
-                Search documents or pick wallet
+                No wallets found
               </v-list-item-title>
             </v-list-item>
           </template>
@@ -418,7 +418,37 @@
         :wallet="wallet"
         @load="onUnlock"
       ></xdv-unlock>
+      <v-dialog v-model="setDIDNameDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Enter a wallet name to import DID</span>
+          </v-card-title>
 
+          <v-card-text>
+            <v-form autocomplete="off">
+              <v-row>
+                <v-col cols="12" md="12">
+                  <v-text-field
+                    required
+                    v-model="didName"
+                    class="input-group--focused"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="setDIDNameDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="blue darken-1" text @click="pendingDIDName(didName)"
+              >OK</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
@@ -468,8 +498,14 @@
   </v-container>
 </template>
 <script lang="ts">
-import { Wallet, X509, LDCryptoTypes, DIDDocument } from 'xdvplatform-wallet';
+import {
+  Wallet,
+  X509,
+  LDCryptoTypes,
+  DIDDocument,
+} from 'xdvplatform-wallet/src';
 import { X509Info, KeyConvert } from 'xdvplatform-wallet/src/index';
+import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex, DIDSigner, X509Signer } from './KeystoreIndex';
@@ -487,19 +523,6 @@ import LinkExternalKeystore from './LinkExternalKeystore.vue';
     'xdv-unlock': Unlock,
     'xdv-link-external-keystore': LinkExternalKeystore,
   },
-  watch: {
-    async search(val) {
-      if (val && val.indexOf('did:xdv:') === 0) {
-        this.loading = true;
-        // fetch DID
-        await Session.resolveAndStoreDID(this.wallet, val);
-        await this.loadWallets();
-        this.loading = false;
-      } else {
-        // no op
-      }
-    },
-  },
 })
 export default class WalletComponent extends Vue {
   loginDialog: boolean = false;
@@ -508,6 +531,8 @@ export default class WalletComponent extends Vue {
   disableBtns = false;
   lastDefault: any;
   linkDialog = false;
+  pendingDIDName: (name: any) => Promise<void>;
+  setDIDNameDialog: boolean = false;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -557,10 +582,18 @@ export default class WalletComponent extends Vue {
       title: 'No wallets found, please add one',
     },
   ];
-
+  didName = '';
   wallet: Wallet = new Wallet();
 
   async mounted() {
+    if (location.hash.indexOf('did=') > -1) {
+      const did = location.hash.split('did=')[1];
+      this.setDIDNameDialog = true;
+      this.pendingDIDName = (name) => {
+        this.setDIDNameDialog = false;
+        return Session.resolveAndStoreDID(this.wallet, decodeURIComponent(did), name);
+      };
+    }
     await this.loadWallets();
   }
   async onUnlock() {
@@ -573,7 +606,6 @@ export default class WalletComponent extends Vue {
   }
   async loadSession(options = { reset: false }) {
     this.loading = true;
-    
 
     // if (ks) await this.wallet.open(ks.keystore);
 
@@ -602,10 +634,11 @@ export default class WalletComponent extends Vue {
         // rsa
         headline = 'RSA 2048 bits';
       }
-      const isDefault = currentKeystore && currentKeystore.isDefault &&
-      currentKeystore.keystore === i.keystore;
-      console.log(currentKeystore.isDefault
-        )
+      const isDefault =
+        currentKeystore &&
+        currentKeystore.isDefault &&
+        currentKeystore.keystore === i.keystore;
+      console.log(currentKeystore.isDefault);
       let hasRSAKeys = await this.hasRSAKeys(i.keystore);
       i.linkedExternalKeystores = i.linkedExternalKeystores || {};
       const hasWalletConnect = !!i.linkedExternalKeystores.walletconnect;
@@ -633,7 +666,7 @@ export default class WalletComponent extends Vue {
 
   async setDefault() {
     const id = this.currentKeystore.keystore;
-   // await this.wallet.open(id);
+    // await this.wallet.open(id);
 
     //  this.currentItem.isDefault = true;
     this.lastDefault = id;

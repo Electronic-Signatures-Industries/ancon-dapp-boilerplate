@@ -36,7 +36,9 @@
     <v-dialog v-model="show" max-width="500px">
       <v-card>
         <v-card-title>
-          <span class="headline">Passphrase</span>
+          <span class="headline"
+            >Enter passphrase for wallet {{ currentKeystore.name }}</span
+          >
         </v-card-title>
 
         <v-card-text>
@@ -50,7 +52,8 @@
                   :type="showPassword ? 'text' : 'password'"
                   class="input-group--focused"
                   @click:append="showPassword = !showPassword"
-                  :error="validations.password"
+                  :error="!!validations.password"
+                  :hint="validations.password"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -90,12 +93,12 @@ import { ethers } from 'ethers';
 })
 export default class Unlock extends Vue {
   trackSubscriptions = {};
-  value: string = '';
+  value: string;
   txview: boolean;
   show: boolean = false;
   showPassword = false;
   wallet: Wallet;
-  validations: any = { password: false };
+  validations: any = { password: undefined };
   passphraseSubject: Subject<any> = new Subject();
   payload: any = null;
   canRequestTx: boolean = false;
@@ -103,12 +106,9 @@ export default class Unlock extends Vue {
   sub1: any;
   sub2: any;
   sub3: any;
+  currentKeystore: KeystoreIndex;
   async change() {
     this.passphraseSubject.next(this.value);
-    const self = this;
-    setTimeout(() => {
-      self.validations.password = true
-    }, 1000);
   }
 
   async mounted() {
@@ -156,6 +156,7 @@ export default class Unlock extends Vue {
       async (i) => {
         let { currentKeystore, unlock } = await Session.getSessionInfo();
         this.show = false === !!this.wallet.mnemonic;
+        this.currentKeystore = currentKeystore;
         if (i.type === 'wallet') {
           if (this.show) {
             this.sub3 = this.passphraseSubject.subscribe(async (passphrase) => {
@@ -171,14 +172,19 @@ export default class Unlock extends Vue {
           }
         } else if (i.type === 'request_tx') {
           this.canRequestTx = true;
-          this.payload = JSON.stringify(i.payload);
-        } else {
-          this.$emit('change', { ...i });
+          if (typeof i.payload === 'object') {
+            this.payload = JSON.stringify(i.payload);
+          } else {
+            this.payload = ethers.utils.hexlify(i.payload);
+          }
+        } else if (i.type === 'error') {
+          this.validations.password = 'Invalid passphrase';
+        } else if (i.type === 'done') {
+          this.validations.password = undefined;
+          this.$emit('load');
         }
       }
     );
-
-    this.$emit('load');
   }
   cancel() {
     //  no-op

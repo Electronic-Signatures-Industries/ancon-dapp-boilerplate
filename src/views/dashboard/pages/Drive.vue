@@ -397,7 +397,7 @@ export default class DriveComponent extends Vue {
 
   async onUnlock() {
     await this.loadWallets();
- const ks =   await this.loadSession({ reset: true });
+    const ks = await this.loadSession({ reset: true });
     this.loading = true;
     await this.loadDirectory(ks);
     this.loading = false;
@@ -418,7 +418,33 @@ export default class DriveComponent extends Vue {
   handleCopyDIDReference(item) {
     let ref;
     if (item.didReference) {
-      copy(item.didReference.did);
+      // copy(item.didReference.did);
+      const sharedUrl = `${location.protocol}//${location.host}/#/xdv/wallet?did=${item.didReference.did}`;
+
+      // @ts-ignore
+      navigator.share(
+        {
+          title: 'XDV',
+          text: 'DID',
+          url: sharedUrl,
+        },
+        // @ts-ignore
+        {
+          // @ts-ignore
+          copy: true,
+          email: true,
+          print: true,
+          sms: true,
+          smessenger: true,
+          // @ts-ignore
+          facebook: true,
+          whatsapp: true,
+          twitter: true,
+          linkedin: true,
+          telegram: true,
+          skype: true,
+        }
+      );
       this.hasCopyRef = true;
     }
   }
@@ -437,7 +463,6 @@ export default class DriveComponent extends Vue {
     this.loadingAutocomplete = false;
     this.loading = false;
     return currentKeystore;
-
   }
 
   async mounted() {
