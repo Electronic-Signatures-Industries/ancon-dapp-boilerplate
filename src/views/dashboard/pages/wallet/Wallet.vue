@@ -508,14 +508,14 @@ import { X509Info, KeyConvert } from 'xdvplatform-wallet/src/index';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex, DIDSigner, X509Signer } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner, X509Signer } from '../shared/KeystoreIndex';
 import { ethers } from 'ethers';
 import moment from 'moment';
-import { Session } from './Session';
+import { Session } from '../shared/Session';
 import { pubKeyToAddress } from '@erebos/keccak256';
 import copy from 'copy-to-clipboard';
 import { Subject, forkJoin } from 'rxjs';
-import Unlock from './Unlock.vue';
+import Unlock from '../documents/Unlock.vue';
 import LinkExternalKeystore from './LinkExternalKeystore.vue';
 
 @Component({

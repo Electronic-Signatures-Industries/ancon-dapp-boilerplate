@@ -1,10 +1,10 @@
 import {
-    DIDDocument,
-    JOSEService,
-    JWTService,
-    KeyConvert,
-    Wallet
-    } from 'xdvplatform-wallet/src';
+  DIDDocument,
+  JOSEService,
+  JWTService,
+  KeyConvert,
+  Wallet
+  } from 'xdvplatform-wallet/src';
 import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
 const ec = require('elliptic').ec;
 const cbor = require('cbor-sync');

@@ -72,9 +72,9 @@
 <script lang="ts">
 import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Session } from './Session';
+import { Session } from '../shared/Session';
 import { Subject } from 'rxjs';
-import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner } from '../shared/KeystoreIndex';
 import { ethers } from 'ethers';
 @Component({
   name: 'xdv-unlock',

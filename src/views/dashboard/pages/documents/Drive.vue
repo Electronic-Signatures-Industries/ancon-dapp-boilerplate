@@ -296,30 +296,28 @@ import { Wallet } from 'xdvplatform-wallet/src';
 
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex, DIDSigner } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner } from '../shared/KeystoreIndex';
 import moment from 'moment';
 import { createKeyPair, sign } from '@erebos/secp256k1';
-import { MiddlewareOptions, XDVMiddleware } from '../../../libs';
-import { SolidoSingleton } from '../components/core/SolidoSingleton';
 import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
-import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
+import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent';
 import { forkJoin, Unsubscribable, Subject, fromEvent } from 'rxjs';
-import { Session } from './Session';
-import { MessagingTimelineDuplexClient } from './MessagingTimelineDuplexClient';
+import { Session } from '../shared/Session';
+import { MessagingTimelineDuplexClient } from '../shared/MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
 const bs58 = require('bs58');
-import { DriveSwarmManager, XVDSwarmNodeBlock } from './DriveSwarmManager';
+import { DriveSwarmManager, XVDSwarmNodeBlock } from '../shared/DriveSwarmManager';
 import { ec } from 'elliptic';
 import Unlock from './Unlock.vue';
 import Upload from './Upload.vue';
 import SendTo from './Recipients.vue';
-import { SubscriptionManager } from './SubscriptionManager';
+import { SubscriptionManager } from '../shared/SubscriptionManager';
 import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
 import SignatureManagementDialog from './SignatureManagementDialog.vue';
-import { SigningOutput } from './SigningOutput';
+import { SigningOutput } from '../shared/SigningOutput';
 import { async } from 'rxjs/internal/scheduler/async';
-import { CacheService } from './CacheService';
+import { CacheService } from '../shared/CacheService';
 const cbor = require('cbor-sync');
 
 @Component({

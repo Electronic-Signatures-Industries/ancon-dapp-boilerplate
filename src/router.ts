@@ -1,12 +1,12 @@
-import DriveComponent from './views/dashboard/pages/Drive.vue';
+import DriveComponent from './views/dashboard/pages/documents/Drive.vue';
 import DurableWebsite from './views/dashboard/pages/dapp/DurableWebsite.vue';
 import index from './views/dashboard/Index.vue';
-import MessagingComponent from './views/dashboard/pages/Messaging.vue';
+import MessagingComponent from './views/dashboard/pages/messaging/Messaging.vue';
 import Router from 'vue-router';
 import TemplateEditor from './views/dashboard/pages/TemplateEditor.vue';
-import ViewerComponent from './views/dashboard/pages/Viewer.vue';
+import ViewerComponent from './views/dashboard/pages/documents/Viewer.vue';
 import Vue from 'vue';
-import WalletComponent from './views/dashboard/pages/Wallet.vue';
+import WalletComponent from './views/dashboard/pages/wallet/Wallet.vue';
 // @ts-ignore
 // @ts-nocheck
 

@@ -314,13 +314,13 @@ import {
   XmlDsig,
 } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex } from './KeystoreIndex';
+import { KeystoreIndex } from '../shared/KeystoreIndex';
 import { base64, arrayify } from 'ethers/utils';
-import { Session } from './Session';
-import { ShareUtils, XDVFileFormat } from './ShareUtils';
+import { Session } from '../shared/Session';
+import { ShareUtils, XDVFileFormat } from '../shared/ShareUtils';
 import { create } from 'xmlbuilder2';
-import { SigningOutput } from './SigningOutput';
-import { DriveSwarmManager } from './DriveSwarmManager';
+import { SigningOutput } from '../shared/SigningOutput';
+import { DriveSwarmManager } from '../shared/DriveSwarmManager';
 import Unlock from './Unlock.vue';
 import 'share-api-polyfill';
 
