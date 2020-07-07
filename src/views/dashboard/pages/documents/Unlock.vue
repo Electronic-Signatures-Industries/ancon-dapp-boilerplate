@@ -106,7 +106,7 @@ export default class Unlock extends Vue {
   sub1: any;
   sub2: any;
   sub3: any;
-  currentKeystore: KeystoreIndex;
+  currentKeystore: KeystoreIndex = new KeystoreIndex();
   async change() {
     this.passphraseSubject.next(this.value);
   }

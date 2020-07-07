@@ -1,6 +1,9 @@
 {
   "name": "xdv-ui-client",
   "version": "2.0.3",
+  "build": {
+    "asar": false
+  },
   "private": true,
   "scripts": {
     "serve": "NODE_OPTIONS=--max_old_space_size=8096; vue-cli-service serve",
@@ -14,7 +17,7 @@
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'",
     "inspect": "vue-cli-service inspect",
     "now-start": "vue-cli-service serve",
-    "postinstall": "npx electron-builder install-app-deps",
+    "__postinstall": "npx electron-builder install-app-deps",
     "postuninstall": "npx electron-builder install-app-deps"
   },
   "main": "background.js",
@@ -46,23 +49,25 @@
     "core-js": "^3.6.2",
     "did-resolver": "^1.1.0",
     "ecies-parity": "^0.1.1",
+    "electron-better-ipc": "^1.1.0",
+    "electron-edge-js": "^12.14.2",
     "elliptic": "^6.5.2",
     "es6-shim": "^0.35.5",
     "eth-sig-util": "^2.5.3",
     "ethers": "^4.0.46",
     "ethr-did": "^1.1.0",
     "ethr-did-resolver": "^2.2.0",
-    "graphene-pk11": "^2.1.7",
+    "execa": "3.1.0",
+    "get-stream": "^5.1.0",
+    "human-signals": "^2.1.0",
     "js-beautify": "^1.11.0",
     "js-md5": "^0.7.3",
     "libxmljs": "^0.19.7",
-    "mdv-workflow-client-types": "git+https://github.com/molekilla/mdv-workflow-client-types.git",
     "mermaid": "^8.5.0",
     "moment": "^2.26.0",
     "node-forge": "^0.9.1",
     "node-jose": "^1.1.4",
-    "pcsclite": "^1.0.0",
-    "peer-id": "^0.13.12",
+    "pkcs11-smartcard-sign": "^1.0.1",
     "pouchdb": "^7.2.1",
     "pouchdb-find": "^7.2.1",
     "promise-file-reader": "^1.0.2",
@@ -82,13 +87,13 @@
     "vue-worker": "^1.2.1",
     "vue_pdfjs_viewer": "^0.1.11",
     "vuethereum": "0.0.7",
-    "vuetify": "^2.2.11",
+    "vuetify": "^2.3.3",
     "vuex": "^3.1.2",
     "web-eid": "0.0.8",
     "web-streams-polyfill": "^2.1.0",
     "web3": "^1.2.6",
     "xdvplatform-wallet": "^2.0.12",
-    "xmlbuilder2": "^2.1.2"
+    "xmlbuilder2": "^2.1.6"
   },
   "devDependencies": {
     "@mdi/font": "^5.0.45",
@@ -115,7 +120,9 @@
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-vue": "^6.2.2",
     "html-webpack-plugin": "^4.2.0",
+    "node-loader": "^1.0.0",
     "node-sass": "^4.13.1",
+    "rust-native-wasm-loader": "git+https://github.com/DarthGandalf/rust-native-wasm-loader.git#dist",
     "sass": "^1.24.3",
     "sass-loader": "^8.0.0",
     "spectron": "^11.0.0",
@@ -128,6 +135,7 @@
     "vue-template-compiler": "^2.6.11",
     "vue-world-map": "^0.1.1",
     "vuetify-loader": "^1.5.0",
+    "wasm-loader": "^1.3.0",
     "webpack-flat-bundle": "0.0.13"
   }
 }

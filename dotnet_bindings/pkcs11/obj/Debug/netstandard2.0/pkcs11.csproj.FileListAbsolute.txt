@@ -1,0 +1,9 @@
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.csprojAssemblyReference.cache
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.AssemblyInfoInputs.cache
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.AssemblyInfo.cs
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.csproj.CoreCompileInputs.cache
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/bin/Debug/netstandard2.0/pkcs11.deps.json
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/bin/Debug/netstandard2.0/pkcs11.dll
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/bin/Debug/netstandard2.0/pkcs11.pdb
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.dll
+/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/Debug/netstandard2.0/pkcs11.pdb

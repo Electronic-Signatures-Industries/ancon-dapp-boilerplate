@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/pkcs11.csproj": {}
+  },
+  "projects": {
+    "/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/pkcs11.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/pkcs11.csproj",
+        "projectName": "pkcs11",
+        "projectPath": "/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/pkcs11.csproj",
+        "packagesPath": "/home/rogelio/.nuget/packages/",
+        "outputPath": "/home/rogelio/Code/xdv-fe-client/dotnet_bindings/pkcs11/obj/",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "/usr/share/dotnet/sdk/NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "/home/rogelio/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "dependencies": {
+            "Edge.js": {
+              "target": "Package",
+              "version": "[8.2.1, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            },
+            "Pkcs11Interop": {
+              "target": "Package",
+              "version": "[5.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.1.301/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

@@ -27,20 +27,22 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="showSCLogin = false">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="showSCLogin = false"
+            >Cancel</v-btn
+          >
           <v-btn color="blue darken-1" text @click="loginSmartCard">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="show" max-width="500px">
+    <v-dialog v-model="show" max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="headline">Link external keystore</span>
+          <span class="headline">Link external hardware / software module</span>
         </v-card-title>
 
         <v-card-text>
           <v-form autocomplete="off">
-            <v-row>
+            <!-- <v-row>
               <v-col cols="12" md="12">
                 <v-radio-group
                   v-model="value.type"
@@ -48,7 +50,7 @@
                   label="Type"
                   column
                 >
-                  <v-tooltip bottom>
+                <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-radio
                         v-on="on"
@@ -59,8 +61,7 @@
                       ></v-radio>
                     </template>
                     <span>WalletConnect</span>
-                  </v-tooltip>
-
+                  </v-tooltip> 
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-radio
@@ -88,8 +89,9 @@
                 </v-radio-group>
               </v-col>
             </v-row>
+             -->
             <v-row>
-              <v-col cols="6" md="6">
+              <v-col cols="12" md="12">
                 <v-select
                   persistent-hint
                   hint="Default DID signer"
@@ -105,7 +107,7 @@
                 ></v-select>
               </v-col>
 
-              <v-col cols="6" md="6">
+              <v-col cols="12" md="12">
                 <v-select
                   persistent-hint
                   hint="Default X509 signer"
@@ -138,11 +140,6 @@
               </v-col>
             </v-row>
           </v-form>
-          <v-row>
-            <v-col>
-              <v-btn color="blue darken-1" text @click="link">Link</v-btn>
-            </v-col>
-          </v-row>
         </v-card-text>
 
         <v-card-actions>
@@ -156,9 +153,8 @@
 </template>
 <script lang="ts">
 import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet/src';
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import WalletConnect from '@walletconnect/client';
-import QRCodeModal from '@walletconnect/qrcode-modal';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+
 import { SmartCardConnectorPKCS11 } from '../shared/SmartCardConnector';
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 import Eth from '@ledgerhq/hw-app-eth';
@@ -170,6 +166,10 @@ import {
 } from '../shared/KeystoreIndex';
 import { Session } from '../shared/Session';
 import { async } from 'rxjs/internal/scheduler/async';
+import {
+  PKCS11ToolBindingsConfig,
+  PKCS11ToolBindings,
+} from '../shared/PKCS11ToolBindings';
 
 @Component({
   name: 'xdv-link-external-keystore',
@@ -189,10 +189,10 @@ export default class LinkExternalKeystore extends Vue {
       key: 'Ledger',
       value: DIDSigner.Ledger,
     },
-    {
-      key: 'WalletConnect',
-      value: DIDSigner.Walletconnect,
-    },
+    // {
+    //   key: 'WalletConnect',
+    //   value: DIDSigner.Walletconnect,
+    // },
     {
       key: 'XDV',
       value: DIDSigner.XDV,
@@ -203,30 +203,39 @@ export default class LinkExternalKeystore extends Vue {
       key: 'PKCS#11',
       value: X509Signer.PKCS11,
     },
-    {
-      key: 'PKCS#12',
-      value: X509Signer.PKCS12,
-    },
+    // {
+    //   key: 'PKCS#12',
+    //   value: X509Signer.PKCS12,
+    // },
     {
       key: 'XDV Self Signed',
       value: X509Signer.XDV,
     },
   ];
+  loading = false;
   alertMessage: string = '';
   alertType: string = '';
   pin = '';
   showPassword = '';
   isLoginSmartCardReady: boolean;
-  validations:  { password: false };
+  validations = { password: undefined };
   showSCLogin = false;
+  pkcs11Config: PKCS11ToolBindingsConfig = new PKCS11ToolBindingsConfig();
 
   async loginSmartCard() {
-    const smartCardConnector = new SmartCardConnectorPKCS11();
     try {
       // login
-      smartCardConnector.login(this.pin);
+      const config = this.pkcs11Config;
+      config.isSimulator = true;
+      const smartCardConnector = new PKCS11ToolBindings(config);
+      await smartCardConnector.login(this.pin);
       this.isLoginSmartCardReady = true;
+      this.validations.password = 'Invalid PIN';
+      await this.linkSmartCard();
+      this.showSCLogin = false;
     } catch (e) {
+      console.log(e);
+      this.validations.password = false;
       this.isLoginSmartCardReady = false;
     }
   }
@@ -239,14 +248,12 @@ export default class LinkExternalKeystore extends Vue {
   }
 
   async linkSmartCard() {
-    if (this.isLoginSmartCardReady) {
-      const smartCardConnector = new SmartCardConnectorPKCS11();
+      const config = this.pkcs11Config;
+      config.isSimulator = true;
+      const smartCardConnector = new PKCS11ToolBindings(config);
       // login
-      const slots = smartCardConnector.list();
-      debugger
-    } else {
-      this.showSCLogin = true;
-    }
+      const slots = await smartCardConnector.list();
+      debugger;
   }
   async linkWalletconnect() {
     // Check if connection is already established
@@ -274,67 +281,7 @@ export default class LinkExternalKeystore extends Vue {
     }
   }
 
-  async link() {
-    if (this.value.type === 'walletconnect') {
-      await this.linkWalletconnect();
-    } else if (this.value.type === 'ledger') {
-      await this.linkLedger();
-    } else {
-      // smart card
-      await this.linkSmartCard();
-    }
-  }
-  async mounted() {
-    // Create a connector
-    Session.walletConnect = new WalletConnect({
-      bridge: 'https://bridge.walletconnect.org', // Required
-      qrcodeModal: QRCodeModal,
-    });
-
-    const onUpdateKeystore = async (error, payload) => {
-      if (error) {
-        throw error;
-      }
-
-      // Get provided accounts and chainId
-      const { accounts, chainId } = payload.params[0];
-      const keystore = {
-        ...this.keystore,
-        linkedExternalKeystores: {
-          ...this.keystore.linkedExternalKeystores,
-          walletconnect: {
-            address: accounts[0],
-            chain: chainId,
-            capability: Capability.Sign,
-            connected: true,
-          },
-        },
-      };
-      await Session.setWalletRefs(keystore, true);
-    };
-    // Subscribe to connection events
-    Session.walletConnect.on('connect', onUpdateKeystore);
-
-    Session.walletConnect.on('session_update', onUpdateKeystore);
-
-    Session.walletConnect.on('disconnect', async (error, payload) => {
-      if (error) {
-        throw error;
-      }
-      const keystore = {
-        ...this.keystore,
-        linkedExternalKeystores: {
-          ...this.keystore.linkedExternalKeystores,
-          walletconnect: {
-            connected: false,
-            ...this.keystore.linkedExternalKeystores.walletconnect,
-          },
-        },
-      };
-      await Session.setWalletRefs(keystore, true);
-      // Delete connector
-    });
-  }
+  async mounted() {}
 
   async setDefaultSignerProtocol() {
     const keystore = {
@@ -348,6 +295,20 @@ export default class LinkExternalKeystore extends Vue {
   async change() {
     await this.setDefaultSignerProtocol();
     this.$emit('input', this.value);
+  }
+
+  @Watch('value.defaultX509Signer')
+  async onX509SignerChange(current: X509Signer) {
+    if (current === X509Signer.PKCS11) {
+      await this.linkSmartCard();
+    }
+  }
+
+  @Watch('value.defaultDIDSigner')
+  async onDIDSignerChange(current: DIDSigner) {
+    if (current === DIDSigner.Ledger) {
+      await this.linkLedger();
+    }
   }
 }
 </script>

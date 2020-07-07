@@ -1,8 +1,6 @@
 import { sign } from '@erebos/secp256k1';
 import { Subject } from 'rxjs';
-const pcsc = require('pcsclite');
-const graphene = require("graphene-pk11");
-const Module = graphene.Module;
+const signer = require('pkcs11-smartcard-sign');
 
 export interface SmartCardConnectorEvent {
     eventName: string;
@@ -112,159 +110,32 @@ export class SmartCardConnector {
 
 
 export class SmartCardConnectorPKCS11 {
-    constructor(private mod?: any) {   
-        this.mod = Module.load("/usr/local/lib/softhsm/libsofthsm2.so", "SoftHSM");
+    module: string;
+    constructor(private keyId?: string) {
+        this.keyId = keyId;
+        this.module = '/usr/local/lib/softhsm/libsofthsm2.so';
     }
+    async sign(pin: string, data: Buffer) {
+        // Basic usage:
+        //  - SHA-256
+        //  - Read key with ID 02
+        //  - Prompt for PIN
+        const signature = await signer.sign({
+            data,
+            // predefined PIN
+            pin,
+            // ID of the key to use (on the smart card)
+            key: this.keyId,
+            // algo: sha256 or sha512
+            algo: 'sha512',
+            // select N-th smart card reader configured by the system
+            reader: 2,
+            // verify with this public key after sign
+//            verifyKey: fs.readFileSync('your-public-key.pem'),
+            // module to use
+            module: this.module
+        });
 
-    login(pin) {
-        this.mod.initialize();
-        const session = this.mod.getSlots(0).open();
-        session.login(pin);
-        this.mod.finalize();
     }
-
-    logout() {
-        this.mod.initialize();       
-        const session = this.mod.getSlots(0).open();
-        session.logout();
-        this.mod.finalize();
-    }
-    async addSelfSignCert() {
-
-        this.mod.initialize();
-
-        try {
-            const slot = this.mod.getSlots(0);
-            const session = slot.open(2 | 4)
-            session.login("password");
-
-            const template = {
-                class: graphene.ObjectClass.CERTIFICATE,
-                certType: graphene.CertificateType.X_509,
-                private: false,
-                token: false,
-                id: Buffer.from([1, 2, 3, 4, 5]), // Should be the same as Private/Public key has
-                label: "My certificate",
-                subject: Buffer.from("3034310B300906035504...", "hex"),
-                value: Buffer.from("308203A830820290A003...", "hex"),
-            };
-
-            const objCert = session.create(template).toType();
-
-            console.log("Certificate: created\n");
-            console.log("Certificate info:\n===========================");
-            console.log("Handle:", objCert.handle.toString("hex"));
-            console.log("ID:", objCert.id.toString("hex"));
-            console.log("Label:", objCert.label);
-            console.log("category:", graphene.CertificateCategory[objCert.category]);
-            console.log("Subject:", objCert.subject.toString("hex"));
-            console.log("Value:", objCert.value.toString("hex"));
-        } catch (err) {
-            console.error(err);
-        }
-
-        this.mod.finalize();
-    }
-    async list() {
-        this.mod.initialize();
-        // get slots
-        const slots = this.mod.getSlots(true);
-        if (slots.length > 0) {
-            for (const i = 0; i < slots.length; i++) {
-                const slot = slots.items(i);
-                console.log("Slot #" + slot.handle);
-                console.log("\tDescription:", slot.slotDescription);
-                console.log("\tSerial:", slot.getToken().serialNumber);
-                console.log("\tPassword(min/max): %d/%d", slot.getToken().minPinLen, slot.getToken().maxPinLen);
-                console.log("\tIs hardware:", !!(slot.flags & graphene.SlotFlag.HW_SLOT));
-                console.log("\tIs removable:", !!(slot.flags & graphene.SlotFlag.REMOVABLE_DEVICE));
-                console.log("\tIs initialized:", !!(slot.flags & graphene.SlotFlag.TOKEN_PRESENT));
-                console.log("\n\nMechanisms:");
-                console.log("Name                       h/s/v/e/d/w/u");
-                console.log("========================================");
-                function b(v) {
-                    return v ? "+" : "-";
-                }
-
-                function s(v) {
-                    v = v.toString();
-                    for (const i_1 = v.length; i_1 < 27; i_1++) {
-                        v += " ";
-                    }
-                    return v;
-                }
-
-                const mechs = slot.getMechanisms();
-                for (const j = 0; j < mechs.length; j++) {
-                    const mech = mechs.items(j);
-                    console.log(s(mech.name) +
-                        b(mech.flags & graphene.MechanismFlag.DIGEST) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.SIGN) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.VERIFY) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.ENCRYPT) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.DECRYPT) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.WRAP) + "/" +
-                        b(mech.flags & graphene.MechanismFlag.UNWRAP));
-                }
-            }
-        }
-        this.mod.finalize();
-        return slots;
-    }
-    async sign(slot, pin) {
-        try {
-            debugger
-
-            this.mod.initialize();
-
-            const slot = this.mod.getSlots(0);
-            if (slot.flags & graphene.SlotFlag.TOKEN_PRESENT) {
-                const session = slot.open();
-                session.login("12345");
-
-                // generate RSA key pair
-                const keys = session.generateKeyPair(graphene.KeyGenMechanism.RSA, {
-                    keyType: graphene.KeyType.RSA,
-                    modulusBits: 1024,
-                    publicExponent: Buffer.from([3]),
-                    token: false,
-                    verify: true,
-                    encrypt: true,
-                    wrap: true
-                }, {
-                    keyType: graphene.KeyType.RSA,
-                    token: false,
-                    sign: true,
-                    decrypt: true,
-                    unwrap: true
-                });
-
-                // sign content
-                const sign = session.createSign("SHA1_RSA_PKCS", keys.privateKey);
-                sign.update("simple text 1");
-                sign.update("simple text 2");
-                const signature = sign.final();
-                console.log("Signature RSA-SHA1:", signature.toString("hex")); // Signature RSA-SHA1: 6102a66dc0d97fadb5...
-
-                // verify content
-                const verify = session.createVerify("SHA1_RSA_PKCS", keys.publicKey);
-                verify.update("simple text 1");
-                verify.update("simple text 2");
-                const verify_result = verify.final(signature);
-                console.log("Signature RSA-SHA1 verify:", verify_result);      // Signature RSA-SHA1 verify: true
-
-                session.logout();
-                session.close();
-            }
-            else {
-                console.error("Slot is not initialized");
-            }
-
-            this.mod.finalize();
-        }
-        catch (e) {
-            console.error(e);
-        }
- 
-    }
+   
 }
