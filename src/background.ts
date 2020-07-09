@@ -1,10 +1,15 @@
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import { app, BrowserWindow, protocol } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  net,
+  protocol
+  } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+import { sign } from '@erebos/secp256k1';
+import { Subject } from 'rxjs';
+const {ipcMain: ipc} = require('electron-better-ipc');
 
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
 
 'use strict'
 // @ts-ignore
@@ -76,6 +81,25 @@ app.on('ready', async () => {
     }
   }
   createWindow()
+
+
+  ipc.on('slots', (ev, arg) => {
+    debugger
+    net.request({
+      method: 'POST',
+      url: 'http://localhost:8080/sc/get_slots',
+    }).on('response', (response) => {
+      response.on('error', e => {
+        debugger
+        ev.sender.send('slots-response', e);
+      })
+      response.on('data', data => {
+        debugger
+        ev.sender.send('slots-response', JSON.parse(data.toString('utf-8')));
+      })
+    })
+
+  })
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -92,3 +116,4 @@ if (isDevelopment) {
     })
   }
 }
+

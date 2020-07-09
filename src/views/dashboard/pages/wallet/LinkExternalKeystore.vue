@@ -122,6 +122,23 @@
                   single-line
                 ></v-select>
               </v-col>
+
+
+              <v-col cols="12" md="12">
+                <v-select
+                  persistent-hint
+                  hint="Slots"
+                  required
+                  :items="slots"
+                  v-model="value.hw"
+                  item-text="key"
+                  class="font-weight-medium"
+                  item-value="value"
+                  @input="setHardwareModule"
+                  label="Select hardware module slot"
+                  single-line
+                ></v-select>
+              </v-col>
             </v-row>
 
             <v-row>
@@ -180,6 +197,7 @@ export default class LinkExternalKeystore extends Vue {
     type: 'walletconnect' | 'xdv' | 'pkcs11' | 'ledger';
     defaultDIDSigner: DIDSigner;
     defaultX509Signer: X509Signer;
+    hw: '',
   };
   show;
   keystore: KeystoreIndex;
@@ -220,18 +238,22 @@ export default class LinkExternalKeystore extends Vue {
   isLoginSmartCardReady: boolean;
   validations = { password: undefined };
   showSCLogin = false;
-  pkcs11Config: PKCS11ToolBindingsConfig = new PKCS11ToolBindingsConfig();
+  slots = [];
+
+  async setHardwareModule() {
+
+
+}
 
   async loginSmartCard() {
     try {
-      // login
-      const config = this.pkcs11Config;
-      config.isSimulator = true;
-      const smartCardConnector = new PKCS11ToolBindings(config);
-      await smartCardConnector.login(this.pin);
+      // // login
+      // const config = this.pkcs11Config;
+      // config.isSimulator = true;
+      // await smartCardConnector.login(this.pin);
       this.isLoginSmartCardReady = true;
-      this.validations.password = 'Invalid PIN';
-      await this.linkSmartCard();
+      // this.validations.password = 'Invalid PIN';
+      // await this.linkSmartCard();
       this.showSCLogin = false;
     } catch (e) {
       console.log(e);
@@ -248,12 +270,10 @@ export default class LinkExternalKeystore extends Vue {
   }
 
   async linkSmartCard() {
-      const config = this.pkcs11Config;
-      config.isSimulator = true;
-      const smartCardConnector = new PKCS11ToolBindings(config);
+      
+      const smartCardConnector = new SmartCardConnectorPKCS11();
       // login
-      const slots = await smartCardConnector.list();
-      debugger;
+      this.slots = await smartCardConnector.getSlots();
   }
   async linkWalletconnect() {
     // Check if connection is already established

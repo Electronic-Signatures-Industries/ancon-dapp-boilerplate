@@ -591,7 +591,11 @@ export default class WalletComponent extends Vue {
       this.setDIDNameDialog = true;
       this.pendingDIDName = (name) => {
         this.setDIDNameDialog = false;
-        return Session.resolveAndStoreDID(this.wallet, decodeURIComponent(did), name);
+        return Session.resolveAndStoreDID(
+          this.wallet,
+          decodeURIComponent(did),
+          name
+        );
       };
     }
     await this.loadWallets();
@@ -736,12 +740,11 @@ export default class WalletComponent extends Vue {
     passphrase: string
   ) {
     const keypairExports = await wallet.getPrivateKeyExports('P256');
-    this.alertMessage =
-      'Connecting to Swarm at https://ipfs.auth2factor.com/...';
+    this.alertMessage = 'Connecting to Swarm';
     const swarmFeed = await wallet.getSwarmNodeClient(
       ks.address,
-      'ES256K',
-      'https://ipfs.auth2factor.com/'
+      'ES256K'
+      // 'https://ipfs.auth2factor.com/'
     );
     const session = `did:xdv:${swarmFeed.user}`;
     const did = new DIDDocument();

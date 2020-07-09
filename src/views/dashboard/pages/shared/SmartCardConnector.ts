@@ -1,6 +1,6 @@
 import { sign } from '@erebos/secp256k1';
 import { Subject } from 'rxjs';
-const signer = require('pkcs11-smartcard-sign');
+
 
 export interface SmartCardConnectorEvent {
     eventName: string;
@@ -115,27 +115,18 @@ export class SmartCardConnectorPKCS11 {
         this.keyId = keyId;
         this.module = '/usr/local/lib/softhsm/libsofthsm2.so';
     }
-    async sign(pin: string, data: Buffer) {
-        // Basic usage:
-        //  - SHA-256
-        //  - Read key with ID 02
-        //  - Prompt for PIN
-        const signature = await signer.sign({
-            data,
-            // predefined PIN
-            pin,
-            // ID of the key to use (on the smart card)
-            key: this.keyId,
-            // algo: sha256 or sha512
-            algo: 'sha512',
-            // select N-th smart card reader configured by the system
-            reader: 2,
-            // verify with this public key after sign
-//            verifyKey: fs.readFileSync('your-public-key.pem'),
-            // module to use
-            module: this.module
+
+
+    async getSlots() {
+        const axios = require('axios');
+        const slots = await axios('http://localhost:8080/sc/get_slots');
+        return Object.keys(slots.data).map(k => {
+            return { value: JSON.parse(slots.data[k]), key:  JSON.parse(slots.data[k]).slotDescription };
         });
+    }
+
+    async sign(index: string, data: Buffer) {
 
     }
-   
+
 }
