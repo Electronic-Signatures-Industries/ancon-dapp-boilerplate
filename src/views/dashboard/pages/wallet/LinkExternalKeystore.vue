@@ -94,7 +94,7 @@
               <v-col cols="12" md="12">
                 <v-select
                   persistent-hint
-                  hint="Default DID signer"
+                  hint="DID signer"
                   required
                   :items="defaultDIDSignerOptions"
                   v-model="value.defaultDIDSigner"
@@ -110,7 +110,7 @@
               <v-col cols="12" md="12">
                 <v-select
                   persistent-hint
-                  hint="Default X509 signer"
+                  hint="X509 signer"
                   required
                   :items="defaultX509SignerOptions"
                   v-model="value.defaultX509Signer"
@@ -122,8 +122,6 @@
                   single-line
                 ></v-select>
               </v-col>
-
-
               <v-col cols="12" md="12">
                 <v-select
                   persistent-hint
@@ -197,7 +195,7 @@ export default class LinkExternalKeystore extends Vue {
     type: 'walletconnect' | 'xdv' | 'pkcs11' | 'ledger';
     defaultDIDSigner: DIDSigner;
     defaultX509Signer: X509Signer;
-    hw: '',
+    hw: '';
   };
   show;
   keystore: KeystoreIndex;
@@ -240,10 +238,7 @@ export default class LinkExternalKeystore extends Vue {
   showSCLogin = false;
   slots = [];
 
-  async setHardwareModule() {
-
-
-}
+  async setHardwareModule() {}
 
   async loginSmartCard() {
     try {
@@ -270,35 +265,29 @@ export default class LinkExternalKeystore extends Vue {
   }
 
   async linkSmartCard() {
-      
-      const smartCardConnector = new SmartCardConnectorPKCS11();
-      // login
-      this.slots = await smartCardConnector.getSlots();
+    const smartCardConnector = new SmartCardConnectorPKCS11();
+    // login
+    this.slots = await smartCardConnector.getSlots();
+    await this.onSelectHWModule(this.slots[0], null);
   }
-  async linkWalletconnect() {
-    // Check if connection is already established
-    if (!Session.walletConnect.connected) {
-      // create new session
-      Session.walletConnect.createSession();
-    } else {
-      const chain = Session.walletConnect.chainId;
-      const address = Session.walletConnect.accounts[0];
-      const keystore = {
+
+  @Watch('value.hw')
+  async onSelectHWModule(current, old) {
+    let keystore;
+    if (this.value.defaultX509Signer === X509Signer.PKCS11) {
+      keystore = {
         ...this.keystore,
         linkedExternalKeystores: {
           ...this.keystore.linkedExternalKeystores,
-          walletconnect: {
-            address,
-            chain,
+          pkcs11: {
+            tokenIndex: this.slots.findIndex(i => i.key === current.slotDescription),
             capability: Capability.Sign,
-            connected: true,
           },
         },
       };
-      await Session.setWalletRefs(keystore, true);
-      this.alertType = 'info';
-      this.alertMessage = 'Already connected';
     }
+    this.keystore = keystore;
+    await Session.setWalletRefs(keystore, true);
   }
 
   async mounted() {}
@@ -321,6 +310,14 @@ export default class LinkExternalKeystore extends Vue {
   async onX509SignerChange(current: X509Signer) {
     if (current === X509Signer.PKCS11) {
       await this.linkSmartCard();
+    } else {
+      const keystore = {
+        ...this.keystore,
+        defaultDIDSigner: this.value.defaultDIDSigner,
+        defaultX509Signer: this.value.defaultX509Signer,
+      };
+
+      await Session.setWalletRefs(keystore, true);
     }
   }
 
@@ -328,6 +325,14 @@ export default class LinkExternalKeystore extends Vue {
   async onDIDSignerChange(current: DIDSigner) {
     if (current === DIDSigner.Ledger) {
       await this.linkLedger();
+    } else {
+            const keystore = {
+        ...this.keystore,
+        defaultDIDSigner: this.value.defaultDIDSigner,
+        defaultX509Signer: this.value.defaultX509Signer,
+      };
+
+      await Session.setWalletRefs(keystore, true);
     }
   }
 }

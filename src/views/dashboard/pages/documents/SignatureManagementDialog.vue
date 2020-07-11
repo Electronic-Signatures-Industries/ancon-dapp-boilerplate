@@ -314,7 +314,7 @@ import {
   XmlDsig,
 } from 'xdvplatform-wallet/src';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex } from '../shared/KeystoreIndex';
+import { KeystoreIndex, X509Signer } from '../shared/KeystoreIndex';
 import { base64, arrayify } from 'ethers/utils';
 import { Session } from '../shared/Session';
 import { ShareUtils, XDVFileFormat } from '../shared/ShareUtils';
@@ -323,6 +323,7 @@ import { SigningOutput } from '../shared/SigningOutput';
 import { DriveSwarmManager } from '../shared/DriveSwarmManager';
 import Unlock from './Unlock.vue';
 import 'share-api-polyfill';
+import { SmartCardConnectorPKCS11 } from '../shared/SmartCardConnector';
 
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
@@ -579,17 +580,28 @@ export default class SignatureManagementDialog extends Vue {
         ) {
           this.loading = true;
           // sign with CMS, return detached
-          const rsaKeys: any = await this.wallet.getImportKey(
-            `import:X509:${this.wallet.id}`
-          );
+         
           try {
             // @ts-ignore
             let data = await this.value.files.arrayBuffer();
-            result = CMSSigner.sign(
-              rsaKeys.key.selfSignedCert,
-              rsaKeys.key.pemAsPrivate,
-              Buffer.from(data)
-            );
+
+            if (currentKeystore.defaultX509Signer === X509Signer.PKCS11) {
+              const sc = new SmartCardConnectorPKCS11();
+             result = await sc.sign(
+                currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex,
+                '',
+                Buffer.from(data)
+              );
+            } else {
+               const rsaKeys: any = await this.wallet.getImportKey(
+            `import:X509:${this.wallet.id}`
+          );
+              result = CMSSigner.sign(
+                rsaKeys.key.selfSignedCert,
+                rsaKeys.key.pemAsPrivate,
+                Buffer.from(data)
+              );
+            }
 
             // store ref
             this.shareFormat = {

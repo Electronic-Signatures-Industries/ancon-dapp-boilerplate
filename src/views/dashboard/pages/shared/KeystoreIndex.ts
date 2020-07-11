@@ -24,8 +24,7 @@ export class LinkedExternalKeystores {
         capability: Capability;
     };
     pkcs11?: {
-        address: string;
-        chain: number;
+        tokenIndex: string;
         capability: Capability;
     };
 }
