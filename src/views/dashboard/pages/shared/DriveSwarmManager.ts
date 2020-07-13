@@ -160,7 +160,7 @@ export class DriveSwarmManager {
             };
         });
 
-debugger
+ 
         // @ts-ignore
         return await this.appendTreeNode(swarmFeed, splitIntoCborAndReferences);
     }
@@ -231,7 +231,7 @@ debugger
         const refUnderlyingHash = await swarmFeed.bzz.uploadData(block, {
             encrypt: true,
         });
-        debugger
+         
         
         const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
         return {

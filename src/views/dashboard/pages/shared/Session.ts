@@ -43,7 +43,7 @@ export class Session {
     public static async resolveAndStoreDID(wallet: Wallet, did: string, name: string = did) {
         const user = did.split(':')[2];
         // resolve DID
-        debugger
+        
         const swarmFeed = wallet.getSwarmNodeQueryable(user);
 
         const feedHash = await swarmFeed.bzzFeed.createManifest({

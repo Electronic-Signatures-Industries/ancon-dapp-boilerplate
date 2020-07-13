@@ -12,9 +12,7 @@ export class SmartCardConnectorPKCS11 {
         this.keyId = keyId;
 
         if (os.platform() === 'linux') {
-            // TODO: Need to add Safe Sign
-            // libaetpkss.so
-            this.module = '/usr/local/lib/softhsm/libsofthsm2.so';
+            this.module = '/usr/lib/libaetpkss.so';
         } else if (os.platform() === 'darwin') {
             // 
             this.module = '/usr/local/lib/libaetpkss.dylib';

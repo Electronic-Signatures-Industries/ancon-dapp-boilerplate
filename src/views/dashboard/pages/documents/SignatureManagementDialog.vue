@@ -1,49 +1,52 @@
 <template>
-  <v-dialog v-model="show" max-width="800px" persistent>
-    <v-card>
-      <v-card-title>
-        <span class="headline">Sign documents</span>
-      </v-card-title>
+  <div>
+    <v-dialog v-model="show" max-width="800px" persistent>
+      <v-card>
+        <v-card-title>
+          <span class="headline">Sign documents</span>
+        </v-card-title>
 
-      <v-card-text>
-        <v-form autocomplete="off">
-          <v-row>
+        <v-card-text>
+          <v-form autocomplete="off">
+            <v-row>
+              <v-col cols="6" md="6">
+                <v-radio-group
+                  v-model="value.operation"
+                  class="font-weight-medium"
+                  label="Operation"
+                  column
+                >
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-radio
+                        v-on="on"
+                        class="font-weight-medium"
+                        label="Sign"
+                        color="red"
+                        value="sign"
+                      ></v-radio>
+                    </template>
+                    <span>Sign</span>
+                  </v-tooltip>
+
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-radio
+                        v-on="on"
+                        class="font-weight-medium"
+                        label="Verify"
+                        color="red"
+                        value="verify"
+                      ></v-radio>
+                    </template>
+                    <span>Verify</span>
+                  </v-tooltip>
+                </v-radio-group>
+              </v-col>
+              <!--
+
             <v-col cols="6" md="6">
-              <v-radio-group
-                v-model="value.operation"
-                class="font-weight-medium"
-                label="Operation"
-                column
-              >
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="Sign"
-                      color="red"
-                      value="sign"
-                    ></v-radio>
-                  </template>
-                  <span>Sign</span>
-                </v-tooltip>
 
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="Verify"
-                      color="red"
-                      value="verify"
-                    ></v-radio>
-                  </template>
-                  <span>Verify</span>
-                </v-tooltip>
-              </v-radio-group>
-            </v-col>
-
-            <v-col cols="6" md="6">
               <v-radio-group
                 v-model="value.presets"
                 label="Presets"
@@ -89,7 +92,6 @@
                   <span>XML Digital Signatures - X509 only</span>
                 </v-tooltip>
 
-                <!--
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-radio
@@ -103,7 +105,7 @@
                   <span>Verifiable Claim</span>
                 </v-tooltip> -->
 
-                <!-- <v-tooltip bottom>
+              <!-- <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-radio
                       v-on="on"
@@ -127,70 +129,68 @@
                     ></v-radio>
                   </template>
                   <span>XML Digital Signatures - X509 only</span>
-                </v-tooltip> -->
+                </v-tooltip> 
               </v-radio-group>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12" md="12">
-              <v-file-input
-                prepend-icon="mdi-paperclip"
-                v-model="value.files"
-                :accept="accept"
-                show-size
-                class="font-weight-medium"
-                v-if="value.isBinaryEnabled"
-                label="Files"
-                dense
-              ></v-file-input>
-              <v-textarea
-                v-model="value.content"
-                v-if="!value.isBinaryEnabled"
-              ></v-textarea>
-            </v-col>
-          </v-row>
-          <v-row v-if="value.presets === 'none'">
-            <v-col cols="6" md="6">
-              <v-select
-                required
-                dense
-                class="font-weight-medium"
-                :items="algos"
-                v-model="value.algorithm"
-                label="Algorithm"
-                :readonly="value.presets !== 'none'"
-                single-line
-              ></v-select>
-            </v-col>
+            </v-col>-->
+            </v-row>
+            <v-row>
+              <v-col cols="12" md="12">
+                <v-file-input
+                  prepend-icon="mdi-paperclip"
+                  v-model="value.files"
+                  :accept="accept"
+                  show-size
+                  class="font-weight-medium"
+                  v-if="value.isBinaryEnabled"
+                  label="Files"
+                  dense
+                ></v-file-input>
+                <v-textarea
+                  v-model="value.content"
+                  v-if="!value.isBinaryEnabled"
+                ></v-textarea>
+              </v-col>
+            </v-row>
+            <v-row v-if="value.presets === 'none'">
+              <v-col cols="6" md="6">
+                <v-select
+                  required
+                  dense
+                  class="font-weight-medium"
+                  :items="algos"
+                  v-model="value.algorithm"
+                  label="Algorithm"
+                  :readonly="value.presets !== 'none'"
+                  single-line
+                ></v-select>
+              </v-col>
 
-            <v-col cols="6" md="6">
-              <v-select
-                dense
-                required
-                :items="outputs"
-                v-model="value.output"
-                item-text="key"
-                class="font-weight-medium"
-                item-value="value"
-                :readonly="value.presets === 'xmldsig'"
-                @input="execute"
-                label="Output"
-                single-line
-              ></v-select>
-            </v-col>
-          </v-row>
+              <v-col cols="6" md="6">
+                <v-select
+                  dense
+                  required
+                  :items="outputs"
+                  v-model="value.output"
+                  item-text="key"
+                  class="font-weight-medium"
+                  item-value="value"
+                  :readonly="value.presets === 'xmldsig'"
+                  label="Output"
+                  single-line
+                ></v-select>
+              </v-col>
+            </v-row>
 
-          <v-row v-if="signingOptions">
-            <v-col cols="10" md="10">
-              <v-textarea
-                label="Signature"
-                class="font-weight-medium"
-                v-model="signatureView"
-                :disabled="!signatureView"
-              ></v-textarea>
-            </v-col>
-            <v-col cols="2" rows="2">
-              <!-- <v-row>
+            <v-row v-if="hasSignature">
+              <v-col cols="10" md="10">
+                <v-textarea
+                  label="Signature"
+                  class="font-weight-medium"
+                  v-model="signatureView"
+                ></v-textarea>
+              </v-col>
+              <v-col cols="2" rows="2">
+                <!-- <v-row>
                 <v-col>
                   <v-tooltip top>
                     <span>Download</span>
@@ -209,101 +209,144 @@
                   >
                 </v-col>
               </v-row> -->
-              <v-row>
-                <v-col>
-                  <v-tooltip top>
-                    <span>Share XDV</span>
-                    <template v-slot:activator="{ on }">
-                      <v-btn
-                        fab
-                        :disabled="loading"
-                        dark
-                        v-on="on"
-                        @click="uploadAndShareLink"
-                        small
-                        color="red accent-4"
-                      >
-                        <v-icon>mdi-file-upload</v-icon>
-                      </v-btn>
-                    </template></v-tooltip
-                  >
-                </v-col>
-              </v-row>
-            </v-col>
-          </v-row>
+                <v-row>
+                  <v-col>
+                    <v-tooltip top>
+                      <span>Share XDV</span>
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          fab
+                          :disabled="loading"
+                          dark
+                          v-on="on"
+                          @click="uploadAndShareLink"
+                          small
+                          color="red accent-4"
+                        >
+                          <v-icon>mdi-file-upload</v-icon>
+                        </v-btn>
+                      </template></v-tooltip
+                    >
+                  </v-col>
+                </v-row>
+              </v-col>
+            </v-row>
 
-          <v-row v-if="!signingOptions">
-            <v-col cols="12" md="12">
-              <v-list two-line flat>
-                <v-list-item-group>
-                  <template v-for="(item, index) in verificationReport">
-                    <v-list-item :key="item.subtitle">
-                      <v-list-item-content>
-                        <v-list-item-title
-                          v-if="item.isError"
-                          v-text="item.title"
-                          class="red--text font-weight-medium"
-                        ></v-list-item-title>
+            <v-row v-if="!signingOptions">
+              <v-col cols="12" md="12">
+                <v-list two-line flat>
+                  <v-list-item-group>
+                    <template v-for="(item, index) in verificationReport">
+                      <v-list-item :key="item.subtitle">
+                        <v-list-item-content>
+                          <v-list-item-title
+                            v-if="item.isError"
+                            v-text="item.title"
+                            class="red--text font-weight-medium"
+                          ></v-list-item-title>
 
-                        <v-list-item-title
-                          v-if="!item.isError"
-                          v-text="item.title"
-                          class="green--text font-weight-medium"
-                        ></v-list-item-title>
-                        <v-list-item-subtitle
-                          class="text--primary"
-                          v-text="item.headline"
-                        ></v-list-item-subtitle>
-                        <v-list-item-subtitle
-                          v-text="item.subtitle"
-                        ></v-list-item-subtitle>
-                      </v-list-item-content>
+                          <v-list-item-title
+                            v-if="!item.isError"
+                            v-text="item.title"
+                            class="green--text font-weight-medium"
+                          ></v-list-item-title>
+                          <v-list-item-subtitle
+                            class="text--primary"
+                            v-text="item.headline"
+                          ></v-list-item-subtitle>
+                          <v-list-item-subtitle
+                            v-text="item.subtitle"
+                          ></v-list-item-subtitle>
+                        </v-list-item-content>
 
-                      <v-list-item-action>
-                        <v-list-item-action-text
-                          v-text="item.action"
-                        ></v-list-item-action-text>
-                      </v-list-item-action>
-                    </v-list-item>
+                        <v-list-item-action>
+                          <v-list-item-action-text
+                            v-text="item.action"
+                          ></v-list-item-action-text>
+                        </v-list-item-action>
+                      </v-list-item>
 
-                    <v-divider
-                      v-if="index + 1 < verificationReport.length"
-                      :key="index"
-                    ></v-divider>
-                  </template>
-                </v-list-item-group>
-              </v-list>
-            </v-col>
-          </v-row>
+                      <v-divider
+                        v-if="index + 1 < verificationReport.length"
+                        :key="index"
+                      ></v-divider>
+                    </template>
+                  </v-list-item-group>
+                </v-list>
+              </v-col>
+            </v-row>
 
-          <v-row>
-            <v-col md="12" cols="12">
-              <v-alert text color="blue" v-if="loading">
-                <v-progress-circular
-                  indeterminate
-                  v-if="loading"
-                  color="blue darken-1"
-                ></v-progress-circular>
-                {{ operationType }} ...
-              </v-alert>
-              <v-alert text :color="alertType" v-if="alertMessage">
-                {{ alertMessage }}
-              </v-alert>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card-text>
-      <!-- 
+            <v-row>
+              <v-col md="12" cols="12">
+                <v-alert text color="blue" v-if="loading">
+                  <v-progress-circular
+                    indeterminate
+                    v-if="loading"
+                    color="blue darken-1"
+                  ></v-progress-circular>
+                  {{ operationType }} ...
+                </v-alert>
+                <v-alert text :color="alertType" v-if="alertMessage">
+                  {{ alertMessage }}
+                </v-alert>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+        <!-- 
         <xdv-unlock
           :wallet="this.value.wallet"
         ></xdv-unlock> -->
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" text @click="change">OK</v-btn>
-        <v-btn color="blue darken-1" text @click="onClose">Close</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        <v-card-actions>
+          <v-btn
+            color="blue darken-1"
+            text
+            :disabled="loading"
+            @click="signQualified"
+            >{{ executeLabel }} Qualified</v-btn
+          >
+          <v-btn color="blue darken-1" text :disabled="loading" @click="signFE"
+            >{{ executeLabel }} DGI Factura Electronica</v-btn
+          >
+          <v-spacer></v-spacer>
+          <!-- <v-btn color="blue darken-1"  @click="change">OK</v-btn> -->
+          <v-btn color="blue darken-1" text @click="onClose">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="unlockPin" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Enter PIN for hardware module</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-form autocomplete="off">
+            <v-row>
+              <v-col cols="12" md="12">
+                <v-text-field
+                  required
+                  v-model="pin"
+                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="input-group--focused"
+                  @click:append="showPassword = !showPassword"
+                  :error="!!validations.password"
+                  :hint="validations.password"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="unlock = false">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="signQualified">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 <script lang="ts">
 import {
@@ -356,12 +399,13 @@ interface SignatureManagementModel {
 })
 export default class SignatureManagementDialog extends Vue {
   value: SignatureManagementModel;
-
+  executeLabel = 'Sign';
   alertType = 'blue';
   signingOptions = true;
   alertMessage = '';
   loading = false;
   signatureView: string = '';
+  hasSignature = false;
   wallet: Wallet;
   outputs = SignOutput;
   algos: AlgorithmTypeString[] = ['RSA', 'ES256K', 'P256', 'ED25519', 'BLS'];
@@ -373,6 +417,10 @@ export default class SignatureManagementDialog extends Vue {
   contentValidated: XDVFileFormat;
   verificationReport: any = [];
   skipExecute: boolean;
+  validations: any = { password: undefined };
+  pin = '';
+  showPassword = false;
+  unlockPin: boolean = false;
 
   @Watch('value.operation')
   async onChangeOps(ops, oldVal) {
@@ -426,38 +474,19 @@ export default class SignatureManagementDialog extends Vue {
         this.value.isBinaryEnabled = false;
       }
     }
-    await this.execute();
   }
 
   @Watch('value.operation')
   async onOperationChange(value, oldVal) {
     if (value === 'verify') {
+      this.executeLabel = 'Verify';
       this.operationType = 'Verifying...';
     } else {
+      this.executeLabel = 'Sign';
       this.operationType = 'Signing...';
     }
   }
 
-  @Watch('value.wallet')
-  async onWalletChange(value, oldVal) {
-    if (!this.loading) {
-      await this.execute();
-    }
-  }
-
-  @Watch('value.files')
-  async onFilesChange(value, oldVal) {
-    if (!this.loading) {
-      await this.execute();
-    }
-  }
-
-  @Watch('value.algorithm')
-  async onAlgorithmChange(value, oldVal) {
-    if (!this.loading) {
-      await this.execute();
-    }
-  }
   async beforeUpdate() {
     let { currentKeystore } = await Session.getSessionInfo();
     if (!currentKeystore) {
@@ -555,7 +584,7 @@ export default class SignatureManagementDialog extends Vue {
     }
   }
 
-  async execute() {
+  async signFE() {
     const { currentKeystore, unlock } = await Session.getSessionInfo();
     const address = currentKeystore.address;
 
@@ -570,175 +599,208 @@ export default class SignatureManagementDialog extends Vue {
 
     let result;
     if (!this.value.files) return;
-    if (this.value.operation === 'sign') {
-      // get content to sign
-      if (this.value.isBinaryEnabled) {
-        // sign file blobs
-        if (
-          this.value.algorithm === 'RSA' &&
-          this.value.output === SigningOutput.PKCS7PEM
-        ) {
-          this.loading = true;
-          // sign with CMS, return detached
-         
-          try {
-            // @ts-ignore
-            let data = await this.value.files.arrayBuffer();
+    // sign with xmldsig, return embedded
+    const rsaKeys: any = await this.wallet.getImportKey(
+      `import:X509:${this.wallet.id}`
+    );
+    try {
+      // @ts-ignore
 
-            if (currentKeystore.defaultX509Signer === X509Signer.PKCS11) {
-              const sc = new SmartCardConnectorPKCS11();
-             result = await sc.sign(
-                currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex,
-                '',
-                Buffer.from(data)
-              );
-            } else {
-               const rsaKeys: any = await this.wallet.getImportKey(
-            `import:X509:${this.wallet.id}`
-          );
-              result = CMSSigner.sign(
-                rsaKeys.key.selfSignedCert,
-                rsaKeys.key.pemAsPrivate,
-                Buffer.from(data)
-              );
-            }
+      let data = await this.value.files.text();
+      const signedDocuments = await XmlDsig.signFEDocument(
+        rsaKeys.key.pemAsPrivate,
+        rsaKeys.key.selfSignedCert,
+        data
+      );
+      result = signedDocuments.xml;
 
-            // store ref
-            this.shareFormat = {
-              content: base64.encode(Buffer.from(data)),
-              pubCert: rsaKeys.key.selfSignedCert,
-              signature: result,
-            };
-          } catch (e) {
-            console.log(e);
-          }
-        } else if (
-          this.value.algorithm === 'RSA' &&
-          this.value.output === SigningOutput.XMLDSIG
-        ) {
-          // sign with xmldsig, return embedded
-          const rsaKeys: any = await this.wallet.getImportKey(
-            `import:X509:${this.wallet.id}`
-          );
-          try {
-            // @ts-ignore
-
-            let data = await this.value.files.text();
-            const signedDocuments = await XmlDsig.signFEDocument(
-              rsaKeys.key.pemAsPrivate,
-              rsaKeys.key.selfSignedCert,
-              data
-            );
-            result = signedDocuments.xml;
-
-            // store ref
-            this.shareFormat = {
-              content: base64.encode(Buffer.from(data)),
-              pubCert: rsaKeys.key.selfSignedCert,
-              signature: result,
-            };
-          } catch (e) {
-            console.log(e);
-          }
-        } else {
-          // sign regular
-          if (this.value.output === SigningOutput.JWT) {
-            // if jwt usse jwt signer
-          }
-        }
-      } else {
-        // sign something else
-      }
-
-      // raw output
-      setTimeout(() => {
-        this.loading = false;
-      }, 1000);
-      if (this.value.output === SigningOutput.PKCS7PEM) {
-        this.signatureView = result;
-      } else if (this.value.output === SigningOutput.Base64) {
-        // convert output to base64
-        this.signatureView = base64.encode(Buffer.from(result));
-      } else if (this.value.output === SigningOutput.QR) {
-        // convert output to qr
-      } else if (this.value.output === SigningOutput.XDVRef) {
-        // take output and upload to Swarm using DriveSwarmManager
-      } else {
-        this.signatureView = result;
-      }
-    } else {
-      let sharedSignedDocument = this.shareFormat;
-      if (!sharedSignedDocument) {
-        sharedSignedDocument = await this.openXDVCompactSignature(
-          // @ts-ignore
-
-          this.value.files
-        );
-      }
-      // verify content
-      switch (this.value.output) {
-        case SigningOutput.PKCS7PEM:
-          this.loading = true;
-
-          try {
-            const payload = {
-              signature: sharedSignedDocument.signature,
-              from: address,
-              contents: sharedSignedDocument.content,
-              token: '12345',
-              // @ts-ignore
-              filename: this.value.files.name.replace('.xdv', '.p7'),
-              certificate: btoa(sharedSignedDocument.pubCert),
-            };
-            const res = await fetch(apiurl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-            this.validated = null;
-
-            const text = await res.text();
-            this.validated = create(text).end({
-              format: 'object',
-            });
-            this.addVerificationReport(this.validated);
-            this.contentValidated = sharedSignedDocument;
-          } catch (e) {
-            console.log(e);
-          }
-          break;
-        case SigningOutput.XMLDSIG:
-          this.loading = true;
-
-          try {
-            const payload = {
-              signature: sharedSignedDocument.signature,
-              from: address,
-              token: '12345',
-              certificate: btoa(sharedSignedDocument.pubCert),
-              filename: 'fe.xml',
-            };
-            const res = await fetch(apiurl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-            this.validated = null;
-            const text = await res.text();
-            this.validated = create(text).end({
-              format: 'object',
-            });
-            this.addVerificationReport(this.validated);
-            this.contentValidated = sharedSignedDocument;
-          } catch (e) {
-            alert(e.message);
-          }
-          break;
-        default:
-          return;
-      }
-      this.loading = false;
+      // store ref
+      this.shareFormat = {
+        content: base64.encode(Buffer.from(data)),
+        pubCert: rsaKeys.key.selfSignedCert,
+        signature: result,
+      };
+      this.shareSignature(result);
+    } catch (e) {
+      console.log(e);
     }
+  }
+
+  async signQualified() {
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
+
+    if (
+      currentKeystore.defaultX509Signer === X509Signer.PKCS11 &&
+      this.pin.length === 0
+    ) {
+      this.unlockPin = true;
+      return;
+    }
+    const address = currentKeystore.address;
+
+    const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+
+    if (!unlock && this.value.algorithm.length === 0) return;
+    // get algo
+    const kp = await this.wallet.getPrivateKey(this.value.algorithm);
+    const keyExports = await this.wallet.getPrivateKeyExports(
+      this.value.algorithm
+    );
+
+    let result;
+    if (!this.value.files) return;
+    try {
+      // @ts-ignore
+      let data = await this.value.files.arrayBuffer();
+
+      if (currentKeystore.defaultX509Signer === X509Signer.PKCS11 && this.pin.length > 0) {
+        this.unlockPin = false;
+        const sc = new SmartCardConnectorPKCS11();
+        result = await sc.sign(
+          currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex,
+          this.pin,
+          Buffer.from(data)
+        );
+               // store ref
+        this.shareFormat = {
+          content: base64.encode(Buffer.from(data)),
+          pubCert: result.cert,
+          signature: result.signature,
+        };
+        this.value.output = SigningOutput.Base64;
+        result =  result.signature;
+      } else {
+        const rsaKeys: any = await this.wallet.getImportKey(
+          `import:X509:${this.wallet.id}`
+        );
+        result = CMSSigner.sign(
+          rsaKeys.key.selfSignedCert,
+          rsaKeys.key.pemAsPrivate,
+          Buffer.from(data)
+        );
+
+        // store ref
+        this.shareFormat = {
+          content: base64.encode(Buffer.from(data)),
+          pubCert: rsaKeys.key.selfSignedCert,
+          signature: result,
+        };
+        this.value.output = SigningOutput.PKCS7PEM;
+
+      }
+      this.hasSignature = true;
+      this.shareSignature(result);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  shareSignature(result) {
+    // raw output
+    setTimeout(() => {
+      this.loading = false;
+    }, 1000);
+    if (this.value.output === SigningOutput.PKCS7PEM) {
+      this.signatureView = result;
+    } else if (this.value.output === SigningOutput.Base64) {
+      // convert output to base64
+      this.signatureView = base64.encode(Buffer.from(result));
+    } else if (this.value.output === SigningOutput.QR) {
+      // convert output to qr
+    } else if (this.value.output === SigningOutput.XDVRef) {
+      // take output and upload to Swarm using DriveSwarmManager
+    } else {
+      this.signatureView = result;
+    }
+  }
+
+  async verify() {
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
+    const address = currentKeystore.address;
+
+    const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+
+    if (!unlock && this.value.algorithm.length === 0) return;
+    // get algo
+    const kp = await this.wallet.getPrivateKey(this.value.algorithm);
+    const keyExports = await this.wallet.getPrivateKeyExports(
+      this.value.algorithm
+    );
+
+    let result;
+    if (!this.value.files) return;
+
+    let sharedSignedDocument = this.shareFormat;
+    if (!sharedSignedDocument) {
+      sharedSignedDocument = await this.openXDVCompactSignature(
+        // @ts-ignore
+
+        this.value.files
+      );
+    }
+    // verify content
+    switch (this.value.output) {
+      case SigningOutput.PKCS7PEM:
+        this.loading = true;
+
+        try {
+          const payload = {
+            signature: sharedSignedDocument.signature,
+            from: address,
+            contents: sharedSignedDocument.content,
+            token: '12345',
+            // @ts-ignore
+            filename: this.value.files.name.replace('.xdv', '.p7'),
+            certificate: btoa(sharedSignedDocument.pubCert),
+          };
+          const res = await fetch(apiurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          this.validated = null;
+
+          const text = await res.text();
+          this.validated = create(text).end({
+            format: 'object',
+          });
+          this.addVerificationReport(this.validated);
+          this.contentValidated = sharedSignedDocument;
+        } catch (e) {
+          console.log(e);
+        }
+        break;
+      case SigningOutput.XMLDSIG:
+        this.loading = true;
+
+        try {
+          const payload = {
+            signature: sharedSignedDocument.signature,
+            from: address,
+            token: '12345',
+            certificate: btoa(sharedSignedDocument.pubCert),
+            filename: 'fe.xml',
+          };
+          const res = await fetch(apiurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          this.validated = null;
+          const text = await res.text();
+          this.validated = create(text).end({
+            format: 'object',
+          });
+          this.addVerificationReport(this.validated);
+          this.contentValidated = sharedSignedDocument;
+        } catch (e) {
+          alert(e.message);
+        }
+        break;
+      default:
+        return;
+    }
+    this.loading = false;
   }
 }
 </script>

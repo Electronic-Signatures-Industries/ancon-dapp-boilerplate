@@ -83,23 +83,7 @@ app.on('ready', async () => {
   createWindow()
 
 
-  ipc.on('slots', (ev, arg) => {
-    debugger
-    net.request({
-      method: 'POST',
-      url: 'http://localhost:8080/sc/get_slots',
-    }).on('response', (response) => {
-      response.on('error', e => {
-        debugger
-        ev.sender.send('slots-response', e);
-      })
-      response.on('data', data => {
-        debugger
-        ev.sender.send('slots-response', JSON.parse(data.toString('utf-8')));
-      })
-    })
 
-  })
 })
 
 // Exit cleanly on request from parent process in development mode.
