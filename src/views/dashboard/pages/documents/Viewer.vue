@@ -275,11 +275,11 @@ export default class ViewerComponent extends Vue {
             this.sharedSignedDocument.signature
           );
           // RSA signature generation
-          const r =require('jsrsasign');
+          const r = require('jsrsasign');
           const rsa = new r.Signature({ alg: 'SHA256withRSA' });
-          const pub = caStore.listAllCertificates()[3].publicKey;
+          const pub = caStore.listAllCertificates()[3];
           rsa.init(cert);
-          rsa.updateHex(data.replace('0x',''));
+          rsa.updateHex(data.replace('0x', ''));
           var isValid = rsa.verify(Buffer.from(sig).toString('hex'));
 
           // //  const keys = Object.keys(caStore.certs);
@@ -292,13 +292,11 @@ export default class ViewerComponent extends Vue {
           //   headers: { 'Content-Type': 'application/json' },
           //   body: JSON.stringify(payload),
           // });
-          this.validated = null;
-
-          const text = await res.text();
-          this.validated = create(text).end({
-            format: 'object',
-          });
-          this.addVerificationReport(this.validated);
+          if (isValid) {
+            this.verificationReport.push({
+              title: `Verified document signed by ${pub.subject.attributes[3].value}`,
+            });
+          }
           this.contentValidated = this.sharedSignedDocument;
         } catch (e) {
           console.log(e);
