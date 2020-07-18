@@ -158,6 +158,10 @@ import { SigningOutput } from '../shared/SigningOutput';
 import { create } from 'xmlbuilder2';
 import { ShareUtils, XDVFileFormat } from '../shared/ShareUtils';
 import { ec, eddsa } from 'elliptic';
+import forge from 'node-forge';
+import { CAGOB } from './cagob.pem';
+import { CARAIZ } from './caraiz.pem';
+import { CAPC2 } from './capc2.pem';
 const cbor = require('cbor-sync');
 
 export interface ShareableSignedContent {
@@ -171,7 +175,7 @@ export default class ViewerComponent extends Vue {
   fromOwner = '';
   document: SwarmNodeSignedContent = null;
   sharedSignedDocument: XDVFileFormat = null;
-  apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
+  apiurl = `${(Vue as any).appconfig.CLIENT_API}xdv_verify`;
   validated: any = null;
   contentValidated: any;
   alertMessage: string = '';
@@ -203,7 +207,9 @@ export default class ViewerComponent extends Vue {
     this.loading = true;
     try {
       this.operationType = 'Downloading...';
-      const payload = await ShareUtils.openEphemeralLinkIndex(decodeURIComponent(this.linkJwt));
+      const payload = await ShareUtils.openEphemeralLinkIndex(
+        decodeURIComponent(this.linkJwt)
+      );
       this.payload = payload;
       let documentSignature = payload.sig;
       let swarmContentIndex = payload.did.id.split(':');
@@ -212,7 +218,7 @@ export default class ViewerComponent extends Vue {
         txs: swarmContentIndex[3],
         entryIndex: parseInt(swarmContentIndex[4], 10) as number,
       };
-      
+
       this.fromOwner = swarmContent.from;
       const res = await ShareUtils.openEphemeralLink(
         swarmContent.from,
@@ -239,8 +245,65 @@ export default class ViewerComponent extends Vue {
   async verify() {
     // verify content
     this.verificationReport = [];
-  
-  switch (this.document.signaturePreset) {
+
+    switch (this.document.signaturePreset) {
+      case SigningOutput.Base64:
+        this.loading = true;
+        this.operationType = 'Verifying...';
+        try {
+          const payload = {
+            signature: this.sharedSignedDocument.signature,
+            from: this.fromOwner,
+            contents: ethers.utils
+              .sha256(
+                ethers.utils.base64.decode(this.sharedSignedDocument.content)
+              )
+              .replace('0x', ''),
+            token: '12345',
+            filename: this.document.name,
+            certificate: this.sharedSignedDocument.pubCert,
+          };
+          const cert = this.sharedSignedDocument.pubCert;
+          var caStore = forge.pki.createCaStore([CAGOB, CARAIZ, CAPC2]);
+          // pki.verifyCertificateChain(caStore, dcustomVerifyCallback);
+          // add a certificate to the CA store
+          caStore.addCertificate(cert);
+          const data = ethers.utils.sha256(
+            ethers.utils.base64.decode(this.sharedSignedDocument.content)
+          );
+          const sig = ethers.utils.base64.decode(
+            this.sharedSignedDocument.signature
+          );
+          // RSA signature generation
+          const r =require('jsrsasign');
+          const rsa = new r.Signature({ alg: 'SHA256withRSA' });
+          const pub = caStore.listAllCertificates()[3].publicKey;
+          rsa.init(cert);
+          rsa.updateHex(data.replace('0x',''));
+          var isValid = rsa.verify(Buffer.from(sig).toString('hex'));
+
+          // //  const keys = Object.keys(caStore.certs);
+          // console.log(
+          //   'verify:',
+          //   pub.verify(forge.util.createBuffer(data.replace('0x', '')), forge.util.createBuffer(sig))
+          // );
+          // const res = await fetch(this.apiurl, {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify(payload),
+          // });
+          this.validated = null;
+
+          const text = await res.text();
+          this.validated = create(text).end({
+            format: 'object',
+          });
+          this.addVerificationReport(this.validated);
+          this.contentValidated = this.sharedSignedDocument;
+        } catch (e) {
+          console.log(e);
+        }
+        break;
       case SigningOutput.PKCS7PEM:
         this.loading = true;
         this.operationType = 'Verifying...';
@@ -298,16 +361,19 @@ export default class ViewerComponent extends Vue {
         }
         break;
     }
-  
+
     const eddsaImpl = new eddsa('ed25519');
     const pubKey = bs58.decode(this.payload.did.publicKey[0].publicKeyBase58);
     const pubString = Buffer.from(pubKey).toString('hex');
     const kp = eddsaImpl.keyFromPublic(pubString);
-    const results = kp.verify(Buffer.from(atob(this.document.content)), this.payload.sig);
+    const results = kp.verify(
+      Buffer.from(atob(this.document.content)),
+      this.payload.sig
+    );
     const isVerified = results;
     this.verificationReport.push({
       title: `Valid content signed by ${this.fromOwner}`,
-      subtitle:`Ed25519 public keys from ${this.payload.did.id}`,
+      subtitle: `Ed25519 public keys from ${this.payload.did.id}`,
       headline: `Signature ${this.payload.sig}`,
     });
     this.loading = false;

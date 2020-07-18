@@ -664,7 +664,7 @@ export default class SignatureManagementDialog extends Vue {
                // store ref
         this.shareFormat = {
           content: base64.encode(Buffer.from(data)),
-          pubCert: result.cert,
+          pubCert: result.publicKey,
           signature: result.signature,
         };
         this.value.output = SigningOutput.Base64;
