@@ -159,7 +159,7 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              <v-tooltip top>
+              <!-- <v-tooltip top>
                 <span>Send encrypted to</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
@@ -174,7 +174,7 @@
                     <v-icon>mdi-publish</v-icon>
                   </v-btn>
                 </template></v-tooltip
-              >
+              > -->
 
               <v-tooltip top>
                 <span>Copy DID link</span>
@@ -234,12 +234,12 @@
             <v-tab>
               Documents
             </v-tab>
-            <v-tab>
+            <!-- <v-tab>
               Invoices
             </v-tab>
             <v-tab>
               Isssued Verifiable Claims
-            </v-tab>
+            </v-tab> -->
           </v-tabs>
         </template>
       </v-toolbar>
