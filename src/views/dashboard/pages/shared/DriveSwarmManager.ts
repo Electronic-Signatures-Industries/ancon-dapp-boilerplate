@@ -89,14 +89,14 @@ export class DriveSwarmManager {
         const [e, res] = await this.wallet.signJWT('ES256K', payload, {
             iss: swarmFeed.user,
             sub: id,
-            aud: 'xdvmessaging.auth2factor.com'
+            aud: 'xdv.auth2factor.com'
         });
 
         const jwt = res;
         const refHash = await swarmFeed.bzz.uploadData(jwt, {
             encrypt: true
         });
-        const sharedUrl = `${location.protocol}//${location.host}/#/xdv/viewer?link=${address};${refHash}`;
+        const sharedUrl = `https://xdv.auth2factor.com/#/viewer?link=${address};${refHash}`;
 
         // @ts-ignore
         navigator.share(

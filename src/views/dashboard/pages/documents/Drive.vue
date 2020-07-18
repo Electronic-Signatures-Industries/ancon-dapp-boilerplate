@@ -417,7 +417,7 @@ export default class DriveComponent extends Vue {
     let ref;
     if (item.didReference) {
       // copy(item.didReference.did);
-      const sharedUrl = `${location.protocol}//${location.host}/#/xdv/wallet?did=${item.didReference.did}`;
+      const sharedUrl = `https://xdv.auth2factor.com/#/wallet?did=${item.didReference.did}`;
 
       // @ts-ignore
       navigator.share(

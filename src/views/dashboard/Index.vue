@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <dashboard-core-app-bar  />
+    <dashboard-core-app-bar />
     <!-- <dashboard-core-drawer v-if="canInit" /> -->
-    <dashboard-core-view  />
+    <dashboard-core-view />
   </v-app>
 </template>
 
@@ -63,8 +63,9 @@ export default class DashboardIndex extends Vue {
   }
 
   async mounted() {
+    this.canInit = true;
+    this.$router.push({ path: 'wallet' });
 
-this.canInit = true;
     // this.onboard = Onboard({
     //   dappId: (Vue as any).appconfig.BLOCKNATIVE_API_KEY,
     //   networkId: this.defaultNetwork,
@@ -91,7 +92,6 @@ this.canInit = true;
     //       });
     //       SolidoSingleton.setProps(props);
     //       self.canInit = init;
-    //       self.$router.push({ path: 'wallet' });
     //     }, 800);
     //   }
     // } else {

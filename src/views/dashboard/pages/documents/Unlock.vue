@@ -46,7 +46,7 @@
             <v-row>
               <v-col cols="12" md="12">
                 <v-text-field
-                  required
+                  required  v-on:keyup.enter="change"
                   v-model="value"
                   :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="showPassword ? 'text' : 'password'"

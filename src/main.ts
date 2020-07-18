@@ -2,9 +2,9 @@ import App from './App.vue';
 import router from './router';
 import store from './store';
 import Vue from 'vue';
+import VueQrcode from '@chenfengyuan/vue-qrcode';
 import vuetify from './plugins/vuetify';
 import VueWorker from 'vue-worker';
-import { initMiddleware, initXdvMiddleware, MiddlewareOptions } from './libs';
 import './plugins/base';
 import './plugins/chartist';
 import './plugins/vee-validate';
@@ -13,12 +13,11 @@ import './plugins/appconfig';
 // @ts-ignore
 
 
+Vue.component(VueQrcode.name, VueQrcode);
 Vue.use(VueWorker)
 Vue.config.productionTip = true;
 
-// Vue.prototype.$loadOnchainDependencies = function(options: MiddlewareOptions) {
-//   return initMiddleware(options);
-// };
+
 
 // @ts-ignore
 new Vue({

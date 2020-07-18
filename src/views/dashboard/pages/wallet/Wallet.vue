@@ -1,5 +1,71 @@
 <template>
   <v-container>
+        <v-dialog v-model="removeDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Remove wallet request</span>
+        </v-card-title>
+
+        <v-card-text>
+          Continue with removing selected wallet?
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="removeDialog = false"
+            >Cancel</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="remove()"
+            >OK</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+        <v-dialog v-model="shareAddressDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Share Address</span>
+        </v-card-title>
+
+        <v-card-text>
+          <qrcode value="currentKeystore.address" :options="{ width: 200 }"></qrcode>
+        {{ currentKeystore.address }}
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="shareAddressDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="copyAddress()"
+            >Copy</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+        <v-dialog v-model="exportWalletDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Export</span>
+        </v-card-title>
+
+        <v-card-text>
+          <qrcode value="wallet.mnemonic" :options="{ width: 200 }"></qrcode><br/>
+        {{ wallet.mnemonic }}
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="exportWalletDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="copyMnemonic()"
+            >Copy</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-progress-linear
       indeterminate
       v-if="loading"
@@ -130,35 +196,35 @@
                 </template></v-tooltip
               >
 
-              <v-tooltip top>
-                <span>Add RSA</span>
+               <v-tooltip top>
+                <span>Share address</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     v-if="currentKeystore"
                     fab
                     dark
                     v-on="on"
-                    @click="addRSA(item)"
+                    @click="shareAddressDialog = true"
                     small
                     color="red accent-4"
                   >
-                    <v-icon>mdi-file-lock</v-icon>
+                    <v-icon>mdi-share</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
               <v-tooltip top>
-                <span>Generate CSR</span>
+                <span>Remove</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
                     v-if="currentKeystore"
                     fab
                     dark
                     v-on="on"
-                    @click="generateCSR(item)"
+                    @click="remove(item)"
                     small
                     color="red accent-4"
                   >
-                    <v-icon>mdi-server</v-icon>
+                    <v-icon>mdi-delete</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
@@ -166,11 +232,11 @@
                 <span>Export wallet</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
-                    v-if="selected"
+                    v-if="currentKeystore"
                     fab
                     dark
                     v-on="on"
-                    @click="openImportDialog(item)"
+                    @click="exportWallet()"
                     small
                     color="red accent-4"
                   >
@@ -180,18 +246,7 @@
               >
             </v-speed-dial>
           </v-btn>
-          <v-tabs v-model="tab" @change="filter" align-with-title>
-            <v-tabs-slider color="yellow"></v-tabs-slider>
-            <v-tab>
-              Wallets
-            </v-tab>
-            <v-tab>
-              Hardware / Imported Wallets
-            </v-tab>
-            <v-tab>
-              Public DIDs
-            </v-tab>
-          </v-tabs>
+
         </template>
       </v-toolbar>
       <v-dialog v-model="dialog" max-width="800px">
@@ -517,6 +572,7 @@ import copy from 'copy-to-clipboard';
 import { Subject, forkJoin } from 'rxjs';
 import Unlock from '../documents/Unlock.vue';
 import LinkExternalKeystore from './LinkExternalKeystore.vue';
+import { it } from 'ethers/wordlists';
 
 @Component({
   components: {
@@ -533,6 +589,7 @@ export default class WalletComponent extends Vue {
   linkDialog = false;
   pendingDIDName: (name: any) => Promise<void>;
   setDIDNameDialog: boolean = false;
+  removeDialog: boolean = false;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -546,6 +603,7 @@ export default class WalletComponent extends Vue {
   search = '';
   rsaKey: any = {};
   walletType: string = 'default';
+  exportWalletDialog = false;
   valid = false;
   dialog = false;
   x509Info: X509Info = new X509Info();
@@ -564,6 +622,7 @@ export default class WalletComponent extends Vue {
   mnemonic = [];
 
   cert = '';
+  shareAddressDialog = false;
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
     defaultX509Signer: X509Signer.XDV,
@@ -621,7 +680,31 @@ export default class WalletComponent extends Vue {
     this.dialog = true;
   }
   copyAddress(address) {
-    copy(address);
+    copy(this.currentKeystore.address || address);
+  }
+
+  copyMnemonic(){
+    copy(this.wallet.mnemonic);
+  }
+
+  async remove(item: KeystoreIndex) {
+    if (this.removeDialog) {
+      await Session.removeWalletRef(this.currentKeystore);
+      this.removeDialog = false;
+      await this.loadWallets();
+    } else {
+      this.removeDialog  = true;
+    }
+  }
+
+  async exportWallet() {
+    if (this.exportWalletDialog &&  this.wallet.mnemonic) {
+      this.exportWalletDialog = false;
+      await this.loadWallets();
+    } else {
+      await this.wallet.open(this.currentKeystore.keystore);
+      this.exportWalletDialog  = true;
+    }
   }
 
   async loadWallets() {

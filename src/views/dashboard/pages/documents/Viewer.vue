@@ -171,7 +171,7 @@ export default class ViewerComponent extends Vue {
   fromOwner = '';
   document: SwarmNodeSignedContent = null;
   sharedSignedDocument: XDVFileFormat = null;
-  apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+  apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
   validated: any = null;
   contentValidated: any;
   alertMessage: string = '';

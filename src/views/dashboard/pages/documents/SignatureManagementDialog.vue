@@ -588,7 +588,7 @@ export default class SignatureManagementDialog extends Vue {
     const { currentKeystore, unlock } = await Session.getSessionInfo();
     const address = currentKeystore.address;
 
-    const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+    const apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
 
     if (!unlock && this.value.algorithm.length === 0) return;
     // get algo
@@ -638,7 +638,7 @@ export default class SignatureManagementDialog extends Vue {
     }
     const address = currentKeystore.address;
 
-    const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+    const apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
 
     if (!unlock && this.value.algorithm.length === 0) return;
     // get algo
@@ -718,7 +718,7 @@ export default class SignatureManagementDialog extends Vue {
     const { currentKeystore, unlock } = await Session.getSessionInfo();
     const address = currentKeystore.address;
 
-    const apiurl = `${(Vue as any).appconfig.API_URL}xdv_verify`;
+    const apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
 
     if (!unlock && this.value.algorithm.length === 0) return;
     // get algo

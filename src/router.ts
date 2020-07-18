@@ -21,19 +21,6 @@ export default new Router({
       path: "/",
       // @ts-ignore
       component: index,
-      children: [
-        {
-          name: "Sitios Web Durables",
-          path: "durable_website",
-          // @ts-ignore
-          component: DurableWebsite
-        },
-      ]
-    },
-    {
-      path: "/xdv",
-      // @ts-ignore
-      component: index,
 
       children: [
 
@@ -43,12 +30,12 @@ export default new Router({
           // @ts-ignore
           component: DriveComponent
         },
-        {
-          path: "messaging",
-          name: "messaging",
-          // @ts-ignore
-          component: MessagingComponent
-        },
+        // {
+        //   path: "messaging",
+        //   name: "messaging",
+        //   // @ts-ignore
+        //   component: MessagingComponent
+        // },
         {
           path: "wallet",
           name: "wallet",

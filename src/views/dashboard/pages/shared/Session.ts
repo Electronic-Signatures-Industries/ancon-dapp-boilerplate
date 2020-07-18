@@ -10,6 +10,7 @@ PouchDB.plugin(require('pouchdb-find'));
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
 
 export class Session {
+
     static timeout;
     static walletConnect: WalletConnect;
     static db = new PouchDB('xdv:session');
@@ -43,7 +44,7 @@ export class Session {
     public static async resolveAndStoreDID(wallet: Wallet, did: string, name: string = did) {
         const user = did.split(':')[2];
         // resolve DID
-        
+
         const swarmFeed = wallet.getSwarmNodeQueryable(user);
 
         const feedHash = await swarmFeed.bzzFeed.createManifest({
@@ -195,6 +196,28 @@ export class Session {
             });
 
         }
+    }
+    static async removeWalletRef(item: KeystoreIndex) {
+        const ref: any = await this.db.get(WALLET_REFS_KEY);
+
+        // remove
+        let refs = {};
+        const keys = Object.keys(ref.refs);
+        for (let i = 0;i<keys.length;i++) {
+            if (ref.refs[keys[i]].name !== item.name) {
+                refs = {
+                    ...refs,
+                    [keys[i]]: ref.refs[keys[i]]
+                }                
+            }
+        }
+
+        return this.db.put({
+            _id: WALLET_REFS_KEY,
+            refs,
+            _rev: ref._rev,
+            timestamp: new Date(),
+        });
     }
 
 }

@@ -17,14 +17,14 @@
       <v-toolbar-title class="headline">XDV - v1.0.0</v-toolbar-title>
 
       <v-spacer></v-spacer>
-            <v-btn
+            <!-- <v-btn
         :to="{
           name: 'messaging',
         }"
         icon
       >
         <v-icon>mdi-message</v-icon>
-      </v-btn>
+      </v-btn> -->
           <v-btn
         :to="{
           name: 'drive',
@@ -58,15 +58,6 @@
         <v-icon>mdi-account-cog</v-icon>
       </v-btn>
  -->
-
-      <v-btn
-        href="https://github.com/molekilla/mdv-contracts"
-        target="blank"
-        icon
-      >
-        <v-icon>mdi-github</v-icon>
-      </v-btn>
-
       
     </v-toolbar>
 

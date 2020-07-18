@@ -23,11 +23,11 @@ module.exports = {
           .use('wasm-loader')
           .loader('wasm-loader')
           .end()
-          .rule('rs')
-          .test(/\.rs$/)
-          .use('rust-native-wasm-loader')
-          .loader('rust-native-wasm-loader')
-          .end();
+          // .rule('rs')
+          // .test(/\.rs$/)
+          // .use('rust-native-wasm-loader')
+          // .loader('rust-native-wasm-loader')
+          // .end();
       },
       chainWebpackRendererProcess: (config) => {
         // Chain webpack config for electron renderer process only

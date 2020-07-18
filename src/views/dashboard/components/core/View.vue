@@ -1,8 +1,8 @@
 <template>
-    <v-content fluid>
-      <router-view />
+    <v-main fluid>
+      <router-view  />
       <dashboard-core-footer />
-    </v-content>
+    </v-main>
 </template>
 
 <script lang="ts">
