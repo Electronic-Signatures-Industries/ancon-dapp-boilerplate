@@ -536,7 +536,7 @@
                     <v-icon color="green accent-5">
                       mdi-link-lock
                     </v-icon></v-col
-                  ><v-col v-if="item.linkedExternalKeystores.pkcs11">
+                  ><v-col v-if="item.hasPKCS11">
                     <v-icon color="pink accent-5">
                       mdi-cellphone-lock
                     </v-icon></v-col
@@ -730,11 +730,13 @@ export default class WalletComponent extends Vue {
       i.linkedExternalKeystores = i.linkedExternalKeystores || {};
       const hasWalletConnect = !!i.linkedExternalKeystores.walletconnect;
       const hasLedger = !!i.linkedExternalKeystores.ledger;
+
       this.lastDefault = i.keystore;
       return {
         hasRSAKeys,
         hasWalletConnect,
         hasLedger,
+        hasPKCS11: i.linkedExternalKeystores.pkcs11,
         ...i,
         isDefault,
         action: moment(i.created).fromNow(),

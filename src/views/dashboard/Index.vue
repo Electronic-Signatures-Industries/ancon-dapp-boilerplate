@@ -64,7 +64,7 @@ export default class DashboardIndex extends Vue {
 
   async mounted() {
     this.canInit = true;
-    this.$router.push({ path: 'wallet' });
+   // this.$router.push({ path: 'wallet' });
 
     // this.onboard = Onboard({
     //   dappId: (Vue as any).appconfig.BLOCKNATIVE_API_KEY,
