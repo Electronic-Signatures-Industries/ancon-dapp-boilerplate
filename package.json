@@ -1,8 +1,13 @@
 {
-  "name": "xdv-ui-client",
-  "version": "2.0.3",
+  "name": "xdv",
+  "description": "XDV Platform for document signing and decentralized identity",
+  "author": {
+    "name": "Rogelio Morrell C., Roberto Zubieta, Bradley Suira"
+  },
+  "version": "1.0.0",
   "build": {
-    "asar": false
+    "appId": "com.electron.xdv.client",
+    "asar": true
   },
   "private": true,
   "scripts": {
@@ -17,11 +22,11 @@
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'",
     "inspect": "vue-cli-service inspect",
     "now-start": "vue-cli-service serve",
-    "__postinstall": "npx electron-builder install-app-deps",
-    "postuninstall": "npx electron-builder install-app-deps"
+    "package": "npx electron-packager dist-electron/ xdv --platform all --arch x64 --electron-version 9.1.0 --out releases --overwrite",
+    "__postinstall": "electron-builder install-app-deps"
   },
   "engines": {
-    "node": "12.14.1"
+    "node": "12.16.3"
   },
   "main": "background.js",
   "dependencies": {
@@ -98,9 +103,12 @@
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
     "copy-webpack-plugin": "^5.1.1",
-    "electron": "^9.0.5",
+    "electron": "^8.0.0",
     "electron-devtools-installer": "^3.1.0",
-    "electron-rebuild": "^1.11.0",
+    "electron-installer-debian": "^3.1.0",
+    "electron-installer-windows": "^3.0.0",
+    "electron-packager": "^15.0.0",
+    "electron-winstaller": "^4.0.1",
     "eslint": "^6.8.0",
     "eslint-config-vuetify": "^0.4.1",
     "eslint-plugin-prettier": "^3.1.2",

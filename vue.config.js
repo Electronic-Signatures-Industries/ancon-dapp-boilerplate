@@ -10,6 +10,20 @@ module.exports = {
   transpileDependencies: ['vuetify'],
   pluginOptions: {
     electronBuilder: {
+      nodeIntegration: true,
+      experimentalNativeDepCheck: true,
+      builderOptions: {
+        "productName": 'XDV',
+        "extraResources": [
+          {
+            "from": "./extraResources/",
+            "to": "extraResources",
+            "filter": [
+              "**/*"
+            ]
+          }
+        ]
+      },
       chainWebpackMainProcess: (config) => {
         // Chain webpack config for electron main process only
         config.module
@@ -32,6 +46,7 @@ module.exports = {
       chainWebpackRendererProcess: (config) => {
         // Chain webpack config for electron renderer process only
       },
+      removeElectronJunk: true,
       // Use this to change the entrypoint of your app's main process
       // mainProcessFile: 'src/myBackgroundFile.js',
       // Provide an array of files that, when changed, will recompile the main process and restart Electron
