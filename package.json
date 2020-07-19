@@ -66,6 +66,7 @@
     "promise-file-reader": "^1.0.2",
     "rxjs": "^6.5.4",
     "share-api-polyfill": "^1.0.11",
+    "sockjs-client": "^1.4.0",
     "solido-provider-ethers": "^1.1.1",
     "styled-components": "^5.0.1",
     "vue": "^2.6.11",
