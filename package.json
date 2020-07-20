@@ -42,6 +42,7 @@
     "@ledgerhq/hw-app-eth": "^5.19.0",
     "@ledgerhq/hw-transport-node-hid-singleton": "^5.19.0",
     "@ledgerhq/hw-transport-webusb": "^5.17.0",
+    "@stomp/stompjs": "^5.4.4",
     "@walletconnect/client": "^1.0.5",
     "@walletconnect/qrcode-modal": "^1.0.5",
     "axios": "^0.19.2",

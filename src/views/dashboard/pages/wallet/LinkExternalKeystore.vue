@@ -185,6 +185,7 @@ import {
   PKCS11ToolBindingsConfig,
   PKCS11ToolBindings,
 } from '../shared/PKCS11ToolBindings';
+import { map, filter } from 'rxjs/operators';
 
 @Component({
   name: 'xdv-link-external-keystore',
@@ -237,6 +238,7 @@ export default class LinkExternalKeystore extends Vue {
   validations = { password: undefined };
   showSCLogin = false;
   slots = [];
+  smartCardConnector = new SmartCardConnectorPKCS11();
 
   async setHardwareModule() {}
 
@@ -265,9 +267,8 @@ export default class LinkExternalKeystore extends Vue {
   }
 
   async linkSmartCard() {
-    const smartCardConnector = new SmartCardConnectorPKCS11();
     // login
-    this.slots = await smartCardConnector.getSlots();
+    this.slots = await this.smartCardConnector.getSlots();
     await this.onSelectHWModule(this.slots[0], null);
   }
 
@@ -280,7 +281,9 @@ export default class LinkExternalKeystore extends Vue {
         linkedExternalKeystores: {
           ...this.keystore.linkedExternalKeystores,
           pkcs11: {
-            tokenIndex: this.slots.findIndex(i => i.key === current.slotDescription),
+            tokenIndex: this.slots.findIndex(
+              (i) => i.key === current.slotDescription
+            ),
             capability: Capability.Sign,
           },
         },
@@ -290,7 +293,20 @@ export default class LinkExternalKeystore extends Vue {
     await Session.setWalletRefs(keystore, true);
   }
 
-  async mounted() {}
+  async mounted() {
+    await this.smartCardConnector.initialize();
+    this.smartCardConnector.subscribe.pipe(
+      filter((i) => i && i.type === 'slots'),
+      map((res) => {
+        return Object.keys(res.slots).map((k) => {
+          return {
+            value: JSON.parse(res.slots[k]),
+            key: JSON.parse(res.slots[k]).slotDescription,
+          };
+        });
+      })
+    ).subscribe(i => this.slots = i);
+  }
 
   async setDefaultSignerProtocol() {
     const keystore = {
@@ -326,7 +342,7 @@ export default class LinkExternalKeystore extends Vue {
     if (current === DIDSigner.Ledger) {
       await this.linkLedger();
     } else {
-            const keystore = {
+      const keystore = {
         ...this.keystore,
         defaultDIDSigner: this.value.defaultDIDSigner,
         defaultX509Signer: this.value.defaultX509Signer,
