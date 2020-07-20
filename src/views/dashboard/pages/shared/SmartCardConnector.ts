@@ -25,7 +25,7 @@ export class SmartCardConnectorPKCS11 {
         // const slots = await axios(`${CLIENT_API}/sc/get_slots`);
         this.stompClient.publish({ destination: "/app/get_slots", skipContentLengthHeader: true });
 
-     
+
     }
 
     async sign(index: string, pin: string, data: Buffer) {
@@ -33,12 +33,11 @@ export class SmartCardConnectorPKCS11 {
         //     pin,
         //     data: data.toString('base64')
         // });
-        // return res.data;
-        this.stompClient.publish({ destination: "/app/sign", body: { pin, data: data.toString('base64') } , skipContentLengthHeader: true });
-
-        return this.subscribe.pipe(
-            filter(i => i && i.type === 'signing')
-        );
+        // // return res.data;
+        this.stompClient.publish({
+            destination: "/app/sign", body: 
+                JSON.stringify({tokenIndex:parseInt(index, 10), pin: pin, data: data.toString('base64')}), 
+        });
     }
 
     connect() {
@@ -53,13 +52,15 @@ export class SmartCardConnectorPKCS11 {
             heartbeatOutgoing: 4000
         });
 
-
         this.stompClient.onConnect = (frame) => {
             this.stompClient.subscribe('/xdv/messages', (data) => {
                 console.log(data)
                 this.subscribe.next(JSON.parse(data.body));
             });
+
         };
-        this.stompClient.activate();
+        if (this.stompClient.connected === false) {
+            this.stompClient.activate();
+        }
     }
 }

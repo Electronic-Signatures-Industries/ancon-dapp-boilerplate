@@ -43,54 +43,53 @@
                   </v-tooltip>
                 </v-radio-group>
               </v-col>
-       
-            <v-col cols="6" md="6">
 
-              <v-radio-group
-                v-model="value.presets"
-                label="Presets"
-                column
-                class="font-weight-medium"
-              >
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="None"
-                      color="red"
-                      value="none"
-                    ></v-radio>
-                  </template>
-                  <span>No signing presets applied</span>
-                </v-tooltip>
+              <v-col cols="6" md="6">
+                <v-radio-group
+                  v-model="value.presets"
+                  label="Presets"
+                  column
+                  class="font-weight-medium"
+                >
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-radio
+                        v-on="on"
+                        class="font-weight-medium"
+                        label="None"
+                        color="red"
+                        value="none"
+                      ></v-radio>
+                    </template>
+                    <span>No signing presets applied</span>
+                  </v-tooltip>
 
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="Qualified Signature"
-                      color="red"
-                      value="cms"
-                    ></v-radio>
-                  </template>
-                  <span>CMS/PKCS#7 - X509 only</span>
-                </v-tooltip>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-radio
+                        v-on="on"
+                        class="font-weight-medium"
+                        label="Qualified Signature"
+                        color="red"
+                        value="cms"
+                      ></v-radio>
+                    </template>
+                    <span>CMS/PKCS#7 - X509 only</span>
+                  </v-tooltip>
 
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="DGI Factura Electronica"
-                      color="red"
-                      value="xmldsig"
-                    ></v-radio>
-                  </template>
-                  <span>XML Digital Signatures - X509 only</span>
-                </v-tooltip>
-       <!--
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-radio
+                        v-on="on"
+                        class="font-weight-medium"
+                        label="DGI Factura Electronica"
+                        color="red"
+                        value="xmldsig"
+                      ></v-radio>
+                    </template>
+                    <span>XML Digital Signatures - X509 only</span>
+                  </v-tooltip>
+                  <!--
 
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
@@ -105,7 +104,7 @@
                   <span>Verifiable Claim</span>
                 </v-tooltip> -->
 
-              <!-- <v-tooltip bottom>
+                  <!-- <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-radio
                       v-on="on"
@@ -130,8 +129,8 @@
                   </template>
                   <span>XML Digital Signatures - X509 only</span>
                 </v-tooltip> -->
-              </v-radio-group>
-            </v-col>
+                </v-radio-group>
+              </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" md="12">
@@ -341,7 +340,9 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="unlock = false">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="unlock = false"
+            >Cancel</v-btn
+          >
           <v-btn color="blue darken-1" text @click="signQualified">OK</v-btn>
         </v-card-actions>
       </v-card>
@@ -367,6 +368,7 @@ import { DriveSwarmManager } from '../shared/DriveSwarmManager';
 import Unlock from './Unlock.vue';
 import 'share-api-polyfill';
 import { SmartCardConnectorPKCS11 } from '../shared/SmartCardConnector';
+import { filter } from 'rxjs/operators';
 
 export const SignOutput = [
   { key: 'QR Code', value: SigningOutput.QR },
@@ -404,6 +406,7 @@ export default class SignatureManagementDialog extends Vue {
   signingOptions = true;
   alertMessage = '';
   loading = false;
+  sc = new SmartCardConnectorPKCS11();
   signatureView: string = '';
   hasSignature = false;
   wallet: Wallet;
@@ -495,6 +498,20 @@ export default class SignatureManagementDialog extends Vue {
   }
   async mounted() {
     const w = await Session.getWalletRefs();
+
+    await this.sc.initialize();
+    this.sc.subscribe
+      .pipe(filter((i) => i && i.type === 'signing'))
+      .subscribe((result) => {
+        // store ref
+        this.shareFormat = {
+          ...this.shareFormat,
+          pubCert: result.publicKey,
+          signature: result.signature,
+        };
+        this.value.output = SigningOutput.Base64;
+        result = result.signature;
+      });
   }
   change() {
     this.$emit('input', this.value);
@@ -653,22 +670,20 @@ export default class SignatureManagementDialog extends Vue {
       // @ts-ignore
       let data = await this.value.files.arrayBuffer();
 
-      if (currentKeystore.defaultX509Signer === X509Signer.PKCS11 && this.pin.length > 0) {
+      if (
+        currentKeystore.defaultX509Signer === X509Signer.PKCS11 &&
+        this.pin.length > 0
+      ) {
+        // store ref
+        this.shareFormat = {
+          content: base64.encode(Buffer.from(data)),
+        };
         this.unlockPin = false;
-        const sc = new SmartCardConnectorPKCS11();
-        result = await sc.sign(
+        await this.sc.sign(
           currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex,
           this.pin,
           Buffer.from(data)
         );
-               // store ref
-        this.shareFormat = {
-          content: base64.encode(Buffer.from(data)),
-          pubCert: result.publicKey,
-          signature: result.signature,
-        };
-        this.value.output = SigningOutput.Base64;
-        result =  result.signature;
       } else {
         const rsaKeys: any = await this.wallet.getImportKey(
           `import:X509:${this.wallet.id}`
@@ -686,7 +701,6 @@ export default class SignatureManagementDialog extends Vue {
           signature: result,
         };
         this.value.output = SigningOutput.PKCS7PEM;
-
       }
       this.hasSignature = true;
       this.shareSignature(result);
