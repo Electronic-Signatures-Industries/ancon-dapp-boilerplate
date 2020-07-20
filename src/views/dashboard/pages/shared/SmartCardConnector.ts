@@ -36,7 +36,7 @@ export class SmartCardConnectorPKCS11 {
         // // return res.data;
         this.stompClient.publish({
             destination: "/app/sign", body: 
-                JSON.stringify({tokenIndex:parseInt(index, 10), pin: pin, data: data.toString('base64')}), 
+                JSON.stringify({tokenIndex: index, pin: pin, data: data.toString('base64')}), 
         });
     }
 

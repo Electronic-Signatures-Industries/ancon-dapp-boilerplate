@@ -503,6 +503,7 @@ export default class SignatureManagementDialog extends Vue {
     this.sc.subscribe
       .pipe(filter((i) => i && i.type === 'signing'))
       .subscribe((result) => {
+        debugger
         // store ref
         this.shareFormat = {
           ...this.shareFormat,
