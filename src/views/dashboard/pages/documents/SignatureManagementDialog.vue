@@ -503,7 +503,6 @@ export default class SignatureManagementDialog extends Vue {
     this.sc.subscribe
       .pipe(filter((i) => i && i.type === 'signing'))
       .subscribe((result) => {
-        debugger
         // store ref
         this.shareFormat = {
           ...this.shareFormat,
@@ -512,6 +511,8 @@ export default class SignatureManagementDialog extends Vue {
         };
         this.value.output = SigningOutput.Base64;
         result = result.signature;
+      this.hasSignature = true;
+      this.shareSignature(result);
       });
   }
   change() {
