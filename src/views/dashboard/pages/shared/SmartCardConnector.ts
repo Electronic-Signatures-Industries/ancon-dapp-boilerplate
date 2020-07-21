@@ -1,5 +1,5 @@
 import * as SockJS from 'sockjs-client';
-import { Client, Message } from '@stomp/stompjs';
+import { Client, Message, Stomp } from '@stomp/stompjs';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 const os = require('os');
@@ -9,7 +9,7 @@ export interface SmartCardConnectorEvent {
     eventName: string;
     payload: any;
 }
-const CLIENT_API = 'http://localhost:8089';
+const CLIENT_API = 'ws://localhost:8089';
 export class SmartCardConnectorPKCS11 {
     module: string;
     subscribe: Subject<any> = new Subject();
@@ -41,16 +41,7 @@ export class SmartCardConnectorPKCS11 {
     }
 
     connect() {
-        this.socket = new SockJS(CLIENT_API + '/ws');
-        this.stompClient = new Client({
-            webSocketFactory: () => this.socket,
-            debug: function (str) {
-                console.log(str);
-            },
-            reconnectDelay: 5000,
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000
-        });
+        this.stompClient = Stomp.client((CLIENT_API + '/ws'));
 
         this.stompClient.onConnect = (frame) => {
             this.stompClient.subscribe('/xdv/messages', (data) => {
