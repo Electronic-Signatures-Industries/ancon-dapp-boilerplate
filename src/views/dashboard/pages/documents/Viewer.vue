@@ -14,7 +14,7 @@
       <v-card-text>
         <v-form autocomplete="off">
           <v-row>
-            <v-col cols="10" md="10">
+            <v-col cols="10" xs="10">
               <v-list two-line flat>
                 <v-list-item-group>
                   <template v-for="(item, index) in verificationReport">
@@ -46,11 +46,6 @@
                         ></v-list-item-action-text>
                       </v-list-item-action>
                     </v-list-item>
-
-                    <v-divider
-                      v-if="index + 1 < verificationReport.length"
-                      :key="index"
-                    ></v-divider>
                   </template>
                 </v-list-item-group>
               </v-list>
@@ -264,10 +259,7 @@ export default class ViewerComponent extends Vue {
             certificate: this.sharedSignedDocument.pubCert,
           };
           const cert = this.sharedSignedDocument.pubCert;
-          var caStore = forge.pki.createCaStore([CAGOB, CARAIZ, CAPC2]);
-          // pki.verifyCertificateChain(caStore, dcustomVerifyCallback);
-          // add a certificate to the CA store
-          caStore.addCertificate(cert);
+          const caStore = forge.pki.createCaStore([CAGOB, CARAIZ, CAPC2]);
           const data = ethers.utils.sha256(
             ethers.utils.base64.decode(this.sharedSignedDocument.content)
           );
@@ -280,24 +272,66 @@ export default class ViewerComponent extends Vue {
           const pub = caStore.listAllCertificates()[3];
           rsa.init(cert);
           rsa.updateHex(data.replace('0x', ''));
-          var isValid = rsa.verify(Buffer.from(sig).toString('hex'));
+          const isValid = rsa.verify(Buffer.from(sig).toString('hex'));
 
-          // //  const keys = Object.keys(caStore.certs);
-          // console.log(
-          //   'verify:',
-          //   pub.verify(forge.util.createBuffer(data.replace('0x', '')), forge.util.createBuffer(sig))
-          // );
-          // const res = await fetch(this.apiurl, {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify(payload),
-          // });
-          if (isValid) {
-            this.verificationReport.push({
-              title: `Verified document signed by ${pub.subject.attributes[3].value}`,
-            });
-          }
-          this.contentValidated = this.sharedSignedDocument;
+          const certificate = forge.pki.certificateFromPem(cert);
+          forge.pki.verifyCertificateChain(
+            caStore,
+            [certificate],
+            (vfd, depth, chain) => {
+              const subjectCert = chain[0];
+              if (isValid && subjectCert) {
+                this.verificationReport.push({
+                  title: `Verified document`,
+                  subtitle: `Signed by ${subjectCert.subject.attributes[3].value}`,
+                });
+                this.verificationReport.push({
+                  title: `Name`,
+                  subtitle: `C=${subjectCert.subject.attributes[0].value}, O=${subjectCert.subject.attributes[1].value},
+                  OU=${subjectCert.subject.attributes[2].value}, CN=${subjectCert.subject.attributes[3].value}`,
+                });
+              } else {
+                this.verificationReport.push({
+                  isError: true,
+                  title: `Invalid document signature`,
+                });
+              }
+              const vsubject = subjectCert.verifySubjectKeyIdentifier();
+              if (vsubject) {
+                const subjectKeyId = forge.pki.getPublicKeyFingerprint(
+                  subjectCert.publicKey,
+                  {
+                    type: 'SubjectPublicKeyInfo',
+                    encoding: 'hex',
+                    delimiter: ':',
+                  }
+                );
+                this.verificationReport.push({
+                  title: `Verified subject key identifier`,
+                  subtitle: `${subjectKeyId}`,
+                });
+              } else {
+                this.verificationReport.push({
+                  isError: true,
+                  title: `Invalid subject key identifier`,
+                });
+              }
+              if (vfd) {
+                this.verificationReport.push({
+                  title: `Verified certificate chain issued by`,
+                  subtitle: `C=${subjectCert.issuer.attributes[0].value}, O=${subjectCert.issuer.attributes[1].value},
+                   CN=${subjectCert.issuer.attributes[2].value}`,
+                });
+              } else {
+                this.verificationReport.push({
+                  isError: true,
+                  title: `Invalid certificate chain`,
+                });
+              }
+              this.contentValidated = this.sharedSignedDocument;
+              return true;
+            }
+          );
         } catch (e) {
           console.log(e);
         }
