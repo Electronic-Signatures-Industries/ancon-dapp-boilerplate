@@ -239,6 +239,9 @@ export class DriveSwarmManager {
         }
     }
 
+    static async goToParentNode(swarmFeed: SwarmFeed, ref: string){
+        return swarmFeed.bzz.downloadData(ref);
+    }
     static async subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
         return swarmFeed.bzzFeed
             .pollContentHash(feedHash, { changedOnly: true, interval: 5000 })
