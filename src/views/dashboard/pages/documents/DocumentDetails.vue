@@ -212,9 +212,7 @@ export default class DocumentDetails extends Vue {
         blockRef
       )) as unknown) as XVDSwarmNodeBlock;
 
-      if (block === null) {
-        await DriveSwarmManager.cacheService.setBlockCache(block, block.txs);
-      }
+
       this.documentBlock = block;
     }
   }

@@ -4,7 +4,7 @@
   "author": {
     "name": "Rogelio Morrell C., Roberto Zubieta, Bradley Suira"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "build": {
     "appId": "com.electron.xdv.client",
     "asar": true

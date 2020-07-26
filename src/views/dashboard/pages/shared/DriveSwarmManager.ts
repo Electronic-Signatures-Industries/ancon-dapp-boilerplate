@@ -261,7 +261,13 @@ export class DriveSwarmManager {
 
         async function getBlocks(block: XVDSwarmNodeBlock, limit: number) {
             let blocks = [block];
-            await DriveSwarmManager.cacheService.setBlockCache(block, block.txs);
+
+            const feed = await swarmFeed.bzzFeed.createManifest({
+                user: swarmFeed.user,
+                name: 'tx-document-tree',
+              });
+            const hash = await swarmFeed.bzzFeed.getContentHash(feed);
+            await DriveSwarmManager.cacheService.setBlockCache(block, hash);
             let i = 0;
             let previous;
             let blockPosition = block.block;

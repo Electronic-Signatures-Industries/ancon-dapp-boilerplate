@@ -450,11 +450,17 @@ export default class DriveComponent extends Vue {
 
   async openDetail(document) {
     Session.SharedWallet = this.wallet;
+    const swarmFeed = await this.wallet.getSwarmNodeQueryable(this.address);
+    const feed = await swarmFeed.bzzFeed.createManifest({
+      user: swarmFeed.user,
+      name: 'tx-document-tree',
+    });
+    const hash = await swarmFeed.bzzFeed.getContentHash(feed);
     this.$router.push({
       name: 'details',
       params: {
         user: this.address,
-        id: document.item.txs,
+        id: hash,
       },
     });
   }
