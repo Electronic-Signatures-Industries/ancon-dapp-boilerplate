@@ -1,5 +1,6 @@
 import find from 'pouchdb-find';
 import PouchDB from 'pouchdb';
+import { XVDSwarmNodeBlock } from './DriveSwarmManager';
 
 type CacheContent = string;
 
@@ -92,6 +93,39 @@ export class CacheService {
     }
   }
 
+
+
+  public async getBlockCache(
+    block: string
+  ) {
+    try {
+      const res = await this.dbCache.get(block);
+      
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  public async setBlockCache(
+    block: XVDSwarmNodeBlock,
+    id: string
+  ) {
+    try {
+      const has = await this.dbCache.get(id);
+      if (!has)
+        return this.dbCache.put({
+          ...block, _id: id
+        });
+    } catch (e) {
+      return this.dbCache.put({
+        ...block,
+        _id: id
+      });
+    }
+  }
+
+
   public subscribeCache(
     address: string,
     filter: string | ((doc: any, params: any) => any),
@@ -105,7 +139,7 @@ export class CacheService {
         live: true,
         include_docs: true,
       })
-      .on("change", function(change) {
+      .on("change", function (change) {
         // change.id contains the doc id, change.doc contains the doc
         if (change.deleted) {
           // document was deleted
@@ -114,7 +148,7 @@ export class CacheService {
           // document was added/modified
         }
       })
-      .on("error", function(err) {
+      .on("error", function (err) {
         // handle errors
         callback(err);
       });

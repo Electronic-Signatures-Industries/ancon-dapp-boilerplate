@@ -1,3 +1,4 @@
+import DocumentDetails from './views/dashboard/pages/documents/DocumentDetails.vue';
 import DriveComponent from './views/dashboard/pages/documents/Drive.vue';
 import DurableWebsite from './views/dashboard/pages/dapp/DurableWebsite.vue';
 import index from './views/dashboard/Index.vue';
@@ -7,8 +8,6 @@ import TemplateEditor from './views/dashboard/pages/TemplateEditor.vue';
 import ViewerComponent from './views/dashboard/pages/documents/Viewer.vue';
 import Vue from 'vue';
 import WalletComponent from './views/dashboard/pages/wallet/Wallet.vue';
-// @ts-ignore
-// @ts-nocheck
 
 
 Vue.use(Router);
@@ -28,7 +27,13 @@ export default new Router({
           path: "drive",
           name: "drive",
           // @ts-ignore
-          component: DriveComponent
+          component: DriveComponent,
+        },
+        {
+          path: "/user/:user/details/:id",
+          name: "details",
+          // @ts-ignore
+          component: DocumentDetails,
         },
         // {
         //   path: "messaging",

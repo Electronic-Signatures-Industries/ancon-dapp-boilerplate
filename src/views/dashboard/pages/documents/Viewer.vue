@@ -211,14 +211,15 @@ export default class ViewerComponent extends Vue {
       let swarmContent = {
         from: swarmContentIndex[2],
         txs: swarmContentIndex[3],
-        entryIndex: parseInt(swarmContentIndex[4], 10) as number,
+        hash: swarmContentIndex[4],
       };
 
       this.fromOwner = swarmContent.from;
       const res = await ShareUtils.openEphemeralLink(
         swarmContent.from,
         swarmContent.txs,
-        swarmContent.entryIndex
+        null,
+        swarmContent.hash
       );
 
       this.document = res.document;

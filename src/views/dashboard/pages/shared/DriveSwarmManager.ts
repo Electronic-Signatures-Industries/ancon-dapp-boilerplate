@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { CacheService } from './CacheService';
 import { DIDDocument, LDCryptoTypes } from 'xdvplatform-wallet';
 import { ec } from 'elliptic';
 import { ethers } from 'ethers';
@@ -32,41 +33,52 @@ export interface DriveDocumentRef {
     reference: SwarmNodeSignedContent;
 }
 export class DriveSwarmManager {
+    static cacheService: CacheService = new CacheService();
     constructor(private wallet: Wallet) {
 
     }
 
 
     /** Shares a ephimeral */
-    async shareEphemeralLink(address: string, txs: string, entry: number, fromManifest: boolean) {
+    async shareEphemeralLink(address: string, txs: string, entry: number, hash: string, fromManifest: boolean) {
         const swarmFeed = await this.wallet.getSwarmNodeClient(address, 'ES256K');
         // get document from reference
         const ref = await swarmFeed.bzz.downloadData(
             txs
         );
         // download ref raw
-        const documentCbor: any = await swarmFeed.bzz.download(
+        const documentCbor: any = await swarmFeed.bzz.downloadData(
             ref.entries[0].hash,
             {
                 mode: 'raw'
             }
         );
 
-        let indexDocument;
+        let indexDocument = documentCbor;
         let document;
-        // if (!fromManifest) {
-        //     indexDocument = await documentCbor.json();
-        //     const temp = await swarmFeed.bzz.download(
-        //         indexDocument.entries[entry].hash,
-        //         {
-        //             mode: 'raw'
-        //         }
-        //     );
-        //     const buf = await temp.arrayBuffer();
-        //     document = cbor.decode(Buffer.from(buf));
-        // } else {
-            indexDocument = await documentCbor.arrayBuffer();
-            document = cbor.decode(Buffer.from(indexDocument));
+        if (hash === null) {
+            hash = indexDocument.entries[entry].hash;
+            const temp = await swarmFeed.bzz.download(
+                hash,
+                {
+                    mode: 'raw'
+                }
+            );
+            const buf = await temp.arrayBuffer();
+            document = cbor.decode(Buffer.from(buf));
+        } else {
+            const query = indexDocument.entries.map(async (i) => {
+                const temp = await swarmFeed.bzz.download(i.hash, { mode: 'raw' });
+                const buf = await temp.arrayBuffer();
+                const info = cbor.decode(Buffer.from(buf));
+                
+                if (info.hash === hash) {
+                    console.log(info)
+                    document = info;
+                }
+            });
+            await forkJoin(query).toPromise();
+        }
         // }
         const base64Content = (document).content;
 
@@ -77,7 +89,7 @@ export class DriveSwarmManager {
             privBytes: () => null,
             pubBytes: () => kp.getPublic()
         }, false);
-        const id = `did:xdv:${swarmFeed.user}:${txs}:${entry}`;
+        const id = `did:xdv:${swarmFeed.user}:${txs}:${document.hash}`;
         const did = new DIDDocument();
         const pub = { owner: swarmFeed.user, ...keypairExports };
         did.id = id;
@@ -89,14 +101,14 @@ export class DriveSwarmManager {
         const [e, res] = await this.wallet.signJWT('ES256K', payload, {
             iss: swarmFeed.user,
             sub: id,
-            aud: 'xdv.auth2factor.com'
+            aud: 'app.xdv.digital'
         });
 
         const jwt = res;
         const refHash = await swarmFeed.bzz.uploadData(jwt, {
             encrypt: true
         });
-        const sharedUrl = `https://xdv.auth2factor.com/#/viewer?link=${address};${refHash}`;
+        const sharedUrl = `https://app.xdv.digital/#/viewer?link=${address};${refHash}`;
 
         // @ts-ignore
         navigator.share(
@@ -160,7 +172,7 @@ export class DriveSwarmManager {
             };
         });
 
- 
+
         // @ts-ignore
         return await this.appendTreeNode(swarmFeed, splitIntoCborAndReferences);
     }
@@ -231,23 +243,51 @@ export class DriveSwarmManager {
         const refUnderlyingHash = await swarmFeed.bzz.uploadData(block, {
             encrypt: true,
         });
-         
-        
+
+
         const f = await swarmFeed.bzzFeed.setContentHash(feed, refUnderlyingHash);
         return {
             ...block,
         }
     }
 
-    static async goToParentNode(swarmFeed: SwarmFeed, ref: string){
+
+
+    static async goToParentNode(swarmFeed: SwarmFeed, ref: string) {
         return swarmFeed.bzz.downloadData(ref);
     }
+
     static async subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
+
+        async function getBlocks(block: XVDSwarmNodeBlock, limit: number) {
+            let blocks = [block];
+            await DriveSwarmManager.cacheService.setBlockCache(block, block.txs);
+            let i = 0;
+            let previous;
+            let blockPosition = block.block;
+            let hasBlock = block.block > 1;
+            while (hasBlock && i < limit) {
+                let previous = await DriveSwarmManager.cacheService.getBlockCache(block.parentHash);
+                if (previous === null) {
+                    previous = await DriveSwarmManager.goToParentNode(swarmFeed, block.parentHash);
+                    await DriveSwarmManager.cacheService.setBlockCache(previous, block.parentHash);
+                }
+                blocks = [...blocks, previous];
+                blockPosition--;
+                hasBlock = blockPosition > 1;
+                i++;
+                block = previous;
+            }
+
+            return blocks;
+        }
+
         return swarmFeed.bzzFeed
             .pollContentHash(feedHash, { changedOnly: true, interval: 5000 })
             .subscribe(async m => {
                 const block = await swarmFeed.bzz.downloadData(m);
-                callback(block);
+                let blocks = await getBlocks(block, 20);
+                callback(blocks);
             });
     }
 }

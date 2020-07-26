@@ -14,7 +14,7 @@ export class Session {
     static timeout;
     static walletConnect: WalletConnect;
     static db = new PouchDB('xdv:session');
-
+    static SharedWallet: Wallet;
 
     static async sign(data: Buffer, address: string, signerType: DIDSigner) {
         if (signerType === DIDSigner.Walletconnect) {

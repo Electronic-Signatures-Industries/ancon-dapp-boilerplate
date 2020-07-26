@@ -1,3 +1,4 @@
+import { forkJoin } from 'rxjs';
 import {
     isBase64,
     IsBase64,
@@ -86,14 +87,14 @@ export class ShareUtils {
         const jwt = await swarmFeed.bzz.downloadData(
             link.split(';')[1]
         );
-   
+
 
         const { payload } = JWTService.decodeWithSignature(jwt);
 
         return payload;
     }
-    
-    static async openEphemeralLink(address: string, txs: string, entry: number) {
+
+    static async openEphemeralLink(address: string, txs: string, entry: number, hash?: string) {
         const wallet = new Wallet();
         const swarmFeed = await wallet.getSwarmNodeQueryable(address);
 
@@ -108,27 +109,42 @@ export class ShareUtils {
                 mode: 'raw'
             }
         );
- 
+
         let indexDocument;
         let document;
         try {
             indexDocument = await documentCbor.json();
-            const temp  = await swarmFeed.bzz.download(
-                indexDocument.entries[entry].hash,
-                {
-                    mode: 'raw'
-                }
-            );
-            const buf = await temp.arrayBuffer();
-            document = cbor.decode(Buffer.from(buf));
-        } catch(e) {
+            if (entry) {
+                hash = indexDocument.entries[entry].hash;
+                const temp = await swarmFeed.bzz.download(
+                    hash,
+                    {
+                        mode: 'raw'
+                    }
+                );
+                const buf = await temp.arrayBuffer();
+                document = cbor.decode(Buffer.from(buf));
+            } else {
+                const query = indexDocument.entries.map(async (i) => {
+                    const temp = await swarmFeed.bzz.download(i.hash, { mode: 'raw' });
+                    const buf = await temp.arrayBuffer();
+                    const info = cbor.decode(Buffer.from(buf));
+                    
+                    if (info.hash === hash) {
+                        document = info;
+                    }
+                });
+                await forkJoin(query).toPromise();
+            }
+
+        } catch (e) {
             documentCbor = await swarmFeed.bzz.download(
                 ref.entries[0].hash,
                 {
                     mode: 'raw'
                 }
             );
-     
+
             indexDocument = await documentCbor.arrayBuffer();
             document = cbor.decode(Buffer.from(indexDocument));
         }

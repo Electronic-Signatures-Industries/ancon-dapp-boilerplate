@@ -35,9 +35,11 @@
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
     <v-card class="mx-auto">
-      <v-toolbar height="40" color="black accent-4" dark>
+      <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Documents </v-toolbar-title>
-        <!-- <v-autocomplete
+
+        <v-spacer></v-spacer>
+        <v-autocomplete
           v-model="select"
           :items="wallets"
           :loading="loadingAutocomplete"
@@ -88,7 +90,7 @@
               <v-icon>mdi-coin</v-icon>
             </v-list-item-action>
           </template>
-        </v-autocomplete> -->
+        </v-autocomplete>
 
         <template v-slot:extension>
           <v-btn
@@ -224,103 +226,39 @@
               > -->
             </v-speed-dial>
           </v-btn>
-          <v-row
-            ><v-col>
-              Address
-              <h4>{{ select.address }}</h4> </v-col
-            ><v-col>
-              <!-- <v-btn class="mx-2" fab dark small color="blue">
-            <v-icon dark>mdi-clipboard</v-icon>
-          </v-btn> -->
-              DID
-              <h4>did:xdv{{ select.address }}</h4>
-            </v-col></v-row
-          >
         </template>
       </v-toolbar>
 
-      <v-data-iterator
-        :items="items"
-        item-key="_id"
-        items-per-page.sync="5"
-        hide-default-footer
-      >
-        <template v-slot:header>
-          <v-text-field
-            v-model="search"
-            append-icon="mdi-magnify"
-            label="Search"
-            single-line
-            hide-details
-          ></v-text-field>
-        </template>
+      <v-list two-line flat style="z-index:-5">
+        <v-list-item-group v-model="selected" class="blue--text">
+          <template v-for="(item, index) in items">
+            <v-list-item :key="item.subtitle" @click="openDetail(item)">
+              <v-list-item-content>
+                <v-list-item-title
+                  v-text="item.title"
+                  class="font-weight-medium"
+                ></v-list-item-title>
+                <v-list-item-subtitle
+                  @click="openViewerDialog(item)"
+                  class="text--primary"
+                  v-text="item.headline"
+                ></v-list-item-subtitle>
+                <v-list-item-subtitle
+                  v-text="item.subtitle"
+                ></v-list-item-subtitle>
+              </v-list-item-content>
 
-        <template v-slot:default="{ items }">
-          <v-list two-line flat style="z-index:-5">
-            <v-list-item-group v-model="selected" class="blue--text">
-              <template v-slot:activator>
-                <v-list-item-content>
-                  <v-list-item-title v-text="item.title"></v-list-item-title>
-                </v-list-item-content>
-              </template>
+              <v-list-item-action>
+                <v-list-item-action-text
+                  v-text="item.action"
+                ></v-list-item-action-text>
+              </v-list-item-action>
+            </v-list-item>
 
-              <template v-for="(item, index) in items">
-                <v-list-item :key="item._id" @click="currentItem = item">
-                  <v-list-item-content>
-                    <v-list-item-title
-                      v-text="item.title"
-                      class="font-weight-medium"
-                    ></v-list-item-title>
-                    <v-list-item-subtitle
-                      class="text--primary"
-                      v-text="item.headline"
-                    ></v-list-item-subtitle>
-                    <v-list-item-subtitle
-                      v-text="item.subtitle"
-                    ></v-list-item-subtitle>
-                    .
-                  </v-list-item-content>
-
-                  <v-list-item-action>
-                    <v-list-item-action-text
-                      v-text="item.action"
-                    ></v-list-item-action-text>
-                  </v-list-item-action>
-                </v-list-item>
-
-                <v-divider
-                  v-if="index + 1 < items.length"
-                  :key="index"
-                ></v-divider>
-              </template>
-            </v-list-item-group>
-          </v-list>
-        </template>
-      </v-data-iterator>
-
-      <v-card-actions>
-        <v-list-item class="grow">
-          <v-row align="center" justify="start">
-            <v-icon class="mr-1">mdi-clock</v-icon>
-            <span class="subheading mr-2">{{
-              currentPage.blockTimestamp
-            }}</span>
-            <span class="mr-1">·</span>
-            <span class="subheading"
-              >Content reference {{ currentPage.txs }}</span
-            >
-          </v-row>
-
-          <v-row align="center" justify="end">
-            <v-icon class="mr-1" @click="goBack(currentPage)"
-              >mdi-chevron-left</v-icon
-            >
-            <span class="subheading mr-2">{{ currentPage.block }}</span>
-            <span class="mr-1">·</span>
-            <v-icon class="mr-1" @click="goLatest()">mdi-origin</v-icon>
-          </v-row>
-        </v-list-item>
-      </v-card-actions>
+            <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
+          </template>
+        </v-list-item-group>
+      </v-list>
     </v-card>
   </v-container>
 </template>
@@ -455,6 +393,7 @@ export default class DriveComponent extends Vue {
     { text: 'Document Type', value: 'documentType' },
   ];
   didDocument: any;
+  address: string;
   async onUnlock() {
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
@@ -509,6 +448,17 @@ export default class DriveComponent extends Vue {
     }
   }
 
+  async openDetail(document) {
+    Session.SharedWallet = this.wallet;
+    this.$router.push({
+      name: 'details',
+      params: {
+        user: this.address,
+        id: document.item.txs,
+      },
+    });
+  }
+
   async loadSession(options = { reset: false }) {
     this.loadingAutocomplete = true;
     const { currentKeystore } = await Session.getSessionInfo();
@@ -535,15 +485,6 @@ export default class DriveComponent extends Vue {
 
     await this.loadWallets();
     const ks = await this.loadSession();
-
-    // await this.cache.initialize();
-    // this.cache.subscribeCache(
-    //   ks.address,
-    //   (i) => i.address === ks.address,
-    //   (e, i) => {
-    //     this.itemsClone.push(i.doc);
-    //   }
-    // );
   }
 
   async loadWallets() {
@@ -618,51 +559,9 @@ export default class DriveComponent extends Vue {
     this.select = i;
   }
 
-  async goBack(block: XVDSwarmNodeBlock) {
-    const { currentKeystore } = await Session.getSessionInfo();
-    const { address } = currentKeystore;
-    const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
-    // let found = await this.cache.find(address, {
-    //   txs: block.txs,
-    // });
-    // if (found.docs.length === 0) {
-    let found = await DriveSwarmManager.goToParentNode(
-      swarmFeed,
-      block.parentHash
-    );
-    // await this.cache.setCachedDocuments(
-    //   swarmFeed.user,
-    //   found.timestamp,
-    //   found
-    // );
-    //   debugger;
-    //   this.currentPage = found;
-    // } else {
-    //   debugger;
-    //   this.currentPage = found.docs[0];
-    // }
-    debugger;
-    await this.renderDocuments(swarmFeed)(this.currentPage);
-  }
-
-  async goLatest() {
-    const { currentKeystore } = await Session.getSessionInfo();
-    const { address } = currentKeystore;
-    const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
-
-    const queue = await swarmFeed.bzzFeed.createManifest({
-      user: swarmFeed.user,
-      name: 'tx-document-tree',
-    });
-    this.sub = await DriveSwarmManager.subscribe(
-      swarmFeed,
-      queue,
-      this.renderDocuments(swarmFeed)
-    );
-  }
-
   async loadDirectory(ks?: KeystoreIndex) {
     const { address } = ks;
+    this.address = address;
     const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: address,
@@ -710,14 +609,10 @@ export default class DriveComponent extends Vue {
   }
 
   renderDocuments(swarmFeed: SwarmFeed) {
-    return async (block: XVDSwarmNodeBlock) => {
-      console.log(block);
-      this.currentPage = block;
-      this.currentPage.blockTimestamp = moment(
-        block.timestamp * 1000
-      ).fromNow();
-      const p = block.metadata.map(
-        async (reference: SwarmNodeSignedContent, index) => {
+    return async (blocks: XVDSwarmNodeBlock[]) => {
+      this.items = [];
+      blocks.map((block) => {
+        block.metadata.map(async (reference: SwarmNodeSignedContent, index) => {
           // @ts-ignore
           const s = ethers.utils.joinSignature({
             // @ts-ignore
@@ -743,8 +638,8 @@ export default class DriveComponent extends Vue {
             signature: `${s.replace('0x', '')}`,
           };
           this.items.push(item);
-        }
-      );
+        });
+      });
     };
   }
 
@@ -754,6 +649,7 @@ export default class DriveComponent extends Vue {
       item.address,
       item.item.txs,
       item.item.index,
+      item.reference.hash,
       true
     );
   }

@@ -591,7 +591,7 @@ export default class SignatureManagementDialog extends Vue {
       });
       this.operationType = 'Creating link to share...';
 
-      await driveManager.shareEphemeralLink(address, txs, 0, false);
+      await driveManager.shareEphemeralLink(address, txs, 0, null, false);
     } catch (e) {
       console.log(e);
       this.alertType = 'red';
