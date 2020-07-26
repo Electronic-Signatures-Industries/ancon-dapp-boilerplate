@@ -172,12 +172,12 @@ export default class DocumentDetails extends Vue {
   async shareTo(item, index) {
     const { currentKeystore } = await Session.getSessionInfo();
 
-    await this.wallet.open(currentKeystore.keystore);
-    this.itemIndex = index;
-    this.itemHash = item.hash;
-  }
-
-  async onUnlock() {
+    if (!this.wallet.mnemonic) {
+      await this.wallet.open(currentKeystore.keystore);
+      this.itemIndex = index;
+      this.itemHash = item.hash;
+      return;
+    }
     const driveManager = new DriveSwarmManager(this.wallet);
     await driveManager.shareEphemeralLink(
       this.$router.currentRoute.params.user,
@@ -186,6 +186,21 @@ export default class DocumentDetails extends Vue {
       this.itemHash,
       true
     );
+  }
+
+  async onUnlock() {
+    try {
+      const driveManager = new DriveSwarmManager(this.wallet);
+      await driveManager.shareEphemeralLink(
+        this.$router.currentRoute.params.user,
+        this.documentBlock.txs,
+        this.itemIndex,
+        this.itemHash,
+        true
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async downloadFile(item, index) {
@@ -211,8 +226,15 @@ export default class DocumentDetails extends Vue {
       let block = ((await this.cacheService.getBlockCache(
         blockRef
       )) as unknown) as XVDSwarmNodeBlock;
-
-
+      if (block === null) {
+        const feed = await swarmFeed.bzzFeed.createManifest({
+          user: swarmFeed.user,
+          name: 'tx-document-tree',
+        });
+        const hash = await swarmFeed.bzzFeed.getContentHash(feed);
+        block = await swarmFeed.bzz.downloadData(hash);
+        await DriveSwarmManager.cacheService.setBlockCache(block, hash);
+      }
       this.documentBlock = block;
     }
   }

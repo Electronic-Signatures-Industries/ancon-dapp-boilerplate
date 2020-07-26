@@ -46,17 +46,29 @@ export class DriveSwarmManager {
         const ref = await swarmFeed.bzz.downloadData(
             txs
         );
-        // download ref raw
-        const documentCbor: any = await swarmFeed.bzz.downloadData(
-            ref.entries[0].hash,
-            {
-                mode: 'raw'
-            }
-        );
 
-        let indexDocument = documentCbor;
+        let indexDocument;
         let document;
-        if (hash === null) {
+
+        try {
+            // download ref raw
+            indexDocument = await swarmFeed.bzz.downloadData(
+                ref.entries[0].hash,
+                {
+                    mode: 'raw'
+                }
+            );
+        } catch (e) {
+            const temp = await swarmFeed.bzz.download(
+                ref.entries[0].hash,
+                {
+                    mode: 'raw'
+                }
+            );
+            const buf = await temp.arrayBuffer();
+            document = cbor.decode(Buffer.from(buf));
+        }
+        if (hash === null && document === null) {
             hash = indexDocument.entries[entry].hash;
             const temp = await swarmFeed.bzz.download(
                 hash,
@@ -66,12 +78,12 @@ export class DriveSwarmManager {
             );
             const buf = await temp.arrayBuffer();
             document = cbor.decode(Buffer.from(buf));
-        } else {
+        } else if (document === null){
             const query = indexDocument.entries.map(async (i) => {
                 const temp = await swarmFeed.bzz.download(i.hash, { mode: 'raw' });
                 const buf = await temp.arrayBuffer();
                 const info = cbor.decode(Buffer.from(buf));
-                
+
                 if (info.hash === hash) {
                     console.log(info)
                     document = info;
@@ -265,7 +277,7 @@ export class DriveSwarmManager {
             const feed = await swarmFeed.bzzFeed.createManifest({
                 user: swarmFeed.user,
                 name: 'tx-document-tree',
-              });
+            });
             const hash = await swarmFeed.bzzFeed.getContentHash(feed);
             await DriveSwarmManager.cacheService.setBlockCache(block, hash);
             let i = 0;
