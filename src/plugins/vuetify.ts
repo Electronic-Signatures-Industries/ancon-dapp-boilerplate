@@ -1,19 +1,17 @@
-import Vue from "vue";
-import Vuetify from "vuetify/lib/framework";
-
-import i18n from "@/i18n";
-import "@/sass/overrides.sass";
-import "@mdi/font/css/materialdesignicons.css"; // Ensure you are using css-loader
-import colors from "vuetify/lib/util/colors";
-
+import colors from 'vuetify/lib/util/colors';
+import i18n from '@/i18n';
+import Vue from 'vue';
+import Vuetify from 'vuetify/lib';
+import '@/scss/vuetify/overrides.scss';
 Vue.use(Vuetify);
 
 const theme = {
-  primary: "#4CAF50",
-  secondary: "#9C27b0",
-  accent: "#9C27b0",
-  info: "#00CAE3"
-};
+  primary: '#1e88e5', // change header color from here || "#1e88e6", "#21c1d6", "#fc4b6c", "#563dea", "#9C27b0", "#ff9800"
+  info: '#1e88e5',
+  success: '#21c1d6',
+  accent: '#fc4b6c',
+  default: '#563dea'
+}
 
 export default new Vuetify({
   icons: {
@@ -30,3 +28,4 @@ export default new Vuetify({
     }
   }
 });
+

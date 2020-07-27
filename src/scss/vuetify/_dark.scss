@@ -1,0 +1,24 @@
+.v-application {
+    &.theme--dark {
+        .border-left {
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .border-right {
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .border {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .todo-cards .v-card {
+            background: #255c63;
+        }
+
+        .progress-cards .v-card {
+            background: #1e374e;
+        }
+
+    }
+}
