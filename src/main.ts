@@ -3,6 +3,7 @@ import router from './router';
 import store from './store';
 import Vue from 'vue';
 import VueQrcode from '@chenfengyuan/vue-qrcode';
+import VueSkycons from 'vue-skycons';
 import vuetify from './plugins/vuetify';
 import VueWorker from 'vue-worker';
 import './plugins/base';
@@ -11,6 +12,9 @@ import './plugins/vee-validate';
 import './plugins/appconfig';
 // @ts-nocheck
 // @ts-ignore
+Vue.use(VueSkycons, {
+    color: '#1e88e5'
+});
 
 
 Vue.component(VueQrcode.name, VueQrcode);

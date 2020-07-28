@@ -85,7 +85,8 @@
     "web-streams-polyfill": "^2.1.0",
     "web3": "^1.2.6",
     "xdvplatform-wallet": "^2.0.12",
-    "xmlbuilder2": "^2.1.6"
+    "xmlbuilder2": "^2.1.6",
+    "vue-skycons": "^1.0.5"
   },
   "devDependencies": {
     "@mdi/font": "^5.0.45",

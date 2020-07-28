@@ -1,31 +1,5 @@
 <template>
-  <v-container>
-    <xdv-unlock
-      v-model="password"
-      :wallet="wallet"
-      @load="onUnlock"
-    ></xdv-unlock>
-
-    <xdv-upload
-      :show="canUpload"
-      v-model="files"
-      @input="createDocumentNode"
-    ></xdv-upload>
-
-    <xdv-send
-      :show="canSend"
-      @input="share"
-      :addresses="publicWallets"
-      v-model="shareInfo.recipients"
-    ></xdv-send>
-
-    <xdv-sign
-      :wallet="wallet"
-      :show="canSign"
-      @input="signOrVerify"
-      v-on:close="closeSign"
-      v-model="signManagerProps"
-    ></xdv-sign>
+    <v-container fluid class="down-top-padding">
 
     <v-progress-linear
       indeterminate
@@ -34,7 +8,7 @@
     ></v-progress-linear>
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
-    <v-card class="mx-auto">
+    <v-card>
       <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Documents </v-toolbar-title>
 
@@ -260,6 +234,34 @@
         </v-list-item-group>
       </v-list>
     </v-card>
+
+    <xdv-unlock
+      v-model="password"
+      :wallet="wallet"
+      @load="onUnlock"
+    ></xdv-unlock>
+
+    <xdv-upload
+      :show="canUpload"
+      v-model="files"
+      @input="createDocumentNode"
+    ></xdv-upload>
+
+    <xdv-send
+      :show="canSend"
+      @input="share"
+      :addresses="publicWallets"
+      v-model="shareInfo.recipients"
+    ></xdv-send>
+
+    <xdv-sign
+      :wallet="wallet"
+      :show="canSign"
+      @input="signOrVerify"
+      v-on:close="closeSign"
+      v-model="signManagerProps"
+    ></xdv-sign>
+
   </v-container>
 </template>
 <script lang="ts">
@@ -576,32 +578,32 @@ export default class DriveComponent extends Vue {
     let content;
     //   if (info.doc_count === 0) {
 
-    try {
-      let { body } = await swarmFeed.bzzFeed.getContent(feed, {
-        path: 'index.json',
-      });
+    // try {
+    //   let { body } = await swarmFeed.bzzFeed.getContent(feed, {
+    //     path: 'index.json',
+    //   });
 
-      let reader = new Response(body);
-      content = await reader.json();
-    } catch (e) {
-      return;
-    }
+    //   let reader = new Response(body);
+    //   content = await reader.json();
+    // } catch (e) {
+    //   return;
+    // }
 
-    this.indexjson = content;
-    this.items = [];
-    this.didDocument = {
-      _id: `${address}:${content.id}`,
-      type: 'did',
-      didReference: {
-        did: 'did:xdv:' + address,
-        address: address,
-      },
-      item: content,
-      action: moment(content.created).fromNow(),
-      headline: content.id,
-      title: 'DID',
-      subtitle: `address ${swarmFeed.user} feed ${feed}`,
-    };
+    // this.indexjson = content;
+    // this.items = [];
+    // this.didDocument = {
+    //   _id: `${address}:${content.id}`,
+    //   type: 'did',
+    //   didReference: {
+    //     did: 'did:xdv:' + address,
+    //     address: address,
+    //   },
+    //   item: content,
+    //   action: moment(content.created).fromNow(),
+    //   headline: content.id,
+    //   title: 'DID',
+    //   subtitle: `address ${swarmFeed.user} feed ${feed}`,
+    // };
     // }
     const queue = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,

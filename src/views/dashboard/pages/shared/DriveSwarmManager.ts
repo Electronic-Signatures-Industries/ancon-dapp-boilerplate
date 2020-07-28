@@ -78,7 +78,7 @@ export class DriveSwarmManager {
             );
             const buf = await temp.arrayBuffer();
             document = cbor.decode(Buffer.from(buf));
-        } else if (document === null){
+        } else if (document === null) {
             const query = indexDocument.entries.map(async (i) => {
                 const temp = await swarmFeed.bzz.download(i.hash, { mode: 'raw' });
                 const buf = await temp.arrayBuffer();
@@ -272,29 +272,23 @@ export class DriveSwarmManager {
     static async subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
 
         async function getBlocks(block: XVDSwarmNodeBlock, limit: number) {
+            const has = await DriveSwarmManager.cacheService.hasBlocks();
+            if (has) return await DriveSwarmManager.cacheService.getBlocks();
+            await DriveSwarmManager.cacheService.setBlocks(block);
+            
             let blocks = [block];
-
-            const feed = await swarmFeed.bzzFeed.createManifest({
-                user: swarmFeed.user,
-                name: 'tx-document-tree',
-            });
-            const hash = await swarmFeed.bzzFeed.getContentHash(feed);
-            await DriveSwarmManager.cacheService.setBlockCache(block, hash);
+            const hash = await swarmFeed.bzzFeed.getContentHash(feedHash);
             let i = 0;
-            let previous;
             let blockPosition = block.block;
             let hasBlock = block.block > 1;
             while (hasBlock && i < limit) {
-                let previous = await DriveSwarmManager.cacheService.getBlockCache(block.parentHash);
-                if (previous === null) {
-                    previous = await DriveSwarmManager.goToParentNode(swarmFeed, block.parentHash);
-                    await DriveSwarmManager.cacheService.setBlockCache(previous, block.parentHash);
-                }
+                let previous = await DriveSwarmManager.goToParentNode(swarmFeed, block.parentHash);
                 blocks = [...blocks, previous];
                 blockPosition--;
                 hasBlock = blockPosition > 1;
                 i++;
                 block = previous;
+                await DriveSwarmManager.cacheService.setBlocks(block);
             }
 
             return blocks;
@@ -305,6 +299,8 @@ export class DriveSwarmManager {
             .subscribe(async m => {
                 const block = await swarmFeed.bzz.downloadData(m);
                 let blocks = await getBlocks(block, 20);
+                await DriveSwarmManager.cacheService.setBlocks(block);
+
                 callback(blocks);
             });
     }

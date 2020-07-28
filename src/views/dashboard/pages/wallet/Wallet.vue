@@ -1,5 +1,6 @@
 <template>
-  <v-container>
+    <v-container fluid class="down-top-padding">
+
         <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
         <v-card-title>
@@ -75,7 +76,7 @@
       alertMessage
     }}</v-alert>
 
-    <v-card class="mx-auto" tile>
+    <v-card>
       <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
 
@@ -461,18 +462,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <xdv-link-external-keystore
-        v-model="linkExternals"
-        :show="linkDialog"
-        :keystore="currentKeystore"
-        @input="loadWallets"
-      >
-      </xdv-link-external-keystore>
-      <xdv-unlock
-        v-model="password"
-        :wallet="wallet"
-        @load="onUnlock"
-      ></xdv-unlock>
+
       <v-dialog v-model="setDIDNameDialog" max-width="500px">
         <v-card>
           <v-card-title>
@@ -550,6 +540,18 @@
         </v-list-item-group>
       </v-list>
     </v-card>
+      <xdv-link-external-keystore
+        v-model="linkExternals"
+        :show="linkDialog"
+        :keystore="currentKeystore"
+        @input="loadWallets"
+      >
+      </xdv-link-external-keystore>
+      <xdv-unlock
+        v-model="password"
+        :wallet="wallet"
+        @load="onUnlock"
+      ></xdv-unlock>
   </v-container>
 </template>
 <script lang="ts">
