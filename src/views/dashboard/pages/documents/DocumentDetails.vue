@@ -223,18 +223,9 @@ export default class DocumentDetails extends Vue {
       const swarmFeed = await this.wallet.getSwarmNodeQueryable(user);
 
       const blockRef = this.$router.currentRoute.params.id;
-      let block = ((await this.cacheService.getBlockCache(
-        blockRef
-      )) as unknown) as XVDSwarmNodeBlock;
-      if (block === null) {
-        const feed = await swarmFeed.bzzFeed.createManifest({
-          user: swarmFeed.user,
-          name: 'tx-document-tree',
-        });
-        const hash = await swarmFeed.bzzFeed.getContentHash(feed);
-        block = await swarmFeed.bzz.downloadData(hash);
-        await DriveSwarmManager.cacheService.setBlockCache(block, hash);
-      }
+      const blocks: XVDSwarmNodeBlock[] =  await DriveSwarmManager.cacheService.getBlocks();
+      let current = await swarmFeed.bzz.downloadData(blockRef);
+      const block = blocks.find(i => i.txs === current.txs);
       this.documentBlock = block;
     }
   }

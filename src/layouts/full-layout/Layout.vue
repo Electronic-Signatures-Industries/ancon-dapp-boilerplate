@@ -6,9 +6,9 @@
       <v-container fluid class="page-wrapper">
         
         <router-view />
-        <v-btn bottom color="success" dark fab fixed right  @click.stop="setCustomizerDrawer(!Customizer_drawer)">
+        <!-- <v-btn bottom color="success" dark fab fixed right  @click.stop="setCustomizerDrawer(!Customizer_drawer)">
         <v-icon>mdi-cog</v-icon>
-      </v-btn>
+      </v-btn> -->
       </v-container>
     </v-content>
     <Sidebar :expand-on-hover.sync="expandOnHover"></Sidebar>

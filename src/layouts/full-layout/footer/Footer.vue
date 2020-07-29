@@ -1,7 +1,7 @@
 <template>
     <v-footer app class="footerpart" inset>
       <v-col cols="12">
-        <span>© {{ new Date().getFullYear() }} — Material Pro Admin by wrappixel.com</span>
+        <span>© {{ new Date().getFullYear() }} — app.xdv.digital</span>
       </v-col>
     </v-footer>
 </template>
