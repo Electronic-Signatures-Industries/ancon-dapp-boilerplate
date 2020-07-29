@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import { forkJoin } from 'rxjs';
 import { KeyConvert } from 'xdvplatform-wallet/src';
 import { PushFilesOptions } from './PushFilesOptions';
+import { ShareUtils } from './ShareUtils';
 import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 import { SwarmNodeSignedContent } from './SwarmNodeSignedContent';
 import { Wallet } from 'xdvplatform-wallet/src';
@@ -42,55 +43,13 @@ export class DriveSwarmManager {
     /** Shares a ephimeral */
     async shareEphemeralLink(address: string, txs: string, entry: number, hash: string, fromManifest: boolean) {
         const swarmFeed = await this.wallet.getSwarmNodeClient(address, 'ES256K');
-        // get document from reference
-        const ref = await swarmFeed.bzz.downloadData(
-            txs
+        const document = await ShareUtils.getDocument(
+            this.wallet,
+            address,
+            txs,
+            entry.toString(),
+            hash
         );
-
-        let indexDocument;
-        let document;
-
-        try {
-            // download ref raw
-            indexDocument = await swarmFeed.bzz.downloadData(
-                ref.entries[0].hash,
-                {
-                    mode: 'raw'
-                }
-            );
-        } catch (e) {
-            const temp = await swarmFeed.bzz.download(
-                ref.entries[0].hash,
-                {
-                    mode: 'raw'
-                }
-            );
-            const buf = await temp.arrayBuffer();
-            document = cbor.decode(Buffer.from(buf));
-        }
-        if (hash === null && document === null) {
-            hash = indexDocument.entries[entry].hash;
-            const temp = await swarmFeed.bzz.download(
-                hash,
-                {
-                    mode: 'raw'
-                }
-            );
-            const buf = await temp.arrayBuffer();
-            document = cbor.decode(Buffer.from(buf));
-        } else if (document === null) {
-            const query = indexDocument.entries.map(async (i) => {
-                const temp = await swarmFeed.bzz.download(i.hash, { mode: 'raw' });
-                const buf = await temp.arrayBuffer();
-                const info = cbor.decode(Buffer.from(buf));
-
-                if (info.hash === hash) {
-                    console.log(info)
-                    document = info;
-                }
-            });
-            await forkJoin(query).toPromise();
-        }
         // }
         const base64Content = (document).content;
 

@@ -94,8 +94,7 @@ export class ShareUtils {
         return payload;
     }
 
-    static async openEphemeralLink(address: string, txs: string, entry: number, hash?: string) {
-        const wallet = new Wallet();
+    static async getDocument(wallet: Wallet, address: string, txs: string, entry: string, hash: string) {
         const swarmFeed = await wallet.getSwarmNodeQueryable(address);
 
         // get document from reference
@@ -148,6 +147,18 @@ export class ShareUtils {
             indexDocument = await documentCbor.arrayBuffer();
             document = cbor.decode(Buffer.from(indexDocument));
         }
+
+        return document;
+    }
+    static async openEphemeralLink(address: string, txs: string, entry: number, hash?: string) {
+        const wallet = new Wallet();
+        const document = await ShareUtils.getDocument(
+            wallet,
+            address,
+            txs,
+            entry,
+            hash
+        );
         const base64Content = (document).content;
 
 
