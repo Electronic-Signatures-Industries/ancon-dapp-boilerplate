@@ -109,9 +109,9 @@
       </v-list>
     </v-menu> -->
     <!---Messages -->
-<div>
-        {{ walletInfo.address }}
-</div>
+    <v-row>
+      <v-col> <b>Wallet address</b> {{ walletInfo.address }} </v-col>
+    </v-row>
     <!---User -->
     <v-menu
       bottom
@@ -122,22 +122,50 @@
     >
       <template v-slot:activator="{ on }">
         <v-btn dark icon v-on="on" class="mr-2">
-            <v-icon>mdi-wallet</v-icon>
+          <v-icon>mdi-wallet</v-icon>
         </v-btn>
       </template>
 
       <v-list>
-        <v-list-item v-for="(item, i) in walletActions" :key="i" @click="href">
-          <v-list-item-title>{{ item.key }}</v-list-item-title>
+        <v-list-item
+          v-for="(item, i) in walletActions"
+          :key="i"
+          @click="handleAction(item)"
+        >
+          <v-list-item-title>
+            {{ item.key }}
+          </v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
     <!---User -->
+        <v-dialog v-model="shareAddressDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Share Address</span>
+        </v-card-title>
+
+        <v-card-text>
+          <qrcode value="walletInfo.address" :options="{ width: 200 }"></qrcode>
+        {{ walletInfo.address }}
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="shareAddressDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="copyAddress()"
+            >Copy</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app-bar>
 </template>
 <script lang="ts">
 import { Session } from '../../../views/dashboard/pages/shared/Session';
-
+import copy from 'copy-to-clipboard';
 // Utilities
 import { mapState, mapMutations } from 'vuex';
 export default {
@@ -152,6 +180,7 @@ export default {
     },
   },
   data: () => ({
+    shareAddressDialog: false,
     showLogo: true,
     showSearch: false,
     notifications: [
@@ -215,10 +244,7 @@ export default {
       },
     ],
     walletInfo: {},
-    walletActions: [
-      { key: 'Copy' },
-      { key: 'Show QR' }
-    ],
+    walletActions: [{ key: 'Show QR' }],
     href() {
       return (location.href = '#/wallet');
     },
@@ -242,6 +268,41 @@ export default {
     },
     searchbox: function() {
       this.showSearch = !this.showSearch;
+    },
+    copyAddress: function() {
+      copy(this.walletInfo.address);
+    },
+    handleAction: function(item) {
+      if (item.key === 'Show QR')      {
+        this.shareAddressDialog = true;
+      }
+      // if (item.key === 'Share address') {
+
+      //   // @ts-ignore
+      //   navigator.share(
+      //     {
+      //       title: 'XDV Wallet address',
+      //       text: this.walletInfo.address,
+      //       url: 'https://app.xdv.digital'
+      //     },
+      //     // @ts-ignore
+      //     {
+      //       // @ts-ignore
+      //       copy: true,
+      //       email: true,
+      //       print: true,
+      //       sms: true,
+      //       smessenger: true,
+      //       // @ts-ignore
+      //       facebook: true,
+      //       whatsapp: true,
+      //       twitter: true,
+      //       linkedin: true,
+      //       telegram: true,
+      //       skype: true,
+      //     }
+      //   );
+      // }
     },
   },
 };

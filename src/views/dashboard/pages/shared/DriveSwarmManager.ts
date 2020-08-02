@@ -47,7 +47,7 @@ export class DriveSwarmManager {
             this.wallet,
             address,
             txs,
-            entry.toString(),
+            null,
             hash
         );
         // }
@@ -234,7 +234,7 @@ export class DriveSwarmManager {
             const has = await DriveSwarmManager.cacheService.hasBlocks();
             if (has) return await DriveSwarmManager.cacheService.getBlocks();
             await DriveSwarmManager.cacheService.setBlocks(block);
-            
+
             let blocks = [block];
             const hash = await swarmFeed.bzzFeed.getContentHash(feedHash);
             let i = 0;

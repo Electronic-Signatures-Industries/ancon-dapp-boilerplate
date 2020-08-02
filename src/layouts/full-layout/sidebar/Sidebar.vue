@@ -53,6 +53,7 @@ export default {
     }
   },
   data: () => ({
+    bar: {},
     items: SidebarItems
   }),
   computed: {

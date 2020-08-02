@@ -10,13 +10,15 @@ import './plugins/base';
 import './plugins/chartist';
 import './plugins/vee-validate';
 import './plugins/appconfig';
+import Vuebar from 'vuebar';
+
 // @ts-nocheck
 // @ts-ignore
 Vue.use(VueSkycons, {
     color: '#1e88e5'
 });
 
-
+Vue.use(Vuebar);
 Vue.component(VueQrcode.name, VueQrcode);
 Vue.use(VueWorker)
 Vue.config.productionTip = true;

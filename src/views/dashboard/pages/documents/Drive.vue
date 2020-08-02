@@ -1,70 +1,17 @@
 <template>
-    <v-container fluid class="down-top-padding">
-
+  <v-container fluid class="down-top-padding">
+    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-progress-linear
       indeterminate
       v-if="loading"
       color="indigo"
     ></v-progress-linear>
-    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
     <v-card>
       <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Documents </v-toolbar-title>
 
         <v-spacer></v-spacer>
-        <v-autocomplete
-          v-model="select"
-          :items="wallets"
-          :loading="loadingAutocomplete"
-          chips
-          @change="loadSession"
-          clearable
-          hide-details
-          hide-selected
-          item-text="name"
-          return-object
-          label="Search documents or select wallet"
-          ref="debounceLoadSession"
-          solo
-        >
-          <template v-slot:no-data>
-            <v-list-item>
-              <v-list-item-title>
-                Search documents or select wallet
-              </v-list-item-title>
-            </v-list-item>
-          </template>
-          <template v-slot:selection="{ attr, on, item, selected }">
-            <v-chip
-              v-bind="attr"
-              :input-value="selected"
-              color="green accent-5"
-              class="white--text"
-              v-on="on"
-            >
-              <v-icon left>mdi-wallet</v-icon>
-              <span v-text="item.name"></span>
-            </v-chip>
-          </template>
-          <template v-slot:item="{ item }">
-            <v-list-item-avatar
-              color="indigo"
-              class="headline font-weight-light white--text"
-            >
-              {{ item.address }}
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle
-                v-text="item.address"
-              ></v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-coin</v-icon>
-            </v-list-item-action>
-          </template>
-        </v-autocomplete>
 
         <template v-slot:extension>
           <v-btn
@@ -181,7 +128,7 @@
                   </v-btn>
                 </template></v-tooltip
               >
-              <!-- 
+              <!--
               <v-tooltip top>
                 <span>Execute chain job</span>
                 <template v-slot:activator="{ on }">
@@ -203,7 +150,158 @@
         </template>
       </v-toolbar>
 
-      <v-list two-line flat style="z-index:-5">
+      <v-row>
+        <v-col cols="6">
+          <v-treeview
+            :active.sync="tree.data"
+            :items="items"
+            activatable
+            open-on-click
+          >
+            <template v-slot:prepend="{ item, open }">
+              <v-icon v-if="!item.contentType">
+                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+              </v-icon>
+              <v-icon v-else>
+                {{ fileIcons[item.contentType] }}
+              </v-icon>
+            </template>
+          </v-treeview>
+        </v-col>
+        <v-col cols="6">
+          <v-card v-if="showDetail" class="mx-auto">
+            <v-list-item>
+              <v-list-item-avatar>
+                <v-icon v-if="currentDocument.reference.contentType === 'application/pdf'"
+                  >mdi-pdf-box</v-icon
+                >
+                <v-icon v-else>mdi-file</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title class="headline">{{
+                  currentDocument.reference.name
+                }}</v-list-item-title>
+                <v-list-item-subtitle>{{
+                  currentDocument.reference.contentType
+                }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-card-text>
+              <v-list>
+                <v-list-item>
+                  <v-list-item-content>
+                    <h3>Document detail</h3>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Hash</b> {{ currentDocument.reference.hash.replace('0x', '') }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Signature</b> {{ getSignature(currentDocument.reference) }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Has Qualified Signature</b>
+                    {{ !!currentDocument.reference.documentSignature ? 'yes' : 'no' }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Size</b> {{ currentDocument.reference.size / 1000 }} kb
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Last Modified</b>
+                    {{ new Date(currentDocument.reference.lastModified) }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Created</b> {{ new Date(1000 * currentDocument.reference.created) }}
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn icon>
+                <v-icon @click="downloadFile(currentDocument.reference, index)"
+                  >mdi-download</v-icon
+                >
+              </v-btn>
+              <v-btn icon>
+                <v-icon @click="shareTo(item.reference, index)"
+                  >mdi-share-variant</v-icon
+                >
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+          <v-card class="mx-auto" v-if="showLog">
+            <v-card-text>
+              <v-list>
+                <v-list-item>
+                  <v-list-item-content>
+                    <h3>Event log</h3>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Document Block</b> {{ documentBlock.block }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Root hash</b>
+                    <a target="_blank" :href="getUrl(documentBlock.rootHash)">{{
+                      documentBlock.rootHash
+                    }}</a>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Parent hash</b>
+                    <a
+                      target="_blank"
+                      :href="getUrl(documentBlock.parentHash)"
+                      >{{ documentBlock.parentHash }}</a
+                    >
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Content transaction reference</b> {{ documentBlock.txs }}
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content class="text--primary">
+                    <b>Timestamp</b>
+                    {{ new Date(1000 * documentBlock.timestamp) }}
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+      <!-- <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.subtitle" @click="openDetail(item)">
@@ -232,7 +330,7 @@
             <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
           </template>
         </v-list-item-group>
-      </v-list>
+      </v-list> -->
     </v-card>
 
     <xdv-unlock
@@ -261,7 +359,6 @@
       v-on:close="closeSign"
       v-model="signManagerProps"
     ></xdv-sign>
-
   </v-container>
 </template>
 <script lang="ts">
@@ -289,7 +386,7 @@ import { createKeyPair, sign } from '@erebos/secp256k1';
 import { ethers } from 'ethers';
 import { arrayify } from 'ethers/utils';
 import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent';
-import { forkJoin, Unsubscribable, Subject, fromEvent } from 'rxjs';
+import { forkJoin, Unsubscribable, Subject, fromEvent, of, from } from 'rxjs';
 import { Session } from '../shared/Session';
 import { MessagingTimelineDuplexClient } from '../shared/MessagingTimelineDuplexClient';
 import copy from 'copy-to-clipboard';
@@ -303,7 +400,14 @@ import Unlock from './Unlock.vue';
 import Upload from './Upload.vue';
 import SendTo from './Recipients.vue';
 import { SubscriptionManager } from '../shared/SubscriptionManager';
-import { filter, mergeMap, debounce, debounceTime } from 'rxjs/operators';
+import {
+  filter,
+  mergeMap,
+  debounce,
+  debounceTime,
+  groupBy,
+  toArray,
+} from 'rxjs/operators';
 import SignatureManagementDialog from './SignatureManagementDialog.vue';
 import { SigningOutput } from '../shared/SigningOutput';
 import { async } from 'rxjs/internal/scheduler/async';
@@ -332,16 +436,32 @@ export default class DriveComponent extends Vue {
   files: File[] = [];
   open = false;
   fab = false;
+  fileIcons = {
+    html: 'mdi-language-html5',
+    js: 'mdi-nodejs',
+    json: 'mdi-json',
+    md: 'mdi-markdown',
+    'application/pdf': 'mdi-file-pdf',
+    png: 'mdi-file-image',
+    txt: 'mdi-file-document-outline',
+    xls: 'mdi-file-excel',
+  };
   walletDescription = '';
   search = '';
   showPassword = false;
   password = '';
   mnemonic = [];
+  showLog = false;
+  documentBlock = null;
+  tree = {
+    data: [],
+  };
   alertMessage = '';
   alertType = '';
   selectedDocument = {};
   selected = [];
   currentItem = {};
+  showDetail = false;
   tableHeaderColor: {
     type: String;
     default: '';
@@ -381,6 +501,7 @@ export default class DriveComponent extends Vue {
   };
   canView: boolean;
   canChain: boolean;
+  currentDocument = {};
   allWallets: any = [];
   cache = new CacheService();
   currentPage: XVDSwarmNodeBlock = {};
@@ -619,36 +740,79 @@ export default class DriveComponent extends Vue {
   renderDocuments(swarmFeed: SwarmFeed) {
     return async (blocks: XVDSwarmNodeBlock[]) => {
       this.items = [];
-      blocks.map((block) => {
-        block.metadata.map(async (reference: SwarmNodeSignedContent, index) => {
-          // @ts-ignore
-          const s = ethers.utils.joinSignature({
+      const temp = {};
+      const resolved = blocks.map(async (block) => {
+        block.parentHash =
+          block.parentHash.length === 0 ? '0' : block.parentHash;
+
+        temp[block.parentHash] = block;
+        temp[block.parentHash].id = block.block;
+        temp[block.parentHash].name = block.txs;
+
+        const items = block.metadata.map(
+          async (reference: SwarmNodeSignedContent, index) => {
             // @ts-ignore
-            r: '0x' + reference.signature.r,
-            // @ts-ignore
-            s: '0x' + reference.signature.s,
-            // @ts-ignore
-            recoveryParam: reference.signature.recoveryParam,
-          });
-          const item = {
-            _id: `${swarmFeed.user}:${block.txs}:${reference.name}`,
-            item: { txs: block.txs, reference, index },
-            type: 'file_document',
-            action: moment(reference.lastModified).fromNow(),
-            title: reference.name,
-            headline: reference.contentType,
-            subtitle: `hash ${reference.hash.replace(
-              '0x',
-              ''
-            )} signature ${s.replace('0x', '')}`,
-            reference,
-            hash: `${reference.hash.replace('0x', '')}`,
-            signature: `${s.replace('0x', '')}`,
-          };
-          this.items.push(item);
-        });
+            const s = ethers.utils.joinSignature({
+              // @ts-ignore
+              r: '0x' + reference.signature.r,
+              // @ts-ignore
+              s: '0x' + reference.signature.s,
+              // @ts-ignore
+              recoveryParam: reference.signature.recoveryParam,
+            });
+            const item = {
+              _id: `${swarmFeed.user}:${block.txs}:${reference.name}`,
+              contentType: reference.contentType,
+              id: `${block.block}:${index}`,
+              name: reference.name,
+              item: { txs: block.txs, reference, index },
+              type: 'file_document',
+              action: moment(reference.lastModified).fromNow(),
+              title: reference.name,
+              headline: reference.contentType,
+              subtitle: `hash ${reference.hash.replace(
+                '0x',
+                ''
+              )} signature ${s.replace('0x', '')}`,
+              reference,
+              hash: `${reference.hash.replace('0x', '')}`,
+              signature: `${s.replace('0x', '')}`,
+            };
+            return item;
+          }
+        );
+        let resolved = await forkJoin(items).toPromise();
+        temp[block.parentHash].children = [...resolved];
+        return true;
       });
+      await forkJoin(resolved).toPromise();
+      this.items = Object.values(temp);
     };
+  }
+
+  @Watch('tree.data')
+  async onTreeChanges(current, old) {
+    const hasItems = current.toString().split(':');
+    if (hasItems.length === 2) {
+      const node = this.items.find(i => i.block.toString() === hasItems[0].toString());
+      const documentIndex = hasItems[1];
+      if (node.children && node.children[documentIndex]) {
+        this.currentDocument = node.children[documentIndex];
+        this.showDetail = true;
+        this.showLog = false;
+      } else {
+        this.currentDocument = null;
+        this.showDetail = false;
+        this.showLog = true;
+        this.documentBlock = node;
+      }
+    } else {
+
+        this.currentDocument = null;
+        this.showDetail = false;
+        this.showLog = true;
+        this.documentBlock = node;
+    }
   }
 
   async shareTo(item) {
@@ -684,6 +848,28 @@ export default class DriveComponent extends Vue {
     this.canUpload = false;
     this.close();
     this.tab = 1;
+  }
+
+
+  getUrl(ref) {
+    return `#/user/${this.$router.currentRoute.params.user}/details/${ref}`;
+  }
+  getSignature(item) {
+    const sig = ethers.utils
+      .joinSignature({
+        // @ts-ignore
+        r: '0x' + item.signature.r,
+        // @ts-ignore
+        s: '0x' + item.signature.s,
+        // @ts-ignore
+        recoveryParam: item.signature.recoveryParam,
+      })
+      .replace('0x', '');
+
+    return `${sig.substring(0, 50)}...${sig.substring(
+      sig.length - 50,
+      sig.length
+    )}`;
   }
 }
 </script>

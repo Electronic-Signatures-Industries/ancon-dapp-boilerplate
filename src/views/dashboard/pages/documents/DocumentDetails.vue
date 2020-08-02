@@ -174,7 +174,6 @@ export default class DocumentDetails extends Vue {
 
     if (!this.wallet.mnemonic) {
       await this.wallet.open(currentKeystore.keystore);
-      this.itemIndex = index;
       this.itemHash = item.hash;
       return;
     }
@@ -182,8 +181,8 @@ export default class DocumentDetails extends Vue {
     await driveManager.shareEphemeralLink(
       this.$router.currentRoute.params.user,
       this.documentBlock.txs,
-      this.itemIndex,
-      this.itemHash,
+      null,
+      item.hash,
       true
     );
   }
@@ -194,7 +193,7 @@ export default class DocumentDetails extends Vue {
       await driveManager.shareEphemeralLink(
         this.$router.currentRoute.params.user,
         this.documentBlock.txs,
-        this.itemIndex,
+        null,
         this.itemHash,
         true
       );
