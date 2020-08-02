@@ -1,12 +1,14 @@
 <template>
   <v-container fluid class="down-top-padding">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-    <v-progress-linear
+<v-dialog v-if="loading">
+      <v-progress-linear
       indeterminate
       v-if="loading"
       color="indigo"
     ></v-progress-linear>
 
+</v-dialog>
     <v-card>
       <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Documents </v-toolbar-title>
@@ -151,13 +153,8 @@
       </v-toolbar>
 
       <v-row>
-        <v-col cols="6">
-          <v-treeview
-            :active.sync="tree.data"
-            :items="items"
-            activatable
-            open-on-click
-          >
+        <v-col col-xs-6>
+          <v-treeview :active.sync="tree.data" :items="items" activatable>
             <template v-slot:prepend="{ item, open }">
               <v-icon v-if="!item.contentType">
                 {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
@@ -168,11 +165,14 @@
             </template>
           </v-treeview>
         </v-col>
-        <v-col cols="6">
+        <v-col col-xs-6>
           <v-card v-if="showDetail" class="mx-auto">
             <v-list-item>
               <v-list-item-avatar>
-                <v-icon v-if="currentDocument.reference.contentType === 'application/pdf'"
+                <v-icon
+                  v-if="
+                    currentDocument.reference.contentType === 'application/pdf'
+                  "
                   >mdi-pdf-box</v-icon
                 >
                 <v-icon v-else>mdi-file</v-icon>
@@ -197,20 +197,26 @@
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
-                    <b>Hash</b> {{ currentDocument.reference.hash.replace('0x', '') }}
+                    <b>Hash</b>
+                    {{ currentDocument.reference.hash.replace('0x', '') }}
                   </v-list-item-content>
                 </v-list-item>
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
-                    <b>Signature</b> {{ getSignature(currentDocument.reference) }}
+                    <b>Signature</b>
+                    {{ getSignature(currentDocument.reference) }}
                   </v-list-item-content>
                 </v-list-item>
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
                     <b>Has Qualified Signature</b>
-                    {{ !!currentDocument.reference.documentSignature ? 'yes' : 'no' }}
+                    {{
+                      !!currentDocument.reference.documentSignature
+                        ? 'yes'
+                        : 'no'
+                    }}
                   </v-list-item-content>
                 </v-list-item>
 
@@ -229,7 +235,8 @@
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
-                    <b>Created</b> {{ new Date(1000 * currentDocument.reference.created) }}
+                    <b>Created</b>
+                    {{ new Date(1000 * currentDocument.reference.created) }}
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
@@ -243,7 +250,7 @@
                 >
               </v-btn>
               <v-btn icon>
-                <v-icon @click="shareTo(item.reference, index)"
+                <v-icon @click="shareTo(currentDocument.reference, index)"
                   >mdi-share-variant</v-icon
                 >
               </v-btn>
@@ -412,6 +419,7 @@ import SignatureManagementDialog from './SignatureManagementDialog.vue';
 import { SigningOutput } from '../shared/SigningOutput';
 import { async } from 'rxjs/internal/scheduler/async';
 import { CacheService } from '../shared/CacheService';
+import { ShareUtils } from '../shared/ShareUtils';
 const cbor = require('cbor-sync');
 
 @Component({
@@ -605,13 +613,6 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
-    // // @ts-ignore
-    // const keyup = fromEvent(this.$refs.debounceLoadSession.$el, 'keyenter')
-    //   .pipe(debounceTime(2500))
-    //   .subscribe(async () => {
-    //     await this.loadSession({ reset: true });
-    //   });
-
     await this.loadWallets();
     const ks = await this.loadSession();
   }
@@ -697,35 +698,7 @@ export default class DriveComponent extends Vue {
       name: 'did:xdv:' + address,
     });
     let content;
-    //   if (info.doc_count === 0) {
 
-    // try {
-    //   let { body } = await swarmFeed.bzzFeed.getContent(feed, {
-    //     path: 'index.json',
-    //   });
-
-    //   let reader = new Response(body);
-    //   content = await reader.json();
-    // } catch (e) {
-    //   return;
-    // }
-
-    // this.indexjson = content;
-    // this.items = [];
-    // this.didDocument = {
-    //   _id: `${address}:${content.id}`,
-    //   type: 'did',
-    //   didReference: {
-    //     did: 'did:xdv:' + address,
-    //     address: address,
-    //   },
-    //   item: content,
-    //   action: moment(content.created).fromNow(),
-    //   headline: content.id,
-    //   title: 'DID',
-    //   subtitle: `address ${swarmFeed.user} feed ${feed}`,
-    // };
-    // }
     const queue = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
       name: 'tx-document-tree',
@@ -737,8 +710,9 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  renderDocuments(swarmFeed: SwarmFeed) {
+  renderDocuments(swarmFeed: SwarmFeed) {    
     return async (blocks: XVDSwarmNodeBlock[]) => {
+      this.loading = true;
       this.items = [];
       const temp = {};
       const resolved = blocks.map(async (block) => {
@@ -747,7 +721,7 @@ export default class DriveComponent extends Vue {
 
         temp[block.parentHash] = block;
         temp[block.parentHash].id = block.block;
-        temp[block.parentHash].name = block.txs;
+        temp[block.parentHash].name = `Content Block # ${block.block}`;
 
         const items = block.metadata.map(
           async (reference: SwarmNodeSignedContent, index) => {
@@ -787,6 +761,7 @@ export default class DriveComponent extends Vue {
       });
       await forkJoin(resolved).toPromise();
       this.items = Object.values(temp);
+          this.loading = false;
     };
   }
 
@@ -794,7 +769,9 @@ export default class DriveComponent extends Vue {
   async onTreeChanges(current, old) {
     const hasItems = current.toString().split(':');
     if (hasItems.length === 2) {
-      const node = this.items.find(i => i.block.toString() === hasItems[0].toString());
+      const node = this.items.find(
+        (i) => i.block.toString() === hasItems[0].toString()
+      );
       const documentIndex = hasItems[1];
       if (node.children && node.children[documentIndex]) {
         this.currentDocument = node.children[documentIndex];
@@ -804,27 +781,53 @@ export default class DriveComponent extends Vue {
         this.currentDocument = null;
         this.showDetail = false;
         this.showLog = true;
-        this.documentBlock = node;
       }
+      this.documentBlock = node;
     } else {
-
-        this.currentDocument = null;
-        this.showDetail = false;
-        this.showLog = true;
-        this.documentBlock = node;
+      const node = this.items.find(
+        (i) => i.block.toString() === current.toString()
+      );
+      this.currentDocument = null;
+      this.showDetail = false;
+      this.showLog = true;
+      this.documentBlock = node;
     }
   }
 
-  async shareTo(item) {
+  async shareTo(item, index) {
+    const { currentKeystore } = await Session.getSessionInfo();
     const driveManager = new DriveSwarmManager(this.wallet);
     await driveManager.shareEphemeralLink(
-      item.address,
-      item.item.txs,
-      item.item.index,
-      item.reference.hash,
+      currentKeystore.address,
+      this.documentBlock.txs,
+      null,
+      item.hash,
       true
     );
   }
+
+  async downloadFile(item, index) {
+    const { currentKeystore } = await Session.getSessionInfo();
+    const res = await ShareUtils.openEphemeralLink(
+      currentKeystore.address,
+      this.documentBlock.txs,
+      null,
+      item.hash
+    );
+
+    await res.downloadFile();
+  }
+
+  // async shareTo(item) {
+  //   const driveManager = new DriveSwarmManager(this.wallet);
+  //   await driveManager.shareEphemeralLink(
+  //     item.address,
+  //     item.item.txs,
+  //     item.item.index,
+  //     item.reference.hash,
+  //     true
+  //   );
+  // }
 
   close() {
     this.didDialog = false;
@@ -849,7 +852,6 @@ export default class DriveComponent extends Vue {
     this.close();
     this.tab = 1;
   }
-
 
   getUrl(ref) {
     return `#/user/${this.$router.currentRoute.params.user}/details/${ref}`;
