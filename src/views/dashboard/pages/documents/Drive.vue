@@ -346,7 +346,7 @@
       @load="onUnlock"
     ></xdv-unlock>
 
-    <xdv-upload
+    <xdv-upload :loading="loading"
       :show="canUpload"
       v-model="files"
       @input="createDocumentNode"
@@ -818,16 +818,6 @@ export default class DriveComponent extends Vue {
     await res.downloadFile();
   }
 
-  // async shareTo(item) {
-  //   const driveManager = new DriveSwarmManager(this.wallet);
-  //   await driveManager.shareEphemeralLink(
-  //     item.address,
-  //     item.item.txs,
-  //     item.item.index,
-  //     item.reference.hash,
-  //     true
-  //   );
-  // }
 
   close() {
     this.didDialog = false;
@@ -850,7 +840,7 @@ export default class DriveComponent extends Vue {
     this.loading = false;
     this.canUpload = false;
     this.close();
-    this.tab = 1;
+    await this.loadDirectory(ks);
   }
 
   getUrl(ref) {

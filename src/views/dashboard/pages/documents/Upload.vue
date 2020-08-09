@@ -8,7 +8,13 @@
       <v-card-text>
         <v-form autocomplete="off">
           <v-row>
-            <v-col cols="12" md="12">
+            <v-col cols="1" xs="1">
+              <v-progress-circular
+                indeterminate v-if="loading"
+                color="primary"
+              ></v-progress-circular>
+            </v-col>
+            <v-col cols="11" xs="11">
               <v-file-input
                 prepend-icon="mdi-paperclip"
                 v-model="value"
@@ -23,8 +29,8 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" text @click="show = false">Cancel</v-btn>
-        <v-btn color="blue darken-1" text @click="change">OK</v-btn>
+        <v-btn color="blue darken-1" text @click="show = false" :disabled="loading">Cancel</v-btn>
+        <v-btn color="blue darken-1" text @click="change" :disabled="loading">OK</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -34,11 +40,12 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
   name: 'xdv-upload',
-  props: ['show','value'],
+  props: ['show', 'value', 'loading'],
 })
 export default class Upload extends Vue {
   value: string;
   show;
+  
   change() {
     this.$emit('input', this.value);
     this.show = false;
