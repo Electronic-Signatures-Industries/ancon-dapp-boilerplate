@@ -760,7 +760,7 @@ export default class DriveComponent extends Vue {
         return true;
       });
       await forkJoin(resolved).toPromise();
-      this.items = Object.values(temp);
+      this.items = Object.values(temp).sort( (a: XVDSwarmNodeBlock, b: XVDSwarmNodeBlock) => a.timestamp - b.timestamp);
           this.loading = false;
     };
   }

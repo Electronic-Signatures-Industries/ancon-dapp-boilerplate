@@ -231,9 +231,9 @@ export class DriveSwarmManager {
     static async subscribe(swarmFeed: SwarmFeed, feedHash: any, callback) {
 
         async function getBlocks(block: XVDSwarmNodeBlock, limit: number) {
-            const has = await DriveSwarmManager.cacheService.hasBlocks();
-            if (has) return await DriveSwarmManager.cacheService.getBlocks();
-            await DriveSwarmManager.cacheService.setBlocks(block);
+            // const has = await DriveSwarmManager.cacheService.hasBlocks();
+            // if (has) return await DriveSwarmManager.cacheService.getBlocks();
+            // await DriveSwarmManager.cacheService.setBlocks(block);
 
             let blocks = [block];
             const hash = await swarmFeed.bzzFeed.getContentHash(feedHash);
@@ -247,7 +247,7 @@ export class DriveSwarmManager {
                 hasBlock = blockPosition > 1;
                 i++;
                 block = previous;
-                await DriveSwarmManager.cacheService.setBlocks(block);
+                // await DriveSwarmManager.cacheService.setBlocks(block);
             }
 
             return blocks;
@@ -258,7 +258,7 @@ export class DriveSwarmManager {
             .subscribe(async m => {
                 const block = await swarmFeed.bzz.downloadData(m);
                 let blocks = await getBlocks(block, 20);
-                await DriveSwarmManager.cacheService.setBlocks(block);
+                // await DriveSwarmManager.cacheService.setBlocks(block);
 
                 callback(blocks);
             });
