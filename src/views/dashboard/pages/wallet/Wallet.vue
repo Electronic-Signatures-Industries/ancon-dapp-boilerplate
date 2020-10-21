@@ -576,6 +576,11 @@ import Unlock from '../documents/Unlock.vue';
 import LinkExternalKeystore from './LinkExternalKeystore.vue';
 import { it } from 'ethers/wordlists';
 
+import { mainnet } from '@filecoin-shipyard/lotus-client-schema';
+import { BrowserProvider } from '@filecoin-shipyard/lotus-client-provider-browser';
+import { LotusRPC } from '@filecoin-shipyard/lotus-client-rpc';
+
+
 @Component({
   components: {
     'xdv-unlock': Unlock,
@@ -645,6 +650,8 @@ export default class WalletComponent extends Vue {
   ];
   didName = '';
   wallet: Wallet = new Wallet();
+  filecoinClient: LotusRPC = null;
+  LOTUS_WSS = 'wss://fil.auth2factor.com/rpc/v0';
 
   async mounted() {
     if (location.hash.indexOf('did=') > -1) {
@@ -659,8 +666,15 @@ export default class WalletComponent extends Vue {
         );
       };
     }
+    await this.loadFilecoinClient();
     await this.loadWallets();
   }
+
+  async loadFilecoinClient() {
+      const provider = new BrowserProvider(this.LOTUS_WSS);
+      this.filecoinClient = new LotusRPC(provider, { schema: mainnet.fullNode })
+  }
+
   async onUnlock() {
     this.loading = true;
 
