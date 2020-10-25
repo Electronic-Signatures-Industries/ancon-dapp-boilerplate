@@ -149,6 +149,22 @@
                 <v-icon>mdi-plus</v-icon>
               </template>
               <v-tooltip top>
+                <span>Request Signer Activation</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-if="currentKeystore"
+                    v-on="on"
+                    @click="requestSignerActivation"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-email</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >              
+              <v-tooltip top>
                 <span>Set as default</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
@@ -666,7 +682,6 @@ export default class WalletComponent extends Vue {
         );
       };
     }
-    await this.loadFilecoinClient();
     await this.loadWallets();
   }
 
@@ -683,6 +698,11 @@ export default class WalletComponent extends Vue {
 
     this.loading = false;
   }
+
+  async requestSignerActivation() {
+
+  }
+
   async loadSession(options = { reset: false }) {
     this.loading = true;
 
