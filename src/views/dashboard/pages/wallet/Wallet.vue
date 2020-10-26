@@ -156,7 +156,7 @@
                     dark
                     v-if="currentKeystore"
                     v-on="on"
-                    @click="requestSignerActivation"
+                    @click="requestSignerActivation(currentKeystore.address)"
                     small
                     color="red accent-4"
                   >
@@ -699,8 +699,21 @@ export default class WalletComponent extends Vue {
     this.loading = false;
   }
 
-  async requestSignerActivation() {
-
+  requestSignerActivation(address) {
+      // @ts-ignore
+      navigator.share(
+          {
+              title: `XDV - Request signer activation for wallet ${address}`,
+              text: ``
+          },
+          // @ts-ignore
+          {
+              // @ts-ignore
+              copy: true, email: true,
+              // @ts-ignore
+              whatsapp: true
+          }
+      );
   }
 
   async loadSession(options = { reset: false }) {
