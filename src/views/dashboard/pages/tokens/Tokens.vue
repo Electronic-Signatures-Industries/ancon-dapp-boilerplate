@@ -123,20 +123,20 @@
 <script lang="ts">
 import { Wallet, X509, LDCryptoTypes, DIDDocument } from 'xdvplatform-wallet';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex, DIDSigner, X509Signer } from './KeystoreIndex';
+import { KeystoreIndex, DIDSigner, X509Signer } from '../shared/KeystoreIndex';
 import moment from 'moment';
-import { Session, Token } from './Session';
+import { Session, Token } from '../shared/Session';
 import copy from 'copy-to-clipboard';
 import { Subject, forkJoin } from 'rxjs';
 import Unlock from './Unlock.vue';
 
 import Web3 from 'web3';
-import { ContractInterface } from './TokenABI';
+import { ContractInterface } from './ethereum/TokenABI';
 const { thorify } = require('thorify');
 
-import { ContractFactory } from './ContractFactory';
+import { ContractFactory } from './ethereum/ContractFactory';
 import AddToken from './AddToken.vue';
-import { TokenContract } from './TokenContract';
+import { TokenContract } from './ethereum/TokenContract';
 import { BigNumber } from 'ethers/utils';
 
 @Component({
@@ -183,7 +183,7 @@ export default class TokensComponent extends Vue {
 
   async onAddToken() {
     const token = Object.assign(new Token(), this.addTokenModel);
-    token.chain = 'vechain';
+    token.chain = 'ethereum';
     await Session.setTokens(token);
     await this.loadTokens();
     this.displayAddDialog = false;

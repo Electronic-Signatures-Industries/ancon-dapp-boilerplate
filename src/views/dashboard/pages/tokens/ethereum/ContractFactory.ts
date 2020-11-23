@@ -1,10 +1,11 @@
 import Web3 from 'web3';
 import { ContractProviderMapping, SolidoModule } from '@decent-bet/solido';
 import { createTokenContractImport } from './TokenImportUtils';
-import { Session, Token } from './Session';
-import { EthersPlugin } from '@decent-bet/solido-provider-ethers';
+import { Session } from '../../shared/Session';
+import { EthersPlugin } from 'solido-provider-ethers';
 import { TokenContract } from './TokenContract';
 import { Wallet } from 'xdvplatform-wallet';
+import { Token } from '../../shared/Token';
 
 const { thorify } = require('thorify');
 
@@ -37,14 +38,15 @@ export class ContractFactory {
             if (tokens) {
                 const mappings = tokens.filter(i => !!i.network).map(i => {
                     const abi = createTokenContractImport({
-                        '0x27': i.network === '0x27' ? i.address : '',
-                        '0x4a': i.network === '0x4a' ? i.address : '',
+                        'ropsten': i.network === 'ropsten' ? i.address : '',
+                        'rinkeby': i.network === 'rinkeby' ? i.address : '',
+                        'mainnet': i.network === 'mainnet' ? i.address : '',
                     });
                     return {
                         name: i.name,
                         import: abi,
                         enableDynamicStubs: true,
-                        provider: ThorifyPlugin,
+                        provider: EthersPlugin,
                     };
                 });
                 const module = new SolidoModule(mappings);
@@ -67,7 +69,7 @@ export class ContractFactory {
         }
     }
 
-    private static async mergePublicTokenList(userCustomTokens: Token[]): Token[] {
+    private static async mergePublicTokenList(userCustomTokens: Token[]): Promise<Token[]> {
         // Icon: https://vechain.github.io/token-registry/assets/{item.icon}.png
         // https://vechain.github.io/token-registry/test.json
 
