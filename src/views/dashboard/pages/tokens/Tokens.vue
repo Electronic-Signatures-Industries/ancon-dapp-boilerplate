@@ -125,19 +125,19 @@ import { Wallet, X509, LDCryptoTypes, DIDDocument } from 'xdvplatform-wallet';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { KeystoreIndex, DIDSigner, X509Signer } from '../shared/KeystoreIndex';
 import moment from 'moment';
-import { Session, Token } from '../shared/Session';
+import { Session } from '../shared/Session';
 import copy from 'copy-to-clipboard';
 import { Subject, forkJoin } from 'rxjs';
-import Unlock from './Unlock.vue';
+import Unlock from '../documents/Unlock.vue';
 
 import Web3 from 'web3';
 import { ContractInterface } from './ethereum/TokenABI';
-const { thorify } = require('thorify');
 
 import { ContractFactory } from './ethereum/ContractFactory';
 import AddToken from './AddToken.vue';
 import { TokenContract } from './ethereum/TokenContract';
 import { BigNumber } from 'ethers/utils';
+import { Token } from '../shared/Token';
 
 @Component({
   components: {
@@ -153,6 +153,7 @@ export default class TokensComponent extends Vue {
   displayAddDialog = false;
   tokens: any;
   address: string;
+  network: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -181,6 +182,9 @@ export default class TokensComponent extends Vue {
   wallet: Wallet = new Wallet();
   keystoreIndexItem = new KeystoreIndex();
 
+/**
+ *  adds a token
+ */
   async onAddToken() {
     const token = Object.assign(new Token(), this.addTokenModel);
     token.chain = 'ethereum';
@@ -191,7 +195,7 @@ export default class TokensComponent extends Vue {
 
   async mounted() {
     const session = await Session.getSessionInfo();
-
+    if (session.currentKeystore === null) return;
     this.address = session.currentKeystore.address;
     await this.wallet.open(session.currentKeystore.keystore);
   }
@@ -219,7 +223,8 @@ export default class TokensComponent extends Vue {
 
   async loadTokens() {
     this.loading = true;
-    this.tokens = await ContractFactory.loadContracts(this.wallet, '0x27');
+    this.network = 'ropsten';
+    this.tokens = await ContractFactory.loadContracts(this.wallet, this.network);
     this.loading = false;
 
     if (this.tokens) {

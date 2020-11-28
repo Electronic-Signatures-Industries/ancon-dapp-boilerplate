@@ -243,7 +243,9 @@ export default {
         time: '12:30AM',
       },
     ],
-    walletInfo: {},
+    walletInfo: {
+      address: '',
+    },
     walletActions: [{ key: 'Show QR' }],
     href() {
       return (location.href = '#/wallet');
@@ -256,7 +258,9 @@ export default {
 
   mounted: async function() {
     const { currentKeystore } = await Session.getSessionInfo();
-    this.walletInfo = currentKeystore;
+    this.walletInfo = currentKeystore || {
+      address: ''
+    };
   },
 
   methods: {

@@ -1,34 +1,36 @@
 <template>
-  <v-container fluid class="down-top-padding">
-    <v-dialog v-model="removeDialog" max-width="500px">
+    <v-container fluid class="down-top-padding">
+
+        <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Remove wallet request</span>
         </v-card-title>
 
-        <v-card-text> Continue with removing selected wallet? </v-card-text>
+        <v-card-text>
+          Continue with removing selected wallet?
+        </v-card-text>
 
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="removeDialog = false"
             >Cancel</v-btn
           >
-          <v-btn color="blue darken-1" text @click="remove()">OK</v-btn>
+          <v-btn color="blue darken-1" text @click="remove()"
+            >OK</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="shareAddressDialog" max-width="500px">
+        <v-dialog v-model="shareAddressDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Share Address</span>
         </v-card-title>
 
         <v-card-text>
-          <qrcode
-            value="currentKeystore.address"
-            :options="{ width: 200 }"
-          ></qrcode>
-          {{ currentKeystore.address }}
+          <qrcode value="currentKeystore.address" :options="{ width: 200 }"></qrcode>
+        {{ currentKeystore.address }}
         </v-card-text>
 
         <v-card-actions>
@@ -36,20 +38,21 @@
           <v-btn color="blue darken-1" text @click="shareAddressDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="copyAddress()">Copy</v-btn>
+          <v-btn color="blue darken-1" text @click="copyAddress()"
+            >Copy</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="exportWalletDialog" max-width="500px">
+        <v-dialog v-model="exportWalletDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Export</span>
         </v-card-title>
 
         <v-card-text>
-          <qrcode value="wallet.mnemonic" :options="{ width: 200 }"></qrcode
-          ><br />
-          {{ wallet.mnemonic }}
+          <qrcode value="wallet.mnemonic" :options="{ width: 200 }"></qrcode><br/>
+        {{ wallet.mnemonic }}
         </v-card-text>
 
         <v-card-actions>
@@ -57,7 +60,9 @@
           <v-btn color="blue darken-1" text @click="exportWalletDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="copyMnemonic()">Copy</v-btn>
+          <v-btn color="blue darken-1" text @click="copyMnemonic()"
+            >Copy</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -92,7 +97,9 @@
         >
           <template v-slot:no-data>
             <v-list-item>
-              <v-list-item-title> No wallets found </v-list-item-title>
+              <v-list-item-title>
+                No wallets found
+              </v-list-item-title>
             </v-list-item>
           </template>
           <template v-slot:selection="{ attr, on, item, selected }">
@@ -135,27 +142,12 @@
             bottom
             right
             fab
-            style="z-index: 5"
+            style="z-index:5"
           >
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
               </template>
-              <v-tooltip top>
-                <span>Create wallet</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="dialog = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-wallet-plus</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
               <v-tooltip top>
                 <span>Request Signer Activation</span>
                 <template v-slot:activator="{ on }">
@@ -171,7 +163,7 @@
                     <v-icon>mdi-email</v-icon>
                   </v-btn>
                 </template></v-tooltip
-              >
+              >              
               <v-tooltip top>
                 <span>Set as default</span>
                 <template v-slot:activator="{ on }">
@@ -185,6 +177,21 @@
                     color="red accent-4"
                   >
                     <v-icon>mdi-star</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Create wallet</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-on="on"
+                    @click="dialog = true"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-wallet-plus</v-icon>
                   </v-btn>
                 </template></v-tooltip
               >
@@ -206,7 +213,7 @@
                 </template></v-tooltip
               >
 
-              <v-tooltip top>
+               <v-tooltip top>
                 <span>Share address</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
@@ -256,6 +263,7 @@
               >
             </v-speed-dial>
           </v-btn>
+
         </template>
       </v-toolbar>
       <v-dialog v-model="dialog" max-width="800px">
@@ -271,169 +279,183 @@
 
           <v-card-text>
             <v-form v-model="valid" autocomplete="off">
-              <!-- <v-expansion-panels v-model="selectedPanel">
+              <v-expansion-panels v-model="selectedPanel">
                 <v-expansion-panel>
-                  <v-expansion-panel-content> -->
-              <v-card v-if="canCreateWallet">
-                <v-card-text>
-                  <v-row>
-                    <v-col cols="12" md="12" v-if="walletType !== 'rsa'">
-                      <v-text-field
-                        label="Name"
-                        value=""
-                        v-model="walletDescription"
-                        class="input-group--focused"
-                      ></v-text-field>
-
-                      <v-text-field
-                        v-model="password"
-                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'"
-                        label="Passphrase"
-                        class="input-group--focused"
-                        @input="handlePasswordUpdate"
-                        @click:append="showPassword = !showPassword"
-                        autocomplete="new-password"
-                      ></v-text-field>
-
-                      <v-text-field
-                        v-model="confirmPassword"
-                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'"
-                        label="Confirm passphrase"
-                        class="input-group--focused"
-                        @click:append="showPassword = !showPassword"
-                        @input="handlePasswordUpdate"
-                        autocomplete="new-password"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col v-if="walletType === 'rsa'" cols="12" md="12">
-                      <div>Detalle del certificado de pruebas</div>
-
-                      <v-text-field
-                        required
-                        v-model="x509Info.commonName"
-                        label="Nombre"
-                        autocomplete="new-password"
-                      ></v-text-field>
-                      <v-text-field
-                        required
-                        hint="Codigo ISO"
-                        v-model="x509Info.countryName"
-                        label="Pais"
-                      ></v-text-field>
-
-                      <v-text-field
-                        required
-                        v-model="x509Info.stateOrProvinceName"
-                        label="Provincia"
-                      ></v-text-field>
-                      <v-text-field
-                        required
-                        v-model="x509Info.localityName"
-                        label="Ciudad"
-                      ></v-text-field>
-                      <v-text-field
-                        required
-                        v-model="x509Info.organizationName"
-                        label="Organizacion"
-                      ></v-text-field>
-
-                      <v-text-field
-                        required
-                        v-model="x509Info.organizationalUnitName"
-                        label="Unidad Organizacional"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                  <v-row
-                    ><v-col
-                      ><v-btn
-                        :disabled="disableBtns"
-                        color="blue darken-1"
-                        text
-                        @click="createKeys"
-                        >Generate</v-btn
-                      ></v-col
-                    >
-                    <v-col md="12" cols="12">
-                      <v-alert text color="blue" v-if="loading">
-                        <v-progress-circular
-                          indeterminate
-                          v-if="loading"
-                          color="blue darken-1"
-                        ></v-progress-circular>
-                        {{ alertMessage }}
-                      </v-alert>
-                      <v-alert text color="red" v-if="hasErrors">
-                        {{ alertMessage }}
-                      </v-alert>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-              </v-card>
-              <!-- </v-expansion-panel-content>
-                </v-expansion-panel>
-                <v-expansion-panel> -->
-              <v-card v-if="canShowMnemonic">
-                <v-card-title class="display-1"
-                  >Backup Mnemonic Words</v-card-title
-                >
-                <v-card-text>
-                  <v-row v-if="walletType === 'rsa'">
-                    <v-col cols="12" md="12">
-                      <v-textarea v-model="cert"></v-textarea>
-                    </v-col>
-                  </v-row>
-
-                  <v-row v-if="walletType !== 'rsa'">
+                  <v-expansion-panel-header class="display-1"
+                    >Type</v-expansion-panel-header
+                  >
+                  <v-expansion-panel-content>
                     <v-row>
-                      <v-col>
-                        <div class="display-2">
-                          {{ `${mnemonic[0]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[1]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[2]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[3]}  ` }}<span>&nbsp;</span>
-                        </div>
+                      <v-col cols="12" md="12" v-if="walletType !== 'rsa'">
+                        <v-text-field
+                          label="Name"
+                          value=""
+                          v-model="walletDescription"
+                          class="input-group--focused"
+                        ></v-text-field>
+
+                        <v-text-field
+                          v-model="password"
+                          :append-icon="
+                            showPassword ? 'mdi-eye' : 'mdi-eye-off'
+                          "
+                          :type="showPassword ? 'text' : 'password'"
+                          label="Passphrase"
+                          class="input-group--focused"
+                          @input="handlePasswordUpdate"
+                          @click:append="showPassword = !showPassword"
+                          autocomplete="new-password"
+                        ></v-text-field>
+
+                        <v-text-field
+                          v-model="confirmPassword"
+                          :append-icon="
+                            showPassword ? 'mdi-eye' : 'mdi-eye-off'
+                          "
+                          :type="showPassword ? 'text' : 'password'"
+                          label="Confirm passphrase"
+                          class="input-group--focused"
+                          @click:append="showPassword = !showPassword"
+                          @input="handlePasswordUpdate"
+                          autocomplete="new-password"
+                        ></v-text-field>
                       </v-col>
-                      <v-col>
-                        <div class="display-2">
-                          {{ `${mnemonic[4]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[5]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[6]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[7]}  ` }}<span>&nbsp;</span>
-                        </div>
-                      </v-col>
-                      <v-col>
-                        <div class="display-2">
-                          {{ `${mnemonic[8]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[9]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[10]}  ` }}<span>&nbsp;</span>
-                        </div>
-                        <div class="display-2">
-                          {{ `${mnemonic[11]}  ` }}
-                        </div>
+                      <v-col v-if="walletType === 'rsa'" cols="12" md="12">
+                        <div>Detalle del certificado de pruebas</div>
+
+                        <v-text-field
+                          required
+                          v-model="x509Info.commonName"
+                          label="Nombre"
+                          autocomplete="new-password"
+                        ></v-text-field>
+                        <v-text-field
+                          required
+                          hint="Codigo ISO"
+                          v-model="x509Info.countryName"
+                          label="Pais"
+                        ></v-text-field>
+
+                        <v-text-field
+                          required
+                          v-model="x509Info.stateOrProvinceName"
+                          label="Provincia"
+                        ></v-text-field>
+                        <v-text-field
+                          required
+                          v-model="x509Info.localityName"
+                          label="Ciudad"
+                        ></v-text-field>
+                        <v-text-field
+                          required
+                          v-model="x509Info.organizationName"
+                          label="Organizacion"
+                        ></v-text-field>
+
+                        <v-text-field
+                          required
+                          v-model="x509Info.organizationalUnitName"
+                          label="Unidad Organizacional"
+                        ></v-text-field>
                       </v-col>
                     </v-row>
-                  </v-row>
-                </v-card-text></v-card
-              >
+                    <v-row
+                      ><v-col
+                        ><v-btn
+                          :disabled="disableBtns"
+                          color="blue darken-1"
+                          text
+                          @click="createKeys"
+                          >Generate</v-btn
+                        ></v-col
+                      >
+                      <v-col md="12" cols="12">
+                        <v-alert text color="blue" v-if="loading">
+                          <v-progress-circular
+                            indeterminate
+                            v-if="loading"
+                            color="blue darken-1"
+                          ></v-progress-circular>
+                          {{ alertMessage }}
+                        </v-alert>
+                        <v-alert text color="red" v-if="hasErrors">
+                          {{ alertMessage }}
+                        </v-alert>
+                      </v-col>
+                    </v-row>
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+                <v-expansion-panel>
+                  <v-expansion-panel-header class="display-1"
+                    >Backup</v-expansion-panel-header
+                  >
+                  <v-expansion-panel-content>
+                    <v-row v-if="walletType === 'rsa'">
+                      <v-col cols="12" md="12">
+                        <v-textarea v-model="cert"></v-textarea>
+                      </v-col>
+                    </v-row>
+
+                    <v-row v-if="walletType !== 'rsa'">
+                      <v-row>
+                        <v-col>
+                          Mnemonic
+                        </v-col>
+                      </v-row>
+                      <v-row>
+                        <v-col>
+                          <div class="display-2">
+                            {{ `${mnemonic[0]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[1]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[2]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[3]}  ` }}<span>&nbsp;</span>
+                          </div>
+                        </v-col>
+                        <v-col>
+                          <div class="display-2">
+                            {{ `${mnemonic[4]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[5]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[6]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[7]}  ` }}<span>&nbsp;</span>
+                          </div>
+                        </v-col>
+                        <v-col>
+                          <div class="display-2">
+                            {{ `${mnemonic[8]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[9]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[10]}  ` }}<span>&nbsp;</span>
+                          </div>
+                          <div class="display-2">
+                            {{ `${mnemonic[11]}  ` }}
+                          </div>
+                        </v-col>
+                      </v-row>
+                    </v-row>
+                  </v-expansion-panel-content></v-expansion-panel
+                >
+                <!-- <v-expansion-panel>
+                      <v-expansion-panel-header class="display-1"
+                        >Avanzado</v-expansion-panel-header
+                      >
+                      <v-expansion-panel-content> </v-expansion-panel-content
+                    ></v-expansion-panel> -->
+              </v-expansion-panels>
             </v-form>
           </v-card-text>
 
@@ -488,7 +510,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-list two-line flat style="z-index: -5">
+      <v-list two-line flat style="z-index:-5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.keystore" @click="currentKeystore = item">
@@ -509,7 +531,9 @@
                 ></v-list-item-action-text>
                 <v-row>
                   <v-col v-if="item.isDefault">
-                    <v-icon color="yellow accent-5"> mdi-star </v-icon></v-col
+                    <v-icon color="yellow accent-5">
+                      mdi-star
+                    </v-icon></v-col
                   ><v-col v-if="item.hasRSAKeys">
                     <v-icon color="blue accent-5">
                       mdi-file-lock
@@ -532,18 +556,18 @@
         </v-list-item-group>
       </v-list>
     </v-card>
-    <xdv-link-external-keystore
-      v-model="linkExternals"
-      :show="linkDialog"
-      :keystore="currentKeystore"
-      @input="loadWallets"
-    >
-    </xdv-link-external-keystore>
-    <xdv-unlock
-      v-model="password"
-      :wallet="wallet"
-      @load="onUnlock"
-    ></xdv-unlock>
+      <xdv-link-external-keystore
+        v-model="linkExternals"
+        :show="linkDialog"
+        :keystore="currentKeystore"
+        @input="loadWallets"
+      >
+      </xdv-link-external-keystore>
+      <xdv-unlock
+        v-model="password"
+        :wallet="wallet"
+        @load="onUnlock"
+      ></xdv-unlock>
   </v-container>
 </template>
 <script lang="ts">
@@ -552,38 +576,31 @@ import {
   X509,
   LDCryptoTypes,
   DIDDocument,
-} from "xdvplatform-wallet/src";
-import { X509Info, KeyConvert } from "xdvplatform-wallet/src/index";
-import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
+} from 'xdvplatform-wallet/src';
+import { X509Info, KeyConvert } from 'xdvplatform-wallet/src/index';
+import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
 
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { KeystoreIndex, DIDSigner, X509Signer } from "../shared/KeystoreIndex";
-import { ethers } from "ethers";
-import moment from "moment";
-import { Session } from "../shared/Session";
-import { pubKeyToAddress } from "@erebos/keccak256";
-import copy from "copy-to-clipboard";
-import { Subject, forkJoin } from "rxjs";
-import Unlock from "../documents/Unlock.vue";
-import LinkExternalKeystore from "./LinkExternalKeystore.vue";
-import { it } from "ethers/wordlists";
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { KeystoreIndex, DIDSigner, X509Signer } from '../shared/KeystoreIndex';
+import { ethers } from 'ethers';
+import moment from 'moment';
+import { Session } from '../shared/Session';
+import { pubKeyToAddress } from '@erebos/keccak256';
+import copy from 'copy-to-clipboard';
+import { Subject, forkJoin } from 'rxjs';
+import Unlock from '../documents/Unlock.vue';
+import { it } from 'ethers/wordlists';
 
-import { mainnet } from "@filecoin-shipyard/lotus-client-schema";
-import { BrowserProvider } from "@filecoin-shipyard/lotus-client-provider-browser";
-import { LotusRPC } from "@filecoin-shipyard/lotus-client-rpc";
 
 @Component({
   components: {
-    "xdv-unlock": Unlock,
-    "xdv-link-external-keystore": LinkExternalKeystore,
+    'xdv-unlock': Unlock,
   },
 })
-export default class WalletComponent extends Vue {
+export default class CertificatesComponent extends Vue {
   loginDialog: boolean = false;
-  canShowMnemonic: boolean = false;
-  canCreateWallet: boolean = true;
-  alertMessage = "";
-  alertType = "";
+  alertMessage = '';
+  alertType = '';
   disableBtns = false;
   lastDefault: any;
   linkDialog = false;
@@ -600,18 +617,18 @@ export default class WalletComponent extends Vue {
   validations: any = { password: false };
   searchResults = [];
   selected = {};
-  search = "";
+  search = '';
   rsaKey: any = {};
-  walletType: string = "default";
+  walletType: string = 'default';
   exportWalletDialog = false;
   valid = false;
   dialog = false;
   x509Info: X509Info = new X509Info();
   open = false;
-  walletDescription = "";
-  confirmPassword = "";
+  walletDescription = '';
+  confirmPassword = '';
   showPassword = false;
-  password = "";
+  password = '';
   currentItem: {
     isDefault?;
     hasPKCS11?;
@@ -621,12 +638,12 @@ export default class WalletComponent extends Vue {
   } & KeystoreIndex = {} as any;
   mnemonic = [];
 
-  cert = "";
+  cert = '';
   shareAddressDialog = false;
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
     defaultX509Signer: X509Signer.XDV,
-    type: "walletconnect",
+    type: 'walletconnect',
   };
   form = {};
   selectedPanel = 0;
@@ -638,15 +655,15 @@ export default class WalletComponent extends Vue {
   fab = false;
   items: any & KeystoreIndex[] = [
     {
-      title: "No wallets found, please add one",
+      title: 'No wallets found, please add one',
     },
   ];
-  didName = "";
+  didName = '';
   wallet: Wallet = new Wallet();
 
   async mounted() {
-    if (location.hash.indexOf("did=") > -1) {
-      const did = location.hash.split("did=")[1];
+    if (location.hash.indexOf('did=') > -1) {
+      const did = location.hash.split('did=')[1];
       this.setDIDNameDialog = true;
       this.pendingDIDName = (name) => {
         this.setDIDNameDialog = false;
@@ -660,6 +677,7 @@ export default class WalletComponent extends Vue {
     await this.loadWallets();
   }
 
+
   async onUnlock() {
     this.loading = true;
 
@@ -670,21 +688,20 @@ export default class WalletComponent extends Vue {
   }
 
   requestSignerActivation(address) {
-    // @ts-ignore
-    navigator.share(
-      {
-        title: `XDV - Request signer activation for wallet ${address}`,
-        text: ``,
-      },
       // @ts-ignore
-      {
-        // @ts-ignore
-        copy: true,
-        email: true,
-        // @ts-ignore
-        whatsapp: true,
-      }
-    );
+      navigator.share(
+          {
+              title: `XDV - Request signer activation for wallet ${address}`,
+              text: ``
+          },
+          // @ts-ignore
+          {
+              // @ts-ignore
+              copy: true, email: true,
+              // @ts-ignore
+              whatsapp: true
+          }
+      );
   }
 
   async loadSession(options = { reset: false }) {
@@ -696,14 +713,14 @@ export default class WalletComponent extends Vue {
   }
 
   addRSA() {
-    this.walletType = "rsa";
+    this.walletType = 'rsa';
     this.dialog = true;
   }
   copyAddress(address) {
     copy(this.currentKeystore.address || address);
   }
 
-  copyMnemonic() {
+  copyMnemonic(){
     copy(this.wallet.mnemonic);
   }
 
@@ -713,17 +730,17 @@ export default class WalletComponent extends Vue {
       this.removeDialog = false;
       await this.loadWallets();
     } else {
-      this.removeDialog = true;
+      this.removeDialog  = true;
     }
   }
 
   async exportWallet() {
-    if (this.exportWalletDialog && this.wallet.mnemonic) {
+    if (this.exportWalletDialog &&  this.wallet.mnemonic) {
       this.exportWalletDialog = false;
       await this.loadWallets();
     } else {
       await this.wallet.open(this.currentKeystore.keystore);
-      this.exportWalletDialog = true;
+      this.exportWalletDialog  = true;
     }
   }
 
@@ -739,7 +756,7 @@ export default class WalletComponent extends Vue {
       let headline = `address ${i.address}`;
       if (!i.address) {
         // rsa
-        headline = "RSA 2048 bits";
+        headline = 'RSA 2048 bits';
       }
       const isDefault =
         currentKeystore &&
@@ -773,7 +790,11 @@ export default class WalletComponent extends Vue {
 
   async setDefault() {
     const id = this.currentKeystore.keystore;
+    // await this.wallet.open(id);
+
+    //  this.currentItem.isDefault = true;
     this.lastDefault = id;
+
     await Session.set({
       ks: {
         ...this.currentKeystore,
@@ -786,25 +807,17 @@ export default class WalletComponent extends Vue {
 
   async save(item) {
     this.loading = true;
-
-    if (this.walletType !== "rsa") {
+    if (this.walletType !== 'rsa') {
       await Session.setWalletRefs(this.keystoreIndexItem);
-      await Session.set({
-        ks: {
-          ...this.keystoreIndexItem,
-          isDefault: true,
-        },
-      });
       this.keystoreIndexItem = new KeystoreIndex();
     }
     this.dialog = false;
     this.mnemonic = [];
-
     await this.loadWallets();
     this.loading = false;
-    this.walletDescription = "";
-    this.password = "";
-    this.confirmPassword = "";
+    this.walletDescription = '';
+    this.password = '';
+    this.confirmPassword = '';
   }
   close(item) {
     this.dialog = false;
@@ -828,7 +841,7 @@ export default class WalletComponent extends Vue {
       return false;
     }
   }
-  @Watch("tab")
+  @Watch('tab')
   filter(current, old) {
     if (this.itemsClone.length === 0) this.itemsClone = [...this.items];
     const mapping = {
@@ -846,11 +859,11 @@ export default class WalletComponent extends Vue {
     wallet: Wallet,
     passphrase: string
   ) {
-    const keypairExports = await wallet.getPrivateKeyExports("P256");
-    this.alertMessage = "Connecting to Swarm";
+    const keypairExports = await wallet.getPrivateKeyExports('P256');
+    this.alertMessage = 'Connecting to Swarm';
     const swarmFeed = await wallet.getSwarmNodeClient(
       ks.address,
-      "ES256K"
+      'ES256K'
       // 'https://ipfs.auth2factor.com/'
     );
     const session = `did:xdv:${swarmFeed.user}`;
@@ -860,30 +873,27 @@ export default class WalletComponent extends Vue {
     did.id = session;
     did.publicKey = [pub];
     did.authentication = [pub as any];
-    const didIndex = { ...did, tag: "main_did" };
+    const didIndex = { ...did, tag: 'main_did' };
     const references = {
-      "index.json": didIndex,
+      'index.json': didIndex,
     };
 
-    this.alertMessage = "Requesting access to publish...";
+    this.alertMessage = 'Requesting access to publish...';
     const res = await swarmFeed.publishDirectory({
       name: session,
       contents: swarmFeed.toSwarmPayload(references),
-      defaultPath: "index.json",
+      defaultPath: 'index.json',
     });
 
     Session.set({ ks });
   }
 
   async createKeys() {
-    this.alertType = "";
-    this.alertMessage = "";
-    this.canCreateWallet = true;
-    this.canShowMnemonic = false;
-    setTimeout(() => {
-      this.loading = true;
-      this.valid = true;
-    }, 50);
+    this.alertType = '';
+    this.alertMessage = '';
+
+    this.loading = true;
+    this.valid = true;
 
     this.disableBtns = true;
     const wallet = new Wallet();
@@ -893,13 +903,12 @@ export default class WalletComponent extends Vue {
     let keystoreIndexItem: KeystoreIndex;
     try {
       switch (this.walletType) {
-        // TODO: Move to certificates for .P12 generation
-        case "rsa":
-          this.alertMessage = "Creating keys...please wait";
+        case 'rsa':
+          this.alertMessage = 'Creating keys...please wait';
 
           keys = await Wallet.getRSA256Standalone();
           const rsaKeyExports = await KeyConvert.getX509RSA(keys);
-          this.alertMessage = "Creating certificate...please wait";
+          this.alertMessage = 'Creating certificate...please wait';
 
           const selfSignedCert = X509.createSelfSignedCertificateFromRSA(
             rsaKeyExports.pemAsPrivate,
@@ -917,7 +926,7 @@ export default class WalletComponent extends Vue {
             this.walletDescription.length > 0 &&
             this.password === this.confirmPassword
           ) {
-            this.alertMessage = "Creating keys...please wait";
+            this.alertMessage = 'Creating keys...please wait';
             const w = await wallet.createWallet(this.password, mnemonic);
             id = w.id;
 
@@ -927,13 +936,12 @@ export default class WalletComponent extends Vue {
               keystore: id,
             } as KeystoreIndex;
 
-            this.alertMessage =
-              "Creating DID (Decentralized Identity)...please wait";
-            keys = await wallet.getPrivateKey("ES256K");
+            this.alertMessage = 'Creating DID...please wait';
+            keys = await wallet.getPrivateKey('ES256K');
             keystoreIndexItem.address = pubKeyToAddress(
-              keys.getPublic("array")
+              keys.getPublic('array')
             );
-            this.mnemonic = wallet.mnemonic.split(" ");
+            this.mnemonic = wallet.mnemonic.split(' ');
 
             await this.createDID(
               keystoreIndexItem,
@@ -945,21 +953,19 @@ export default class WalletComponent extends Vue {
           break;
       }
 
-      this.canShowMnemonic = true;
-      this.canCreateWallet = false;
       this.loading = false;
       this.keystoreIndexItem = keystoreIndexItem;
       this.selectedPanel = 1;
 
-      this.alertMessage = "Completed";
+      this.alertMessage = 'Completed';
       setTimeout(() => {
-        this.alertMessage = "";
+        this.alertMessage = '';
       }, 1500);
       this.disableBtns = false;
     } catch (e) {
       this.valid = false;
       this.alertMessage = e.message;
-      this.alertType = "error";
+      this.alertType = 'error';
     } finally {
       this.loading = false;
       this.valid = false;

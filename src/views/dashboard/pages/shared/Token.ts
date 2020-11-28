@@ -1,5 +1,9 @@
 import { IsEthereumAddress, IsNumber, IsString } from 'class-validator';
 
+/**
+ * Interface for an ERC-20 Token
+ * TODO: Add ERC-721 and ERC-
+ */
 export class Token {
     @IsString()
     name: string;

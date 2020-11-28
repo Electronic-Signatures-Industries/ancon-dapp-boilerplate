@@ -9,7 +9,9 @@ import TemplateEditor from './views/dashboard/pages/TemplateEditor.vue';
 import ViewerComponent from './views/dashboard/pages/documents/Viewer.vue';
 import Vue from 'vue';
 import WalletComponent from './views/dashboard/pages/wallet/Wallet.vue';
-
+import CertificatesComponent from './views/dashboard/pages/certs/Certificates.vue';
+import TokensComponent from './views/dashboard/pages/tokens/Tokens.vue';
+import StakingComponent from './views/dashboard/pages/staking/Staking.vue';
 
 Vue.use(Router);
 
@@ -35,7 +37,18 @@ export default new Router({
       component: () => import('@/layouts/full-layout/Layout'),
 
       children: [
-
+        {
+          path: "staking",
+          name: "staking",
+          // @ts-ignore
+          component: StakingComponent,
+        },
+        {
+          path: "certs",
+          name: "certs",
+          // @ts-ignore
+          component: CertificatesComponent,
+        },
         {
           path: "drive",
           name: "drive",
@@ -59,6 +72,12 @@ export default new Router({
           name: "wallet",
           // @ts-ignore
           component: WalletComponent
+        },
+        {
+          path: "tokens",
+          name: "tokens",
+          // @ts-ignore
+          component: TokensComponent
         },
         {
           path: "viewer",

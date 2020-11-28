@@ -7,9 +7,9 @@ import { Wallet } from 'xdvplatform-wallet';
 export class TokenContract {
   // eslint-disable-next-line no-useless-constructor
   constructor(
-    private signer: Wallet,
     private contract: ethers.Contract,
     public defaultAccount: string,
+    private signer?: Wallet,
   ) {
   }
 
