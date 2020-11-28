@@ -37,7 +37,7 @@ export class ContractFactory {
         const i = await Session.getSessionInfo();
         const has = i.currentKeystore;
         if (has === null || has === undefined) return;
-        const { currentKeystore } = await Session.getSessionInfo();
+        const currentKeystore = has;
         const defaultAccount = currentKeystore.address;
 
         try {
@@ -45,7 +45,6 @@ export class ContractFactory {
             let tokens: Token[] = await Session.getTokens({
                 chain: 'ethereum'
             });
-
             // Merge with public tokens
             tokens = await ContractFactory.mergePublicTokenList(tokens);
 
@@ -86,6 +85,7 @@ export class ContractFactory {
                 })
             }
         } catch (e) {
+            debugger
             console.log(e)
 
         }
@@ -96,14 +96,14 @@ export class ContractFactory {
         // https://vechain.github.io/token-registry/test.json
 
         const ropstenRegistry = [
-            {
-                "name": "Ethereum",
-                "symbol": "ETH",
-                "decimals": 18,
-                "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-                "desc": "Ethereum",
-                "icon": "3ac553ea77911248ab4519bca020e0aa2891a6c6.png",
-            },
+            // {
+            //     "name": "Ethereum",
+            //     "symbol": "ETH",
+            //     "decimals": 18,
+            //     "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            //     "desc": "Ethereum",
+            //     "icon": "3ac553ea77911248ab4519bca020e0aa2891a6c6.png",
+            // },
             {
                 "name": "DAI",
                 "symbol": "DAI",

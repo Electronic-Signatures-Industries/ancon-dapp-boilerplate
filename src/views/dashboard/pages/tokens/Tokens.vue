@@ -26,10 +26,60 @@
     }}</v-alert>
 
     <v-card class="mx-auto" tile>
-      <v-toolbar color="blue accent-4" dark dense>
-        <v-toolbar-title>Wallet {{ address }}</v-toolbar-title>
+      <v-toolbar color="black accent-4" dark>
+        <v-toolbar-title>Tokens</v-toolbar-title>
 
         <v-spacer></v-spacer>
+        <v-autocomplete
+          v-model="selected"
+          :items="searchResults"
+          :loading="loading"
+          :search-input.sync="search"
+          chips
+          clearable
+          hide-details
+          hide-selected
+          item-text="name"
+          item-value="name"
+          label="Search token"
+          solo
+        >
+          <template v-slot:no-data>
+            <v-list-item>
+              <v-list-item-title> No tokens found </v-list-item-title>
+            </v-list-item>
+          </template>
+          <template v-slot:selection="{ attr, on, item, selected }">
+            <v-chip
+              v-bind="attr"
+              :input-value="selected"
+              color="blue-grey"
+              class="white--text"
+              v-on="on"
+            >
+              <v-icon left>mdi-ethereum</v-icon>
+              <span v-text="item.name"></span>
+            </v-chip>
+          </template>
+          <template v-slot:item="{ item }">
+            <v-list-item-avatar
+              color="indigo"
+              class="headline font-weight-light white--text"
+            >
+              {{ item.address }}
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title v-text="item.name"></v-list-item-title>
+              <v-list-item-subtitle
+                v-text="item.address"
+              ></v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon @click="copyAddress(item.address)">mdi-clipboard</v-icon>
+            </v-list-item-action>
+          </template>
+        </v-autocomplete>
+
         <template v-slot:extension>
           <v-btn
             color="red"
@@ -39,7 +89,7 @@
             bottom
             right
             fab
-            style="z-index:5"
+            style="z-index: 5"
           >
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
@@ -77,7 +127,7 @@
         @input="onAddToken"
       ></xdv-add-token>
 
-      <v-list two-line flat style="z-index: -5;">
+      <v-list two-line flat style="z-index: -5">
         <v-list-item-group v-model="selected" class="blue--text">
           <template v-for="(item, index) in items">
             <v-list-item :key="item.symbol" @click="currentToken = item">
@@ -172,6 +222,7 @@ export default class TokensComponent extends Vue {
   amount = '';
   hasErrors = false;
   fab = false;
+  searchResults = [];
   items = [
     {
       title: 'No tokens found, please add one',

@@ -36,12 +36,17 @@ export class Session {
         return null;
     }
     static async getTokens({ chain }) {
-        const tokens: Token[] = await this.db.get(TOKENS_KEY);
-        if (tokens) {
-            return Object.values(tokens).filter(i => i.chain === chain );
-        } else {
-            return Object.values(tokens);
+        try {
+            const tokens: Token[] = await this.db.get(TOKENS_KEY);
+            if (tokens) {
+                return Object.values(tokens).filter(i => i.chain === chain);
+            } else {
+                return Object.values(tokens);
 
+            }
+        } catch (e) {
+            // missing
+            return [];
         }
     }
 
@@ -239,12 +244,12 @@ export class Session {
         // remove
         let refs = {};
         const keys = Object.keys(ref.refs);
-        for (let i = 0;i<keys.length;i++) {
+        for (let i = 0; i < keys.length; i++) {
             if (ref.refs[keys[i]].name !== item.name) {
                 refs = {
                     ...refs,
                     [keys[i]]: ref.refs[keys[i]]
-                }                
+                }
             }
         }
 
