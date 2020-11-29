@@ -687,9 +687,12 @@ export default class SignatureManagementDialog extends Vue {
           Buffer.from(data)
         );
       } else {
+        // Get key using get import key
         const rsaKeys: any = await this.wallet.getImportKey(
           `import:X509:${this.wallet.id}`
         );
+
+        // Sign
         result = CMSSigner.sign(
           rsaKeys.key.selfSignedCert,
           rsaKeys.key.pemAsPrivate,
