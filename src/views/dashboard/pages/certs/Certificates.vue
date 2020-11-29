@@ -33,6 +33,33 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="displayPurchaseCert" width="600px">
+      <!-- // GENERATE ACCESS TOKEN ON THE BACKEND
+import snsWebSdk from '@sumsub/websdk'
+
+let accessToken = "{accessToken}"
+let applicantEmail = "test@example.org"
+let applicantPhone = "+491758764512"
+
+let snsWebSdkInstance = snsWebSdk.Builder("https://test-api.sumsub.com", "basic-kyc")
+    .withAccessToken(accessToken, () => {
+        // EXPIRATION HANDLER
+        /* generate a new token and launch WebSDK again */
+    })
+    .withConf({
+        lang: "es",
+        email: applicantEmail,
+        phone: applicantPhone, // if available
+        onMessage: (type, payload) => {
+            console.log('WebSDK onMessage', type, payload)
+        },
+        onError: (error) => {
+            console.log('WebSDK onError', error)
+        },
+    }).build()
+
+snsWebSdkInstance.launch('#sumsub-websdk-container') -->
+    </v-dialog>
     <v-progress-linear
       indeterminate
       v-if="loading"
