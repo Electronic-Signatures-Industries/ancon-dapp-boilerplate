@@ -14,7 +14,8 @@
                 label="Name"
                 required
                 class="input-group--focused"
-                  :error="!!purchaseDomainModel.exists" :hint="purchaseDomainModel.label"
+                :error="!!purchaseDomainModel.exists"
+                :hint="purchaseDomainModel.label"
               ></v-text-field>
             </v-col>
             <v-col>
@@ -29,36 +30,12 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="primary" text @click="nextPage()">Next</v-btn>
+          <v-btn color="primary" text @click="requestKYC()">Go to KYC</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="displayPurchaseCert" width="600px">
-      <!-- // GENERATE ACCESS TOKEN ON THE BACKEND
-import snsWebSdk from '@sumsub/websdk'
-
-let accessToken = "{accessToken}"
-let applicantEmail = "test@example.org"
-let applicantPhone = "+491758764512"
-
-let snsWebSdkInstance = snsWebSdk.Builder("https://test-api.sumsub.com", "basic-kyc")
-    .withAccessToken(accessToken, () => {
-        // EXPIRATION HANDLER
-        /* generate a new token and launch WebSDK again */
-    })
-    .withConf({
-        lang: "es",
-        email: applicantEmail,
-        phone: applicantPhone, // if available
-        onMessage: (type, payload) => {
-            console.log('WebSDK onMessage', type, payload)
-        },
-        onError: (error) => {
-            console.log('WebSDK onError', error)
-        },
-    }).build()
-
-snsWebSdkInstance.launch('#sumsub-websdk-container') -->
+    <v-dialog v-model="displayPurchaseCertKYC" width="600px">
+      <div ref="kyc"></div>
     </v-dialog>
     <v-progress-linear
       indeterminate
@@ -207,7 +184,10 @@ import { Session } from "../shared/Session";
 import copy from "copy-to-clipboard";
 import { Subject, forkJoin } from "rxjs";
 import { BigNumber } from "ethers/utils";
-import { CertificateService } from './CertificateService';
+import { CertificateService } from "./CertificateService";
+
+import snsWebSdk from "@sumsub/websdk";
+import { SumSubUtils } from "./SumSubUtils";
 
 @Component({
   components: {},
@@ -217,6 +197,7 @@ export default class CertificatesComponent extends Vue {
   alertMessage = "";
   alertType = "";
   lastDefault: any;
+  displayPurchaseCertKYC = false;
   displayPurchaseCert = false;
   tokens: any;
   address: string;
@@ -233,13 +214,13 @@ export default class CertificatesComponent extends Vue {
   valid = false;
   dialog = false;
   open = false;
-  search = '';
+  search = "";
   selected = null;
   purchaseDomainModel = {
-    name: '',
-    domain: 'xdv.digital',
+    name: "",
+    domain: "xdv.digital",
     exists: null,
-    label: '',
+    label: "",
   };
   to = "";
   amount = "";
@@ -263,7 +244,31 @@ export default class CertificatesComponent extends Vue {
     //    await this.loadTokens();
     this.displayPurchaseCert = false;
   }
-
+  async requestKYC() {
+    this.displayPurchaseCertKYC = true;
+    const name = this.purchaseDomainModel.name;
+    let accessToken // = await SumSubUtils.getAccessToken(name);
+    let snsWebSdkInstance = snsWebSdk
+      .Builder("https://test-api.sumsub.com", "basic-kyc")
+      .withAccessToken(accessToken, () => {
+        // EXPIRATION HANDLER
+        /* generate a new token and launch WebSDK again */
+      })
+      .withConf({
+        lang: "es",
+        email: name,
+        onMessage: (type, payload) => {
+          console.log("WebSDK onMessage", type, payload);
+        },
+        onError: (error) => {
+          console.log("WebSDK onError", error);
+        },
+      })
+      .build();
+    this.displayPurchaseCert = false
+debugger
+    snsWebSdkInstance.launch(this.$refs.kyc.srcElement);
+  }
   async verifyDomain() {
     this.purchaseDomainModel.exists = await this.certService.find(
       this.purchaseDomainModel.name,
@@ -271,7 +276,7 @@ export default class CertificatesComponent extends Vue {
     );
 
     if (this.purchaseDomainModel.exists) {
-      this.purchaseDomainModel.label = "Id already exists"
+      this.purchaseDomainModel.label = "Id already exists";
     } else {
       this.purchaseDomainModel.label = "Available";
     }
