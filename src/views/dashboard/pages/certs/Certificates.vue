@@ -35,7 +35,7 @@
       </v-card>
     </v-dialog>
     <v-dialog v-model="displayPurchaseCertKYC" width="600px">
-      <div ref="kyc"></div>
+      <div id="kyc" ref="kyc"></div>
     </v-dialog>
     <v-progress-linear
       indeterminate
@@ -202,6 +202,7 @@ export default class CertificatesComponent extends Vue {
   tokens: any;
   address: string;
   network: any;
+  snsWebSdkInstance: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -248,26 +249,9 @@ export default class CertificatesComponent extends Vue {
     this.displayPurchaseCertKYC = true;
     const name = this.purchaseDomainModel.name;
     let accessToken // = await SumSubUtils.getAccessToken(name);
-    let snsWebSdkInstance = snsWebSdk
-      .Builder("https://test-api.sumsub.com", "basic-kyc")
-      .withAccessToken(accessToken, () => {
-        // EXPIRATION HANDLER
-        /* generate a new token and launch WebSDK again */
-      })
-      .withConf({
-        lang: "es",
-        email: name,
-        onMessage: (type, payload) => {
-          console.log("WebSDK onMessage", type, payload);
-        },
-        onError: (error) => {
-          console.log("WebSDK onError", error);
-        },
-      })
-      .build();
     this.displayPurchaseCert = false
 debugger
-    snsWebSdkInstance.launch(this.$refs.kyc.srcElement);
+    this.snsWebSdkInstance.launch(this.$refs.kyc);
   }
   async verifyDomain() {
     this.purchaseDomainModel.exists = await this.certService.find(
@@ -282,6 +266,23 @@ debugger
     }
   }
   async mounted() {
+    this.snsWebSdkInstance = snsWebSdk
+      .Builder("https://test-api.sumsub.com", "basic-kyc")
+      .withAccessToken('', () => {
+        // EXPIRATION HANDLER
+        /* generate a new token and launch WebSDK again */
+      })
+      .withConf({
+        lang: "es",
+        email: name,
+        onMessage: (type, payload) => {
+          console.log("WebSDK onMessage", type, payload);
+        },
+        onError: (error) => {
+          console.log("WebSDK onError", error);
+        },
+      })
+      .build();
     const session = await Session.getSessionInfo();
     if (session.currentKeystore === null) return;
     this.address = session.currentKeystore.address;

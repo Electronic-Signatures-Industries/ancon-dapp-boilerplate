@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-export const CERT_API = 'http://localhost:3000';
+export const CERT_API = 'https://firmas.xdv.digital';
 export class CertificateService {
     async find(name: string, domain: string) {
         const res = await axios.post(`${CERT_API}/domains/find`, {
