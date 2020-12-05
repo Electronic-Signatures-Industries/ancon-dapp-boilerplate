@@ -16,11 +16,11 @@ export default [
     //     icon: 'mdi-ethereum',
     //     to: '/tokens',
     // },
-    {
-        title: 'Purchase Certs',
-        icon: 'mdi-certificate',
-        to: '/certs',
-    },
+    // {
+    //     title: 'Purchase Certs',
+    //     icon: 'mdi-certificate',
+    //     to: '/certs',
+    // },
     // {
     //     title: 'Staking',
     //     icon: 'mdi-bank',

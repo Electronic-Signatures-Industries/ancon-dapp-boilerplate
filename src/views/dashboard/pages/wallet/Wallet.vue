@@ -61,6 +61,23 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="googleOnboarding" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Sign In with Google</span>
+        </v-card-title>
+
+        <v-card-text> </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="googleOnboarding = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="copyMnemonic()">Sign</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-progress-linear
       indeterminate
@@ -74,189 +91,6 @@
     <v-card>
       <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
-
-        <v-spacer></v-spacer>
-        <v-autocomplete
-          v-model="selected"
-          :items="searchResults"
-          :loading="loading"
-          :search-input.sync="search"
-          chips
-          clearable
-          hide-details
-          hide-selected
-          item-text="name"
-          item-value="name"
-          label="Search wallet"
-          solo
-        >
-          <template v-slot:no-data>
-            <v-list-item>
-              <v-list-item-title> No wallets found </v-list-item-title>
-            </v-list-item>
-          </template>
-          <template v-slot:selection="{ attr, on, item, selected }">
-            <v-chip
-              v-bind="attr"
-              :input-value="selected"
-              color="blue-grey"
-              class="white--text"
-              v-on="on"
-            >
-              <v-icon left>mdi-wallet</v-icon>
-              <span v-text="item.name"></span>
-            </v-chip>
-          </template>
-          <template v-slot:item="{ item }">
-            <v-list-item-avatar
-              color="indigo"
-              class="headline font-weight-light white--text"
-            >
-              {{ item.address }}
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle
-                v-text="item.address"
-              ></v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon @click="copyAddress(item.address)">mdi-clipboard</v-icon>
-            </v-list-item-action>
-          </template>
-        </v-autocomplete>
-
-        <template v-slot:extension>
-          <v-btn
-            color="red"
-            dark
-            small
-            absolute
-            bottom
-            right
-            fab
-            style="z-index: 5"
-          >
-            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
-              ><template v-slot:activator>
-                <v-icon>mdi-plus</v-icon>
-              </template>
-              <v-tooltip top>
-                <span>Create wallet</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="dialog = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-wallet-plus</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Request Signer Activation</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="requestSignerActivation(currentKeystore.address)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-email</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Set as default</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="setDefault"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-star</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-
-              <v-tooltip top>
-                <span>Link external</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="currentKeystore"
-                    dark
-                    v-on="on"
-                    @click="linkDialog = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-key-link</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-
-              <v-tooltip top>
-                <span>Share address</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    fab
-                    dark
-                    v-on="on"
-                    @click="shareAddressDialog = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-share</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Remove</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    fab
-                    dark
-                    v-on="on"
-                    @click="remove(item)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Export wallet</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    fab
-                    dark
-                    v-on="on"
-                    @click="exportWallet()"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-export</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-            </v-speed-dial>
-          </v-btn>
-        </template>
       </v-toolbar>
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
@@ -488,49 +322,120 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-list two-line flat style="z-index: -5">
-        <v-list-item-group v-model="selected" class="blue--text">
-          <template v-for="(item, index) in items">
-            <v-list-item :key="item.keystore" @click="currentKeystore = item">
-              <v-list-item-content>
-                <v-list-item-title v-text="item.title"></v-list-item-title>
-                <v-list-item-subtitle
-                  class="text--primary"
-                  v-text="item.headline"
-                ></v-list-item-subtitle>
-                <v-list-item-subtitle
-                  v-text="item.subtitle"
-                ></v-list-item-subtitle>
-              </v-list-item-content>
+      <v-card class="mx-auto">
+        <v-list-item>
+          <v-list-item-avatar>
+            <v-icon>mdi-wallet</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-select
+              v-model="currentKeystore"
+              :items="items"
+              :loading="loading"
+              hide-details
+              hide-selected
+              item-text="headline"
+              return-object
+              label="Pick wallet"
+              @change="setWallet"
+            ></v-select>
+          </v-list-item-content>
+        </v-list-item>
 
-              <v-list-item-action>
-                <v-list-item-action-text
-                  v-text="item.action"
-                ></v-list-item-action-text>
-                <v-row>
-                  <v-col v-if="item.isDefault">
-                    <v-icon color="yellow accent-5"> mdi-star </v-icon></v-col
-                  ><v-col v-if="item.hasRSAKeys">
-                    <v-icon color="blue accent-5">
-                      mdi-file-lock
-                    </v-icon></v-col
-                  ><v-col v-if="item.hasLedger">
-                    <v-icon color="green accent-5">
-                      mdi-link-lock
-                    </v-icon></v-col
-                  ><v-col v-if="item.hasPKCS11">
-                    <v-icon color="pink accent-5">
-                      mdi-cellphone-lock
-                    </v-icon></v-col
-                  >
-                </v-row>
-              </v-list-item-action>
+        <v-card-text>
+          <v-list>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Address</b> {{ currentKeystore.address }}
+              </v-list-item-content>
             </v-list-item>
 
-            <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
-          </template>
-        </v-list-item-group>
-      </v-list>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Linked to Smart Card</b>
+                {{ !!currentKeystore.hasPKCS11 ? "yes" : "no" }}
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Linked to P12</b>
+                {{ !!currentKeystore.hasRSAKeys ? "yes" : "no" }}
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Created</b> {{ new Date(currentKeystore.created) }}
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-tooltip top>
+            <span>Create wallet</span>
+            <template v-slot:activator="{ on }">
+              <v-btn v-on="on" @click="dialog = true" small>
+                <v-icon>mdi-wallet-plus</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+
+          <v-tooltip top>
+            <span>Link external</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="linkDialog = true"
+                small
+              >
+                <v-icon>mdi-key-link</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+
+          <v-tooltip top>
+            <span>Share address</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="shareAddressDialog = true"
+                small
+              >
+                <v-icon>mdi-share</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+          <v-tooltip top>
+            <span>Remove</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="remove(item)"
+                small
+              >
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+          <v-tooltip top>
+            <span>Export wallet</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="exportWallet()"
+                small
+              >
+                <v-icon>mdi-export</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+        </v-card-actions>
+      </v-card>
     </v-card>
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -567,10 +472,6 @@ import { Subject, forkJoin } from "rxjs";
 import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import { it } from "ethers/wordlists";
-
-import { mainnet } from "@filecoin-shipyard/lotus-client-schema";
-import { BrowserProvider } from "@filecoin-shipyard/lotus-client-provider-browser";
-import { LotusRPC } from "@filecoin-shipyard/lotus-client-rpc";
 
 @Component({
   components: {
@@ -620,7 +521,7 @@ export default class WalletComponent extends Vue {
     hasLedger?;
   } & KeystoreIndex = {} as any;
   mnemonic = [];
-
+  googleOnboarding = false;
   cert = "";
   shareAddressDialog = false;
   linkExternals = {
@@ -730,10 +631,15 @@ export default class WalletComponent extends Vue {
   async loadWallets() {
     this.linkDialog = false;
     // @ts-ignore
+    let { currentKeystore, unlock } = await Session.getSessionInfo();
+    if (currentKeystore ===  null) {
+      this.dialog = true;
+      return;
+    }
+
+    //    this.googleOnboarding = true;
 
     const index: KeystoreIndex[] = await Session.getWalletRefs();
-    if (!index) return;
-    const { currentKeystore, unlock } = await Session.getSessionInfo();
 
     const promises = index.map(async (i: KeystoreIndex) => {
       let headline = `address ${i.address}`;
@@ -768,6 +674,8 @@ export default class WalletComponent extends Vue {
 
     this.items = await forkJoin(promises).toPromise();
     this.searchResults = index;
+    this.currentKeystore = this.items[0];
+    console.log(this.currentKeystore);
   }
   keystoreIndexItem = new KeystoreIndex();
 
@@ -782,6 +690,15 @@ export default class WalletComponent extends Vue {
     });
 
     await this.loadWallets();
+  }
+
+  async setWallet() {
+    await Session.set({
+      ks: {
+        ...this.currentKeystore,
+        isDefault: true,
+      },
+    });
   }
 
   async save(item) {
