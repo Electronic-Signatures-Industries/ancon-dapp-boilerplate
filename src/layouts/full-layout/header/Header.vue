@@ -1,21 +1,21 @@
 <template>
-  <v-app-bar app clipped-left clipped-right color="indigo accent-4" dark>
+  <v-app-bar app clipped-left clipped-right color="black" dark>
     <!---Logo part -->
     <v-toolbar-title class="align-center d-flex">
-      XDV
-      <!-- <span class="logo-icon">
-        <img src="../../../assets/images/logo-light-icon.png" />
+      <span class="logo-icon">
+        <img src="../../../assets/xdv.png" width="64" />
       </span>
-      <span class="logo-text ml-2" :class="`${showLogo ? '' : 'hidelogo'}`">
+      <!-- 
+        <span class="logo-text ml-2" :class="`${showLogo ? '' : 'hidelogo'}`">
         <img src="../../../assets/images/logo-light-text.png" class="mt-2" />
       </span> -->
     </v-toolbar-title>
     <!---Logo part -->
     <!---Search part -->
-    <v-btn dark icon class="mr-1 d-sm-block d-none" @click="searchbox">
+    <!-- <v-btn dark icon class="mr-1 d-sm-block d-none" @click="searchbox">
       <v-icon>mdi-magnify</v-icon>
     </v-btn>
-
+ -->
     <div v-if="showSearch" class="searchinput primary">
       <template>
         <v-text-field
@@ -111,7 +111,7 @@
     >
       <template v-slot:activator="{ on }">
         <v-btn dark icon v-on="on" class="mr-2">
-          <v-icon>mdi-wallet</v-icon>
+          <v-icon>mdi-qrcode-scan</v-icon>
         </v-btn>
       </template>
 
@@ -128,7 +128,7 @@
       </v-list>
     </v-menu>
     <!---User -->
-        <v-dialog v-model="shareAddressDialog" max-width="500px">
+    <v-dialog v-model="shareAddressDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Share Address</span>
@@ -136,7 +136,7 @@
 
         <v-card-text>
           <qrcode value="walletInfo.address" :options="{ width: 200 }"></qrcode>
-        {{ walletInfo.address }}
+          {{ walletInfo.address }}
         </v-card-text>
 
         <v-card-actions>
@@ -144,21 +144,19 @@
           <v-btn color="blue darken-1" text @click="shareAddressDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="copyAddress()"
-            >Copy</v-btn
-          >
+          <v-btn color="blue darken-1" text @click="copyAddress()">Copy</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
   </v-app-bar>
 </template>
 <script lang="ts">
-import { Session } from '../../../views/dashboard/pages/shared/Session';
-import copy from 'copy-to-clipboard';
+import { Session } from "../../../views/dashboard/pages/shared/Session";
+import copy from "copy-to-clipboard";
 // Utilities
-import { mapState, mapMutations } from 'vuex';
+import { mapState, mapMutations } from "vuex";
 export default {
-  name: 'Header',
+  name: "Header",
 
   components: {},
 
@@ -174,99 +172,99 @@ export default {
     showSearch: false,
     notifications: [
       {
-        title: 'Launch Admin',
-        iconbg: 'error',
-        icon: 'mdi-link-variant',
-        desc: 'Just see the my new admin!',
-        time: '9:30AM',
+        title: "Launch Admin",
+        iconbg: "error",
+        icon: "mdi-link-variant",
+        desc: "Just see the my new admin!",
+        time: "9:30AM",
       },
       {
-        title: 'Event today',
-        iconbg: 'success',
-        icon: 'mdi-calendar-check',
-        desc: 'Just a reminder that you have event',
-        time: '10:30AM',
+        title: "Event today",
+        iconbg: "success",
+        icon: "mdi-calendar-check",
+        desc: "Just a reminder that you have event",
+        time: "10:30AM",
       },
       {
-        title: 'Settings',
-        iconbg: 'info',
-        icon: 'mdi-cog',
-        desc: 'You can customize this template as you want',
-        time: '11:30AM',
+        title: "Settings",
+        iconbg: "info",
+        icon: "mdi-cog",
+        desc: "You can customize this template as you want",
+        time: "11:30AM",
       },
       {
-        title: 'Pavan Kumar',
-        iconbg: 'indigo',
-        icon: 'mdi-account',
-        desc: 'Sent you an notification',
-        time: '12:30AM',
+        title: "Pavan Kumar",
+        iconbg: "indigo",
+        icon: "mdi-account",
+        desc: "Sent you an notification",
+        time: "12:30AM",
       },
     ],
     messages: [
       {
-        title: 'Sonu Nigam',
-        avatar: '1',
-        avatarstatus: 'success',
-        desc: 'Singing Show tonigh at 9pm!',
-        time: '9:30AM',
+        title: "Sonu Nigam",
+        avatar: "1",
+        avatarstatus: "success",
+        desc: "Singing Show tonigh at 9pm!",
+        time: "9:30AM",
       },
       {
-        title: 'Sonu Nigam',
-        avatar: '2',
-        avatarstatus: 'error',
-        desc: 'The greate malody songs ever sung',
-        time: '10:30AM',
+        title: "Sonu Nigam",
+        avatar: "2",
+        avatarstatus: "error",
+        desc: "The greate malody songs ever sung",
+        time: "10:30AM",
       },
       {
-        title: 'Arijit singh',
-        avatar: '3',
-        avatarstatus: 'warning',
-        desc: 'You can customize this template as you want',
-        time: '11:30AM',
+        title: "Arijit singh",
+        avatar: "3",
+        avatarstatus: "warning",
+        desc: "You can customize this template as you want",
+        time: "11:30AM",
       },
       {
-        title: 'Pavan Kumar',
-        avatar: '4',
-        avatarstatus: 'success',
-        desc: 'Sent you an notification',
-        time: '12:30AM',
+        title: "Pavan Kumar",
+        avatar: "4",
+        avatarstatus: "success",
+        desc: "Sent you an notification",
+        time: "12:30AM",
       },
     ],
     walletInfo: {
-      address: '',
+      address: "",
     },
-    walletActions: [{ key: 'Show QR' }],
+    walletActions: [{ key: "Show QR" }],
     href() {
-      return (location.href = '#/wallet');
+      return (location.href = "#/wallet");
     },
   }),
 
   computed: {
-    ...mapState(['Sidebar_drawer']),
+    ...mapState(["Sidebar_drawer"]),
   },
 
-  mounted: async function() {
+  mounted: async function () {
     const { currentKeystore } = await Session.getSessionInfo();
     this.walletInfo = currentKeystore || {
-      address: ''
+      address: "",
     };
   },
 
   methods: {
     ...mapMutations({
-      setSidebarDrawer: 'SET_SIDEBAR_DRAWER',
+      setSidebarDrawer: "SET_SIDEBAR_DRAWER",
     }),
-    showhideLogo: function() {
+    showhideLogo: function () {
       this.showLogo = !this.showLogo;
     },
-    searchbox: function() {
+    searchbox: function () {
       this.showSearch = !this.showSearch;
     },
-    copyAddress: function() {
+    copyAddress: function () {
       copy(this.walletInfo.address);
     },
-    handleAction: function(item) {
-      if (item.key === 'Show QR')      {
+    handleAction: function (item) {
+      if (item.key === "Show QR") {
         this.shareAddressDialog = true;
       }
       // if (item.key === 'Share address') {

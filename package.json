@@ -59,6 +59,8 @@
     "es6-shim": "^0.35.5",
     "ethers": "^4.0.46",
     "ethr-did": "^1.1.0",
+    "ipfs-core": "^0.3.0",
+    "ipfs-http-client": "^41.0.1",
     "jsrsasign": "^8.0.20",
     "moment": "^2.26.0",
     "node-forge": "^0.9.1",

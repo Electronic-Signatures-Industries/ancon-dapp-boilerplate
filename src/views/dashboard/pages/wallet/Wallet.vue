@@ -483,6 +483,8 @@ import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
+import { DIDManager } from './DIDManager';
+const IPFS = require('ipfs-core')
 
 @Component({
   components: {
@@ -556,8 +558,10 @@ export default class WalletComponent extends Vue {
   ];
   didName = "";
   wallet: Wallet = new Wallet();
+  ipfs = null;
 
   async mounted() {
+    this.ipfs = await IPFS.create()
     if (location.hash.indexOf("did=") > -1) {
       const did = location.hash.split("did=")[1];
       this.setDIDNameDialog = true;
@@ -769,41 +773,7 @@ export default class WalletComponent extends Vue {
     const type = Object.keys(mapping)[current];
     this.items = this.itemsClone.filter((i) => i.walletType === type);
   }
-  async createDID(
-    ks: KeystoreIndex,
-    swarmKeypair: any,
-    wallet: Wallet,
-    passphrase: string
-  ) {
-    const keypairExports = await wallet.getPrivateKeyExports("P256");
-    this.alertMessage = "Connecting to Swarm";
-    const swarmFeed = await wallet.getSwarmNodeClient(
-      ks.address,
-      "ES256K"
-      // 'https://ipfs.auth2factor.com/'
-    );
-    const session = `did:xdv:${swarmFeed.user}`;
-    const did = new DIDDocument();
-    const pub = { owner: swarmFeed.user, ...keypairExports.ldJsonPublic };
-    pub.publicKeyJwk.d = undefined;
-    did.id = session;
-    did.publicKey = [pub];
-    did.authentication = [pub as any];
-    const didIndex = { ...did, tag: "main_did" };
-    const references = {
-      "index.json": didIndex,
-    };
-
-    this.alertMessage = "Requesting access to publish...";
-    const res = await swarmFeed.publishDirectory({
-      name: session,
-      contents: swarmFeed.toSwarmPayload(references),
-      defaultPath: "index.json",
-    });
-
-    Session.set({ ks });
-  }
-
+  
   async createKeys() {
     this.alertType = "";
     this.alertMessage = "";
@@ -863,12 +833,12 @@ export default class WalletComponent extends Vue {
               keys.getPublic("array")
             );
             this.mnemonic = wallet.mnemonic.split(" ");
-
-            await this.createDID(
-              keystoreIndexItem,
-              keys,
+            const manager = new DIDManager();
+            const ipnsRes = await manager.createDID(
+              keystoreIndexItem,              
               wallet,
-              this.password
+              this.ipfs,
+              (m) => this.alertMessage = m
             );
           }
           break;
