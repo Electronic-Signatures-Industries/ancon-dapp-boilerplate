@@ -445,6 +445,7 @@
         </v-expansion-panel>
       </v-expansion-panels>
     </v-card>
+    <!-- <xdv-drive></xdv-drive> -->
     <xdv-link-external-keystore
       v-model="linkExternals"
       :show="linkDialog"
@@ -480,10 +481,12 @@ import { Subject, forkJoin } from "rxjs";
 import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import { it } from "ethers/wordlists";
+import Drive from "../documents/Drive.vue";
 
 @Component({
   components: {
     "xdv-unlock": Unlock,
+    "xdv-drive": Drive,
     "xdv-link-external-keystore": LinkExternalKeystore,
   },
 })
