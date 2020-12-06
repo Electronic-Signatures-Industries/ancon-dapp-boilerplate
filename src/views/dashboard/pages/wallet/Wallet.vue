@@ -560,6 +560,11 @@ export default class WalletComponent extends Vue {
   wallet: Wallet = new Wallet();
   ipfs = null;
 
+
+  async destroyed() {
+    await this.ipfs.stop();
+  }
+
   async mounted() {
     this.ipfs = await IPFS.create()
     if (location.hash.indexOf("did=") > -1) {
