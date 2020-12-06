@@ -444,7 +444,7 @@
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
-    <xdv-drive :wallet="wallet" :mode="'integrated'" :loading.sync="loading"></xdv-drive>
+    <xdv-drive :updateWallet="currentKeystore" :mode="'integrated'"></xdv-drive>
 
     </v-card>
     <xdv-link-external-keystore

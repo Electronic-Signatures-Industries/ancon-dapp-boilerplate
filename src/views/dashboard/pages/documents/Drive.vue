@@ -1,22 +1,17 @@
 <template>
   <v-container fluid class="down-top-padding">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-<v-dialog v-if="loading">
-      <v-progress-linear
-      indeterminate
-      v-if="loading"
-      color="indigo"
-    ></v-progress-linear>
 
-</v-dialog>
+    <v-overlay :value="loading">
+      <v-progress-circular indeterminate size="64"></v-progress-circular>
+    </v-overlay>
     <v-card>
-      <v-toolbar color="black accent-4" dark v-if="mode===''">
+      <v-toolbar color="black accent-4" dark v-if="mode === ''">
         <v-toolbar-title>Documents </v-toolbar-title>
 
         <v-spacer></v-spacer>
 
-        <template v-slot:extension>
-        </template>
+        <template v-slot:extension> </template>
       </v-toolbar>
 
       <v-row>
@@ -24,7 +19,7 @@
           <v-treeview :active.sync="tree.data" :items="items" activatable>
             <template v-slot:prepend="{ item, open }">
               <v-icon v-if="!item.contentType">
-                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+                {{ open ? "mdi-folder-open" : "mdi-folder" }}
               </v-icon>
               <v-icon v-else>
                 {{ fileIcons[item.contentType] }}
@@ -36,12 +31,9 @@
           <v-card v-if="showDetail" class="mx-auto">
             <v-list-item>
               <v-list-item-avatar>
-                <v-icon
-                  v-if="
-                    currentDocument.reference.contentType === 'application/pdf'
-                  "
-                  >mdi-pdf-box</v-icon
-                >
+                <v-icon v-if="currentDocument.reference.contentType">{{
+                  fileIcons[currentDocument.reference.contentType]
+                }}</v-icon>
                 <v-icon v-else>mdi-file</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
@@ -65,7 +57,7 @@
                 <v-list-item>
                   <v-list-item-content class="text--primary">
                     <b>Hash</b>
-                    {{ currentDocument.reference.hash.replace('0x', '') }}
+                    {{ currentDocument.reference.hash.replace("0x", "") }}
                   </v-list-item-content>
                 </v-list-item>
 
@@ -81,8 +73,8 @@
                     <b>Has Qualified Signature</b>
                     {{
                       !!currentDocument.reference.documentSignature
-                        ? 'yes'
-                        : 'no'
+                        ? "yes"
+                        : "no"
                     }}
                   </v-list-item-content>
                 </v-list-item>
@@ -173,15 +165,7 @@
               </v-list>
             </v-card-text>
           </v-card>
-                    <v-btn
-            color="red"
-            dark
-            small
-            absolute
-            bottom
-            right
-            fab
-          >
+          <v-btn color="red" dark small absolute bottom right fab>
             <v-speed-dial transition="slide-y" v-model="fab" direction="left"
               ><template v-slot:activator>
                 <v-icon>mdi-plus</v-icon>
@@ -305,7 +289,6 @@
               > -->
             </v-speed-dial>
           </v-btn>
-
         </v-col>
       </v-row>
     </v-card>
@@ -316,7 +299,8 @@
       @load="onUnlock"
     ></xdv-unlock>
 
-    <xdv-upload :loading="loading"
+    <xdv-upload
+      :loading="loading"
       :show="canUpload"
       v-model="files"
       @input="createDocumentNode"
@@ -352,31 +336,31 @@ import {
   DocumentNodeSchema,
   JWTService,
   PublicKey,
-} from 'xdvplatform-wallet';
-import { Wallet } from 'xdvplatform-wallet/src';
+} from "xdvplatform-wallet";
+import { Wallet } from "xdvplatform-wallet/src";
 
-import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { KeystoreIndex, DIDSigner } from '../shared/KeystoreIndex';
-import moment from 'moment';
-import { createKeyPair, sign } from '@erebos/secp256k1';
-import { ethers } from 'ethers';
-import { arrayify } from 'ethers/utils';
-import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent';
-import { forkJoin, Unsubscribable, Subject, fromEvent, of, from } from 'rxjs';
-import { Session } from '../shared/Session';
-import { MessagingTimelineDuplexClient } from '../shared/MessagingTimelineDuplexClient';
-import copy from 'copy-to-clipboard';
-const bs58 = require('bs58');
+import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { KeystoreIndex, DIDSigner } from "../shared/KeystoreIndex";
+import moment from "moment";
+import { createKeyPair, sign } from "@erebos/secp256k1";
+import { ethers } from "ethers";
+import { arrayify } from "ethers/utils";
+import { SwarmNodeSignedContent } from "../shared/SwarmNodeSignedContent";
+import { forkJoin, Unsubscribable, Subject, fromEvent, of, from } from "rxjs";
+import { Session } from "../shared/Session";
+import { MessagingTimelineDuplexClient } from "../shared/MessagingTimelineDuplexClient";
+import copy from "copy-to-clipboard";
+const bs58 = require("bs58");
 import {
   DriveSwarmManager,
   XVDSwarmNodeBlock,
-} from '../shared/DriveSwarmManager';
-import { ec } from 'elliptic';
-import Unlock from './Unlock.vue';
-import Upload from './Upload.vue';
-import SendTo from './Recipients.vue';
-import { SubscriptionManager } from '../shared/SubscriptionManager';
+} from "../shared/DriveSwarmManager";
+import { ec } from "elliptic";
+import Unlock from "./Unlock.vue";
+import Upload from "./Upload.vue";
+import SendTo from "./Recipients.vue";
+import { SubscriptionManager } from "../shared/SubscriptionManager";
 import {
   filter,
   mergeMap,
@@ -384,26 +368,26 @@ import {
   debounceTime,
   groupBy,
   toArray,
-} from 'rxjs/operators';
-import SignatureManagementDialog from './SignatureManagementDialog.vue';
-import { SigningOutput } from '../shared/SigningOutput';
-import { async } from 'rxjs/internal/scheduler/async';
-import { CacheService } from '../shared/CacheService';
-import { ShareUtils } from '../shared/ShareUtils';
-const cbor = require('cbor-sync');
+} from "rxjs/operators";
+import SignatureManagementDialog from "./SignatureManagementDialog.vue";
+import { SigningOutput } from "../shared/SigningOutput";
+import { async } from "rxjs/internal/scheduler/async";
+import { CacheService } from "../shared/CacheService";
+import { ShareUtils } from "../shared/ShareUtils";
+const cbor = require("cbor-sync");
 
 @Component({
-  name: 'xdv-drive',
-  props: ['wallet', 'mode', 'loading'],
+  name: "xdv-drive",
+  props: ["updateWallet", "mode"],
   components: {
-    'xdv-unlock': Unlock,
-    'xdv-upload': Upload,
-    'xdv-send': SendTo,
-    'xdv-sign': SignatureManagementDialog,
+    "xdv-unlock": Unlock,
+    "xdv-upload": Upload,
+    "xdv-send": SendTo,
+    "xdv-sign": SignatureManagementDialog,
   },
 })
 export default class DriveComponent extends Vue {
-  loading;
+  loading = false;
   mode;
   loadingAutocomplete = false;
   indexjson = null;
@@ -418,40 +402,40 @@ export default class DriveComponent extends Vue {
   open = false;
   fab = false;
   fileIcons = {
-    html: 'mdi-language-html5',
-    js: 'mdi-nodejs',
-    json: 'mdi-json',
-    md: 'mdi-markdown',
-    'application/pdf': 'mdi-file-pdf',
-    png: 'mdi-file-image',
-    txt: 'mdi-file-document-outline',
-    xls: 'mdi-file-excel',
-    new: 'mdi-plus'
+    "text/html": "mdi-language-html5",
+    js: "mdi-nodejs",
+    "application/json": "mdi-json",
+    md: "mdi-markdown",
+    "application/pdf": "mdi-file-pdf",
+    "image/png": "mdi-file-image",
+    "image/jpeg": "mdi-file-image",
+    "text/text": "mdi-file-document-outline",
+    xls: "mdi-file-excel",
   };
-  walletDescription = '';
-  search = '';
+  walletDescription = "";
+  search = "";
   showPassword = false;
-  password = '';
+  password = "";
   mnemonic = [];
   showLog = false;
   documentBlock = null;
   tree = {
     data: [],
   };
-  alertMessage = '';
-  alertType = '';
+  alertMessage = "";
+  alertType = "";
   selectedDocument = {};
   selected = [];
   currentItem = {};
   showDetail = false;
   tableHeaderColor: {
     type: String;
-    default: '';
+    default: "";
   };
   shareDialog = false;
   shareInfo = {
-    address: '',
-    feed: '',
+    address: "",
+    feed: "",
     recipients: {},
   };
   items = [];
@@ -469,14 +453,14 @@ export default class DriveComponent extends Vue {
   publicWallets = [];
   hasCopyRef = false;
   sub: Unsubscribable;
-  wallet;
+  wallet = new Wallet();
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
-    operation: 'sign',
-    presets: 'none',
-    output: { key: 'XDV link', value: SigningOutput.XDVRef },
-    algorithm: '',
+    operation: "sign",
+    presets: "none",
+    output: { key: "XDV link", value: SigningOutput.XDVRef },
+    algorithm: "",
     isBinaryEnabled: true,
     wallet: new KeystoreIndex(),
     files: [],
@@ -488,17 +472,26 @@ export default class DriveComponent extends Vue {
   cache = new CacheService();
   currentPage: XVDSwarmNodeBlock = {};
   headers = [
-    { text: 'Name', value: 'reference.name' },
-    { text: 'Content Type', value: 'reference.contentType' },
-    { text: 'Hash', value: 'hash' },
-    { text: 'Signature', value: 'signature' },
-    { text: 'Is Qualified Signature', value: 'isQualified' },
-    { text: 'Last Modified', value: 'lastModified' },
-    { text: 'Signed', value: 'signed' },
-    { text: 'Document Type', value: 'documentType' },
+    { text: "Name", value: "reference.name" },
+    { text: "Content Type", value: "reference.contentType" },
+    { text: "Hash", value: "hash" },
+    { text: "Signature", value: "signature" },
+    { text: "Is Qualified Signature", value: "isQualified" },
+    { text: "Last Modified", value: "lastModified" },
+    { text: "Signed", value: "signed" },
+    { text: "Document Type", value: "documentType" },
   ];
   didDocument: any;
   address: string;
+  updateWallet;
+
+  @Watch("updateWallet")
+  async onUpdateWallet(prev, next) {
+    this.items = [];
+    await this.wallet.open(this.updateWallet.keystore);
+    await this.loadDirectory(this.updateWallet);
+  }
+
   async onUnlock() {
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
@@ -528,8 +521,8 @@ export default class DriveComponent extends Vue {
       // @ts-ignore
       navigator.share(
         {
-          title: 'XDV',
-          text: 'DID',
+          title: "XDV",
+          text: "DID",
           url: sharedUrl,
         },
         // @ts-ignore
@@ -558,11 +551,11 @@ export default class DriveComponent extends Vue {
     const swarmFeed = await this.wallet.getSwarmNodeQueryable(this.address);
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
-      name: 'tx-document-tree',
+      name: "tx-document-tree",
     });
     const hash = await swarmFeed.bzzFeed.getContentHash(feed);
     this.$router.push({
-      name: 'details',
+      name: "details",
       params: {
         user: this.address,
         id: hash,
@@ -587,16 +580,6 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
-    // if (this.mode === 'integrated'){
-    //   const { currentKeystore } = await Session.getSessionInfo();
-    //   this.select = currentKeystore;
-    //   this.wallet.id = currentKeystore.keystore;
-    //   this.loading = true;
-    //   await this.loadDirectory(currentKeystore);
-    //   this.loading = false;
-    //   return;
-    // }
-
     await this.loadWallets();
     const ks = await this.loadSession();
   }
@@ -607,7 +590,7 @@ export default class DriveComponent extends Vue {
     this.wallets = w.filter((i: KeystoreIndex) => i.address);
     this.allWallets = w;
     this.publicWallets = w.filter(
-      (i: KeystoreIndex) => i.name.indexOf('did:xdv:') > -1
+      (i: KeystoreIndex) => i.name.indexOf("did:xdv:") > -1
     );
   }
 
@@ -644,15 +627,15 @@ export default class DriveComponent extends Vue {
       this.shareInfo.recipients[0].name
     );
     this.alertMessage =
-      'Connecting to Swarm at https://ipfs.auth2factor.com/...';
+      "Connecting to Swarm at https://ipfs.auth2factor.com/...";
     const swarmFeed = await this.wallet.getSwarmNodeClient(
       currentKeystore.address,
-      'ES256K',
-      'https://ipfs.auth2factor.com/'
+      "ES256K",
+      "https://ipfs.auth2factor.com/"
     );
 
     const messageIO = new SubscriptionManager(this.wallet, userKp, swarmFeed);
-    this.alertMessage = 'Encrypting and sending message...';
+    this.alertMessage = "Encrypting and sending message...";
     await messageIO.sendEncryptedCommPayload(
       // @ts-ignore
       this.shareInfo.recipients[0].address,
@@ -679,14 +662,17 @@ export default class DriveComponent extends Vue {
     const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
     const feed = await swarmFeed.bzzFeed.createManifest({
       user: address,
-      name: 'did:xdv:' + address,
+      name: "did:xdv:" + address,
     });
     let content;
 
     const queue = await swarmFeed.bzzFeed.createManifest({
       user: swarmFeed.user,
-      name: 'tx-document-tree',
+      name: "tx-document-tree",
     });
+    if (this.sub) {
+      this.sub.unsubscribe();
+    }
     this.sub = await DriveSwarmManager.subscribe(
       swarmFeed,
       queue,
@@ -694,14 +680,14 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  renderDocuments(swarmFeed: SwarmFeed) {    
+  renderDocuments(swarmFeed: SwarmFeed) {
     return async (blocks: XVDSwarmNodeBlock[]) => {
       this.loading = true;
       this.items = [];
       const temp = {};
       const resolved = blocks.map(async (block) => {
         block.parentHash =
-          block.parentHash.length === 0 ? '0' : block.parentHash;
+          block.parentHash.length === 0 ? "0" : block.parentHash;
 
         temp[block.parentHash] = block;
         temp[block.parentHash].id = block.block;
@@ -712,9 +698,9 @@ export default class DriveComponent extends Vue {
             // @ts-ignore
             const s = ethers.utils.joinSignature({
               // @ts-ignore
-              r: '0x' + reference.signature.r,
+              r: "0x" + reference.signature.r,
               // @ts-ignore
-              s: '0x' + reference.signature.s,
+              s: "0x" + reference.signature.s,
               // @ts-ignore
               recoveryParam: reference.signature.recoveryParam,
             });
@@ -724,17 +710,17 @@ export default class DriveComponent extends Vue {
               id: `${block.block}:${index}`,
               name: reference.name,
               item: { txs: block.txs, reference, index },
-              type: 'file_document',
+              type: "file_document",
               action: moment(reference.lastModified).fromNow(),
               title: reference.name,
               headline: reference.contentType,
               subtitle: `hash ${reference.hash.replace(
-                '0x',
-                ''
-              )} signature ${s.replace('0x', '')}`,
+                "0x",
+                ""
+              )} signature ${s.replace("0x", "")}`,
               reference,
-              hash: `${reference.hash.replace('0x', '')}`,
-              signature: `${s.replace('0x', '')}`,
+              hash: `${reference.hash.replace("0x", "")}`,
+              signature: `${s.replace("0x", "")}`,
             };
             return item;
           }
@@ -744,15 +730,18 @@ export default class DriveComponent extends Vue {
         return true;
       });
       await forkJoin(resolved).toPromise();
-      this.items = Object.values(temp).sort( (a: XVDSwarmNodeBlock, b: XVDSwarmNodeBlock) => a.timestamp - b.timestamp);
-      
+      this.items = Object.values(temp).sort(
+        (a: XVDSwarmNodeBlock, b: XVDSwarmNodeBlock) =>
+          a.timestamp - b.timestamp
+      );
+
       this.loading = false;
     };
   }
 
-  @Watch('tree.data')
+  @Watch("tree.data")
   async onTreeChanges(current, old) {
-    const hasItems = current.toString().split(':');
+    const hasItems = current.toString().split(":");
     if (hasItems.length === 2) {
       const node = this.items.find(
         (i) => i.block.toString() === hasItems[0].toString()
@@ -803,7 +792,6 @@ export default class DriveComponent extends Vue {
     await res.downloadFile();
   }
 
-
   close() {
     this.didDialog = false;
     this.fileDialog = false;
@@ -819,7 +807,7 @@ export default class DriveComponent extends Vue {
     await driveManager.pushFiles({
       address: ks.address,
       files: this.files,
-      queueName: 'documents',
+      queueName: "documents",
     });
     this.loading = false;
     this.canUpload = false;
@@ -834,13 +822,13 @@ export default class DriveComponent extends Vue {
     const sig = ethers.utils
       .joinSignature({
         // @ts-ignore
-        r: '0x' + item.signature.r,
+        r: "0x" + item.signature.r,
         // @ts-ignore
-        s: '0x' + item.signature.s,
+        s: "0x" + item.signature.s,
         // @ts-ignore
         recoveryParam: item.signature.recoveryParam,
       })
-      .replace('0x', '');
+      .replace("0x", "");
 
     return `${sig.substring(0, 50)}...${sig.substring(
       sig.length - 50,
