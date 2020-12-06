@@ -10,145 +10,12 @@
 
 </v-dialog>
     <v-card>
-      <v-toolbar color="black accent-4" dark>
+      <v-toolbar color="black accent-4" dark v-if="mode===''">
         <v-toolbar-title>Documents </v-toolbar-title>
 
         <v-spacer></v-spacer>
 
         <template v-slot:extension>
-          <v-btn
-            color="red"
-            dark
-            small
-            absolute
-            bottom
-            right
-            fab
-            :disabled="!wallet.id"
-          >
-            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
-              ><template v-slot:activator>
-                <v-icon>mdi-plus</v-icon>
-              </template>
-
-              <v-tooltip top>
-                <span>Upload</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="canUpload = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-text-box-plus</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-
-              <!-- <v-tooltip top>
-                <span>Send subscription link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    @click="openShareDialog(selected)"
-
-                    dark
-                    v-on="on"
-                    @click="canUpload = true"
-                    small
-                    v-if="selected && selected.type!=='did'"
-                     color="red accent-4"
-                  >
-                    <v-icon>mdi-key-change</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-
-              <v-tooltip top>
-                <span>Share link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="shareTo(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-link-box-variant</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <!-- <v-tooltip top>
-                <span>Send encrypted to</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="openShareDialog(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-publish</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-
-              <v-tooltip top>
-                <span>Copy DID link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="tab === 0"
-                    fab
-                    dark
-                    v-on="on"
-                    @click="handleCopyDIDReference(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-clipboard</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Sign documents</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="openSignatureDialog()"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-file-certificate</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <!--
-              <v-tooltip top>
-                <span>Execute chain job</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="openChainDialog(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-link-lock</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-            </v-speed-dial>
-          </v-btn>
         </template>
       </v-toolbar>
 
@@ -306,38 +173,141 @@
               </v-list>
             </v-card-text>
           </v-card>
+                    <v-btn
+            color="red"
+            dark
+            small
+            absolute
+            bottom
+            right
+            fab
+          >
+            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
+              ><template v-slot:activator>
+                <v-icon>mdi-plus</v-icon>
+              </template>
+
+              <v-tooltip top>
+                <span>Upload</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-on="on"
+                    @click="canUpload = true"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-text-box-plus</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+
+              <!-- <v-tooltip top>
+                <span>Send subscription link</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    @click="openShareDialog(selected)"
+
+                    dark
+                    v-on="on"
+                    @click="canUpload = true"
+                    small
+                    v-if="selected && selected.type!=='did'"
+                     color="red accent-4"
+                  >
+                    <v-icon>mdi-key-change</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              > -->
+
+              <v-tooltip top>
+                <span>Share link</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    v-if="tab === 1 && currentItem"
+                    dark
+                    v-on="on"
+                    @click="shareTo(currentItem)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-link-box-variant</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <!-- <v-tooltip top>
+                <span>Send encrypted to</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    v-if="tab === 1 && currentItem"
+                    dark
+                    v-on="on"
+                    @click="openShareDialog(currentItem)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-publish</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              > -->
+
+              <v-tooltip top>
+                <span>Copy DID link</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="tab === 0"
+                    fab
+                    dark
+                    v-on="on"
+                    @click="handleCopyDIDReference(currentItem)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-clipboard</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Sign documents</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    dark
+                    v-on="on"
+                    @click="openSignatureDialog()"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-file-certificate</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <!--
+              <v-tooltip top>
+                <span>Execute chain job</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    fab
+                    v-if="tab === 1 && currentItem"
+                    dark
+                    v-on="on"
+                    @click="openChainDialog(currentItem)"
+                    small
+                    color="red accent-4"
+                  >
+                    <v-icon>mdi-link-lock</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              > -->
+            </v-speed-dial>
+          </v-btn>
+
         </v-col>
       </v-row>
-      <!-- <v-list two-line flat style="z-index:-5">
-        <v-list-item-group v-model="selected" class="blue--text">
-          <template v-for="(item, index) in items">
-            <v-list-item :key="item.subtitle" @click="openDetail(item)">
-              <v-list-item-content>
-                <v-list-item-title
-                  v-text="item.title"
-                  class="font-weight-medium"
-                ></v-list-item-title>
-                <v-list-item-subtitle
-                  @click="openViewerDialog(item)"
-                  class="text--primary"
-                  v-text="item.headline"
-                ></v-list-item-subtitle>
-                <v-list-item-subtitle
-                  v-text="item.subtitle"
-                ></v-list-item-subtitle>
-              </v-list-item-content>
-
-              <v-list-item-action>
-                <v-list-item-action-text
-                  v-text="item.action"
-                ></v-list-item-action-text>
-              </v-list-item-action>
-            </v-list-item>
-
-            <v-divider v-if="index + 1 < items.length" :key="index"></v-divider>
-          </template>
-        </v-list-item-group>
-      </v-list> -->
     </v-card>
 
     <xdv-unlock
@@ -423,6 +393,8 @@ import { ShareUtils } from '../shared/ShareUtils';
 const cbor = require('cbor-sync');
 
 @Component({
+  name: 'xdv-drive',
+  props: ['wallet', 'mode', 'loading'],
   components: {
     'xdv-unlock': Unlock,
     'xdv-upload': Upload,
@@ -431,7 +403,8 @@ const cbor = require('cbor-sync');
   },
 })
 export default class DriveComponent extends Vue {
-  loading = false;
+  loading;
+  mode;
   loadingAutocomplete = false;
   indexjson = null;
   invalidPassword = false;
@@ -453,6 +426,7 @@ export default class DriveComponent extends Vue {
     png: 'mdi-file-image',
     txt: 'mdi-file-document-outline',
     xls: 'mdi-file-excel',
+    new: 'mdi-plus'
   };
   walletDescription = '';
   search = '';
@@ -483,7 +457,7 @@ export default class DriveComponent extends Vue {
   items = [];
   showMenu = false;
   selectWalletDialog = false;
-  select: KeystoreIndex = {};
+  select: KeystoreIndex = {} as KeystoreIndex;
   wallets: KeystoreIndex[] = [];
   selectedItem = new SwarmNodeSignedContent();
   session = {};
@@ -495,7 +469,7 @@ export default class DriveComponent extends Vue {
   publicWallets = [];
   hasCopyRef = false;
   sub: Unsubscribable;
-  wallet = new Wallet();
+  wallet;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -613,6 +587,16 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
+    // if (this.mode === 'integrated'){
+    //   const { currentKeystore } = await Session.getSessionInfo();
+    //   this.select = currentKeystore;
+    //   this.wallet.id = currentKeystore.keystore;
+    //   this.loading = true;
+    //   await this.loadDirectory(currentKeystore);
+    //   this.loading = false;
+    //   return;
+    // }
+
     await this.loadWallets();
     const ks = await this.loadSession();
   }
@@ -761,7 +745,8 @@ export default class DriveComponent extends Vue {
       });
       await forkJoin(resolved).toPromise();
       this.items = Object.values(temp).sort( (a: XVDSwarmNodeBlock, b: XVDSwarmNodeBlock) => a.timestamp - b.timestamp);
-          this.loading = false;
+      
+      this.loading = false;
     };
   }
 
@@ -826,7 +811,6 @@ export default class DriveComponent extends Vue {
 
   async createDocumentNode() {
     const wallets = await Session.getWalletRefs();
-
     const ks = wallets.find(
       (i: KeystoreIndex) => i.keystore === this.wallet.id
     ) as KeystoreIndex;

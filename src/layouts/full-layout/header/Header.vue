@@ -11,17 +11,6 @@
       </span> -->
     </v-toolbar-title>
     <!---Logo part -->
-    <!---/Toggle sidebar part -->
-    <div @click="showhideLogo">
-      <v-app-bar-nav-icon
-        @click="
-          $vuetify.breakpoint.smAndDown
-            ? setSidebarDrawer(!Sidebar_drawer)
-            : $emit('input', !value)
-        "
-      />
-    </div>
-    <!---/Toggle sidebar part -->
     <!---Search part -->
     <v-btn dark icon class="mr-1 d-sm-block d-none" @click="searchbox">
       <v-icon>mdi-magnify</v-icon>
@@ -110,7 +99,7 @@
     </v-menu> -->
     <!---Messages -->
     <v-row>
-      <v-col> <b>Wallet address</b> {{ walletInfo.address }} </v-col>
+      <!-- <v-col> <b>Wallet address</b> {{ walletInfo.address }} </v-col> -->
     </v-row>
     <!---User -->
     <v-menu

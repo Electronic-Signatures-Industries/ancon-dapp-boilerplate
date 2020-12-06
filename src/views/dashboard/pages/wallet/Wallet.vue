@@ -89,9 +89,9 @@
     }}</v-alert>
 
     <v-card>
-      <v-toolbar color="black accent-4" dark>
+      <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
-      </v-toolbar>
+      </v-toolbar> -->
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
           <v-card-title>
@@ -444,8 +444,9 @@
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
+    <xdv-drive :wallet="wallet" :mode="'integrated'" :loading.sync="loading"></xdv-drive>
+
     </v-card>
-    <!-- <xdv-drive></xdv-drive> -->
     <xdv-link-external-keystore
       v-model="linkExternals"
       :show="linkDialog"
