@@ -331,17 +331,17 @@
                 <v-icon>mdi-wallet</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
+<v-row><v-col>
                 <v-select
                   v-model="currentKeystore"
                   :items="items"
                   :loading="loading"
-                  hide-details
-                  hide-selected
                   item-text="headline"
                   return-object
-                  label="Pick wallet"
+                  chips
                   @change="setWallet"
                 ></v-select>
+                </v-col></v-row>
               </v-list-item-content>
             </v-list-item>
           </v-expansion-panel-header>
@@ -658,7 +658,7 @@ export default class WalletComponent extends Vue {
     const index: KeystoreIndex[] = await Session.getWalletRefs();
 
     const promises = index.map(async (i: KeystoreIndex) => {
-      let headline = `address ${i.address}`;
+      let headline = `address ${i.address.substring(0, 5)}...${i.address.substring(i.address.length-5,i.address.length)}`;
       if (!i.address) {
         // rsa
         headline = "RSA 2048 bits";
