@@ -181,14 +181,6 @@
                     </v-col>
                   </v-row>
                   <v-row
-                    ><v-col
-                      ><v-btn
-                        :disabled="disableBtns"
-                        color="blue darken-1"
-                        text
-                        @click="createKeys"
-                        >Generate</v-btn
-                      ></v-col
                     >
                     <v-col md="12" cols="12">
                       <v-alert text color="blue" v-if="loading">
@@ -284,7 +276,7 @@
               color="blue darken-1"
               :disabled="disableBtns"
               text
-              @click="save"
+              @click="createKeys"
               >Save</v-btn
             >
           </v-card-actions>
@@ -331,17 +323,18 @@
                 <v-icon>mdi-wallet</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
-<v-row><v-col>
-                <v-select
-                  v-model="currentKeystore"
-                  :items="items"
-                  :loading="loading"
-                  item-text="headline"
-                  return-object
-                  chips
-                  @change="setWallet"
-                ></v-select>
-                </v-col></v-row>
+                <v-row
+                  ><v-col>
+                    <v-select
+                      v-model="currentKeystore"
+                      :items="items"
+                      :loading="loading"
+                      item-text="headline"
+                      return-object
+                      chips
+                      @change="setWallet"
+                    ></v-select> </v-col
+                ></v-row>
               </v-list-item-content>
             </v-list-item>
           </v-expansion-panel-header>
@@ -444,8 +437,10 @@
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
-    <xdv-drive :updateWallet="currentKeystore" :mode="'integrated'"></xdv-drive>
-
+      <xdv-drive
+        :updateWallet="currentKeystore"
+        :mode="'integrated'"
+      ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -483,8 +478,8 @@ import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
-import { DIDManager } from './DIDManager';
-const IPFS = require('ipfs-core')
+import { DIDManager } from "./DIDManager";
+const IPFS = require("ipfs-core");
 
 @Component({
   components: {
@@ -560,13 +555,12 @@ export default class WalletComponent extends Vue {
   wallet: Wallet = new Wallet();
   ipfs = null;
 
-
   async destroyed() {
     await this.ipfs.stop();
   }
 
   async mounted() {
-    this.ipfs = await IPFS.create()
+    this.ipfs = await IPFS.create();
     if (location.hash.indexOf("did=") > -1) {
       const did = location.hash.split("did=")[1];
       this.setDIDNameDialog = true;
@@ -585,7 +579,6 @@ export default class WalletComponent extends Vue {
   async onUnlock() {
     this.loading = true;
 
-    await this.loadSession({ reset: true });
     await this.loadWallets();
 
     this.loading = false;
@@ -609,13 +602,13 @@ export default class WalletComponent extends Vue {
     );
   }
 
-  async loadSession(options = { reset: false }) {
-    this.loading = true;
+  // async loadSession(options = { reset: false }) {
+  //   this.loading = true;
 
-    // if (ks) await this.wallet.open(ks.keystore);
+  //   // if (ks) await this.wallet.open(ks.keystore);
 
-    this.loading = false;
-  }
+  //   this.loading = false;
+  // }
 
   addRSA() {
     this.walletType = "rsa";
@@ -663,7 +656,10 @@ export default class WalletComponent extends Vue {
     const index: KeystoreIndex[] = await Session.getWalletRefs();
 
     const promises = index.map(async (i: KeystoreIndex) => {
-      let headline = `address ${i.address.substring(0, 5)}...${i.address.substring(i.address.length-5,i.address.length)}`;
+      let headline = `address ${i.address.substring(
+        0,
+        5
+      )}...${i.address.substring(i.address.length - 5, i.address.length)}`;
       if (!i.address) {
         // rsa
         headline = "RSA 2048 bits";
@@ -695,8 +691,7 @@ export default class WalletComponent extends Vue {
 
     this.items = await forkJoin(promises).toPromise();
     this.searchResults = index;
-    this.currentKeystore = this.items[0];
-    console.log(this.currentKeystore);
+    this.currentKeystore = currentKeystore;
   }
   keystoreIndexItem = new KeystoreIndex();
 
@@ -720,6 +715,7 @@ export default class WalletComponent extends Vue {
         isDefault: true,
       },
     });
+    await this.wallet.open(this.currentKeystore.keystore);
   }
 
   async save(item) {
@@ -778,18 +774,16 @@ export default class WalletComponent extends Vue {
     const type = Object.keys(mapping)[current];
     this.items = this.itemsClone.filter((i) => i.walletType === type);
   }
-  
+
   async createKeys() {
+    setImmediate(() => (this.disableBtns = true));
     this.alertType = "";
     this.alertMessage = "";
     this.canCreateWallet = true;
     this.canShowMnemonic = false;
-    setTimeout(() => {
-      this.loading = true;
-      this.valid = true;
-    }, 50);
+    this.loading = true;
+    this.valid = true;
 
-    this.disableBtns = true;
     const wallet = new Wallet();
     let mnemonic = wallet.mnemonic;
     let keys;
@@ -840,25 +834,22 @@ export default class WalletComponent extends Vue {
             this.mnemonic = wallet.mnemonic.split(" ");
             const manager = new DIDManager();
             const ipnsRes = await manager.createDID(
-              keystoreIndexItem,              
+              keystoreIndexItem,
               wallet,
               this.ipfs,
-              (m) => this.alertMessage = m
+              (m) => (this.alertMessage = m)
             );
           }
           break;
       }
 
-      this.canShowMnemonic = true;
-      this.canCreateWallet = false;
       this.loading = false;
       this.keystoreIndexItem = keystoreIndexItem;
-      this.selectedPanel = 1;
-
+      await this.save(this.keystoreIndexItem)
       this.alertMessage = "Completed";
       setTimeout(() => {
         this.alertMessage = "";
-      }, 1500);
+      }, 2500);
       this.disableBtns = false;
     } catch (e) {
       this.valid = false;

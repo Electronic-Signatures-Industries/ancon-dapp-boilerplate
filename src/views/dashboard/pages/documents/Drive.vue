@@ -488,7 +488,9 @@ export default class DriveComponent extends Vue {
   @Watch("updateWallet")
   async onUpdateWallet(prev, next) {
     this.items = [];
-    await this.wallet.open(this.updateWallet.keystore);
+    await this.loadWallets();
+    let { currentKeystore, unlock } = await Session.getSessionInfo();
+
     await this.loadDirectory(this.updateWallet);
   }
 

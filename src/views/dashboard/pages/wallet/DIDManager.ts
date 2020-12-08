@@ -45,7 +45,6 @@ export class DIDManager {
         const res = await ipfs.name.publish(`/ipfs/${cid}`);
 
         console.log(res);
-        debugger
         // const directory = {
         //     'file': { data: Buffer.from('nice essay') },
         //     'other-file': { data: Buffer.from('nice essay') },

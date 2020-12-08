@@ -68,7 +68,7 @@ export default new Router({
         //   component: MessagingComponent
         // },
         {
-          path: "wallet",
+          path: "/",
           name: "wallet",
           // @ts-ignore
           component: WalletComponent
