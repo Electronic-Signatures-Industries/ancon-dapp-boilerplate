@@ -240,22 +240,6 @@
               > -->
 
               <v-tooltip top>
-                <span>Copy DID link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="tab === 0"
-                    fab
-                    dark
-                    v-on="on"
-                    @click="handleCopyDIDReference(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-clipboard</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
                 <span>Sign documents</span>
                 <template v-slot:activator="{ on }">
                   <v-btn
