@@ -87,7 +87,7 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-
+<v-alert><a href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing">Download PKCS#11 Java Signer</a></v-alert>
     <v-card>
       <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
@@ -320,7 +320,15 @@
           <v-expansion-panel-header>
             <v-list-item>
               <v-list-item-avatar>
-                <v-icon>mdi-wallet</v-icon>
+                <v-tooltip top>
+                  <span>Create wallet</span>
+                  <template v-slot:activator="{ on }">
+                    <v-btn v-on="on" @click="dialog = true" small>
+                      <v-icon>mdi-wallet-plus</v-icon>
+                    </v-btn>
+                  </template></v-tooltip
+                >
+
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-row
@@ -351,13 +359,13 @@
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to Smart Card</b>
-                      {{ !!currentKeystore.hasPKCS11 ? "yes" : "no" }}
+                      {{ currentKeystore.hasPKCS11 === true ? "yes" : "no" }}
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to P12</b>
-                      {{ !!currentKeystore.hasRSAKeys ? "yes" : "no" }}
+                      {{ currentKeystore.hasPKCS12 === true ? "yes" : "no" }}
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>
@@ -370,14 +378,6 @@
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-tooltip top>
-                  <span>Create wallet</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn v-on="on" @click="dialog = true" small>
-                      <v-icon>mdi-wallet-plus</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
 
                 <v-tooltip top>
                   <span>Link external</span>
@@ -443,7 +443,7 @@
       ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
-      v-model="linkExternals"
+      v-model="linkExternals" :wallet="wallet"
       :show="linkDialog"
       :keystore="currentKeystore"
       @input="loadWallets"
@@ -602,14 +602,6 @@ export default class WalletComponent extends Vue {
     );
   }
 
-  // async loadSession(options = { reset: false }) {
-  //   this.loading = true;
-
-  //   // if (ks) await this.wallet.open(ks.keystore);
-
-  //   this.loading = false;
-  // }
-
   addRSA() {
     this.walletType = "rsa";
     this.dialog = true;
@@ -668,18 +660,17 @@ export default class WalletComponent extends Vue {
         currentKeystore &&
         currentKeystore.isDefault &&
         currentKeystore.keystore === i.keystore;
-      console.log(currentKeystore.isDefault);
       let hasRSAKeys = await this.hasRSAKeys(i.keystore);
       i.linkedExternalKeystores = i.linkedExternalKeystores || {};
       const hasWalletConnect = !!i.linkedExternalKeystores.walletconnect;
       const hasLedger = !!i.linkedExternalKeystores.ledger;
-
       this.lastDefault = i.keystore;
       return {
         hasRSAKeys,
         hasWalletConnect,
         hasLedger,
-        hasPKCS11: i.linkedExternalKeystores.pkcs11,
+        hasPKCS11: !!i.linkedExternalKeystores.pkcs11,
+        hasPKCS12: !!i.linkedExternalKeystores.pkcs12,
         ...i,
         isDefault,
         action: moment(i.created).fromNow(),
@@ -691,7 +682,7 @@ export default class WalletComponent extends Vue {
 
     this.items = await forkJoin(promises).toPromise();
     this.searchResults = index;
-    this.currentKeystore = currentKeystore;
+    this.currentKeystore = this.items.find(i => i.keystore === currentKeystore.keystore);
   }
   keystoreIndexItem = new KeystoreIndex();
 

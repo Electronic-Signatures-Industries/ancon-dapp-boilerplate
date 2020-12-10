@@ -1,43 +1,9 @@
 <template>
   <v-content>
-    <v-dialog v-model="showSCLogin" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Enter smartcard PIN</span>
-        </v-card-title>
-
-        <v-card-text>
-          <v-form autocomplete="off">
-            <v-row>
-              <v-col cols="12" md="12">
-                <v-text-field
-                  required
-                  v-model="pin"
-                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  :type="showPassword ? 'text' : 'password'"
-                  class="input-group--focused"
-                  @click:append="showPassword = !showPassword"
-                  :error="!!validations.password"
-                  :hint="validations.password"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-form>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="showSCLogin = false"
-            >Cancel</v-btn
-          >
-          <v-btn color="blue darken-1" text @click="loginSmartCard">OK</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
     <v-dialog v-model="show" max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="headline">Link external hardware / software module</span>
+          <span class="headline">Add Signing Modules</span>
         </v-card-title>
 
         <v-card-text>
@@ -132,11 +98,46 @@
                   item-text="key"
                   class="font-weight-medium"
                   item-value="value"
+                  v-if="!p12.canSelect"
                   @input="setHardwareModule"
                   label="Select hardware module slot"
                   single-line
                 ></v-select>
               </v-col>
+              <v-row>
+                <v-col cols="12" md="12">
+                  <v-file-input
+                    prepend-icon="mdi-paperclip"
+                    v-model="p12.file"
+                    show-size
+                    class="font-weight-medium"
+                    v-if="p12.canSelect"
+                    label="P12"
+                    @input="storeP12"
+                    dense
+                  ></v-file-input>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="6" md="6">
+                  <v-text-field
+                    required
+                    v-model="pin"
+                    @blur="setPIN"
+                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    :type="showPassword ? 'text' : 'password'"
+                    class="input-group--focused"
+                    @click:append="showPassword = !showPassword"
+                    :error="!!validations.password"
+                    :hint="validations.password"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="6" md="6">
+                  <v-alert text color="green" v-if="message">{{
+                    message
+                  }}</v-alert>
+                </v-col>
+              </v-row>
             </v-row>
 
             <v-row>
@@ -167,112 +168,102 @@
   </v-content>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet/src';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { TypedRFE, TasaISC, ISC } from "xdvplatform-wallet/src";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
-import { SmartCardConnectorPKCS11 } from '../shared/SmartCardConnector';
-import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
-import Eth from '@ledgerhq/hw-app-eth';
+import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
+import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
+import Eth from "@ledgerhq/hw-app-eth";
 import {
   KeystoreIndex,
   Capability,
   DIDSigner,
   X509Signer,
-} from '../shared/KeystoreIndex';
-import { Session } from '../shared/Session';
-import { async } from 'rxjs/internal/scheduler/async';
-import {
-  PKCS11ToolBindingsConfig,
-  PKCS11ToolBindings,
-} from '../shared/PKCS11ToolBindings';
-import { map, filter } from 'rxjs/operators';
+} from "../shared/KeystoreIndex";
+import { Session } from "../shared/Session";
+import { async } from "rxjs/internal/scheduler/async";
+import { map, filter } from "rxjs/operators";
+import { Wallet } from "xdvplatform-wallet";
+import forge from "node-forge";
 
 @Component({
-  name: 'xdv-link-external-keystore',
-  props: ['show', 'value', 'keystore'],
+  name: "xdv-link-external-keystore",
+  props: ["show", "value", "keystore", "wallet"],
 })
 export default class LinkExternalKeystore extends Vue {
+  wallet: Wallet;
   value: {
-    type: 'walletconnect' | 'xdv' | 'pkcs11' | 'ledger';
+    type: "walletconnect" | "xdv" | "pkcs11" | "ledger";
     defaultDIDSigner: DIDSigner;
     defaultX509Signer: X509Signer;
-    hw: '';
+    hw: "";
   };
   show;
   keystore: KeystoreIndex;
 
   defaultDIDSignerOptions = [
     {
-      key: 'Ledger',
+      key: "Ledger",
       value: DIDSigner.Ledger,
     },
-    // {
-    //   key: 'WalletConnect',
-    //   value: DIDSigner.Walletconnect,
-    // },
     {
-      key: 'XDV',
+      key: "WalletConnect",
+      value: DIDSigner.Walletconnect,
+    },
+    {
+      key: "XDV",
       value: DIDSigner.XDV,
     },
   ];
   defaultX509SignerOptions = [
     {
-      key: 'PKCS#11',
+      key: "PKCS#12",
+      value: X509Signer.PKCS12,
+    },
+    {
+      key: "PKCS#11",
       value: X509Signer.PKCS11,
     },
     // {
-    //   key: 'PKCS#12',
-    //   value: X509Signer.PKCS12,
+    //   key: 'XDV Self Signed',
+    //   value: X509Signer.XDV,
     // },
-    {
-      key: 'XDV Self Signed',
-      value: X509Signer.XDV,
-    },
   ];
   loading = false;
-  alertMessage: string = '';
-  alertType: string = '';
-  pin = '';
-  showPassword = '';
-  isLoginSmartCardReady: boolean;
+  alertMessage: string = "";
+  alertType: string = "";
+  pin = "";
+  showPassword = "";
   validations = { password: undefined };
-  showSCLogin = false;
   slots = [];
+  p12 = {
+    file: undefined,
+    canSelect: false,
+  };
+  message = "";
   smartCardConnector = new SmartCardConnectorPKCS11();
 
   async setHardwareModule() {}
 
-  async loginSmartCard() {
-    try {
-      // // login
-      // const config = this.pkcs11Config;
-      // config.isSimulator = true;
-      // await smartCardConnector.login(this.pin);
-      this.isLoginSmartCardReady = true;
-      // this.validations.password = 'Invalid PIN';
-      // await this.linkSmartCard();
-      this.showSCLogin = false;
-    } catch (e) {
-      console.log(e);
-      this.validations.password = false;
-      this.isLoginSmartCardReady = false;
+  async setPIN() {
+    if (this.value.defaultX509Signer === X509Signer.PKCS12) {
+      await this.storeP12();
     }
   }
 
   async linkLedger() {
     const transport = await TransportWebUSB.open();
     const eth = new Eth(transport);
-
     const addr = await eth.getAddress("44'/60'/0'/0/0");
   }
 
   async linkSmartCard() {
     // login
-    this.slots = await this.smartCardConnector.getSlots();
+    this.slots = (await this.smartCardConnector.getSlots()) as any;
     await this.onSelectHWModule(this.slots[0], null);
   }
 
-  @Watch('value.hw')
+  @Watch("value.hw")
   async onSelectHWModule(current, old) {
     let keystore;
     if (this.value.defaultX509Signer === X509Signer.PKCS11) {
@@ -293,19 +284,97 @@ export default class LinkExternalKeystore extends Vue {
     await Session.setWalletRefs(keystore, true);
   }
 
+  getKeyFromP12(p12: any, password: string) {
+    const keyData = p12.getBags(
+      { bagType: forge.pki.oids.pkcs8ShroudedKeyBag },
+      password
+    );
+    let pkcs8Key = keyData[forge.pki.oids.pkcs8ShroudedKeyBag][0];
+
+    if (typeof pkcs8Key === "undefined") {
+      pkcs8Key = keyData[forge.pki.oids.keyBag][0];
+    }
+
+    if (typeof pkcs8Key === "undefined") {
+      throw new Error("Unable to get private key.");
+    }
+
+    let pemKey = forge.pki.privateKeyToPem(pkcs8Key.key);
+    pemKey = pemKey.replace(/\r\n/g, "");
+
+    return pemKey;
+  }
+
+  getCertificateFromP12(p12: any) {
+    const certData = p12.getBags({ bagType: forge.pki.oids.certBag });
+    const certificate = certData[forge.pki.oids.certBag][0];
+
+    let pemCertificate = forge.pki.certificateToPem(certificate.cert);
+    pemCertificate = pemCertificate.replace(/\r\n/g, "");
+    const commonName = certificate.cert.subject.attributes[0].value;
+    return { pemCertificate, commonName };
+  }
+
+  arrayBufferToBase64(buffer) {
+    let binary = "";
+    let bytes = new Uint8Array(buffer);
+    let len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
+
+  async storeP12() {
+    let keystore;
+    let ab = await (this.p12.file as Blob).arrayBuffer();
+    let b64 = this.arrayBufferToBase64(ab);
+    const temp = forge.asn1.fromDer(forge.util.decode64(b64), false);
+    const p12 = forge.pkcs12.pkcs12FromAsn1(temp, this.pin);
+    const { pemCertificate, commonName } = this.getCertificateFromP12(p12);
+    this.message = commonName;
+    const key = this.getKeyFromP12(p12, this.pin);
+
+    //  const pvk = forge.pki.privateKeyFromPem(key); // PEM
+    // const certificate = forge.pki.certificateFromPem(pemCertificate); // PEM
+
+    if (this.value.defaultX509Signer === X509Signer.PKCS12) {
+      keystore = {
+        ...this.keystore,
+        linkedExternalKeystores: {
+          ...this.keystore.linkedExternalKeystores,
+          pkcs12: {
+            name: commonName,
+            capability: Capability.Any,
+          },
+        },
+      };
+    }
+debugger
+    await this.wallet.setImportKey(`import:P12:${this.wallet.id}`, {
+      pvk: key,
+      certificate: pemCertificate,
+    });
+    this.keystore = keystore;
+    await Session.setWalletRefs(keystore, true);
+  }
+
   async mounted() {
+    this.value.defaultX509Signer = X509Signer.PKCS11;
     await this.smartCardConnector.initialize();
-    this.smartCardConnector.subscribe.pipe(
-      filter((i) => i && i.type === 'slots'),
-      map((res) => {
-        return Object.keys(res.slots).map((k) => {
-          return {
-            value: JSON.parse(res.slots[k]),
-            key: JSON.parse(res.slots[k]).slotDescription,
-          };
-        });
-      })
-    ).subscribe(i => this.slots = i);
+    this.smartCardConnector.subscribe
+      .pipe(
+        filter((i) => i && i.type === "slots"),
+        map((res) => {
+          return Object.keys(res.slots).map((k) => {
+            return {
+              value: JSON.parse(res.slots[k]),
+              key: JSON.parse(res.slots[k]).slotDescription,
+            };
+          });
+        })
+      )
+      .subscribe((i) => (this.slots = i));
   }
 
   async setDefaultSignerProtocol() {
@@ -319,13 +388,17 @@ export default class LinkExternalKeystore extends Vue {
   }
   async change() {
     await this.setDefaultSignerProtocol();
-    this.$emit('input', this.value);
+    this.$emit("input", this.value);
   }
 
-  @Watch('value.defaultX509Signer')
+  @Watch("value.defaultX509Signer")
   async onX509SignerChange(current: X509Signer) {
     if (current === X509Signer.PKCS11) {
+      this.p12.canSelect = false;
       await this.linkSmartCard();
+    } else if (current === X509Signer.PKCS12) {
+      this.p12.canSelect = true;
+      this.commonName = "";
     } else {
       const keystore = {
         ...this.keystore,
@@ -337,7 +410,7 @@ export default class LinkExternalKeystore extends Vue {
     }
   }
 
-  @Watch('value.defaultDIDSigner')
+  @Watch("value.defaultDIDSigner")
   async onDIDSignerChange(current: DIDSigner) {
     if (current === DIDSigner.Ledger) {
       await this.linkLedger();

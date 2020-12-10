@@ -34,10 +34,17 @@
     </v-dialog>
 
     <v-dialog v-model="show" max-width="500px">
-      <v-card>
+      <v-card dark color="indigo">
         <v-card-title>
-          <span class="headline"
-            >Enter passphrase for wallet {{ currentKeystore.name }}</span
+          <v-row>
+            <v-col> <div class="subtitle">Unlock</div></v-col></v-row
+          >
+          <v-row
+            ><v-col>
+              <div>
+                <h6 class="subtitle">{{ currentKeystore.address }}</h6>
+              </div></v-col
+            ></v-row
           >
         </v-card-title>
 
@@ -46,7 +53,8 @@
             <v-row>
               <v-col cols="12" md="12">
                 <v-text-field
-                  required  v-on:keyup.enter="change"
+                  required
+                  v-on:keyup.enter="change"
                   v-model="value"
                   :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="showPassword ? 'text' : 'password'"
@@ -62,25 +70,25 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="cancel">Cancel</v-btn>
-          <v-btn color="blue darken-1" text @click="change">OK</v-btn>
+          <v-btn color="pink darken-1" text @click="cancel">Cancel</v-btn>
+          <v-btn color="pink darken-1" text @click="change">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
   </v-content>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC, Wallet } from 'xdvplatform-wallet/src';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Session } from '../shared/Session';
-import { Subject } from 'rxjs';
-import { KeystoreIndex, DIDSigner } from '../shared/KeystoreIndex';
-import { ethers } from 'ethers';
+import { TypedRFE, TasaISC, ISC, Wallet } from "xdvplatform-wallet/src";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Session } from "../shared/Session";
+import { Subject } from "rxjs";
+import { KeystoreIndex, DIDSigner } from "../shared/KeystoreIndex";
+import { ethers } from "ethers";
 @Component({
-  name: 'xdv-unlock',
-  props: ['value', 'txview', 'wallet'],
+  name: "xdv-unlock",
+  props: ["value", "txview", "wallet"],
   watch: {
-    show: async function(current, old) {
+    show: async function (current, old) {
       if (old === false && current) {
         const { unlock } = await Session.getSessionInfo();
         if (unlock) {
@@ -157,7 +165,7 @@ export default class Unlock extends Vue {
         let { currentKeystore, unlock } = await Session.getSessionInfo();
         this.show = false === !!this.wallet.mnemonic;
         this.currentKeystore = currentKeystore;
-        if (i.type === 'wallet') {
+        if (i.type === "wallet") {
           if (this.show) {
             this.sub3 = this.passphraseSubject.subscribe(async (passphrase) => {
               await Session.set({
@@ -165,23 +173,23 @@ export default class Unlock extends Vue {
                 unlock: true,
               });
               this.wallet.onRequestPassphraseWallet.next({
-                type: 'ui',
+                type: "ui",
                 passphrase,
               });
             });
           }
-        } else if (i.type === 'request_tx') {
+        } else if (i.type === "request_tx") {
           this.canRequestTx = true;
-          if (typeof i.payload === 'object') {
+          if (typeof i.payload === "object") {
             this.payload = JSON.stringify(i.payload);
           } else {
             this.payload = ethers.utils.hexlify(i.payload);
           }
-        } else if (i.type === 'error') {
-          this.validations.password = 'Invalid passphrase';
-        } else if (i.type === 'done') {
+        } else if (i.type === "error") {
+          this.validations.password = "Invalid passphrase";
+        } else if (i.type === "done") {
           this.validations.password = undefined;
-          this.$emit('load');
+          this.$emit("load");
         }
       }
     );
@@ -194,7 +202,7 @@ export default class Unlock extends Vue {
   //  @Watch('accepted')
   onRequestAction(accepted) {
     this.wallet.onRequestPassphraseWallet.next({
-      type: 'request_tx_response',
+      type: "request_tx_response",
       accepted,
     });
     this.canRequestTx = false;

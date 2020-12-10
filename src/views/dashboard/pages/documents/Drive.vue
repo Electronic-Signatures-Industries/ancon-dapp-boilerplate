@@ -245,7 +245,7 @@
                   <v-btn
                     fab
                     dark
-                    v-on="on"
+                    v-on="on" v-if="currentItem.linkedExternalKeystores"
                     @click="openSignatureDialog()"
                     small
                     color="red accent-4"

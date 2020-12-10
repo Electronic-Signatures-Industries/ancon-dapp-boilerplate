@@ -23,6 +23,11 @@ export class LinkedExternalKeystores {
         chain: number;
         capability: Capability;
     };
+    pkcs12?: {
+        privateKey: string;
+        certificate: string;
+        capability: Capability;
+    };
     pkcs11?: {
         tokenIndex: string;
         capability: Capability;

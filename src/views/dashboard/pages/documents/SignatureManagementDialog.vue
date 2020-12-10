@@ -298,14 +298,14 @@
           :wallet="this.value.wallet"
         ></xdv-unlock> -->
         <v-card-actions>
-          <v-btn
+          <v-btn v-if="currentKeystore.linkedExternalKeystores.pkcs11"
             color="blue darken-1"
             text
             :disabled="loading"
             @click="signQualified"
             >{{ executeLabel }} Qualified PKCS#11</v-btn
           >
-          <v-btn color="blue darken-1" text :disabled="true" @click="signFE"
+          <v-btn color="blue darken-1" text :disabled="loading" v-if="currentKeystore.linkedExternalKeystores.pkcs12" @click="signQualifiedP12"
             >{{ executeLabel }} P12</v-btn
           >
           <v-spacer></v-spacer>
@@ -357,6 +357,7 @@ import {
   Wallet,
   CMSSigner,
   XmlDsig,
+  KeyConvert,
 } from "xdvplatform-wallet/src";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { KeystoreIndex, X509Signer } from "../shared/KeystoreIndex";
@@ -425,6 +426,9 @@ export default class SignatureManagementDialog extends Vue {
   pin = "";
   showPassword = false;
   unlockPin: boolean = false;
+  currentKeystore: KeystoreIndex = {
+    linkedExternalKeystores: {}
+  } as any;
 
   @Watch("value.operation")
   async onChangeOps(ops, oldVal) {
@@ -503,6 +507,8 @@ export default class SignatureManagementDialog extends Vue {
     this.value.algorithm = "RSA";
     this.value.isBinaryEnabled = true;
     const w = await Session.getWalletRefs();
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
+    this.currentKeystore = w.find(i => i.keystore === currentKeystore.keystore);
 
     await this.sc.initialize();
     this.sc.subscribe
@@ -701,6 +707,49 @@ export default class SignatureManagementDialog extends Vue {
         result = CMSSigner.sign(
           rsaKeys.key.selfSignedCert,
           rsaKeys.key.pemAsPrivate,
+          Buffer.from(data)
+        );
+
+        // store ref
+        this.shareFormat = {
+          content: base64.encode(Buffer.from(data)),
+          pubCert: rsaKeys.key.selfSignedCert,
+          signature: result,
+        };
+        this.value.output = SigningOutput.PKCS7PEM;
+      }
+      this.hasSignature = true;
+      this.shareSignature(result);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async signQualifiedP12() {
+    const { currentKeystore, unlock } = await Session.getSessionInfo();
+    const address = currentKeystore.address;
+
+    const apiurl = `${(Vue as any).appconfig.WEB_API}xdv_verify`;
+
+
+
+    let result;
+    if (!this.value.files) return;
+    try {
+      // @ts-ignore
+      let data = await this.value.files.arrayBuffer();
+
+      if (
+        currentKeystore.defaultX509Signer === X509Signer.PKCS12
+      ) {
+        // Get key using get import key
+        const rsaKeys: any = await this.wallet.getImportKey(
+          `import:P12:${this.wallet.id}`
+        );
+        // Sign
+        result = CMSSigner.sign(
+          rsaKeys.certificate,
+          rsaKeys.pvk,
           Buffer.from(data)
         );
 
