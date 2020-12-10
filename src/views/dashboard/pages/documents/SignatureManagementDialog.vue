@@ -371,6 +371,7 @@ import Unlock from "./Unlock.vue";
 import "share-api-polyfill";
 import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
 import { filter } from "rxjs/operators";
+import forge from "node-forge";
 
 export const SignOutput = [
   { key: "QR Code", value: SigningOutput.QR },
@@ -509,7 +510,6 @@ export default class SignatureManagementDialog extends Vue {
     const w = await Session.getWalletRefs();
     const { currentKeystore, unlock } = await Session.getSessionInfo();
     this.currentKeystore = w.find(i => i.keystore === currentKeystore.keystore);
-
     await this.sc.initialize();
     this.sc.subscribe
       .pipe(filter((i) => i && i.type === "signing"))
@@ -702,7 +702,6 @@ export default class SignatureManagementDialog extends Vue {
         const rsaKeys: any = await this.wallet.getImportKey(
           `import:X509:${this.wallet.id}`
         );
-
         // Sign
         result = CMSSigner.sign(
           rsaKeys.key.selfSignedCert,
@@ -716,7 +715,7 @@ export default class SignatureManagementDialog extends Vue {
           pubCert: rsaKeys.key.selfSignedCert,
           signature: result,
         };
-        this.value.output = SigningOutput.PKCS7PEM;
+        this.value.output = SigningOutput.Base64;
       }
       this.hasSignature = true;
       this.shareSignature(result);
@@ -744,22 +743,27 @@ export default class SignatureManagementDialog extends Vue {
       ) {
         // Get key using get import key
         const rsaKeys: any = await this.wallet.getImportKey(
-          `import:P12:${this.wallet.id}`
+          `key:P12:${this.wallet.id}`
         );
-        // Sign
+        const keys = JSON.parse(rsaKeys.key);
+     
+//     const pvk = forge.pki.privateKeyFromPem(key); // PEM
+  //  const certificate = forge.pki.certificateFromPem(pemCertificate); // PEM
+
+     // Sign
         result = CMSSigner.sign(
-          rsaKeys.certificate,
-          rsaKeys.pvk,
+          keys.certificate,
+          keys.pvk,
           Buffer.from(data)
         );
 
         // store ref
         this.shareFormat = {
           content: base64.encode(Buffer.from(data)),
-          pubCert: rsaKeys.key.selfSignedCert,
+          pubCert: keys.certificate,
           signature: result,
         };
-        this.value.output = SigningOutput.PKCS7PEM;
+        this.value.output = SigningOutput.Base64;
       }
       this.hasSignature = true;
       this.shareSignature(result);

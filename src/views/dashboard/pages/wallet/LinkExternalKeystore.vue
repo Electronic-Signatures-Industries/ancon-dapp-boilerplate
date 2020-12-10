@@ -335,9 +335,6 @@ export default class LinkExternalKeystore extends Vue {
     this.message = commonName;
     const key = this.getKeyFromP12(p12, this.pin);
 
-    //  const pvk = forge.pki.privateKeyFromPem(key); // PEM
-    // const certificate = forge.pki.certificateFromPem(pemCertificate); // PEM
-
     if (this.value.defaultX509Signer === X509Signer.PKCS12) {
       keystore = {
         ...this.keystore,
@@ -350,11 +347,17 @@ export default class LinkExternalKeystore extends Vue {
         },
       };
     }
-debugger
-    await this.wallet.setImportKey(`import:P12:${this.wallet.id}`, {
-      pvk: key,
-      certificate: pemCertificate,
-    });
+    await this.wallet.setImportKey(
+      `key:P12:${this.wallet.id}`,
+      JSON.stringify({
+        pvk: key,
+        certificate: pemCertificate,
+      }) as any
+    );
+    const rsaKeys: any = await this.wallet.getImportKey(
+      `key:P12:${this.wallet.id}`
+    );
+
     this.keystore = keystore;
     await Session.setWalletRefs(keystore, true);
   }

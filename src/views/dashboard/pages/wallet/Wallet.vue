@@ -87,7 +87,12 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-<v-alert><a href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing">Download PKCS#11 Java Signer</a></v-alert>
+    <v-alert
+      ><a
+        href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
+        >Download PKCS#11 Java Signer</a
+      ></v-alert
+    >
     <v-card>
       <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
@@ -180,8 +185,7 @@
                       ></v-text-field>
                     </v-col>
                   </v-row>
-                  <v-row
-                    >
+                  <v-row>
                     <v-col md="12" cols="12">
                       <v-alert text color="blue" v-if="loading">
                         <v-progress-circular
@@ -328,7 +332,6 @@
                     </v-btn>
                   </template></v-tooltip
                 >
-
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-row
@@ -365,7 +368,8 @@
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to P12</b>
-                      {{ currentKeystore.hasPKCS12 === true ? "yes" : "no" }}
+                      {{ currentKeystore.hasPKCS12 === true ? 
+                      currentKeystore.linkedExternalKeystores.pkcs12.name : "no" }}
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>
@@ -438,12 +442,14 @@
         </v-expansion-panel>
       </v-expansion-panels>
       <xdv-drive
-        :updateWallet="currentKeystore"
+        :updateWallet="currentKeystore" 
+      :wallet="wallet"
         :mode="'integrated'"
       ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
-      v-model="linkExternals" :wallet="wallet"
+      v-model="linkExternals"
+      :wallet="wallet"
       :show="linkDialog"
       :keystore="currentKeystore"
       @input="loadWallets"
@@ -573,7 +579,13 @@ export default class WalletComponent extends Vue {
         );
       };
     }
-    await this.loadWallets();
+    let { currentKeystore, unlock } = await Session.getSessionInfo();
+    if (currentKeystore === null) {
+      this.dialog = true;
+      return;
+    }
+
+    await this.wallet.open(currentKeystore.keystore);
   }
 
   async onUnlock() {
@@ -682,7 +694,9 @@ export default class WalletComponent extends Vue {
 
     this.items = await forkJoin(promises).toPromise();
     this.searchResults = index;
-    this.currentKeystore = this.items.find(i => i.keystore === currentKeystore.keystore);
+    this.currentKeystore = this.items.find(
+      (i) => i.keystore === currentKeystore.keystore
+    );
   }
   keystoreIndexItem = new KeystoreIndex();
 
@@ -836,7 +850,7 @@ export default class WalletComponent extends Vue {
 
       this.loading = false;
       this.keystoreIndexItem = keystoreIndexItem;
-      await this.save(this.keystoreIndexItem)
+      await this.save(this.keystoreIndexItem);
       this.alertMessage = "Completed";
       setTimeout(() => {
         this.alertMessage = "";

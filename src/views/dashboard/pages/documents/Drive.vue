@@ -245,7 +245,7 @@
                   <v-btn
                     fab
                     dark
-                    v-on="on" v-if="currentItem.linkedExternalKeystores"
+                    v-on="on" v-if="updateWallet.linkedExternalKeystores"
                     @click="openSignatureDialog()"
                     small
                     color="red accent-4"
@@ -277,11 +277,11 @@
       </v-row>
     </v-card>
 
-    <xdv-unlock
+    <!-- <xdv-unlock
       v-model="password"
       :wallet="wallet"
       @load="onUnlock"
-    ></xdv-unlock>
+    ></xdv-unlock> -->
 
     <xdv-upload
       :loading="loading"
@@ -362,7 +362,7 @@ const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode"],
+  props: ["updateWallet", "mode", "wallet"],
   components: {
     "xdv-unlock": Unlock,
     "xdv-upload": Upload,
@@ -437,7 +437,7 @@ export default class DriveComponent extends Vue {
   publicWallets = [];
   hasCopyRef = false;
   sub: Unsubscribable;
-  wallet = new Wallet();
+  wallet;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -474,7 +474,6 @@ export default class DriveComponent extends Vue {
     this.items = [];
     await this.loadWallets();
     let { currentKeystore, unlock } = await Session.getSessionInfo();
-
     await this.loadDirectory(this.updateWallet);
   }
 
@@ -555,10 +554,10 @@ export default class DriveComponent extends Vue {
     if (currentKeystore && options.reset === false) {
       this.select = currentKeystore;
 
-      await this.wallet.open(this.select.keystore);
+      // await this.wallet.open(this.select.keystore);
     } else if (this.select) {
       await Session.set({ ks: this.select } as any);
-      await this.wallet.open(this.select.keystore);
+      // await this.wallet.open(this.select.keystore);
     }
     this.loadingAutocomplete = false;
     this.loading = false;
@@ -568,6 +567,7 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
+    await this.loadDirectory(ks)
   }
 
   async loadWallets() {
