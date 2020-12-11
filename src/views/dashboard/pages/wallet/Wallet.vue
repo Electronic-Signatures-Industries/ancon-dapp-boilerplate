@@ -368,7 +368,7 @@
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to P12</b>
-                      {{ currentKeystore.hasPKCS12 === true ? 
+                      {{ !!currentKeystore.linkedExternalKeystores ? 
                       currentKeystore.linkedExternalKeystores.pkcs12.name : "no" }}
                     </v-list-item-content>
                   </v-list-item>

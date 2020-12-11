@@ -347,19 +347,23 @@ export default class LinkExternalKeystore extends Vue {
         },
       };
     }
-    await this.wallet.setImportKey(
-      `key:P12:${this.wallet.id}`,
-      JSON.stringify({
-        pvk: key,
-        certificate: pemCertificate,
-      }) as any
-    );
-    const rsaKeys: any = await this.wallet.getImportKey(
-      `key:P12:${this.wallet.id}`
-    );
+    try {
+      await this.wallet.setImportKey(
+        `key:P12:${this.wallet.id}`,
+        JSON.stringify({
+          pvk: key,
+          certificate: pemCertificate,
+        }) as any
+      );
+      const rsaKeys: any = await this.wallet.getImportKey(
+        `key:P12:${this.wallet.id}`
+      );
 
-    this.keystore = keystore;
-    await Session.setWalletRefs(keystore, true);
+      this.keystore = keystore;
+      await Session.setWalletRefs(keystore, true);
+    } catch (e) {
+      this.message = 'P12 slot already assigned'
+    }
   }
 
   async mounted() {
