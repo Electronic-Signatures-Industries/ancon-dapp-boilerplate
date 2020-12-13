@@ -362,14 +362,13 @@
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to Smart Card</b>
-                      {{ currentKeystore.hasPKCS11 === true ? "yes" : "no" }}
+                      {{ getP11Name(currentKeystore) }}
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Linked to P12</b>
-                      {{ !!currentKeystore.linkedExternalKeystores ? 
-                      currentKeystore.linkedExternalKeystores.pkcs12.name : "no" }}
+                      {{ getP12Name(currentKeystore) }}
                     </v-list-item-content>
                   </v-list-item>
                   <v-list-item>
@@ -586,6 +585,24 @@ export default class WalletComponent extends Vue {
     }
 
     await this.wallet.open(currentKeystore.keystore);
+  }
+
+  getP11Name() {
+    if (this.currentKeystore &&
+    this.currentKeystore.linkedExternalKeystores &&
+    this.currentKeystore.linkedExternalKeystores.pkcs11) {
+      return this.currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex;
+    } 
+    return 'no';
+  }
+
+  getP12Name() {
+    if (this.currentKeystore &&
+    this.currentKeystore.linkedExternalKeystores &&
+    this.currentKeystore.linkedExternalKeystores.pkcs12) {
+      return this.currentKeystore.linkedExternalKeystores.pkcs12.name || "No name found"
+    } 
+    return 'no';
   }
 
   async onUnlock() {

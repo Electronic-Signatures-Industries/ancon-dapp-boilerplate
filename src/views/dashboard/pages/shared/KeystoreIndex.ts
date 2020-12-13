@@ -24,8 +24,7 @@ export class LinkedExternalKeystores {
         capability: Capability;
     };
     pkcs12?: {
-        privateKey: string;
-        certificate: string;
+        name: string;
         capability: Capability;
     };
     pkcs11?: {

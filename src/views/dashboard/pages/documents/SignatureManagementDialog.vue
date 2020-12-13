@@ -498,7 +498,7 @@ export default class SignatureManagementDialog extends Vue {
 
   async beforeUpdate() {
     let { currentKeystore } = await Session.getSessionInfo();
-    if (!currentKeystore) {
+    if (currentKeystore !== null) {
       await this.wallet.open(currentKeystore.keystore);
     }
   }
