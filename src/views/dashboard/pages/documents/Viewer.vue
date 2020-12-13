@@ -8,7 +8,7 @@
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-card>
       <v-card-title>
-        <span class="headline">Signed document viewer</span>
+        <span class="headline">XDV Document Viewer</span>
       </v-card-title>
 
       <v-card-text>
@@ -154,7 +154,7 @@ import { create } from "xmlbuilder2";
 import { ShareUtils, XDVFileFormat } from "../shared/ShareUtils";
 import { ec, eddsa } from "elliptic";
 import forge from "node-forge";
-import {ACME_X3_CROSS_SIGNED} from './lets-encrypt-x3-cross-signeed.pem';
+import { ACME_X3_CROSS_SIGNED } from "./lets-encrypt-x3-cross-signeed.pem";
 import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
@@ -262,7 +262,13 @@ export default class ViewerComponent extends Vue {
             certificate: this.sharedSignedDocument.pubCert,
           };
           const cert = this.sharedSignedDocument.pubCert;
-          const caStore = forge.pki.createCaStore([CAGOB, CARAIZ, CAPC2, ACME_X3_CROSS_SIGNED, ACME_R3_CROSS_SIGNED]);
+          const caStore = forge.pki.createCaStore([
+            CAGOB,
+            CARAIZ,
+            CAPC2,
+            ACME_X3_CROSS_SIGNED,
+            ACME_R3_CROSS_SIGNED,
+          ]);
           const data = ethers.utils.sha256(
             ethers.utils.base64.decode(this.sharedSignedDocument.content)
           );
@@ -298,16 +304,12 @@ export default class ViewerComponent extends Vue {
                 });
               } else {
                 this.verificationReport.push({
-                  title: `Verified document`,
-                  subtitle: `Signed by ${subjectCert.subject.attributes[0].value}`,
-                });
-                this.verificationReport.push({
-                  title: `Name`,
-                  subtitle: `CN=${subjectCert.subject.attributes[0].value}`,
+                  isError: true,
+                  title: `Document verification incomplete`,
                 });
               }
               const vsubject = subjectCert.verifySubjectKeyIdentifier();
-              if (vsubject) {
+              if (vsubject && isValid) {
                 const subjectKeyId = forge.pki.getPublicKeyFingerprint(
                   subjectCert.publicKey,
                   {
@@ -326,7 +328,7 @@ export default class ViewerComponent extends Vue {
                   title: `Invalid subject key identifier`,
                 });
               }
-              if (vfd) {
+              if (vfd && vfd.indexOf('UnknownCertificateAuth') === -1) {
                 this.verificationReport.push({
                   title: `Verified certificate chain issued by`,
                   subtitle: `C=${subjectCert.issuer.attributes[0].value}, O=${subjectCert.issuer.attributes[1].value},

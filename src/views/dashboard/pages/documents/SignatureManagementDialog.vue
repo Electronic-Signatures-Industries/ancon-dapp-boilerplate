@@ -8,12 +8,12 @@
 
         <v-card-text>
           <v-form autocomplete="off">
-            <!-- <v-row>
+            <v-row>
                <v-col cols="6" md="6">
                 <v-radio-group
-                  v-model="value.operation"
+                  v-model="signingspec.spec"
                   class="font-weight-medium"
-                  label="Operation"
+                  label="Signature Spec"
                   column
                 >
                   <v-tooltip bottom>
@@ -21,9 +21,9 @@
                       <v-radio
                         v-on="on"
                         class="font-weight-medium"
-                        label="Sign"
+                        label="PKCS#11 - Smart Card"
                         color="red"
-                        value="sign"
+                        value="p11"
                       ></v-radio>
                     </template>
                     <span>Sign</span>
@@ -32,107 +32,18 @@
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-radio
-                        v-on="on"
+                        v-on="on" 
                         class="font-weight-medium"
-                        label="Verify"
+                        label="PKCS#12 - P12 Files"
                         color="red"
-                        value="verify"
+                        value="p12"
                       ></v-radio>
                     </template>
                     <span>Verify</span>
                   </v-tooltip>
                 </v-radio-group>
-              </v-col> -->
-
-            <!-- <v-col cols="6" md="6">
-                <v-radio-group
-                  v-model="value.presets"
-                  label="Presets"
-                  column
-                  class="font-weight-medium"
-                >
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-radio
-                        v-on="on"
-                        class="font-weight-medium"
-                        label="None"
-                        color="red"
-                        value="none"
-                      ></v-radio>
-                    </template>
-                    <span>No signing presets applied</span>
-                  </v-tooltip>
-
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-radio
-                        v-on="on"
-                        class="font-weight-medium"
-                        label="Qualified Signature"
-                        color="red"
-                        value="cms"
-                      ></v-radio>
-                    </template>
-                    <span>CMS/PKCS#7 - X509 only</span>
-                  </v-tooltip>
-
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-radio
-                        v-on="on"
-                        class="font-weight-medium"
-                        label="DGI Factura Electronica"
-                        color="red"
-                        value="xmldsig"
-                      ></v-radio>
-                    </template>
-                    <span>XML Digital Signatures - X509 only</span>
-                  </v-tooltip> -->
-            <!--
-
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="W3C Verifiable Claim"
-                      color="red"
-                      value="vc"
-                    ></v-radio>
-                  </template>
-                  <span>Verifiable Claim</span>
-                </v-tooltip> -->
-
-            <!-- <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="XDV Document"
-                      color="red"
-                      value="xdv"
-                    ></v-radio>
-                  </template>
-                  <span>XDV</span>
-                </v-tooltip>
-
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-radio
-                      v-on="on"
-                      class="font-weight-medium"
-                      label="Ethereum Signed Typed Data"
-                      color="red"
-                      value="eip712"
-                    ></v-radio>
-                  </template>
-                  <span>XML Digital Signatures - X509 only</span>
-                </v-tooltip>
-                 </v-radio-group>
-              </v-col>
+              </v-col> 
             </v-row>
-            --> 
             <v-row>
               <v-col cols="12" md="12">
                 <v-file-input
@@ -298,15 +209,12 @@
           :wallet="this.value.wallet"
         ></xdv-unlock> -->
         <v-card-actions>
-          <v-btn v-if="currentKeystore.linkedExternalKeystores.pkcs11"
+          <v-btn
             color="blue darken-1"
             text
             :disabled="loading"
-            @click="signQualified"
-            >{{ executeLabel }} Qualified PKCS#11</v-btn
-          >
-          <v-btn color="blue darken-1" text :disabled="loading" v-if="currentKeystore.linkedExternalKeystores.pkcs12" @click="signQualifiedP12"
-            >{{ executeLabel }} P12</v-btn
+            @click="signingSpecSelector"
+            >Sign</v-btn
           >
           <v-spacer></v-spacer>
           <!-- <v-btn color="blue darken-1"  @click="change">OK</v-btn> -->
@@ -403,6 +311,9 @@ interface SignatureManagementModel {
   props: ["value", "wallet", "show"],
 })
 export default class SignatureManagementDialog extends Vue {
+  signingspec = {
+    spec: 'p12'
+  }
   value: SignatureManagementModel;
   executeLabel = "Sign";
   alertType = "blue";
@@ -532,6 +443,14 @@ export default class SignatureManagementDialog extends Vue {
   onClose() {
     this.signatureView = "";
     this.$emit("close");
+  }
+
+  async signingSpecSelector() {
+    if (this.signingspec.spec === 'p12') {
+      this.signQualifiedP12();
+    } else {
+      this.signQualified();
+    }
   }
 
   addVerificationReport({ SimpleReport }) {
@@ -684,10 +603,8 @@ export default class SignatureManagementDialog extends Vue {
       let data = await this.value.files.arrayBuffer();
 
       if (
-        currentKeystore.defaultX509Signer === X509Signer.PKCS11 &&
         this.pin.length > 0
       ) {
-        // store ref
         this.shareFormat = {
           content: base64.encode(Buffer.from(data)),
         };
@@ -738,18 +655,12 @@ export default class SignatureManagementDialog extends Vue {
       // @ts-ignore
       let data = await this.value.files.arrayBuffer();
 
-      if (
-        currentKeystore.defaultX509Signer === X509Signer.PKCS12
-      ) {
-        // Get key using get import key
+// Get key using get import key
         const rsaKeys: any = await this.wallet.getImportKey(
           `key:P12:${this.wallet.id}`
         );
         const keys = JSON.parse(rsaKeys.key);
      
-//     const pvk = forge.pki.privateKeyFromPem(key); // PEM
-  //  const certificate = forge.pki.certificateFromPem(pemCertificate); // PEM
-
      // Sign
         result = CMSSigner.sign(
           keys.certificate,
@@ -764,7 +675,7 @@ export default class SignatureManagementDialog extends Vue {
           signature: result,
         };
         this.value.output = SigningOutput.Base64;
-      }
+ 
       this.hasSignature = true;
       this.shareSignature(result);
     } catch (e) {
