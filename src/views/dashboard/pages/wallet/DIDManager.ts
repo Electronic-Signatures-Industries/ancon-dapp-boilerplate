@@ -3,8 +3,21 @@ import { KeystoreIndex } from '../shared/KeystoreIndex';
 import { Session } from '../shared/Session';
 import { CID, IpfsHttpClient } from 'ipfs-http-client'
 // const ipfs = IpfsHttpClient('https://ipfs-api.xdv.digital/api/v0')
+import { Ed25519Provider } from 'key-did-provider-ed25519'
+import KeyResolver from '@ceramicnetwork/key-did-resolver'
+import { DID } from 'dids'
+import { mnemonicToSeed } from 'ethers/utils/hdnode';
+import { arrayify } from 'ethers/utils';
 
 export class DIDManager {
+
+    async create3ID(wallet: Wallet) {
+        const provider = new Ed25519Provider(arrayify(mnemonicToSeed(wallet.mnemonic)))
+        const did = new DID({ provider, resolver: KeyResolver.getResolver() })
+        await did.authenticate()
+        return did;
+    }
+    
     async createDID(
         ks: KeystoreIndex,
         wallet: Wallet,

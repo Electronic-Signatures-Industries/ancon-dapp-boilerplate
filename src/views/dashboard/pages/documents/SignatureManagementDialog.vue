@@ -269,7 +269,6 @@ import {
 } from "xdvplatform-wallet/src";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { KeystoreIndex, X509Signer } from "../shared/KeystoreIndex";
-import { base64, arrayify } from "ethers/utils";
 import { Session } from "../shared/Session";
 import { ShareUtils, XDVFileFormat } from "../shared/ShareUtils";
 import { create } from "xmlbuilder2";
@@ -280,6 +279,8 @@ import "share-api-polyfill";
 import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
 import { filter } from "rxjs/operators";
 import forge from "node-forge";
+import { ethers } from "ethers";
+const { arrayify, base64 } = ethers.utils;
 
 export const SignOutput = [
   { key: "QR Code", value: SigningOutput.QR },

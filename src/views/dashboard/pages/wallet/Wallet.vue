@@ -558,14 +558,14 @@ export default class WalletComponent extends Vue {
   ];
   didName = "";
   wallet: Wallet = new Wallet();
-  ipfs = null;
+  ipfs: IPFSManager;
 
   async destroyed() {
     await this.ipfs.stop();
   }
 
   async mounted() {
-    this.ipfs = await IPFS.create();
+    await this.ipfs.start();
     if (location.hash.indexOf("did=") > -1) {
       const did = location.hash.split("did=")[1];
       this.setDIDNameDialog = true;
@@ -807,7 +807,7 @@ export default class WalletComponent extends Vue {
     this.valid = true;
 
     const wallet = new Wallet();
-    let mnemonic = wallet.mnemonic;
+    let { phrase } = Wallet.generateMnemonic() as any;
     let keys;
     let id;
     let keystoreIndexItem: KeystoreIndex;
@@ -838,7 +838,7 @@ export default class WalletComponent extends Vue {
             this.password === this.confirmPassword
           ) {
             this.alertMessage = "Creating keys...please wait";
-            const w = await wallet.createWallet(this.password, mnemonic);
+            const w = await wallet.createWallet(this.password, phrase);
             id = w.id;
 
             keystoreIndexItem = {
