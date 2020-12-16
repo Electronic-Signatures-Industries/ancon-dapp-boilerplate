@@ -1,4 +1,4 @@
-<template>
+`<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -317,11 +317,10 @@
             >
           </v-card-actions>
         </v-card>
-      </v-dialog>
-
+      </v-dialog>      
       <v-expansion-panels>
         <v-expansion-panel>
-          <v-expansion-panel-header>
+          <v-expansion-panel-header>             
             <v-list-item>
               <v-list-item-avatar>
                 <v-tooltip top>
@@ -353,6 +352,12 @@
             <v-card class="mx-auto">
               <v-card-text>
                 <v-list>
+                  <v-list-item>
+                    <v-list-item-content class="text--primary">
+                      <b>DID</b> {{ did._id }}
+                    </v-list-item-content>
+                  </v-list-item>
+
                   <v-list-item>
                     <v-list-item-content class="text--primary">
                       <b>Address</b> {{ currentKeystore.address }}
@@ -442,7 +447,7 @@
       </v-expansion-panels>
       <xdv-drive
         :updateWallet="currentKeystore" 
-      :wallet="wallet"
+      :wallet="wallet" :ipfs="ipfs" :did="did"
         :mode="'integrated'"
       ></xdv-drive>
     </v-card>
@@ -484,7 +489,8 @@ import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
 import { DIDManager } from "./DIDManager";
-const IPFS = require("ipfs-core");
+import { IPFSManager } from './IPFSManager';
+import { DID } from "dids";
 
 @Component({
   components: {
@@ -494,6 +500,7 @@ const IPFS = require("ipfs-core");
   },
 })
 export default class WalletComponent extends Vue {
+  did: DID = {} as any;
   loginDialog: boolean = false;
   canShowMnemonic: boolean = false;
   canCreateWallet: boolean = true;
@@ -559,25 +566,17 @@ export default class WalletComponent extends Vue {
   didName = "";
   wallet: Wallet = new Wallet();
   ipfs: IPFSManager;
+  didManager: DIDManager;
 
   async destroyed() {
     await this.ipfs.stop();
   }
 
   async mounted() {
+    this.ipfs = new   IPFSManager();
+    this.didManager = new DIDManager();
     await this.ipfs.start();
-    if (location.hash.indexOf("did=") > -1) {
-      const did = location.hash.split("did=")[1];
-      this.setDIDNameDialog = true;
-      this.pendingDIDName = (name) => {
-        this.setDIDNameDialog = false;
-        return Session.resolveAndStoreDID(
-          this.wallet,
-          decodeURIComponent(did),
-          name
-        );
-      };
-    }
+
     let { currentKeystore, unlock } = await Session.getSessionInfo();
     if (currentKeystore === null) {
       this.dialog = true;
@@ -585,6 +584,7 @@ export default class WalletComponent extends Vue {
     }
 
     await this.wallet.open(currentKeystore.keystore);
+    
   }
 
   getP11Name() {
@@ -607,9 +607,9 @@ export default class WalletComponent extends Vue {
 
   async onUnlock() {
     this.loading = true;
-
+    const did: any = await this.didManager.create3ID(this.wallet as any, (message) => console.log);
+    this.did = did;
     await this.loadWallets();
-
     this.loading = false;
   }
 
@@ -854,13 +854,11 @@ export default class WalletComponent extends Vue {
               keys.getPublic("array")
             );
             this.mnemonic = wallet.mnemonic.split(" ");
-            const manager = new DIDManager();
-            const ipnsRes = await manager.createDID(
-              keystoreIndexItem,
-              wallet,
-              this.ipfs,
+            const did = await this.didManager.create3ID(
+              wallet as any,
               (m) => (this.alertMessage = m)
             );
+            Session.set({ ks: keystoreIndexItem });
           }
           break;
       }
@@ -884,3 +882,4 @@ export default class WalletComponent extends Vue {
   }
 }
 </script>
+`

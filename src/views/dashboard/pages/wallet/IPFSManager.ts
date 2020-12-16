@@ -7,8 +7,9 @@ import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
 
-multiformats.multicodec.add(dagJose)
-const dagJoseFormat = legacy(multiformats, dagJose.name)
+const mf = multiformats('');
+mf.multicodec.add(dagJose)
+const dagJoseFormat = legacy(mf, dagJose.name)
 
 export class IPFSManager {
     client: IPFS.IPFSRepo;
@@ -36,7 +37,12 @@ export class IPFSManager {
        did: DID,
        cid: string,       
    ) {
-       // TODO: Use IPNS
+    debugger   
+    // TODO: Use IPNS
+       const res = await this.client.name.publish(cid);
+
+       debugger
+       return res;
    }
 
     /**
@@ -58,7 +64,8 @@ export class IPFSManager {
             temp = keccak256(payload);
             content = payload;
         }
-        const epoch = await this.provider.getBlockNumber();
+        temp = temp.replace('0x','');
+        const epoch = 1; // await this.provider.getBlockNumber();
         // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
@@ -71,7 +78,7 @@ export class IPFSManager {
         const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
         await this.client.block.put(linkedBlock, { cid: jws.link })
-        return jwsCid
+        return jwsCid.toString()
     }
 
     /**

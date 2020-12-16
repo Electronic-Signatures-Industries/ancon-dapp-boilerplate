@@ -245,7 +245,8 @@
                   <v-btn
                     fab
                     dark
-                    v-on="on" v-if="updateWallet.linkedExternalKeystores"
+                    v-on="on"
+                    v-if="updateWallet.linkedExternalKeystores"
                     @click="openSignatureDialog()"
                     small
                     color="red accent-4"
@@ -358,11 +359,13 @@ import { SigningOutput } from "../shared/SigningOutput";
 import { async } from "rxjs/internal/scheduler/async";
 import { CacheService } from "../shared/CacheService";
 import { ShareUtils } from "../shared/ShareUtils";
+import { IPFSManager } from "../wallet/IPFSManager";
+import { DID } from "dids";
 const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode", "wallet"],
+  props: ["updateWallet", "mode", "wallet", "ipfs", "did"],
   components: {
     "xdv-unlock": Unlock,
     "xdv-upload": Upload,
@@ -438,6 +441,8 @@ export default class DriveComponent extends Vue {
   hasCopyRef = false;
   sub: Unsubscribable;
   wallet;
+  ipfs: IPFSManager;
+  did: DID;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -567,7 +572,7 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
-    await this.loadDirectory(ks)
+    await this.loadDirectory(ks);
   }
 
   async loadWallets() {
@@ -789,12 +794,21 @@ export default class DriveComponent extends Vue {
       (i: KeystoreIndex) => i.keystore === this.wallet.id
     ) as KeystoreIndex;
     this.loading = true;
-    const driveManager = new DriveSwarmManager(this.wallet);
-    await driveManager.pushFiles({
-      address: ks.address,
-      files: this.files,
-      queueName: "documents",
+    // const driveManager = new DriveSwarmManager(this.wallet);
+    // await driveManager.pushFiles({
+    //   address: ks.address,
+    //   files: this.files,
+    //   queueName: "documents",
+    // });
+    let last = null;
+    const pushFiles = this.files.map( async (f) => {
+      last = await this.ipfs.addSignedObject(this.did, f, last);
+      return last;
     });
+
+    const items = await forkJoin(pushFiles).toPromise();
+
+    debugger
     this.loading = false;
     this.canUpload = false;
     this.close();
