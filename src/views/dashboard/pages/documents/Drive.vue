@@ -800,15 +800,16 @@ export default class DriveComponent extends Vue {
     //   files: this.files,
     //   queueName: "documents",
     // });
-    let last = null;
     const pushFiles = this.files.map( async (f) => {
-      last = await this.ipfs.addSignedObject(this.did, f, last);
-      return last;
+      return await this.ipfs.addSignedObject(this.did, f);
     });
 
     const items = await forkJoin(pushFiles).toPromise();
-
-    debugger
+    debugger;
+    const res  = await this.ipfs.setCurrentNode(
+      this.did,
+      items[0],
+    );
     this.loading = false;
     this.canUpload = false;
     this.close();

@@ -6,7 +6,7 @@ import { DID } from 'dids'
 import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
-
+import axios from 'axios'
 const mf = multiformats('');
 mf.multicodec.add(dagJose)
 const dagJoseFormat = legacy(mf, dagJose.name)
@@ -34,15 +34,12 @@ export class IPFSManager {
    }
 
    async setCurrentNode(
-       did: DID,
        cid: string,       
    ) {
-    debugger   
-    // TODO: Use IPNS
        const res = await this.client.name.publish(cid);
-
-       debugger
-       return res;
+       for await(const query of this.client.name.resolve(`/ipns/${res.name}`)) {
+        return res;
+       }
    }
 
     /**
@@ -54,7 +51,7 @@ export class IPFSManager {
     async addSignedObject(
         did: DID,
         payload: Buffer | Blob,
-        previousNode: any) {
+        previousNode?: any) {
         let temp: string;
         let content: Buffer;
         if (payload instanceof Blob) {
@@ -81,6 +78,23 @@ export class IPFSManager {
         return jwsCid.toString()
     }
 
+    
+    async addIndex(
+        did: DID,
+        documents: [],
+        parent?: any) {
+       // sign the payload as dag-jose
+        const { jws, linkedBlock } = await did.createDagJWS({
+            documents,
+            parent
+        });
+        // put the JWS into the ipfs dag
+        const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
+        // put the payload into the ipfs dag
+        await this.client.block.put(linkedBlock, { cid: jws.link })
+        const cid = jwsCid.toString()
+        return await this.setCurrentNode(did, cid);
+    }
     /**
      * Get IPLD object
      * @param cid content id
