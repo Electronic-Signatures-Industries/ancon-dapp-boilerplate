@@ -7,10 +7,12 @@ import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
 import axios from 'axios'
+import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent'
 const mf = multiformats('');
 mf.multicodec.add(dagJose)
 const dagJoseFormat = legacy(mf, dagJose.name)
 
+const MAINNET = `https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d`;
 export class IPFSManager {
     client: IPFS.IPFSRepo;
     provider: ethers.providers.JsonRpcProvider
@@ -37,8 +39,12 @@ export class IPFSManager {
        cid: string,       
    ) {
        const res = await this.client.name.publish(cid);
-       for await(const query of this.client.name.resolve(`/ipns/${res.name}`)) {
-        return res;
+       return res;
+   }
+
+   async getCurrentNode() {
+    for await(const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
+        return query.value;
        }
    }
 
@@ -68,7 +74,7 @@ export class IPFSManager {
             epoch,
             timestamp: moment().unix(),
             hash: temp,
-            content: content.toString('hex'),
+            content: content.toString('base64'),
             parent: previousNode || undefined
         });
         // put the JWS into the ipfs dag
@@ -78,10 +84,35 @@ export class IPFSManager {
         return jwsCid.toString()
     }
 
+    createSignedContent({
+        contentType,
+        name,
+        lastModified,
+        size,
+        content,
+        hash,
+        documentPubCert,
+        documentSignature,
+        signaturePreset
+    }){
+        return {
+            contentType,
+            name,
+            lastModified,
+            size,
+            content,
+            hash,
+            created: moment().unix(),
+            documentPubCert,
+            documentSignature,
+            signaturePreset,
+        } as SwarmNodeSignedContent;
+
+    }
     
     async addIndex(
         did: DID,
-        documents: [],
+        documents: any[],
         parent?: any) {
        // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
@@ -93,7 +124,7 @@ export class IPFSManager {
         // put the payload into the ipfs dag
         await this.client.block.put(linkedBlock, { cid: jws.link })
         const cid = jwsCid.toString()
-        return await this.setCurrentNode(did, cid);
+        return await this.setCurrentNode(cid);
     }
     /**
      * Get IPLD object
