@@ -13,17 +13,16 @@ export class DriveManager {
     }
 
     async appendDocumentSet(files: File[]) {
-        // todo: read ipns
+        const parent = await this.ipfs.getCurrentNode();
         const pushFiles = files.map(async (f) => {
             return await this.ipfs.addSignedObject(this.did, f);
         });
-
         const items = await forkJoin(pushFiles).toPromise();
-        
-        // todo: set previous, and update next
+        const parentindex = await this.ipfs.addIndex(this.did, items, parent);
         const res = await this.ipfs.setCurrentNode(
-            this.did,
-            items[0],
+            parentindex,
         );
+
+        return res;
     }
 }
