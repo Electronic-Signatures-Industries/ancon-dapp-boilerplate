@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const base = `http://localhost:3000`;
+const base = `https://firmas.xdv.digital/api`;
 
 export class WalletResolver {
     constructor() {
