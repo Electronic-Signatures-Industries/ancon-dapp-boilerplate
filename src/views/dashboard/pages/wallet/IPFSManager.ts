@@ -33,20 +33,20 @@ export class IPFSManager {
         let ab = await payload.arrayBuffer();
         let buf = new Uint8Array(ab);
         return keccak256(buf) as string;
-   }
+    }
 
-   async setCurrentNode(
-       cid: string,       
-   ) {
-       const res = await this.client.name.publish(cid);
-       return res;
-   }
+    async setCurrentNode(
+        cid: string,
+    ) {
+        const res = await this.client.name.publish(cid);
+        return res;
+    }
 
-   async getCurrentNode() {
-    for await(const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
-        return query.value;
-       }
-   }
+    async getCurrentNode() {
+        for await (const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
+            return query.value;
+        }
+    }
 
     /**
      * Add Signed Object
@@ -67,7 +67,7 @@ export class IPFSManager {
             temp = keccak256(payload);
             content = payload;
         }
-        temp = temp.replace('0x','');
+        temp = temp.replace('0x', '');
         const epoch = 1; // await this.provider.getBlockNumber();
         // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
@@ -94,7 +94,7 @@ export class IPFSManager {
         documentPubCert,
         documentSignature,
         signaturePreset
-    }){
+    }) {
         return {
             contentType,
             name,
@@ -109,12 +109,12 @@ export class IPFSManager {
         } as SwarmNodeSignedContent;
 
     }
-    
+
     async addIndex(
         did: DID,
         documents: any[],
         parent?: any) {
-       // sign the payload as dag-jose
+        // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
             documents,
             parent
@@ -135,8 +135,8 @@ export class IPFSManager {
         const res = {
             metadata: {
                 ...temp,
-            },            
-            payload: undefined            
+            },
+            payload: undefined
         }
         temp = await this.client.dag.get(cid, { path: '/link' });
         res.payload = {
@@ -160,5 +160,20 @@ export class IPFSManager {
         const cleartext = await did.decryptDagJWE(jwe)
         return cleartext;
     }
-    
+    async addPublicWallet(
+        did: DID,
+        payload: Buffer) {
+        let temp: string;
+        let content: Buffer;
+        temp = keccak256(payload);
+        content = payload;
+        temp = temp.replace('0x', '');
+        // sign the payload as dag-jose
+        const { cid } = await this.client.add({
+            path: 'index.json',
+            content: content.buffer,
+        });
+        return cid.toString()
+    }
+
 }
