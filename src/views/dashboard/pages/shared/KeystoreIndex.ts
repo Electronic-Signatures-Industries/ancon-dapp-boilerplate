@@ -55,4 +55,5 @@ export class KeystoreIndex {
     description: string;
     name: string;
     created: Date = new Date();
+  walletRegistry: string;
 }

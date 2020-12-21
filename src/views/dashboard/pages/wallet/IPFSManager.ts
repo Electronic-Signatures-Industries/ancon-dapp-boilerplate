@@ -43,8 +43,14 @@ export class IPFSManager {
     }
 
     async getCurrentNode() {
-        for await (const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
-            return query.value;
+        try {
+            let query = '';
+            const { id } = await this.client.id();
+            for await (query of this.client.name.resolve(`/ipns/${id}`)) {
+            }
+            return query.replace('/ipfs/', '');
+        } catch (e) {
+            return null;
         }
     }
 
@@ -65,7 +71,7 @@ export class IPFSManager {
             content = Buffer.from((await payload.arrayBuffer()));
         } else {
             throw new Error('addSignedObject: must be a file object');
-            
+
         }
         temp = temp.replace('0x', '');
         const epoch = 1; // await this.provider.getBlockNumber();

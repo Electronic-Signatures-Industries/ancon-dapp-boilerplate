@@ -361,7 +361,7 @@ import { CacheService } from "../shared/CacheService";
 import { ShareUtils } from "../shared/ShareUtils";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
-import { DriveManager } from '../wallet/DriveManager';
+import { DriveManager } from "../wallet/DriveManager";
 import { DIDManager } from "../wallet/DIDManager";
 const cbor = require("cbor-sync");
 
@@ -576,8 +576,6 @@ export default class DriveComponent extends Vue {
     await this.loadWallets();
     const ks = await this.loadSession();
     await this.loadDirectory(ks);
-    debugger;
-    this.driveManager = new DriveManager(this.ipfs, this.did);
   }
 
   async loadWallets() {
@@ -676,16 +674,17 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  async loadDirectory(ks?: KeystoreIndex){
-    const didManager = new DIDManager();
-    const currentNode = await this.ipfs.getCurrentNode();
-    debugger;
-    if(currentNode){
-      const cid = currentNode.value;
-      if(cid){
-        // load the structure 
-        this.ipfs.getObject(cid);
+  async loadDirectory(ks?: KeystoreIndex) {
+    this.driveManager = new DriveManager(this.ipfs, this.did);
+    try {
+      const cid = await this.ipfs.getCurrentNode();
+      if (cid) {
+        // load the structure
+        const index = await this.ipfs.getObject(cid);
+        debugger
       }
+    } catch (e) {
+      console.log(e);
     }
   }
 
@@ -819,9 +818,9 @@ export default class DriveComponent extends Vue {
     //   queueName: "documents",
     // });
     debugger;
-    const indexes = await this.driveManager.appendDocumentSet(this.files)
+    const indexes = await this.driveManager.appendDocumentSet(this.files);
     console.log(indexes);
-    
+
     this.loading = false;
     this.canUpload = false;
     this.close();

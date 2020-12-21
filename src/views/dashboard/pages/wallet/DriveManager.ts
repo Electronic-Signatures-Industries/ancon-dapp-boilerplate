@@ -31,6 +31,6 @@ export class DriveManager {
             parentindex,
         );
 
-        return res;
+        return res.name;
     }
 }

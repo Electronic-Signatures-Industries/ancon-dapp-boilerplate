@@ -293,7 +293,7 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>DID</b> {{ did._id }}
+                      <b>DID</b><a :href="currentKeystore.walletRegistry">{{ did._id }}</a>
                     </v-list-item-content>
                   </v-list-item>
 
@@ -807,11 +807,12 @@ export default class WalletComponent extends Vue {
           did,
           Buffer.from(JSON.stringify(publicWallet))
         );
-        const res = await WalletResolver.setPublicWalletRef(
-          `${this.oauthName}`,
-          cid
-        );
-        keystoreIndexItem.name = res.data.domain;
+        // const res = await WalletResolver.setPublicWalletRef(
+        //   `${this.oauthName}`,
+        //   cid
+        // );
+        keystoreIndexItem.name = this.oauthName;
+        keystoreIndexItem.walletRegistry = `https://ipfs.io/ipfs/${cid}`;
         Session.set({ ks: keystoreIndexItem });
       }
 
