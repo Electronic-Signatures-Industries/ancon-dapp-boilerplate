@@ -33,26 +33,20 @@ export class IPFSManager {
         let ab = await payload.arrayBuffer();
         let buf = new Uint8Array(ab);
         return keccak256(buf) as string;
-   }
+    }
 
-   async setCurrentNode(
-       cid: string,       
-   ) {
-       const res = await this.client.name.publish(cid);
-       return res;
-   }
+    async setCurrentNode(
+        cid: string,
+    ) {
+        const res = await this.client.name.publish(cid);
+        return res;
+    }
 
-   async getCurrentNode() {
-    try{
-        const clientId = await this.client.id();
-        for await(const query of this.client.name.resolve(`/ipns/${clientId}`)) {
+    async getCurrentNode() {
+        for await (const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
             return query.value;
         }
     }
-    catch(err){
-        return null;
-    }
-   }
 
     /**
      * Add Signed Object
@@ -73,21 +67,18 @@ export class IPFSManager {
             throw new Error('addSignedObject: must be a file object');
             
         }
-        temp = temp.replace('0x','');
-        const contentMetaData = this.createSignedContent({
-            contentType: payload.type,
-            name: payload.name,
-            lastModified: payload.lastModified,
-            size: payload.size,
-            content: content.toString('base64'),
+        temp = temp.replace('0x', '');
+        const epoch = 1; // await this.provider.getBlockNumber();
+        // sign the payload as dag-jose
+        const { jws, linkedBlock } = await did.createDagJWS({
+            epoch,
+            timestamp: moment().unix(),
             hash: temp,
+            content: content.toString('base64'),
             documentPubCert: undefined,
             documentSignature: undefined,
             signaturePreset: undefined
         });
-        const epoch = 1; // await this.provider.getBlockNumber();
-        // sign the payload as dag-jose
-        const { jws, linkedBlock } = await did.createDagJWS(contentMetaData);
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
@@ -105,7 +96,7 @@ export class IPFSManager {
         documentPubCert,
         documentSignature,
         signaturePreset
-    }){
+    }) {
         return {
             contentType,
             name,
@@ -120,13 +111,13 @@ export class IPFSManager {
         } as SwarmNodeSignedContent;
 
     }
-    
+
     async addIndex(
         did: DID,
         documents: any[],
         parent?: any) {
         const epoch = await this.provider.getBlockNumber();
-       // sign the payload as dag-jose
+        // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
             timestamp: moment().unix(),
@@ -149,8 +140,8 @@ export class IPFSManager {
         const res = {
             metadata: {
                 ...temp,
-            },            
-            payload: undefined            
+            },
+            payload: undefined
         }
         temp = await this.client.dag.get(cid, { path: '/link' });
         res.payload = {
@@ -174,5 +165,20 @@ export class IPFSManager {
         const cleartext = await did.decryptDagJWE(jwe)
         return cleartext;
     }
-    
+    async addPublicWallet(
+        did: DID,
+        payload: Buffer) {
+        let temp: string;
+        let content: Buffer;
+        temp = keccak256(payload);
+        content = payload;
+        temp = temp.replace('0x', '');
+        // sign the payload as dag-jose
+        const { cid } = await this.client.add({
+            path: 'index.json',
+            content: content.buffer,
+        });
+        return cid.toString()
+    }
+
 }

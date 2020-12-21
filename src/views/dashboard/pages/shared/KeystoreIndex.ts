@@ -52,6 +52,7 @@ export class KeystoreIndex {
     publicKeyFromDID?: any;
     address?: string;
     keystore: string;
+    description: string;
     name: string;
     created: Date = new Date();
 }

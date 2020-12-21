@@ -33,7 +33,8 @@
           <v-row
             ><v-col>
               <div>
-                <h6 class="subtitle">{{ currentKeystore.address }}</h6>
+                <h6 class="subtitle">{{ currentKeystore.description ||
+                  currentKeystore.address  }}</h6>
               </div></v-col
             ></v-row
           >
