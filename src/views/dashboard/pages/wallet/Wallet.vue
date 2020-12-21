@@ -812,6 +812,7 @@ export default class WalletComponent extends Vue {
         //   cid
         // );
         keystoreIndexItem.name = this.oauthName;
+        // todo: corregir url construct
         keystoreIndexItem.walletRegistry = `https://ipfs.io/ipfs/${cid}`;
         Session.set({ ks: keystoreIndexItem });
       }
