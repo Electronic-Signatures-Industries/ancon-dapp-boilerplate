@@ -361,6 +361,8 @@ import { CacheService } from "../shared/CacheService";
 import { ShareUtils } from "../shared/ShareUtils";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
+import { DriveManager } from '../wallet/DriveManager';
+import { DIDManager } from "../wallet/DIDManager";
 const cbor = require("cbor-sync");
 
 @Component({
@@ -443,6 +445,7 @@ export default class DriveComponent extends Vue {
   wallet;
   ipfs: IPFSManager;
   did: DID;
+  driveManager: DriveManager;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -573,6 +576,8 @@ export default class DriveComponent extends Vue {
     await this.loadWallets();
     const ks = await this.loadSession();
     await this.loadDirectory(ks);
+    debugger;
+    this.driveManager = new DriveManager(this.ipfs, this.did);
   }
 
   async loadWallets() {
@@ -647,7 +652,7 @@ export default class DriveComponent extends Vue {
     this.select = i;
   }
 
-  async loadDirectory(ks?: KeystoreIndex) {
+  async _loadDirectory(ks?: KeystoreIndex) {
     const { address } = ks;
     this.address = address;
     const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
@@ -669,6 +674,19 @@ export default class DriveComponent extends Vue {
       queue,
       await this.renderDocuments(swarmFeed)
     );
+  }
+
+  async loadDirectory(ks?: KeystoreIndex){
+    const didManager = new DIDManager();
+    const currentNode = await this.ipfs.getCurrentNode();
+    debugger;
+    if(currentNode){
+      const cid = currentNode.value;
+      if(cid){
+        // load the structure 
+        this.ipfs.getObject(cid);
+      }
+    }
   }
 
   renderDocuments(swarmFeed: SwarmFeed) {
@@ -800,16 +818,10 @@ export default class DriveComponent extends Vue {
     //   files: this.files,
     //   queueName: "documents",
     // });
-    const pushFiles = this.files.map( async (f) => {
-      return await this.ipfs.addSignedObject(this.did, f);
-    });
-
-    const items = await forkJoin(pushFiles).toPromise();
     debugger;
-    const res  = await this.ipfs.setCurrentNode(
-      this.did,
-      items[0],
-    );
+    const indexes = await this.driveManager.appendDocumentSet(this.files)
+    console.log(indexes);
+    
     this.loading = false;
     this.canUpload = false;
     this.close();

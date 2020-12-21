@@ -17,7 +17,7 @@ export class IPFSManager {
     client: IPFS.IPFSRepo;
     provider: ethers.providers.JsonRpcProvider
     async start() {
-        this.provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/');
+        this.provider = new ethers.providers.JsonRpcProvider(MAINNET);
         this.client = await IPFS.create({ ipld: { formats: [dagJoseFormat] } })
     }
 
@@ -43,9 +43,15 @@ export class IPFSManager {
    }
 
    async getCurrentNode() {
-    for await(const query of this.client.name.resolve(`/ipns/${this.client.id}`)) {
-        return query.value;
-       }
+    try{
+        const clientId = await this.client.id();
+        for await(const query of this.client.name.resolve(`/ipns/${clientId}`)) {
+            return query.value;
+        }
+    }
+    catch(err){
+        return null;
+    }
    }
 
     /**
@@ -56,27 +62,32 @@ export class IPFSManager {
      */
     async addSignedObject(
         did: DID,
-        payload: Buffer | Blob,
+        payload: File,
         previousNode?: any) {
         let temp: string;
         let content: Buffer;
-        if (payload instanceof Blob) {
+        if (payload instanceof File) {
             temp = await this.blobToKeccak256(payload);
             content = Buffer.from((await payload.arrayBuffer()));
         } else {
-            temp = keccak256(payload);
-            content = payload;
+            throw new Error('addSignedObject: must be a file object');
+            
         }
         temp = temp.replace('0x','');
+        const contentMetaData = this.createSignedContent({
+            contentType: payload.type,
+            name: payload.name,
+            lastModified: payload.lastModified,
+            size: payload.size,
+            content: content.toString('base64'),
+            hash: temp,
+            documentPubCert: undefined,
+            documentSignature: undefined,
+            signaturePreset: undefined
+        });
         const epoch = 1; // await this.provider.getBlockNumber();
         // sign the payload as dag-jose
-        const { jws, linkedBlock } = await did.createDagJWS({
-            epoch,
-            timestamp: moment().unix(),
-            hash: temp,
-            content: content.toString('base64'),
-            parent: previousNode || undefined
-        });
+        const { jws, linkedBlock } = await did.createDagJWS(contentMetaData);
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
@@ -114,17 +125,20 @@ export class IPFSManager {
         did: DID,
         documents: any[],
         parent?: any) {
+        const epoch = await this.provider.getBlockNumber();
        // sign the payload as dag-jose
         const { jws, linkedBlock } = await did.createDagJWS({
+            epoch,
+            timestamp: moment().unix(),
             documents,
             parent
         });
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
-        await this.client.block.put(linkedBlock, { cid: jws.link })
+        await this.client.block.put(linkedBlock, { cid: jws.link });
         const cid = jwsCid.toString()
-        return await this.setCurrentNode(cid);
+        return cid;
     }
     /**
      * Get IPLD object

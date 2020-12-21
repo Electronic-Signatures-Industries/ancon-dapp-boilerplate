@@ -90,7 +90,7 @@
     <v-alert
       ><a
         href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
-        >Download PKCS#11 Java Signer</a
+        target="_blank">Download PKCS#11 Java Signer</a
       ></v-alert
     >
     <v-card>
