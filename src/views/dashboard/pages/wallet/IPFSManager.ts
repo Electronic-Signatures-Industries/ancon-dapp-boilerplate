@@ -76,8 +76,12 @@ export class IPFSManager {
         temp = temp.replace('0x', '');
         const epoch = 1; // await this.provider.getBlockNumber();
         // sign the payload as dag-jose
+        
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
+            contentType: payload.type,
+            name: payload.name,
+            lastModified: payload.lastModified,
             timestamp: moment().unix(),
             hash: temp,
             content: content.toString('base64'),
@@ -131,6 +135,7 @@ export class IPFSManager {
             parent
         });
         // put the JWS into the ipfs dag
+        debugger;
         const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
         await this.client.block.put(linkedBlock, { cid: jws.link });
@@ -154,7 +159,7 @@ export class IPFSManager {
             ...temp,
         };
 
-        return temp;
+        return temp; 
     }
 
     verify(did: DID, obj: any): Promise<any> {

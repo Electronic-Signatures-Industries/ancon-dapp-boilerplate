@@ -580,11 +580,12 @@ export default class DriveComponent extends Vue {
 
   async loadWallets() {
     const w = await Session.getWalletRefs();
+    let { currentKeystore, unlock } = await Session.getSessionInfo();
     // @ts-ignore
     this.wallets = w.filter((i: KeystoreIndex) => i.address);
     this.allWallets = w;
     this.publicWallets = w.filter(
-      (i: KeystoreIndex) => i.name.indexOf("did:xdv:") > -1
+      (i: KeystoreIndex) => currentKeystore.address
     );
   }
 
@@ -677,11 +678,48 @@ export default class DriveComponent extends Vue {
   async loadDirectory(ks?: KeystoreIndex) {
     this.driveManager = new DriveManager(this.ipfs, this.did);
     try {
-      const cid = await this.ipfs.getCurrentNode();
-      if (cid) {
-        // load the structure
-        const index = await this.ipfs.getObject(cid);
-        debugger
+      if(this.ipfs){
+        let cid = await this.ipfs.getCurrentNode();
+        if (cid) {
+          // load the structure
+          let keepSearching = true;
+          this.items = [];
+          while(keepSearching){
+            try
+            {
+              const index = await this.ipfs.getObject(cid);
+              index.value.documents.map(async (doc, _index) => {
+                const document = await this.ipfs.getObject(doc);
+ 
+                const item = {
+                  _id: `${this.$router.currentRoute.params.user}:-txs-:${document.value.name}`,
+                  contentType: document.value.contentType,
+                  id: `-block-:${_index}`,
+                  name: document.value.name,
+                  item: { txs: '-txs-', reference : document.value, _index },
+                  type: "file_document",
+                  action: moment(document.value.lastModified).fromNow(),
+                  title: document.value.name,
+                  headline: document.value.contentType,
+                  subtitle: `hash ${document.value.hash.replace(
+                    "0x",
+                    ""
+                  )} signature -signature-`,
+                  reference: document.value,
+                  hash: `${document.value.hash.replace("0x", "")}`,
+                  signature: `-s-`,
+                };
+                this.items.push(item);
+              });
+              cid = index.value.parent;
+            } 
+            catch(err){
+              keepSearching = false;
+            }
+          }
+
+          this.loading = false;
+        }
       }
     } catch (e) {
       console.log(e);
@@ -749,8 +787,10 @@ export default class DriveComponent extends Vue {
 
   @Watch("tree.data")
   async onTreeChanges(current, old) {
+    debugger;
     const hasItems = current.toString().split(":");
     if (hasItems.length === 2) {
+      console.log(this.items);
       const node = this.items.find(
         (i) => i.block.toString() === hasItems[0].toString()
       );

@@ -209,14 +209,13 @@
               <v-spacer></v-spacer>
               <v-btn
                 color="blue darken-1"
-                :disabled="!isSignIn"
                 text
                 @click="close"
                 >Cancel</v-btn
               >
               <v-btn
                 color="blue darken-1"
-                :disabled="!isSignIn"
+                :disabled="isSignIn"
                 text
                 @click="createKeys"
                 >Save</v-btn
@@ -265,7 +264,7 @@
                 <v-tooltip top>
                   <span>Create wallet</span>
                   <template v-slot:activator="{ on }">
-                    <v-btn v-on="on" @click="dialog = true" small>
+                    <v-btn v-on="on" @click="openDialog" small>
                       <v-icon>mdi-wallet-plus</v-icon>
                     </v-btn>
                   </template></v-tooltip
@@ -293,7 +292,7 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>DID</b><a :href="currentKeystore.walletRegistry">{{ did._id }}</a>
+                      <b>DID</b><a target="_blank" :href="currentKeystore.walletRegistry">{{ did._id }}</a>
                     </v-list-item-content>
                   </v-list-item>
 
@@ -532,6 +531,12 @@ export default class WalletComponent extends Vue {
     await this.wallet.open(currentKeystore.keystore);
   }
 
+  openDialog(){
+    this.dialog = true;
+    this.password = '';
+    this.confirmPassword = '';
+  }
+
   getP11Name() {
     if (
       this.currentKeystore &&
@@ -760,6 +765,7 @@ export default class WalletComponent extends Vue {
     let id;
     let keystoreIndexItem: KeystoreIndex;
     try {
+      this.walletDescription = 'description';
       if (
         this.walletDescription.length > 0 &&
         this.password === this.confirmPassword
