@@ -14,11 +14,13 @@ const dagJoseFormat = legacy(mf, dagJose.name)
 
 const MAINNET = `https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d`;
 export class IPFSManager {
+    format = 'dag-jose';
     client: IPFS.IPFSRepo;
     provider: ethers.providers.JsonRpcProvider
     async start() {
         this.provider = new ethers.providers.JsonRpcProvider(MAINNET);
-        this.client = await IPFS.create({ ipld: { formats: [dagJoseFormat] } })
+        this.client = await IPFS.create({ ipld: { formats: [dagJoseFormat] } });
+        await this.client.bootstrap.add(`/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN`)
     }
 
     async stop() {
@@ -37,15 +39,19 @@ export class IPFSManager {
 
     async setCurrentNode(
         cid: string,
+        key?: string
     ) {
         const res = await this.client.name.publish(cid);
         return res;
     }
 
-    async getCurrentNode() {
+    async getCurrentNode(
+        key: string = 'self'
+    ) {
         try {
             let query = '';
-            const { id } = await this.client.id();
+            const keys = await this.client.key.list();
+            const { id } = keys.find(i => i.name === key);
             for await (query of this.client.name.resolve(`/ipns/${id}`)) {
             }
             return query.replace('/ipfs/', '');
@@ -74,9 +80,9 @@ export class IPFSManager {
 
         }
         temp = temp.replace('0x', '');
-        const epoch = 1; // await this.provider.getBlockNumber();
-        // sign the payload as dag-jose
-        
+        const epoch = await this.provider.getBlockNumber();
+        // sign the payload as dag-cbor
+
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
             contentType: payload.type,
@@ -84,13 +90,14 @@ export class IPFSManager {
             lastModified: payload.lastModified,
             timestamp: moment().unix(),
             hash: temp,
+            id: atob(moment().unix() + temp),
             content: content.toString('base64'),
             documentPubCert: undefined,
             documentSignature: undefined,
             signaturePreset: undefined
         });
         // put the JWS into the ipfs dag
-        const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
+        const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
         await this.client.block.put(linkedBlock, { cid: jws.link })
         return jwsCid.toString()
@@ -127,7 +134,7 @@ export class IPFSManager {
         documents: any[],
         parent?: any) {
         const epoch = await this.provider.getBlockNumber();
-        // sign the payload as dag-jose
+        // sign the payload as dag-cbor
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
             timestamp: moment().unix(),
@@ -135,8 +142,7 @@ export class IPFSManager {
             parent
         });
         // put the JWS into the ipfs dag
-        debugger;
-        const jwsCid = await this.client.dag.put(jws, { format: 'dag-jose', hashAlg: 'sha2-256' })
+        const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag
         await this.client.block.put(linkedBlock, { cid: jws.link });
         const cid = jwsCid.toString()
@@ -159,7 +165,7 @@ export class IPFSManager {
             ...temp,
         };
 
-        return temp; 
+        return temp;
     }
 
     verify(did: DID, obj: any): Promise<any> {
@@ -168,7 +174,7 @@ export class IPFSManager {
 
     async encryptObject(did: DID, cleartext, dids: string[]) {
         const jwe = await did.createDagJWE(cleartext, dids)
-        return this.client.dag.put(jwe, { format: 'dag-jose', hashAlg: 'sha2-256' })
+        return this.client.dag.put(jwe, { format: this.format, hashAlg: 'sha2-256' })
     }
 
     async decryptObject(did: DID, cid, query) {
@@ -184,12 +190,28 @@ export class IPFSManager {
         temp = keccak256(payload);
         content = payload;
         temp = temp.replace('0x', '');
-        // sign the payload as dag-jose
-        const { cid } = await this.client.add({
+        // sign the payload as dag-cbor
+        const cid = await this.client.add({
             path: 'index.json',
-            content: content.buffer,
+            content
         });
         return cid.toString()
+    }
+
+    /**
+     * Creates key
+     * @param name name 
+     * @param password password
+     */
+    async createKey(name: string, password: string) {
+        const key = await this.client.key.gen(name, {
+            type: 'rsa',
+            size: 2048
+        });
+
+        const pem = await this.client.key.export(name, password);
+
+        return { name, pem };
     }
 
 }

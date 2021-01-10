@@ -651,35 +651,11 @@ export default class DriveComponent extends Vue {
     this.select = i;
   }
 
-  async _loadDirectory(ks?: KeystoreIndex) {
-    const { address } = ks;
-    this.address = address;
-    const swarmFeed = await this.wallet.getSwarmNodeQueryable(address);
-    const feed = await swarmFeed.bzzFeed.createManifest({
-      user: address,
-      name: "did:xdv:" + address,
-    });
-    let content;
-
-    const queue = await swarmFeed.bzzFeed.createManifest({
-      user: swarmFeed.user,
-      name: "tx-document-tree",
-    });
-    if (this.sub) {
-      this.sub.unsubscribe();
-    }
-    this.sub = await DriveSwarmManager.subscribe(
-      swarmFeed,
-      queue,
-      await this.renderDocuments(swarmFeed)
-    );
-  }
-
   async loadDirectory(ks?: KeystoreIndex) {
     this.driveManager = new DriveManager(this.ipfs, this.did);
     try {
       if(this.ipfs){
-        let cid = await this.ipfs.getCurrentNode();
+        let cid = await this.ipfs.getCurrentNode(ks.name);
         if (cid) {
           // load the structure
           let keepSearching = true;
@@ -692,15 +668,15 @@ export default class DriveComponent extends Vue {
                 const document = await this.ipfs.getObject(doc);
  
                 const item = {
-                  _id: `${this.$router.currentRoute.params.user}:-txs-:${document.value.name}`,
+                  // _id: `${this.$router.currentRoute.params.user}:-txs-:${document.value.name}`,
                   contentType: document.value.contentType,
-                  id: `-block-:${_index}`,
-                  name: document.value.name,
-                  item: { txs: '-txs-', reference : document.value, _index },
+                  id: `${document.value.hash}:${document.value.timestamp}`,
+                  name: `Block # ${_index}`,
+                  //  item: { txs: '-txs-', reference : document.value, _index },
                   type: "file_document",
-                  action: moment(document.value.lastModified).fromNow(),
-                  title: document.value.name,
-                  headline: document.value.contentType,
+                  // action: moment(document.value.lastModified).fromNow(),
+                  // title: document.value.name,
+                  //headline: document.value.contentType,
                   subtitle: `hash ${document.value.hash.replace(
                     "0x",
                     ""
@@ -709,6 +685,7 @@ export default class DriveComponent extends Vue {
                   hash: `${document.value.hash.replace("0x", "")}`,
                   signature: `-s-`,
                 };
+                console.log(document);
                 this.items.push(item);
               });
               cid = index.value.parent;
@@ -787,8 +764,9 @@ export default class DriveComponent extends Vue {
 
   @Watch("tree.data")
   async onTreeChanges(current, old) {
-    debugger;
     const hasItems = current.toString().split(":");
+    debugger;
+
     if (hasItems.length === 2) {
       console.log(this.items);
       const node = this.items.find(

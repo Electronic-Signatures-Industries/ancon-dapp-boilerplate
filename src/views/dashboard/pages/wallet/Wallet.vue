@@ -90,7 +90,8 @@
     <v-alert
       ><a
         href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
-        target="_blank">Download PKCS#11 Java Signer</a
+        target="_blank"
+        >Download PKCS#11 Java Signer</a
       ></v-alert
     >
     <v-card>
@@ -207,15 +208,10 @@
                 >Sign in With Google</v-btn
               >
               <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
               <v-btn
                 color="blue darken-1"
-                text
-                @click="close"
-                >Cancel</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                :disabled="isSignIn"
+                :disabled="!isSignIn"
                 text
                 @click="createKeys"
                 >Save</v-btn
@@ -292,7 +288,12 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>DID</b><a target="_blank" :href="currentKeystore.walletRegistry">{{ did._id }}</a>
+                      <b>DID</b
+                      ><a
+                        target="_blank"
+                        :href="currentKeystore.walletRegistry"
+                        >{{ did._id }}</a
+                      >
                     </v-list-item-content>
                   </v-list-item>
 
@@ -531,10 +532,10 @@ export default class WalletComponent extends Vue {
     await this.wallet.open(currentKeystore.keystore);
   }
 
-  openDialog(){
+  openDialog() {
     this.dialog = true;
-    this.password = '';
-    this.confirmPassword = '';
+    this.password = "";
+    this.confirmPassword = "";
   }
 
   getP11Name() {
@@ -741,11 +742,12 @@ export default class WalletComponent extends Vue {
       const googleUser = await this.$gAuth.signIn();
       const oauthId = googleUser.getId();
       const profile = googleUser.getBasicProfile();
-      this.walletDescription = `${profile.Ad} (${profile.du})`;
-      this.oauthName = profile.du.split(`@`)[0];
-      this.avatar = profile.iK;
-      this.oauthUniqueId = profile.OT;
       this.isSignIn = this.$gAuth.isAuthorized;
+
+      this.walletDescription = profile.getName();
+      this.oauthName = profile.getEmail().split(`@`)[0];
+      this.avatar = profile.getImageUrl();
+      this.oauthUniqueId = profile.getEmail();
     }
   }
 
@@ -765,7 +767,7 @@ export default class WalletComponent extends Vue {
     let id;
     let keystoreIndexItem: KeystoreIndex;
     try {
-      this.walletDescription = 'description';
+      this.walletDescription = "description";
       if (
         this.walletDescription.length > 0 &&
         this.password === this.confirmPassword
@@ -809,14 +811,13 @@ export default class WalletComponent extends Vue {
         // remove pvk
         publicWallet.wallet.publicKeys.P256.d = undefined;
         publicWallet.wallet.publicKeys.ES256K.d = undefined;
-        const cid = await this.ipfs.addPublicWallet(
+
+        // create new key
+        const ipfsKey = await this.ipfs.createKey(this.oauthUniqueId, this.password);
+        const cid = await this.ipfs.addIndex(
           did,
-          Buffer.from(JSON.stringify(publicWallet))
+          [Buffer.from(JSON.stringify(publicWallet))]
         );
-        // const res = await WalletResolver.setPublicWalletRef(
-        //   `${this.oauthName}`,
-        //   cid
-        // );
         keystoreIndexItem.name = this.oauthName;
         // todo: corregir url construct
         keystoreIndexItem.walletRegistry = `https://ipfs.io/ipfs/${cid}`;
@@ -832,6 +833,7 @@ export default class WalletComponent extends Vue {
       }, 2500);
       this.disableBtns = false;
     } catch (e) {
+      console.log(e);
       this.valid = false;
       this.alertMessage = e.message;
       this.alertType = "error";
