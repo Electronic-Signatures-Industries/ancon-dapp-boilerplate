@@ -39,9 +39,10 @@ export class IPFSManager {
 
     async setCurrentNode(
         cid: string,
-        key?: string
+        key: string = 'self',
+
     ) {
-        const res = await this.client.name.publish(cid);
+        const res = await this.client.name.publish(cid, {key});
         return res;
     }
 
