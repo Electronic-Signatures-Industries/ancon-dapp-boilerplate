@@ -82,7 +82,7 @@ export class ShareUtils {
     static async openEphemeralLinkIndex(link: string) {
         if (link.split(';').length < 2) return;
         const wallet = new Wallet();
-        const swarmFeed = await wallet.getSwarmNodeQueryable(link.split(';')[0]);
+        const swarmFeed = null; //await wallet.getSwarmNodeQueryable(link.split(';')[0]);
         // get document from reference
         const jwt = await swarmFeed.bzz.downloadData(
             link.split(';')[1]
@@ -95,7 +95,7 @@ export class ShareUtils {
     }
 
     static async getDocument(wallet: Wallet, address: string, txs: string, entry: string, hash: string) {
-        const swarmFeed = await wallet.getSwarmNodeQueryable(address);
+        const swarmFeed = null; //await wallet.getSwarmNodeQueryable(link.split(';')[0]);
 
         // get document from reference
         const ref = await swarmFeed.bzz.downloadData(

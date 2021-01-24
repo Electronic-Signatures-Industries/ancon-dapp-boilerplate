@@ -76,7 +76,7 @@ export class SubscriptionManager {
         return subs.map((i) => {
             const { feedHash, user } = i;
             const wallet = new Wallet();
-            const swarmFeed = wallet.getSwarmNodeQueryable(user);
+            const swarmFeed = null;// wallet.getSwarmNodeQueryable(user);
 
             const duplexClient = new MessagingTimelineDuplexClient(
                 swarmFeed,

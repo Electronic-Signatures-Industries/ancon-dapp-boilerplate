@@ -415,7 +415,6 @@ import {
   DIDDocument,
 } from "xdvplatform-wallet/src";
 import { X509Info, KeyConvert } from "xdvplatform-wallet/src/index";
-import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
 
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { KeystoreIndex, DIDSigner, X509Signer } from "../shared/KeystoreIndex";
@@ -433,6 +432,7 @@ import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
+import { SwarmAccounts } from "xdvplatform-wallet";
 
 @Component({
   components: {
@@ -761,8 +761,22 @@ export default class WalletComponent extends Vue {
     this.loading = true;
     this.valid = true;
 
-    const wallet = new Wallet();
-    let { phrase } = Wallet.generateMnemonic() as any;
+    const accounts = new SwarmAccounts({
+      tokenName: 'gas',
+      swarmGateway: 'https://swarm.fairdatasociety.org',
+      ethGateway: 'https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d',
+      faucetAddress: 'https://faucet-noordung.fairdatasociety.org/gimmie',
+      // chainID: '235813',
+      httpTimeout: 1000,
+      gasPrice: 0.1,
+        ensConfig: {
+        domain: 'datafund.eth',
+        registryAddress: '0xA1029cb176082eca658A67fD6807B9bDfB44A695',
+        subdomainRegistrarAddress: '0x0E6a3B5f6800145bAe95C48934B7b5a90Df50722',
+        resolverContractAddress: '0xC91AB84FFad79279D47a715eF91F5fbE86302E4D'
+      }
+    });
+
     let keys;
     let id;
     let keystoreIndexItem: KeystoreIndex;
@@ -773,9 +787,8 @@ export default class WalletComponent extends Vue {
         this.password === this.confirmPassword
       ) {
         this.alertMessage = "Creating keys...please wait";
-        const w = await wallet.createWallet(this.password, phrase);
-        id = w.id;
-
+        const { xdv } = await accounts.createWallet(this.oauthUniqueId, this.password);
+        id = xdv.id;
         keystoreIndexItem = {
           created: new Date(),
           name: this.oauthUniqueId,
@@ -785,11 +798,11 @@ export default class WalletComponent extends Vue {
 
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
-        keys = await wallet.getPrivateKey("ES256K");
+        keys = await xdv.getPrivateKey("ES256K");
         keystoreIndexItem.address = pubKeyToAddress(keys.getPublic("array"));
 
         const did = await this.didManager.create3ID(
-          wallet as any,
+          xdv as any,
           (m) => (this.alertMessage = m)
         );
         const publicWallet = {
@@ -799,11 +812,11 @@ export default class WalletComponent extends Vue {
               ES256K: keystoreIndexItem.address,
             },
             publicKeys: {
-              P256: (await wallet.getPrivateKeyExports("P256")).ldJsonPublic
+              P256: (await xdv.getPrivateKeyExports("P256")).ldJsonPublic
                 .publicKeyJwk,
-              ES256K: (await wallet.getPrivateKeyExports("ES256K")).ldJsonPublic
+              ES256K: (await xdv.getPrivateKeyExports("ES256K")).ldJsonPublic
                 .publicKeyJwk,
-              ED25519: (await wallet.getPrivateKeyExports("ED25519"))
+              ED25519: (await xdv.getPrivateKeyExports("ED25519"))
                 .ldJsonPublic.publicKeyBase58,
             },
           },
@@ -813,11 +826,13 @@ export default class WalletComponent extends Vue {
         publicWallet.wallet.publicKeys.ES256K.d = undefined;
 
         // create new key
-        const ipfsKey = await this.ipfs.createKey(this.oauthUniqueId, this.password);
-        const cid = await this.ipfs.addIndex(
-          did,
-          [Buffer.from(JSON.stringify(publicWallet))]
+        const ipfsKey = await this.ipfs.createKey(
+          this.oauthUniqueId,
+          this.password
         );
+        const cid = await this.ipfs.addIndex(did, [
+          Buffer.from(JSON.stringify(publicWallet)),
+        ]);
         keystoreIndexItem.name = this.oauthName;
         // todo: corregir url construct
         keystoreIndexItem.walletRegistry = `https://ipfs.io/ipfs/${cid}`;
