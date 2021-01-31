@@ -433,6 +433,8 @@ import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
 import { SwarmAccounts } from "xdvplatform-wallet";
+import { BigNumber } from "ethers/utils";
+const contracts = require("./contracts");
 
 @Component({
   components: {
@@ -512,8 +514,9 @@ export default class WalletComponent extends Vue {
   wallet: Wallet = new Wallet();
   ipfs: IPFSManager;
   didManager: DIDManager;
+  bscWallet: ethers.Wallet;
   oauthUniqueId = "";
-
+  nftContracts = { DAI: null, DocumentAnchoring: null, NFTFactory: null };
   async destroyed() {
     await this.ipfs.stop();
   }
@@ -572,6 +575,38 @@ export default class WalletComponent extends Vue {
     this.did = did;
     await this.loadWallets();
     this.loading = false;
+    const wallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
+    const provider = new ethers.providers.JsonRpcProvider(
+        "https://data-seed-prebsc-1-s1.binance.org:8545"
+    );
+    const signer = provider.getSigner(this.currentKeystore.address);
+
+    // wallet.connect()
+    this.nftContracts.NFTFactory = new ethers.Contract(
+      contracts.NFTFactory.address.bsctestnet,
+      contracts.NFTFactory.raw.abi,
+      signer
+    );
+    this.nftContracts.DocumentAnchoring = new ethers.Contract(
+      contracts.DocumentAnchoring.address.bsctestnet,
+      contracts.DocumentAnchoring.raw.abi,
+      signer
+    );
+    this.nftContracts.DAI = new ethers.Contract(
+      contracts.TestDAI.address.bsctestnet,
+      contracts.TestDAI.raw.abi,
+      signer
+    );
+
+    // const res = await this.nftContracts.DAI.mint(
+    //   this.currentKeystore.address,
+    //   '2' + '0'.repeat(19)
+    // );
+    const res = await this.nftContracts.DAI.totalSupply();
+    console.log(res);
+
+    console.log(await provider.getBalance(this.currentKeystore.address));
+    // await res.wait()
   }
 
   requestSignerActivation(address) {
@@ -762,19 +797,20 @@ export default class WalletComponent extends Vue {
     this.valid = true;
 
     const accounts = new SwarmAccounts({
-      tokenName: 'gas',
-      swarmGateway: 'https://swarm.fairdatasociety.org',
-      ethGateway: 'https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d',
-      faucetAddress: 'https://faucet-noordung.fairdatasociety.org/gimmie',
+      tokenName: "gas",
+      swarmGateway: "https://swarm.fairdatasociety.org",
+      ethGateway:
+        "https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d",
+      faucetAddress: "https://faucet-noordung.fairdatasociety.org/gimmie",
       // chainID: '235813',
       httpTimeout: 1000,
       gasPrice: 0.1,
-        ensConfig: {
-        domain: 'datafund.eth',
-        registryAddress: '0xA1029cb176082eca658A67fD6807B9bDfB44A695',
-        subdomainRegistrarAddress: '0x0E6a3B5f6800145bAe95C48934B7b5a90Df50722',
-        resolverContractAddress: '0xC91AB84FFad79279D47a715eF91F5fbE86302E4D'
-      }
+      ensConfig: {
+        domain: "datafund.eth",
+        registryAddress: "0xA1029cb176082eca658A67fD6807B9bDfB44A695",
+        subdomainRegistrarAddress: "0x0E6a3B5f6800145bAe95C48934B7b5a90Df50722",
+        resolverContractAddress: "0xC91AB84FFad79279D47a715eF91F5fbE86302E4D",
+      },
     });
 
     let keys;
@@ -787,7 +823,10 @@ export default class WalletComponent extends Vue {
         this.password === this.confirmPassword
       ) {
         this.alertMessage = "Creating keys...please wait";
-        const { xdv } = await accounts.createWallet(this.oauthUniqueId, this.password);
+        const { xdv } = await accounts.createWallet(
+          this.oauthUniqueId,
+          this.password
+        );
         id = xdv.id;
         keystoreIndexItem = {
           created: new Date(),
@@ -816,8 +855,8 @@ export default class WalletComponent extends Vue {
                 .publicKeyJwk,
               ES256K: (await xdv.getPrivateKeyExports("ES256K")).ldJsonPublic
                 .publicKeyJwk,
-              ED25519: (await xdv.getPrivateKeyExports("ED25519"))
-                .ldJsonPublic.publicKeyBase58,
+              ED25519: (await xdv.getPrivateKeyExports("ED25519")).ldJsonPublic
+                .publicKeyBase58,
             },
           },
         };
