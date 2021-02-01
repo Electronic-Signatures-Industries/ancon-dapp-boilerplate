@@ -155,13 +155,7 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-    <v-alert
-      ><a
-        href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
-        target="_blank"
-        >Download PKCS#11 Java Signer</a
-      ></v-alert
-    >
+
     <v-card>
       <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
@@ -320,158 +314,98 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-expansion-panels>
-        <v-expansion-panel>
-          <v-expansion-panel-header>
+
+      <v-card class="mx-auto">
+        <v-card-text>
+          <v-list>
             <v-list-item>
-              <v-list-item-avatar>
-                <v-tooltip top>
-                  <span>Create wallet</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn v-on="on" @click="openDialog" small>
-                      <v-icon>mdi-wallet-plus</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-row
-                  ><v-col>
-                    <v-select
-                      v-model="currentKeystore"
-                      :items="items"
-                      :loading="loading"
-                      item-text="headline"
-                      return-object
-                      chips
-                      @change="setWallet"
-                    ></v-select> </v-col
-                ></v-row>
+              <v-list-item-content class="text--primary">
+                <b>DID</b
+                ><a target="_blank" :href="currentKeystore.walletRegistry">{{
+                  did._id
+                }}</a>
               </v-list-item-content>
             </v-list-item>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-card class="mx-auto">
-              <v-card-text>
-                <v-list>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>DID</b
-                      ><a
-                        target="_blank"
-                        :href="currentKeystore.walletRegistry"
-                        >{{ did._id }}</a
-                      >
-                    </v-list-item-content>
-                  </v-list-item>
 
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Address</b> {{ currentKeystore.address }}
-                    </v-list-item-content>
-                  </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Address</b> {{ currentAccount }}
+              </v-list-item-content>
+            </v-list-item>
 
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Linked to Smart Card</b>
-                      {{ getP11Name(currentKeystore) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Linked to P12</b>
-                      {{ getP12Name(currentKeystore) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Created</b> {{ new Date(currentKeystore.created) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
-              </v-card-text>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Created</b> {{ new Date(currentKeystore.created) }}
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
 
-              <v-card-actions>
-                <v-spacer></v-spacer>
+        <v-card-actions>
+          <v-spacer></v-spacer>
 
-                <v-tooltip top>
-                  <span>Link external</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="linkDialog = true"
-                      small
-                    >
-                      <v-icon>mdi-key-link</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
+          <v-tooltip top>
+            <span>Connect</span>
+            <template v-slot:activator="{ on }">
+              <v-btn v-if="currentKeystore" v-on="on" @click="connect()" small>
+                <v-icon>mdi-key-link</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
 
-                <v-tooltip top>
-                  <span>Share address</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="shareAddressDialog = true"
-                      small
-                    >
-                      <v-icon>mdi-share</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-                <v-tooltip top>
-                  <span>Remove</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="remove(item)"
-                      small
-                    >
-                      <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-                <v-tooltip top>
-                  <span>Export wallet</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="exportWallet()"
-                      small
-                    >
-                      <v-icon>mdi-export</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-                <v-tooltip top>
-                  <span>Create data issuer</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="createDataIssuer()"
-                      small
-                    >
-                      <v-icon>mdi-export</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-              </v-card-actions>
-            </v-card>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
-      <xdv-drive
-        :updateWallet="currentKeystore"
-        :wallet="wallet"
-        :ipfs="ipfs"
-        :did="did"
-        :mode="'integrated'"
-      ></xdv-drive>
+          <v-tooltip top>
+            <span>Create data issuer</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="createDataIssuer()"
+                small
+              >
+                <v-icon>mdi-bank</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+          <v-tooltip top>
+            <span>Request Mint</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="currentKeystore"
+                v-on="on"
+                @click="requestMint(item)"
+                small
+              >
+                <v-icon>mdi-merge</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+
+          <v-tooltip top>
+            <span>Mint</span>
+            <template v-slot:activator="{ on }">
+              <v-btn v-if="currentKeystore" v-on="on" @click="mint()" small>
+                <v-icon>mdi-gold</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+
+          <v-tooltip top>
+            <span>Burn</span>
+            <template v-slot:activator="{ on }">
+              <v-btn v-if="currentKeystore" v-on="on" @click="burn()" small>
+                <v-icon>mdi-fire</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          >
+        </v-card-actions>
+      </v-card>
+
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :items-per-page="5"
+        class="elevation-1"
+      ></v-data-table>
     </v-card>
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -547,6 +481,7 @@ export default class WalletComponent extends Vue {
     payment: "",
     price: 0,
   };
+  currentAccount: any = '';
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -606,24 +541,73 @@ export default class WalletComponent extends Vue {
   bscWallet: ethers.Wallet;
   oauthUniqueId = "";
   nftContracts = { DAI: null, DocumentAnchoring: null, NFTFactory: null };
+  headers = [
+    {
+      text: "Nombre",
+      value: "name",
+    },
+    { text: "Simbolo", value: "symbol" },
+    { text: "Direccion de cobros", value: "address" },
+    { text: "Precio", value: "price" },
+    { text: "Fecha", value: "created" },
+  ];
+
   async destroyed() {
     await this.ipfs.stop();
   }
 
-  async mounted() {
+  async beforeMount() {
     this.ipfs = new IPFSManager();
     this.didManager = new DIDManager();
     await this.ipfs.start();
 
-    let { currentKeystore, unlock } = await Session.getSessionInfo();
-    if (currentKeystore === null) {
-      this.dialog = true;
-      return;
-    }
-
-    await this.wallet.open(currentKeystore.keystore);
+    BinanceChain.on("accountsChanged", async (accounts) => {
+      if (accounts.length === 0) {
+        // Binance Chain Wallet is locked or the user has not connected any accounts
+        console.log("Please connect to Binance Chain Wallet.");
+      } else if (accounts[0] !== this.currentAccount) {
+        this.currentAccount = accounts[0];
+        await this.onContractConnect();
+      }
+    });
   }
 
+  async connect() {
+    try {
+      this.currentAccount = (await BinanceChain.enable())[0];
+      await this.onContractConnect();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async onContractConnect() {
+    const provider = new ethers.providers.Web3Provider(BinanceChain);
+    this.did = await this.didManager.create3IDWeb3(BinanceChain,  this.currentAccount);
+    // wallet.connect()
+    this.nftContracts.NFTFactory = new ethers.Contract(
+      contracts.NFTFactory.address.bsctestnet,
+      contracts.NFTFactory.raw.abi,
+      provider.getSigner()
+    );
+    this.nftContracts.DocumentAnchoring = new ethers.Contract(
+      contracts.DocumentAnchoring.address.bsctestnet,
+      contracts.DocumentAnchoring.raw.abi,
+      provider.getSigner()
+    );
+    this.nftContracts.DAI = new ethers.Contract(
+      contracts.TestDAI.address.bsctestnet,
+      contracts.TestDAI.raw.abi,
+      provider.getSigner()
+    );
+
+    // const res = await this.nftContracts.DAI.mint(
+    //   this.currentKeystore.address,
+    //   '2' + '0'.repeat(19)
+    // );
+    console.log(await provider.getBalance(this.currentAccount));
+    // await res.wait()
+  }
   openDialog() {
     this.dialog = true;
     this.password = "";
@@ -664,36 +648,6 @@ export default class WalletComponent extends Vue {
     this.did = did;
     await this.loadWallets();
     this.loading = false;
-    await BinanceChain.enable();
-    const wallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    const provider = new ethers.providers.Web3Provider(BinanceChain);
-    // wallet.connect()
-    this.nftContracts.NFTFactory = new ethers.Contract(
-      contracts.NFTFactory.address.bsctestnet,
-      contracts.NFTFactory.raw.abi,
-      provider.getSigner()
-    );
-    this.nftContracts.DocumentAnchoring = new ethers.Contract(
-      contracts.DocumentAnchoring.address.bsctestnet,
-      contracts.DocumentAnchoring.raw.abi,
-      provider.getSigner()
-    );
-    this.nftContracts.DAI = new ethers.Contract(
-      contracts.TestDAI.address.bsctestnet,
-      contracts.TestDAI.raw.abi,
-      provider.getSigner()
-    );
-
-    // const res = await this.nftContracts.DAI.mint(
-    //   this.currentKeystore.address,
-    //   '2' + '0'.repeat(19)
-    // );
-    const res = await this.nftContracts.DAI.totalSupply();
-    console.log(res);
-
-    console.log(await provider.getBalance(this.currentKeystore.address));
-
-    // await res.wait()
   }
 
   async createDataIssuer() {
@@ -705,8 +659,11 @@ export default class WalletComponent extends Vue {
         this.dataIssuer.price.toString() +
           "0".repeat(19 - this.dataIssuer.price.toString().length)
       );
+      await res.wait();
       const documentMinterAddress = res.logs[0].args.minter;
+      this.items.push(documentMinterAddress);
       console.log(documentMinterAddress);
+      this.createDataIssuerDialog = false;
     } else {
       this.createDataIssuerDialog = true;
     }
