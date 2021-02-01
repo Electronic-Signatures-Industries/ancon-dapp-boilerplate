@@ -515,6 +515,7 @@ import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
 import { SwarmAccounts } from "xdvplatform-wallet";
 import { BigNumber } from "ethers/utils";
+import { window } from "rxjs/operators";
 const contracts = require("./contracts");
 
 @Component({
@@ -541,10 +542,10 @@ export default class WalletComponent extends Vue {
   oauthName: any = null;
   avatar: any = null;
   dataIssuer = {
-    name: '',
-    symbol: '',
-    payment: '',
-    price: 0
+    name: "",
+    symbol: "",
+    payment: "",
+    price: 0,
   };
   show(e) {
     this.open = false;
@@ -663,27 +664,24 @@ export default class WalletComponent extends Vue {
     this.did = did;
     await this.loadWallets();
     this.loading = false;
+    await BinanceChain.enable();
     const wallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    const provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
-    );
-    const signer = provider.getSigner(this.currentKeystore.address);
-
+    const provider = new ethers.providers.Web3Provider(BinanceChain);
     // wallet.connect()
     this.nftContracts.NFTFactory = new ethers.Contract(
       contracts.NFTFactory.address.bsctestnet,
       contracts.NFTFactory.raw.abi,
-      signer
+      provider.getSigner()
     );
     this.nftContracts.DocumentAnchoring = new ethers.Contract(
       contracts.DocumentAnchoring.address.bsctestnet,
       contracts.DocumentAnchoring.raw.abi,
-      signer
+      provider.getSigner()
     );
     this.nftContracts.DAI = new ethers.Contract(
       contracts.TestDAI.address.bsctestnet,
       contracts.TestDAI.raw.abi,
-      signer
+      provider.getSigner()
     );
 
     // const res = await this.nftContracts.DAI.mint(
@@ -698,41 +696,31 @@ export default class WalletComponent extends Vue {
     // await res.wait()
   }
 
-  async createDataIssuer(){
-
-
+  async createDataIssuer() {
     if (this.createDataIssuerDialog) {
-debugger
-        const res = await this.nftContracts.NFTFactory.createMinter(
-          ethers.utils.toUtf8Bytes(this.dataIssuer.name),
-          ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
-          this.dataIssuer.payment,    
-          (this.dataIssuer.price.toString() + '0'.repeat(19 - this.dataIssuer.price.toString().length))
-        );
-debugger
-        const documentMinterAddress = res.logs[0].args.minter;
-        console.log(documentMinterAddress);
-      
-    }
-    else {
+      const res = await this.nftContracts.NFTFactory.createMinter(
+        ethers.utils.toUtf8Bytes(this.dataIssuer.name),
+        ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
+        this.dataIssuer.payment,
+        this.dataIssuer.price.toString() +
+          "0".repeat(19 - this.dataIssuer.price.toString().length)
+      );
+      const documentMinterAddress = res.logs[0].args.minter;
+      console.log(documentMinterAddress);
+    } else {
       this.createDataIssuerDialog = true;
     }
 
-
-
-
-        // const requestMintResult = await documents.requestMint(
-        //   documentMinterAddress,
-        //   `did:ethr:${documentMinterAddress}`,
-        //   `did:ethr:${accounts[1]}`,
-        //   false,
-        //   `https://bobb.did.pa`,{
-        //     from:  accounts[1]
-        //   }
-        // );
-        // assert.equal('https://bobb.did.pa', requestMintResult.logs[0].args.tokenURI);
-
-
+    // const requestMintResult = await documents.requestMint(
+    //   documentMinterAddress,
+    //   `did:ethr:${documentMinterAddress}`,
+    //   `did:ethr:${accounts[1]}`,
+    //   false,
+    //   `https://bobb.did.pa`,{
+    //     from:  accounts[1]
+    //   }
+    // );
+    // assert.equal('https://bobb.did.pa', requestMintResult.logs[0].args.tokenURI);
   }
 
   requestSignerActivation(address) {
