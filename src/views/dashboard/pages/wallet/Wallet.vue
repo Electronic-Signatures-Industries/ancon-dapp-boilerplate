@@ -61,6 +61,74 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="exportWalletDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Export</span>
+        </v-card-title>
+
+        <v-card-text>
+          <qrcode value="wallet.mnemonic" :options="{ width: 200 }"></qrcode
+          ><br />
+          {{ wallet.mnemonic }}
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="exportWalletDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="copyMnemonic()">Copy</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="createDataIssuerWalletDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Create data issuer</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            required
+            v-model="dataIssuer.name"
+            label="Nombre"
+          ></v-text-field>
+          <v-text-field
+            required
+            hint="Simbolo"
+            v-model="dataIssuer.symbol"
+            label="Simbolo"
+          ></v-text-field>
+
+          <v-text-field
+            required
+            v-model="dataIssuer.payment"
+            label="Direccion de cobros"
+          ></v-text-field>
+          <v-text-field
+            required
+            v-model="dataIssuer.price"
+            label="Precio"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="createDataIssuerWalletDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="createDataIssuer()"
+            >Create</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="googleOnboarding" max-width="500px">
       <v-card>
         <v-card-title>
@@ -379,6 +447,19 @@
                     </v-btn>
                   </template></v-tooltip
                 >
+                <v-tooltip top>
+                  <span>Create data issuer</span>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      v-if="currentKeystore"
+                      v-on="on"
+                      @click="createDataIssuer()"
+                      small
+                    >
+                      <v-icon>mdi-export</v-icon>
+                    </v-btn>
+                  </template></v-tooltip
+                >
               </v-card-actions>
             </v-card>
           </v-expansion-panel-content>
@@ -459,6 +540,7 @@ export default class WalletComponent extends Vue {
   isSignIn: any = false;
   oauthName: any = null;
   avatar: any = null;
+  dataIssuer: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -606,7 +688,35 @@ export default class WalletComponent extends Vue {
     console.log(res);
 
     console.log(await provider.getBalance(this.currentKeystore.address));
+
     // await res.wait()
+  }
+
+  async createDataIssuer(){
+
+
+
+        const res = await this.nftContracts.NFTFactory.createMinter(
+          ethers.utils.toUtf8Bytes(this.dataIssuer.name)
+          web3.utils.fromUtf8("NOT9APOST"),
+          "0x0a2Cd4F28357D59e9ff26B1683715201Ea53Cc3b",
+          new BigNumber(20 * 10e18)
+        );
+
+        documentMinterAddress = res.logs[0].args.minter;
+
+        // const requestMintResult = await documents.requestMint(
+        //   documentMinterAddress,
+        //   `did:ethr:${documentMinterAddress}`,
+        //   `did:ethr:${accounts[1]}`,
+        //   false,
+        //   `https://bobb.did.pa`,{
+        //     from:  accounts[1]
+        //   }
+        // );
+        // assert.equal('https://bobb.did.pa', requestMintResult.logs[0].args.tokenURI);
+
+
   }
 
   requestSignerActivation(address) {
