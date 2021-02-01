@@ -83,7 +83,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="createDataIssuerWalletDialog" max-width="500px">
+    <v-dialog v-model="createDataIssuerDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Create data issuer</span>
@@ -109,7 +109,7 @@
           ></v-text-field>
           <v-text-field
             required
-            v-model="dataIssuer.price"
+            v-model.number="dataIssuer.price"
             label="Precio"
           ></v-text-field>
         </v-card-text>
@@ -119,7 +119,7 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="createDataIssuerWalletDialog = false"
+            @click="createDataIssuerDialog = false"
             >Close</v-btn
           >
           <v-btn color="blue darken-1" text @click="createDataIssuer()"
@@ -574,6 +574,7 @@ export default class WalletComponent extends Vue {
   googleOnboarding = false;
   cert = "";
   shareAddressDialog = false;
+  createDataIssuerDialog = false;
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
     defaultX509Signer: X509Signer.XDV,
@@ -695,15 +696,25 @@ export default class WalletComponent extends Vue {
   async createDataIssuer(){
 
 
-
+    if (this.createDataIssuerDialog) {
+debugger
         const res = await this.nftContracts.NFTFactory.createMinter(
-          ethers.utils.toUtf8Bytes(this.dataIssuer.name)
-          web3.utils.fromUtf8("NOT9APOST"),
-          "0x0a2Cd4F28357D59e9ff26B1683715201Ea53Cc3b",
-          new BigNumber(20 * 10e18)
+          ethers.utils.toUtf8Bytes(this.dataIssuer.name),
+          ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
+          this.dataIssuer.payment,    
+          new BigNumber(this.dataIssuer.price * 10e18)
         );
+debugger
+        const documentMinterAddress = res.logs[0].args.minter;
+        console.log(documentMinterAddress);
+      
+    }
+    else {
+      this.createDataIssuerDialog = true;
+    }
 
-        documentMinterAddress = res.logs[0].args.minter;
+
+
 
         // const requestMintResult = await documents.requestMint(
         //   documentMinterAddress,
