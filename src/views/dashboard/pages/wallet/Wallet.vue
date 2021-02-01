@@ -707,7 +707,7 @@ debugger
           ethers.utils.toUtf8Bytes(this.dataIssuer.name),
           ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
           this.dataIssuer.payment,    
-          new BigNumber(this.dataIssuer.price * 10e18)
+          (this.dataIssuer.price.toString() + '0'.repeat(19 - this.dataIssuer.price.toString().length))
         );
 debugger
         const documentMinterAddress = res.logs[0].args.minter;
