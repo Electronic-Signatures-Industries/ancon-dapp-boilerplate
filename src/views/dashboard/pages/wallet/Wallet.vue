@@ -540,7 +540,12 @@ export default class WalletComponent extends Vue {
   isSignIn: any = false;
   oauthName: any = null;
   avatar: any = null;
-  dataIssuer: any;
+  dataIssuer = {
+    name: '',
+    symbol: '',
+    payment: '',
+    price: 0
+  };
   show(e) {
     this.open = false;
     setTimeout(() => {
