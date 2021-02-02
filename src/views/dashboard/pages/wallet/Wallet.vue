@@ -738,13 +738,12 @@ export default class WalletComponent extends Vue {
           "0".repeat(19 - this.dataIssuer.price.toString().length)
       );
       await res.wait();
-      const provider = new ethers.providers.Web3Provider(BinanceChain) as any;
-      const web3 = new Web3(provider);
+      const web3 = new Web3(BinanceChain);
       
       const receipt = await web3.eth.getTransactionReceipt(res.hash);
       
       debugger;
-      const documentMinterAddress = res.logs[0].args.minter;
+      const documentMinterAddress = receipt.logs[0].address;
       //this.items.push(documentMinterAddress);
       console.log('documentMinterAddress ', documentMinterAddress);
       this.createDataIssuerDialog = false;
