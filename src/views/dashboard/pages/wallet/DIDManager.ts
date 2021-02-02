@@ -8,6 +8,7 @@ import KeyResolver from '@ceramicnetwork/key-did-resolver'
 import { DID } from 'dids'
 import { mnemonicToSeed } from 'ethers/utils/hdnode';
 import { arrayify } from 'ethers/utils';
+import { randomBytes } from '@stablelib/random'
 
 export class DIDManager {
 
@@ -18,14 +19,12 @@ export class DIDManager {
      * @param messageNotify 
      */
     async create3ID(
-        wallet: Wallet,
-        messageNotify: (m) => {}) {
-        let seed = arrayify(mnemonicToSeed(wallet.mnemonic));
-        seed = seed.slice(0, 32);
-        const provider = new Ed25519Provider(seed);
+        walletAddress: string) {
+        let seed = randomBytes(32);
+        localStorage.setItem("pk:" + walletAddress, seed.toString());
+        const provider = new Ed25519Provider(seed)
         const did = new DID({ provider, resolver: KeyResolver.getResolver() })
-        messageNotify("Requesting access to publish...");
-        await did.authenticate();
+        await did.authenticate()
         return did;
     }    
 
@@ -40,8 +39,9 @@ export class DIDManager {
     async create3IDWeb3(web3provider: any, address: any) {
         const threeid = new ThreeIdConnect();
         const authProvider = new EthereumAuthProvider(web3provider, address);
-        const provider = await threeid.connect(authProvider)
-        const did = new DID({ provider: await provider.getDidProvider(), resolver: KeyResolver.getResolver() })
+        await threeid.connect(authProvider) 
+        const did = new DID({ provider: (await threeid.getDidProvider()) as any, resolver: KeyResolver.getResolver() })
+        debugger;
         await did.authenticate();
         return did;
     }    

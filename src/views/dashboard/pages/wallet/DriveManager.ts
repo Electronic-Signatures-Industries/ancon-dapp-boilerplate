@@ -30,7 +30,7 @@ export class DriveManager {
         const res = await this.ipfs.setCurrentNode(
             parentindex,
         );
-
+        debugger;
         return res.name;
     }
 }

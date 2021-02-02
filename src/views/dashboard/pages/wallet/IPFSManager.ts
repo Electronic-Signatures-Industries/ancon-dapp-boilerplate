@@ -14,12 +14,12 @@ const dagJoseFormat = legacy(mf, dagJose.name)
 
 const MAINNET = `https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d`;
 export class IPFSManager {
-    format = 'dag-jose';
+    format = 'dag-cbor';
     client: IPFS.IPFSRepo;
     provider: ethers.providers.JsonRpcProvider
     async start() {
         this.provider = new ethers.providers.JsonRpcProvider(MAINNET);
-        this.client = await IPFS.create({ ipld: { formats: [dagJoseFormat] } });
+        this.client = await IPFS.create();
         await this.client.bootstrap.add(`/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN`)
     }
 
@@ -58,9 +58,7 @@ export class IPFSManager {
         } catch (e) {
             return null;
         }
-    }
-
-    /**
+    }/**
      * Add Signed Object
      * @param did DID
      * @param payload Payload, either Buffer or Blob 
@@ -84,18 +82,69 @@ export class IPFSManager {
         // sign the payload as dag-cbor
 
         const { jws, linkedBlock } = await did.createDagJWS({
-            epoch,
             contentType: payload.type,
             name: payload.name,
             lastModified: payload.lastModified,
             timestamp: moment().unix(),
             hash: temp,
             id: atob(moment().unix() + temp),
-            content: content.toString('base64'),
-            documentPubCert: undefined,
-            documentSignature: undefined,
-            signaturePreset: undefined
+            content: content.toString('base64')
         });
+        // put the JWS into the ipfs dag
+        const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
+        // put the payload into the ipfs dag
+        await this.client.block.put(linkedBlock, { cid: jws.link })
+        return jwsCid.toString()
+    }
+
+    /**
+     * Add Signed Object
+     * @param did DID
+     * @param payload Payload, either Buffer or Blob 
+     * @param previousNode If it has previous node
+     */
+    async addSignedAndEncryptObject(
+        did: DID,
+        contentPartyDid: DID,
+        payload: File,
+        previousNode?: any,
+        ) {
+        let temp: string;
+        let content: Buffer;
+        if (payload instanceof File) {
+            temp = await this.blobToKeccak256(payload);
+            content = Buffer.from((await payload.arrayBuffer()));
+        } else {
+            throw new Error('addSignedObject: must be a file object');
+
+        }
+        temp = temp.replace('0x', '');
+        const epoch = await this.provider.getBlockNumber();
+        
+        const toEncrypt = {
+            contentType: payload.type,
+            name: payload.name,
+            lastModified: payload.lastModified,
+            timestamp: moment().unix(),
+            hash: temp,
+            id: atob(moment().unix() + temp),
+            content: content.toString('base64')
+        };
+        
+        const cipherText = await this.encryptObject(did, JSON.stringify(toEncrypt), [contentPartyDid.id] );
+
+        var toSign ={
+            cipherText,
+            metadata : {
+                contentType: payload.type,
+                timestamp: moment().unix(),
+                hash: temp,
+                id: atob(moment().unix() + temp)
+            }
+        };
+
+        // sign the payload as dag-cbor
+        const { jws, linkedBlock } = await did.createDagJWS(toSign);
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
         // put the payload into the ipfs dag

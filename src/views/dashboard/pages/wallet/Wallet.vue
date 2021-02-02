@@ -128,6 +128,52 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="sendDocumetToDataProviderDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Enviar documenta un proveedero de datos</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            required
+            v-model="requestMinting.minterAddress"
+            label="Nombre del proveedor de datos"
+          ></v-text-field>
+          <v-text-field
+            required
+            hint="Simbolo"
+            v-model="requestMinting.minterDid"
+            label="DID del proveedor de datos"
+          ></v-text-field>
+
+          <v-text-field
+            required
+            v-model="requestMinting.userDid"
+            label="DID del usuario"
+          ></v-text-field>
+          <v-text-field
+            required
+            v-model.number="requestMinting.didDoc"
+            label="Documento"
+            @click="canUpload = true"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="sendDocumetToDataProviderDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="requestMint()"
+            >Create</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="googleOnboarding" max-width="500px">
       <v-card>
@@ -420,6 +466,12 @@
       :wallet="wallet"
       @load="onUnlock"
     ></xdv-unlock>
+    <xdv-upload
+      :loading="loading"
+      :show="canUpload"
+      v-model="files"
+      @input="createDocumentNode"
+    ></xdv-upload>
   </v-container>
 </template>
 <script lang="ts">
@@ -445,11 +497,13 @@ import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
 import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
+import { DriveManager } from "../wallet/DriveManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
-import { SwarmAccounts } from "xdvplatform-wallet";
 import { BigNumber } from "ethers/utils";
 import { window } from "rxjs/operators";
+import Upload from "../documents/Upload.vue";
+import Web3 from 'web3';
 const contracts = require("./contracts");
 
 @Component({
@@ -457,6 +511,7 @@ const contracts = require("./contracts");
     "xdv-unlock": Unlock,
     "xdv-drive": Drive,
     "xdv-link-external-keystore": LinkExternalKeystore,
+    "xdv-upload": Upload,
   },
 })
 export default class WalletComponent extends Vue {
@@ -474,7 +529,9 @@ export default class WalletComponent extends Vue {
   removeDialog: boolean = false;
   isSignIn: any = false;
   oauthName: any = null;
+  files: File[] = [];
   avatar: any = null;
+  canUpload = false;
   dataIssuer = {
     name: "",
     symbol: "",
@@ -482,6 +539,12 @@ export default class WalletComponent extends Vue {
     price: 0,
   };
   currentAccount: any = '';
+  requestMinting = {
+    minterAddress: null,
+    minterDid: null,
+    userDid: null,
+    didDoc: null
+  };
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -516,6 +579,7 @@ export default class WalletComponent extends Vue {
   cert = "";
   shareAddressDialog = false;
   createDataIssuerDialog = false;
+  sendDocumetToDataProviderDialog = false;
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
     defaultX509Signer: X509Signer.XDV,
@@ -576,14 +640,28 @@ export default class WalletComponent extends Vue {
     try {
       this.currentAccount = (await BinanceChain.enable())[0];
       await this.onContractConnect();
+      await this.createDataWallet();
     } catch (error) {
       console.log(error);
     }
   }
 
+  async createDataWallet() {
+    if(!localStorage.getItem(this.currentAccount)){
+      const wallet = new Wallet();
+      const password = this.walletPassword;
+      const mnemonic = ethers.Wallet.createRandom();
+      wallet.createWallet(password, mnemonic.mnemonic);
+    }
+  }
+
   async onContractConnect() {
     const provider = new ethers.providers.Web3Provider(BinanceChain);
-    this.did = await this.didManager.create3IDWeb3(BinanceChain,  this.currentAccount);
+    this.did = await this.didManager.create3ID(this.currentAccount);
+    
+    this.driveManager = new DriveManager(this.ipfs,this.did);
+
+    localStorage.setItem("did:" + this.currentAccount, this.did.id);
     // wallet.connect()
     this.nftContracts.NFTFactory = new ethers.Contract(
       contracts.NFTFactory.address.bsctestnet,
@@ -660,25 +738,41 @@ export default class WalletComponent extends Vue {
           "0".repeat(19 - this.dataIssuer.price.toString().length)
       );
       await res.wait();
+      const provider = new ethers.providers.Web3Provider(BinanceChain) as any;
+      const web3 = new Web3(provider);
+      
+      const receipt = await web3.eth.getTransactionReceipt(res.hash);
+      
+      debugger;
       const documentMinterAddress = res.logs[0].args.minter;
-      this.items.push(documentMinterAddress);
-      console.log(documentMinterAddress);
+      //this.items.push(documentMinterAddress);
+      console.log('documentMinterAddress ', documentMinterAddress);
       this.createDataIssuerDialog = false;
     } else {
       this.createDataIssuerDialog = true;
     }
-
-    // const requestMintResult = await documents.requestMint(
-    //   documentMinterAddress,
-    //   `did:ethr:${documentMinterAddress}`,
-    //   `did:ethr:${accounts[1]}`,
-    //   false,
-    //   `https://bobb.did.pa`,{
-    //     from:  accounts[1]
-    //   }
-    // );
-    // assert.equal('https://bobb.did.pa', requestMintResult.logs[0].args.tokenURI);
   }
+
+  // make the request to data provider
+  async requestMint() {
+    if(this.sendDocumetToDataProviderDialog){
+      const res = await this.nftContracts.DocumentAnchoring.requestMint(
+         this.requestMinting.minterAddress,
+         this.requestMinting.minterDid,
+         this.requestMinting.userDid,
+         false,
+         this.requestMinting.didDoc
+       );
+      await res.wait();
+    }
+    else{
+      const did = localStorage.getItem("did:" + this.currentAccount);
+      this.requestMinting.minterDid = did;
+      this.requestMinting.userDid = did;
+    }
+    this.sendDocumetToDataProviderDialog = !this.sendDocumetToDataProviderDialog;
+  }
+  
 
   requestSignerActivation(address) {
     // @ts-ignore
@@ -966,6 +1060,18 @@ export default class WalletComponent extends Vue {
       this.loading = false;
       this.valid = false;
     }
+  }
+
+  driveManager: DriveManager;
+  async createDocumentNode() {
+    this.loading = true;
+    const indexes = await this.driveManager.appendDocumentSet(this.files);
+    console.log(indexes);
+
+    this.requestMinting.didDoc = 'http://ipfs.io/ipns/' + indexes;
+    this.loading = false;
+    this.canUpload = false;
+    this.close();
   }
 }
 </script>
