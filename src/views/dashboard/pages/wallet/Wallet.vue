@@ -504,6 +504,8 @@ import { BigNumber } from "ethers/utils";
 import { window } from "rxjs/operators";
 import Upload from "../documents/Upload.vue";
 import Web3 from 'web3';
+import * as encUtils from 'enc-utils';
+
 const contracts = require("./contracts");
 
 @Component({
@@ -742,8 +744,8 @@ export default class WalletComponent extends Vue {
       
       const receipt = await web3.eth.getTransactionReceipt(res.hash);
       
+      const documentMinterAddress = '0x' + receipt.logs[0].data.substr(26,40);
       debugger;
-      const documentMinterAddress = receipt.logs[0].address;
       //this.items.push(documentMinterAddress);
       console.log('documentMinterAddress ', documentMinterAddress);
       this.createDataIssuerDialog = false;

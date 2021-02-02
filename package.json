@@ -62,6 +62,7 @@
     "dids": "^1.1.1",
     "ecies-parity": "^0.1.1",
     "elliptic": "^6.5.2",
+    "enc-utils": "^2.1.0",
     "es6-shim": "^0.35.5",
     "ethers": "^4.0.46",
     "ethr-did": "^1.1.0",
