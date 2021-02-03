@@ -503,10 +503,10 @@ import { WalletResolver } from "./WalletResolver";
 import { BigNumber } from "ethers/utils";
 import { window } from "rxjs/operators";
 import Upload from "../documents/Upload.vue";
-import Web3 from 'web3';
-import * as encUtils from 'enc-utils';
+import Web3 from "web3";
+import * as encUtils from "enc-utils";
 
-import { bindContracts } from "./SetupContract"; 
+import { bindContracts } from "./SetupContract";
 
 @Component({
   components: {
@@ -540,13 +540,14 @@ export default class WalletComponent extends Vue {
     payment: "",
     price: 0,
   };
-  currentAccount: any = '';
+  currentAccount: any = "";
   requestMinting = {
     minterAddress: null,
     minterDid: null,
     userDid: null,
-    didDoc: null
+    didDoc: null,
   };
+  walletPassword: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -606,16 +607,21 @@ export default class WalletComponent extends Vue {
   didManager: DIDManager;
   bscWallet: ethers.Wallet;
   oauthUniqueId = "";
-  nftContracts = { DAI: null, DocumentAnchoring: null, NFTFactory: null };
+  nftContracts = {
+    DAI: null,
+    DocumentAnchoring: null,
+    NFTFactory: null,
+    getNFTDocumentMinter: (a) => {},
+  };
   headers = [
     {
       text: "Nombre",
-      value: "name",
+      value: "decoded.name",
     },
-    { text: "Simbolo", value: "symbol" },
-    { text: "Direccion de cobros", value: "address" },
-    { text: "Precio", value: "price" },
-    { text: "Fecha", value: "created" },
+    { text: "Simbolo", value: "decoded.symbol" },
+    { text: "Direccion de cobros", value: "decoded.paymentAddress" },
+    { text: "Precio", value: "decoded.feeStructure" },
+    { text: "Fecha", value: "blockTimestamp" },
   ];
 
   async destroyed() {
@@ -642,51 +648,32 @@ export default class WalletComponent extends Vue {
     try {
       this.currentAccount = (await BinanceChain.enable())[0];
       await this.onContractConnect();
-      await this.createDataWallet();
+      await this.fetchDocuments();
+      // await this.createDataWallet();
     } catch (error) {
       console.log(error);
     }
   }
 
   async createDataWallet() {
-    if(!localStorage.getItem(this.currentAccount)){
+    if (!localStorage.getItem(this.currentAccount)) {
       const wallet = new Wallet();
-      const password = this.walletPassword;
+      const password = this.walletPassword || "012345";
       const mnemonic = ethers.Wallet.createRandom();
-      wallet.createWallet(password, mnemonic.mnemonic);
+      wallet.createWallet(password, { mnemonic: mnemonic.mnemonic });
     }
   }
 
   async onContractConnect() {
-    const provider = new ethers.providers.Web3Provider(BinanceChain);
-    this.did = await this.didManager.create3ID(this.currentAccount);
-    
-    this.driveManager = new DriveManager(this.ipfs,this.did);
-
-    localStorage.setItem("did:" + this.currentAccount, this.did.id);
-    // wallet.connect()
-    this.nftContracts.NFTFactory = new ethers.Contract(
-      contracts.NFTFactory.address.bsctestnet,
-      contracts.NFTFactory.raw.abi,
-      provider.getSigner()
+    const config = await bindContracts(
+      BinanceChain as any,
+      this.currentAccount,
+      this.didManager,
+      this.ipfs
     );
-    this.nftContracts.DocumentAnchoring = new ethers.Contract(
-      contracts.DocumentAnchoring.address.bsctestnet,
-      contracts.DocumentAnchoring.raw.abi,
-      provider.getSigner()
-    );
-    this.nftContracts.DAI = new ethers.Contract(
-      contracts.TestDAI.address.bsctestnet,
-      contracts.TestDAI.raw.abi,
-      provider.getSigner()
-    );
-
-    // const res = await this.nftContracts.DAI.mint(
-    //   this.currentKeystore.address,
-    //   '2' + '0'.repeat(19)
-    // );
-    console.log(await provider.getBalance(this.currentAccount));
-    // await res.wait()
+    this.driveManager = config.driveManager;
+    this.nftContracts = config.contracts;
+    this.did = config.did;
   }
   openDialog() {
     this.dialog = true;
@@ -732,6 +719,12 @@ export default class WalletComponent extends Vue {
 
   async createDataIssuer() {
     if (this.createDataIssuerDialog) {
+      const query = {
+        topics: [
+          ethers.utils.id("MinterCreated(address,string,string,address,uint)"),
+        ],
+      };
+
       const res = await this.nftContracts.NFTFactory.createMinter(
         ethers.utils.toUtf8Bytes(this.dataIssuer.name),
         ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
@@ -740,40 +733,57 @@ export default class WalletComponent extends Vue {
           "0".repeat(19 - this.dataIssuer.price.toString().length)
       );
       await res.wait();
-      const web3 = new Web3(BinanceChain);
-      
-      const receipt = await web3.eth.getTransactionReceipt(res.hash);
-      
-      const documentMinterAddress = '0x' + receipt.logs[0].data.substr(26,40);
-      debugger;
-      //this.items.push(documentMinterAddress);
-      console.log('documentMinterAddress ', documentMinterAddress);
+      await this.fetchDocuments();
+
       this.createDataIssuerDialog = false;
     } else {
       this.createDataIssuerDialog = true;
     }
   }
+  async fetchDocuments() {
+    const filter = this.nftContracts.NFTFactory.filters.MinterCreated(
+      null,
+      null,
+      null,
+      null,
+      null
+    );
+
+    const logs = await (this.nftContracts.NFTFactory as ethers.Contract).queryFilter(
+      filter
+    );
+
+    const parsed = logs.map( (l) => {
+      return {
+        ...l,
+        decoded: {
+          ...l.decode(l.data, l.topics),
+        },
+      };
+    });
+
+    this.items = parsed;
+  }
 
   // make the request to data provider
   async requestMint() {
-    if(this.sendDocumetToDataProviderDialog){
+    if (this.sendDocumetToDataProviderDialog) {
       const res = await this.nftContracts.DocumentAnchoring.requestMint(
-         this.requestMinting.minterAddress,
-         this.requestMinting.minterDid,
-         this.requestMinting.userDid,
-         false,
-         this.requestMinting.didDoc
-       );
+        this.requestMinting.minterAddress,
+        this.requestMinting.minterDid,
+        this.requestMinting.userDid,
+        false,
+        this.requestMinting.didDoc
+      );
       await res.wait();
-    }
-    else{
+    } else {
       const did = localStorage.getItem("did:" + this.currentAccount);
       this.requestMinting.minterDid = did;
       this.requestMinting.userDid = did;
     }
-    this.sendDocumetToDataProviderDialog = !this.sendDocumetToDataProviderDialog;
+    this.sendDocumetToDataProviderDialog = !this
+      .sendDocumetToDataProviderDialog;
   }
-  
 
   requestSignerActivation(address) {
     // @ts-ignore
@@ -1069,7 +1079,7 @@ export default class WalletComponent extends Vue {
     const indexes = await this.driveManager.appendDocumentSet(this.files);
     console.log(indexes);
 
-    this.requestMinting.didDoc = 'http://ipfs.io/ipns/' + indexes;
+    this.requestMinting.didDoc = "http://ipfs.io/ipns/" + indexes;
     this.loading = false;
     this.canUpload = false;
     this.close();

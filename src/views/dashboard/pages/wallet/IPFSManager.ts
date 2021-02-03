@@ -3,11 +3,11 @@ import dagJose from 'dag-jose'
 import multiformats from 'multiformats/cjs/src/basics'
 import legacy from 'multiformats/cjs/src/legacy'
 import { DID } from 'dids'
-import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
 import axios from 'axios'
 import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent'
+import { keccak256 } from 'ethers/lib/utils'
 const mf = multiformats('');
 mf.multicodec.add(dagJose)
 const dagJoseFormat = legacy(mf, dagJose.name)

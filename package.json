@@ -64,7 +64,7 @@
     "elliptic": "^6.5.2",
     "enc-utils": "^2.1.0",
     "es6-shim": "^0.35.5",
-    "ethers": "^4.0.46",
+    "ethers": "^5.0.0",
     "ethr-did": "^1.1.0",
     "fds.js": "^0.1.30",
     "ipfs-core": "^0.3.1",
