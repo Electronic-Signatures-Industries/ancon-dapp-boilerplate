@@ -506,7 +506,7 @@ import Upload from "../documents/Upload.vue";
 import Web3 from 'web3';
 import * as encUtils from 'enc-utils';
 
-const contracts = require("./contracts");
+import { bindContracts } from "./SetupContract"; 
 
 @Component({
   components: {
