@@ -18,31 +18,35 @@ export const bindContracts = async (
   const driveManager = new DriveManager(ipfs, did)
 
   localStorage.setItem('did:' + address, did.id)
-  const NFTFactory = new ethers.Contract(
-    mainContracts.NFTFactory.address.bsctestnet,
-    mainContracts.NFTFactory.raw.abi,
+  const NFTManager = new ethers.Contract(
+    mainContracts.NFTManager.address.bsctestnet,
+    mainContracts.NFTManager.raw.abi,
     provider.getSigner(),
-  )
+  );
+  const NFTDocumentMinter = new ethers.Contract(
+    mainContracts.NFTDocumentMinter.address.bsctestnet,
+    mainContracts.NFTDocumentMinter.raw.abi,
+    provider.getSigner(),
+  );  
   const DocumentAnchoring = new ethers.Contract(
     mainContracts.DocumentAnchoring.address.bsctestnet,
     mainContracts.DocumentAnchoring.raw.abi,
     provider.getSigner(),
-  )
+  );
   const DAI = new ethers.Contract(
-    mainContracts.TestDAI.address.bsctestnet,
-    mainContracts.TestDAI.raw.abi,
+    mainContracts.DAI.address.bsctestnet,
+    mainContracts.DAI.raw.abi,
     provider.getSigner(),
-  )
-  const getNFTDocumentMinter = (address) =>
-    new ethers.Contract(address, minterAbi, provider.getSigner())
+  );
+
   return {
     driveManager,
     did,
     contracts: {
-      NFTFactory,
+      NFTManager,
       DocumentAnchoring,
       DAI,
-      getNFTDocumentMinter,
+      NFTDocumentMinter,
     },
   }
 }

@@ -128,10 +128,55 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="sendDocumetToDataProviderDialog" max-width="500px">
+    <v-dialog v-model="sendDocumentToDataProviderDialog" max-width="500px">
       <v-card>
         <v-card-title>
-          <span class="headline">Enviar documenta un proveedero de datos</span>
+          <span class="headline">Enviar documentos a certificador</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            required
+            v-model="certifier.minterAddress"
+            label="Nombre del certificador"
+          ></v-text-field>
+          <v-text-field
+            required
+            hint="Simbolo"
+            v-model="certifier.minterDid"
+            label="DID del certificador"
+          ></v-text-field>
+          <v-text-field
+            required
+            v-model="certifier.userDid"
+            label="DID del usuario"
+          ></v-text-field>
+          <v-text-field
+            required
+            v-model.number="certifier.didDoc"
+            label="Documento"
+            @click="canUpload = true"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="sendDocumentToDataProviderDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="requestMint()"
+            >Create</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="UnlockPaysForService" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Emitir documento tokenizado</span>
         </v-card-title>
 
         <v-card-text>
@@ -165,7 +210,7 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="sendDocumetToDataProviderDialog = false"
+            @click="UnlockPaysForService = false"
             >Close</v-btn
           >
           <v-btn color="blue darken-1" text @click="requestMint()"
@@ -174,7 +219,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
     <v-dialog v-model="googleOnboarding" max-width="500px">
       <v-card>
         <v-card-title>
@@ -542,7 +586,13 @@ export default class WalletComponent extends Vue {
   };
   currentAccount: any = "";
   requestMinting = {
-    minterAddress: null,
+    minterAddress: '',
+    minterDid: null,
+    userDid: null,
+    didDoc: null,
+  };
+    certifier = {
+    minterAddress: '',
     minterDid: null,
     userDid: null,
     didDoc: null,
@@ -581,8 +631,9 @@ export default class WalletComponent extends Vue {
   googleOnboarding = false;
   cert = "";
   shareAddressDialog = false;
+  UnlockPaysForService = false;
   createDataIssuerDialog = false;
-  sendDocumetToDataProviderDialog = false;
+  sendDocumentToDataProviderDialog = false;
   linkExternals = {
     defaultDIDSigner: DIDSigner.XDV,
     defaultX509Signer: X509Signer.XDV,
@@ -610,8 +661,8 @@ export default class WalletComponent extends Vue {
   nftContracts = {
     DAI: null,
     DocumentAnchoring: null,
-    NFTFactory: null,
-    getNFTDocumentMinter: (a) => {},
+    NFTManager: null,
+    NFTDocumentMinter: null,
   };
   headers = [
     {
@@ -649,7 +700,7 @@ export default class WalletComponent extends Vue {
       this.currentAccount = (await BinanceChain.enable())[0];
       await this.onContractConnect();
       await this.fetchDocuments();
-      // await this.createDataWallet();
+//      await this.createDataWallet();
     } catch (error) {
       console.log(error);
     }
@@ -719,16 +770,14 @@ export default class WalletComponent extends Vue {
 
   async createDataIssuer() {
     if (this.createDataIssuerDialog) {
-      const query = {
-        topics: [
-          ethers.utils.id("MinterCreated(address,string,string,address,uint)"),
-        ],
-      };
-
-      const res = await this.nftContracts.NFTFactory.createMinter(
-        ethers.utils.toUtf8Bytes(this.dataIssuer.name),
-        ethers.utils.toUtf8Bytes(this.dataIssuer.symbol),
+      
+    
+      const res = await this.nftContracts.NFTManager.registerMinter(
+        (this.nftContracts.NFTDocumentMinter as ethers.Contract).address,
+        this.dataIssuer.name,
+        this.dataIssuer.symbol,
         this.dataIssuer.payment,
+        false,
         this.dataIssuer.price.toString() +
           "0".repeat(19 - this.dataIssuer.price.toString().length)
       );
@@ -741,33 +790,34 @@ export default class WalletComponent extends Vue {
     }
   }
   async fetchDocuments() {
-    const filter = this.nftContracts.NFTFactory.filters.MinterCreated(
+    const filter = this.nftContracts.NFTManager.filters.MinterRegistered(
       null,
       null,
       null,
       null,
-      null
     );
 
-    const logs = await (this.nftContracts.NFTFactory as ethers.Contract).queryFilter(
+    const logs = await (this.nftContracts.NFTManager as ethers.Contract).queryFilter(
       filter
     );
 
-    const parsed = logs.map( (l) => {
+    const parsed = logs.map(async (l) => {
+      const data = l.decode(l.data, l.topics);
+      const props =  await this.nftContracts.NFTManager.dataProviderMinters(data.id);
       return {
         ...l,
         decoded: {
-          ...l.decode(l.data, l.topics),
+          ...props,
         },
       };
     });
 
-    this.items = parsed;
+    this.items = await forkJoin(parsed).toPromise();
   }
 
   // make the request to data provider
   async requestMint() {
-    if (this.sendDocumetToDataProviderDialog) {
+    if (this.sendDocumentToDataProviderDialog) {
       const res = await this.nftContracts.DocumentAnchoring.requestMint(
         this.requestMinting.minterAddress,
         this.requestMinting.minterDid,
@@ -781,8 +831,8 @@ export default class WalletComponent extends Vue {
       this.requestMinting.minterDid = did;
       this.requestMinting.userDid = did;
     }
-    this.sendDocumetToDataProviderDialog = !this
-      .sendDocumetToDataProviderDialog;
+    this.sendDocumentToDataProviderDialog = !this
+      .sendDocumentToDataProviderDialog;
   }
 
   requestSignerActivation(address) {
