@@ -433,6 +433,7 @@ import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
+const Venus = require('@swipewallet/venus-js'); // in Node.js
 
 @Component({
   components: {
@@ -502,6 +503,7 @@ export default class WalletComponent extends Vue {
   tab = 0;
   item = 1;
   currentKeystore: KeystoreIndex = {} as KeystoreIndex;
+  venusData: any;
   fab = false;
   items: any & KeystoreIndex[] = [
     {
@@ -570,6 +572,13 @@ export default class WalletComponent extends Vue {
       (message) => console.log
     );
     this.did = did;
+
+    // Init with HD mnemonic (server side)
+    this.venusData = new Venus('97', {
+      mnemonic: this.wallet.mnemonic, // preferably with environment variable
+    });
+
+    debugger;
     await this.loadWallets();
     this.loading = false;
   }

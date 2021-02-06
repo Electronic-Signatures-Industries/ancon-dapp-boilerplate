@@ -83,7 +83,7 @@ export class IPFSManager {
         temp = temp.replace('0x', '');
         const epoch = await this.provider.getBlockNumber();
         // sign the payload as dag-cbor
-
+        debugger;
         const { jws, linkedBlock } = await did.createDagJWS({
             epoch,
             contentType: payload.type,
