@@ -135,25 +135,19 @@
         </v-card-title>
 
         <v-card-text>
-          <v-text-field
+            <v-text-field
             required
-            v-model="certifier.minterAddress"
-            label="Nombre del certificador"
-          ></v-text-field>
-          <v-text-field
-            required
-            hint="Simbolo"
-            v-model="certifier.minterDid"
+            v-model="requestMinting.minterDid"
             label="DID del certificador"
           ></v-text-field>
           <v-text-field
             required
-            v-model="certifier.userDid"
+            v-model="requestMinting.userDid"
             label="DID del usuario"
           ></v-text-field>
           <v-text-field
             required
-            v-model.number="certifier.didDoc"
+            v-model.number="requestMinting.didDoc"
             label="Documento"
             @click="canUpload = true"
           ></v-text-field>
@@ -173,7 +167,41 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="UnlockPaysForService" max-width="500px">
+    <v-dialog v-model="burnServiceDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Pagar Servicio de Tokenizacion</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            required
+            v-model="burnToken.requestId"
+            label="ID de la Solicitud"
+          ></v-text-field>
+          <v-text-field
+            required
+            v-model="burnToken.tokenId"
+            label="ID del Token"
+          ></v-text-field>
+
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="burnServiceDialog = false"
+            >Close</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="burn()"
+            >Pagar</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+      <v-dialog v-model="mintServiceDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Emitir documento tokenizado</span>
@@ -182,24 +210,19 @@
         <v-card-text>
           <v-text-field
             required
-            v-model="requestMinting.minterAddress"
-            label="Nombre del proveedor de datos"
+            v-model="mintToken.requestId"
+            label="ID de la Solicitud"
           ></v-text-field>
           <v-text-field
             required
             hint="Simbolo"
-            v-model="requestMinting.minterDid"
-            label="DID del proveedor de datos"
+            v-model="mintToken.userAddress"
+            label="Dirección del Usuario"
           ></v-text-field>
 
           <v-text-field
             required
-            v-model="requestMinting.userDid"
-            label="DID del usuario"
-          ></v-text-field>
-          <v-text-field
-            required
-            v-model.number="requestMinting.didDoc"
+            v-model.number="mintToken.documentUri"
             label="Documento"
             @click="canUpload = true"
           ></v-text-field>
@@ -210,11 +233,11 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="UnlockPaysForService = false"
+            @click="mintServiceDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="requestMint()"
-            >Create</v-btn
+          <v-btn color="blue darken-1" text @click="mint()"
+            >Emitir</v-btn
           >
         </v-card-actions>
       </v-card>
@@ -491,11 +514,17 @@
       </v-card>
 
       <v-data-table
-        :headers="headers"
-        :items="items"
-        :items-per-page="5"
-        class="elevation-1"
-      ></v-data-table>
+    v-model="selected"
+    :headers="headers"
+    :items="items"
+    :item-per-page="5"
+    :single-select= "true" 
+    item-key="decoded.id"
+    show-select
+    class="elevation-1"
+  >
+  </v-data-table>
+      
     </v-card>
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -591,12 +620,16 @@ export default class WalletComponent extends Vue {
     userDid: null,
     didDoc: null,
   };
-    certifier = {
-    minterAddress: '',
-    minterDid: null,
-    userDid: null,
-    didDoc: null,
+  mintToken = {
+    userAddress: '',
+    requestId: null,
+    
   };
+  burnToken = {
+    tokenId: null,
+    requestId: null,
+  };
+    
   walletPassword: any;
   show(e) {
     this.open = false;
@@ -631,7 +664,7 @@ export default class WalletComponent extends Vue {
   googleOnboarding = false;
   cert = "";
   shareAddressDialog = false;
-  UnlockPaysForService = false;
+  mintServiceDialog = false;
   createDataIssuerDialog = false;
   sendDocumentToDataProviderDialog = false;
   linkExternals = {
@@ -669,7 +702,7 @@ export default class WalletComponent extends Vue {
       text: "Nombre",
       value: "decoded.name",
     },
-    { text: "Simbolo", value: "decoded.symbol" },
+    { text: "ID", value: "decoded.id" },
     { text: "Direccion de cobros", value: "decoded.paymentAddress" },
     { text: "Precio", value: "decoded.feeStructure" },
     { text: "Fecha", value: "blockTimestamp" },
@@ -819,11 +852,11 @@ export default class WalletComponent extends Vue {
   async requestMint() {
     if (this.sendDocumentToDataProviderDialog) {
       const res = await this.nftContracts.DocumentAnchoring.requestMint(
-        this.requestMinting.minterAddress,
-        this.requestMinting.minterDid,
-        this.requestMinting.userDid,
+        this.nftContracts.NFTDocumentMinter.address,
+        this.did._id,
+        this.did._id,  //for testing proposes
         false,
-        this.requestMinting.didDoc
+        this.requestMinting.didDoc, "prueba de testnet"
       );
       await res.wait();
     } else {
@@ -833,6 +866,26 @@ export default class WalletComponent extends Vue {
     }
     this.sendDocumentToDataProviderDialog = !this
       .sendDocumentToDataProviderDialog;
+  }
+
+  // Necesitamos el ID, el Address y el Doc. hay que leer el ID del current ITEM
+  async mint() {
+    if (this.mintServiceDialog) {
+      const res = await this.nftContracts.NFTDocumentMinter.mint(
+        this.nftContracts.NFTDocumentMinter.address,
+        this.did._id,
+        this.did._id,  //for testing proposes
+        false,
+        this.requestMinting.didDoc, "prueba de testnet"
+      );
+      await res.wait();
+    } else {
+      const did = localStorage.getItem("did:" + this.currentAccount);
+      this.requestMinting.minterDid = did;
+      this.requestMinting.userDid = did;
+    }
+    this.mintServiceDialog = !this
+      .mintServiceDialog;
   }
 
   requestSignerActivation(address) {
