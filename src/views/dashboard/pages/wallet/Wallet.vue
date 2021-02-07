@@ -299,7 +299,7 @@
 
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>Address</b> {{ currentKeystore.address }}
+                      <b>Address</b> {{ currentAddress }}
                     </v-list-item-content>
                   </v-list-item>
 
@@ -503,6 +503,7 @@ export default class WalletComponent extends Vue {
   tab = 0;
   item = 1;
   currentKeystore: KeystoreIndex = {} as KeystoreIndex;
+  currentAddress: any;
   venusData: any;
   fab = false;
   items: any & KeystoreIndex[] = [
@@ -577,8 +578,8 @@ export default class WalletComponent extends Vue {
     this.venusData = new Venus('97', {
       mnemonic: this.wallet.mnemonic, // preferably with environment variable
     });
-
-    debugger;
+    this.currentAddress = this.venusData._provider.address;
+    
     await this.loadWallets();
     this.loading = false;
   }
