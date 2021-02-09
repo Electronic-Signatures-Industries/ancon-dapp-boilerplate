@@ -17,13 +17,11 @@ export class DIDManager {
      * @param messageNotify 
      */
     async create3ID(
-        wallet: Wallet,
-        messageNotify: (m) => {}) {
+        wallet: Wallet) {
         let seed = arrayify(mnemonicToSeed(wallet.mnemonic));
         seed = seed.slice(0, 32);
         const provider = new Ed25519Provider(seed);
         const did = new DID({ provider, resolver: KeyResolver.getResolver() })
-        messageNotify("Requesting access to publish...");
         await did.authenticate();
         return did;
     }    

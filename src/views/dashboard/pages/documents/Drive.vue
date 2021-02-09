@@ -367,7 +367,7 @@ const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode", "wallet", "ipfs", "did"],
+  props: ["updateWallet", "mode", "wallet", "ipfs", "did", "contract"],
   components: {
     "xdv-unlock": Unlock,
     "xdv-upload": Upload,
@@ -444,6 +444,7 @@ export default class DriveComponent extends Vue {
   sub: Unsubscribable;
   wallet;
   ipfs: IPFSManager;
+  contract: ethers.Contract;
   did: DID;
   driveManager: DriveManager;
 
@@ -482,14 +483,12 @@ export default class DriveComponent extends Vue {
     this.items = [];
     await this.loadWallets();
     let { currentKeystore, unlock } = await Session.getSessionInfo();
-    await this.loadDirectory(this.updateWallet);
   }
 
   async onUnlock() {
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
     this.loading = true;
-    await this.loadDirectory(ks);
     this.loading = false;
   }
 
@@ -575,7 +574,7 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
-    await this.loadDirectory(ks);
+    this.driveManager = new DriveManager(this.ipfs, this.did);
   }
 
   async loadWallets() {
@@ -649,58 +648,6 @@ export default class DriveComponent extends Vue {
   async changeWallet(i: KeystoreIndex) {
     this.selectWalletDialog = true;
     this.select = i;
-  }
-
-  async loadDirectory(ks?: KeystoreIndex) {
-    this.driveManager = new DriveManager(this.ipfs, this.did);
-    try {
-      if(this.ipfs){
-        let cid = await this.ipfs.getCurrentNode(ks.name);
-        if (cid) {
-          // load the structure
-          let keepSearching = true;
-          this.items = [];
-          while(keepSearching){
-            try
-            {
-              const index = await this.ipfs.getObject(cid);
-              index.value.documents.map(async (doc, _index) => {
-                const document = await this.ipfs.getObject(doc);
- 
-                const item = {
-                  // _id: `${this.$router.currentRoute.params.user}:-txs-:${document.value.name}`,
-                  contentType: document.value.contentType,
-                  id: `${document.value.hash}:${document.value.timestamp}`,
-                  name: `Block # ${_index}`,
-                  //  item: { txs: '-txs-', reference : document.value, _index },
-                  type: "file_document",
-                  // action: moment(document.value.lastModified).fromNow(),
-                  // title: document.value.name,
-                  //headline: document.value.contentType,
-                  subtitle: `hash ${document.value.hash.replace(
-                    "0x",
-                    ""
-                  )} signature -signature-`,
-                  reference: document.value,
-                  hash: `${document.value.hash.replace("0x", "")}`,
-                  signature: `-s-`,
-                };
-                console.log(document);
-                this.items.push(item);
-              });
-              cid = index.value.parent;
-            } 
-            catch(err){
-              keepSearching = false;
-            }
-          }
-
-          this.loading = false;
-        }
-      }
-    } catch (e) {
-      console.log(e);
-    }
   }
 
   renderDocuments(swarmFeed: SwarmFeed) {
@@ -822,27 +769,48 @@ export default class DriveComponent extends Vue {
     this.didDialog = false;
     this.fileDialog = false;
   }
+  
+  async fetchDocuments() {
+    debugger;
+    const filter = this.contract.filters.DocumentAnchored(
+      null,
+      null,
+      null,
+      null,
+    );
+    console.log('addres ',this.wallet.ethersWallet.address);
+
+    const logs = await (this.contract as ethers.Contract).queryFilter(
+      filter
+    );
+    const parsed = logs.map(async (l) => {
+      const data = l.decode(l.data, l.topics);
+      const props =  await this.contract.minterDocumentAnchors(this.wallet.ethersWallet.address,data.id);
+      return {
+        ...l,
+        decoded: {
+          ...props,
+        },
+      };
+    });
+    this.items = await forkJoin(parsed).toPromise();
+  }
 
   async createDocumentNode() {
-    const wallets = await Session.getWalletRefs();
-    const ks = wallets.find(
-      (i: KeystoreIndex) => i.keystore === this.wallet.id
-    ) as KeystoreIndex;
     this.loading = true;
-    // const driveManager = new DriveSwarmManager(this.wallet);
-    // await driveManager.pushFiles({
-    //   address: ks.address,
-    //   files: this.files,
-    //   queueName: "documents",
-    // });
-    debugger;
-    const indexes = await this.driveManager.appendDocumentSet(this.files);
+    this.ipfs = new IPFSManager();
+    await this.ipfs.start();
+    this.driveManager = new DriveManager(this.ipfs, this.did);
+    const indexes = await this.driveManager.createDocumentSet(this.files);
     console.log(indexes);
+    const document = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description').send();
 
+    debugger;
+    console.log('txt ',document);
     this.loading = false;
     this.canUpload = false;
     this.close();
-    await this.loadDirectory(ks);
+    await this.fetchDocuments();
   }
 
   getUrl(ref) {

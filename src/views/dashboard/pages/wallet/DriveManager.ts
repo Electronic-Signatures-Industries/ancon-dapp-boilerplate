@@ -11,10 +11,7 @@ export class DriveManager {
 
     }
 
-    async appendDocumentSet(files: File[]) {
-        // get parent node
-        const parent = await this.ipfs.getCurrentNode();
-
+    async createDocumentSet(files: File[]){
         // get promises of signed objects
         const pushFiles = files.map(async (f) => {
             return await this.ipfs.addSignedObject(this.did, f);
@@ -24,7 +21,17 @@ export class DriveManager {
         const items = await forkJoin(pushFiles).toPromise();
 
         // get indexed of ipfs
-        const parentindex = await this.ipfs.addIndex(this.did, items, parent);
+        const parentindex = await this.ipfs.addIndex(this.did, items);
+
+        return parentindex;
+    }
+
+    async appendDocumentSet(files: File[]) {
+
+        // get promises of signed objects
+        const pushFiles = files.map(async (f) => {
+            return await this.ipfs.addSignedObject(this.did, f);
+        });
 
         // response with indexes (IPFS cid's)
         const res = await this.ipfs.setCurrentNode(

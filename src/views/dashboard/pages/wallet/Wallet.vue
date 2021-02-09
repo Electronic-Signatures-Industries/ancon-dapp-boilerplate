@@ -390,6 +390,7 @@
         :ipfs="ipfs"
         :did="did"
         :mode="'integrated'"
+        :contract="contract"
       ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
@@ -433,7 +434,10 @@ import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
+import Web3 from "web3";
+import { BigNumber } from "ethers/utils";
 const Venus = require('@swipewallet/venus-js'); // in Node.js
+const xdvAbi = require('../../../../abi/xdv');
 
 @Component({
   components: {
@@ -503,8 +507,9 @@ export default class WalletComponent extends Vue {
   tab = 0;
   item = 1;
   currentKeystore: KeystoreIndex = {} as KeystoreIndex;
-  currentAddress: any;
-  venusData: any;
+  currentAddress = "";
+  blockchainWallet: any;
+  contract: any = {};
   fab = false;
   items: any & KeystoreIndex[] = [
     {
@@ -517,14 +522,9 @@ export default class WalletComponent extends Vue {
   didManager: DIDManager;
   oauthUniqueId = "";
 
-  async destroyed() {
-    await this.ipfs.stop();
-  }
-
   async mounted() {
     this.ipfs = new IPFSManager();
     this.didManager = new DIDManager();
-    await this.ipfs.start();
 
     let { currentKeystore, unlock } = await Session.getSessionInfo();
     if (currentKeystore === null) {
@@ -569,19 +569,25 @@ export default class WalletComponent extends Vue {
   async onUnlock() {
     this.loading = true;
     const did: any = await this.didManager.create3ID(
-      this.wallet as any,
-      (message) => console.log
+      this.wallet as any
     );
+    this.ipfs = new IPFSManager();
     this.did = did;
-
-    // Init with HD mnemonic (server side)
-    this.venusData = new Venus('97', {
-      mnemonic: this.wallet.mnemonic, // preferably with environment variable
-    });
-    this.currentAddress = this.venusData._provider.address;
     
     await this.loadWallets();
     this.loading = false;
+    
+    const web3_data = (await this.getWeb3(this.wallet));
+    const web3 = web3_data.web3;
+    const account = web3_data.account;
+
+    this.contract = new web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, 
+      xdvAbi.XDVDocumentAnchoring.address.bsctestnet, 
+      { 
+        from: account.address,
+        gasPrice: new BigNumber(20*1e9).toString(),
+        gas: 20000000 
+      });
   }
 
   requestSignerActivation(address) {
@@ -761,6 +767,24 @@ export default class WalletComponent extends Vue {
     }
   }
 
+  async getWeb3(wallet: Wallet){
+
+        // Init with HD mnemonic (server side)
+        const network = {
+          name: 'Chapel',
+          networkId: 97,
+          chainId: 97,
+        };
+        const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+        const web3 = new Web3(providerUrl);
+        const private_key = (await wallet.getPrivateKey("ES256K")).getPrivate("hex");
+        web3.eth.accounts.wallet.add(private_key);
+        const account = web3.eth.accounts.privateKeyToAccount(private_key);
+
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any,network);
+        return {web3, provider, account};
+  }
+
   async createKeys() {
     this.isSignIn = false;
     setImmediate(() => (this.disableBtns = true));
@@ -793,44 +817,19 @@ export default class WalletComponent extends Vue {
           description: this.walletDescription,
         } as KeystoreIndex;
 
+
+        this.currentAddress = wallet.ethersWallet.address;//blockchainWallet.address;
+        this.blockchainWallet = wallet.ethersWallet;//blockchainWallet;
+
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
-        keys = await wallet.getPrivateKey("ES256K");
-        keystoreIndexItem.address = pubKeyToAddress(keys.getPublic("array"));
-
-        const did = await this.didManager.create3ID(
-          wallet as any,
-          (m) => (this.alertMessage = m)
-        );
-        const publicWallet = {
-          wallet: {
-            did: did.id,
-            address: {
-              ES256K: keystoreIndexItem.address,
-            },
-            publicKeys: {
-              P256: (await wallet.getPrivateKeyExports("P256")).ldJsonPublic
-                .publicKeyJwk,
-              ES256K: (await wallet.getPrivateKeyExports("ES256K")).ldJsonPublic
-                .publicKeyJwk,
-              ED25519: (await wallet.getPrivateKeyExports("ED25519"))
-                .ldJsonPublic.publicKeyBase58,
-            },
-          },
-        };
-        // remove pvk
-        publicWallet.wallet.publicKeys.P256.d = undefined;
-        publicWallet.wallet.publicKeys.ES256K.d = undefined;
-
-        // create new key
-        const ipfsKey = await this.ipfs.createKey(this.oauthUniqueId, this.password);
-        const cid = await this.ipfs.addIndex(
-          did,
-          [Buffer.from(JSON.stringify(publicWallet))]
+        const provider = (await this.getWeb3(wallet)).provider;
+        keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
+        this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
+        this.did = await this.didManager.create3ID(
+          wallet as any
         );
         keystoreIndexItem.name = this.oauthName;
-        // todo: corregir url construct
-        keystoreIndexItem.walletRegistry = `https://ipfs.io/ipfs/${cid}`;
         Session.set({ ks: keystoreIndexItem });
       }
 

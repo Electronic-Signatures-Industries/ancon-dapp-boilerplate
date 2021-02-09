@@ -7,24 +7,40 @@ import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
 import axios from 'axios'
+import IPFSClient from 'ipfs-http-client';
 import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent'
-const mf = multiformats('');
-mf.multicodec.add(dagJose)
-const dagJoseFormat = legacy(mf, dagJose.name)
+const dagCBOR = require('ipld-dag-cbor');
+const Ipld = require('ipld')
+const IpfsRepo = require('ipfs-repo')
+const IpfsBlockService = require('ipfs-block-service')
+const multicodec = require('multicodec')
+const Repo = require('ipfs-repo');
+
+const initIpld = async (repo) => {
+  //const repo = new IpfsRepo(ipfsRepoPath)
+  //await repo.init({})
+  //await repo.open()
+  const blockService = new IpfsBlockService(repo)
+  return new Ipld({blockService: blockService})
+}
 
 const MAINNET = `https://mainnet.infura.io/v3/92ed13edfad140409ac24457a9c4e22d`;
 export class IPFSManager {
-    format = 'dag-jose';
+    format = 'dag-cbor';
     client: IPFS.IPFSRepo;
-    provider: ethers.providers.JsonRpcProvider
-    async start() {
-        this.provider = new ethers.providers.JsonRpcProvider(MAINNET);
-        this.client = await IPFS.create({ ipld: { formats: [dagJoseFormat] } });
-        await this.client.bootstrap.add(`/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN`)
+    provider: ethers.providers.JsonRpcProvider;
+    ipld: any;
+
+    async start(){
+        const repo = new Repo('/xdv/ipfs-repo');
+        await repo.init({host: 'ipfs.infura.io', port: 5001, protocol: 'https' , ipld: { formats: [dagCBOR] }})
+        await repo.open()
+        this.client = repo;
+        this.ipld = await initIpld(this.client);
     }
 
     async stop() {
-        await this.client.stop();
+        //await this.client.stop();
     }
 
     /**
@@ -81,11 +97,9 @@ export class IPFSManager {
 
         }
         temp = temp.replace('0x', '');
-        const epoch = await this.provider.getBlockNumber();
         // sign the payload as dag-cbor
-        debugger;
+        
         const { jws, linkedBlock } = await did.createDagJWS({
-            epoch,
             contentType: payload.type,
             name: payload.name,
             lastModified: payload.lastModified,
@@ -98,9 +112,9 @@ export class IPFSManager {
             signaturePreset: undefined
         });
         // put the JWS into the ipfs dag
-        const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
+        const jwsCid = await this.ipld.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
-        await this.client.block.put(linkedBlock, { cid: jws.link })
+        //await this.client.blocks.put(linkedBlock, { cid: jws.link })
         return jwsCid.toString()
     }
 
@@ -132,20 +146,16 @@ export class IPFSManager {
 
     async addIndex(
         did: DID,
-        documents: any[],
-        parent?: any) {
-        const epoch = await this.provider.getBlockNumber();
+        documents: any[]) {
         // sign the payload as dag-cbor
         const { jws, linkedBlock } = await did.createDagJWS({
-            epoch,
-            timestamp: moment().unix(),
-            documents,
-            parent
+            documents
         });
+        
         // put the JWS into the ipfs dag
-        const jwsCid = await this.client.dag.put(jws, { format: this.format, hashAlg: 'sha2-256' })
+        const jwsCid = await this.ipld.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
-        await this.client.block.put(linkedBlock, { cid: jws.link });
+        //await this.client.blocks.put(linkedBlock, { cid: jws.link });
         const cid = jwsCid.toString()
         return cid;
     }
@@ -154,14 +164,14 @@ export class IPFSManager {
      * @param cid content id
      */
     async getObject(cid: string): Promise<any> {
-        let temp = await this.client.dag.get(cid);
+        let temp = await this.ipld.get(cid);
         const res = {
             metadata: {
                 ...temp,
             },
             payload: undefined
         }
-        temp = await this.client.dag.get(cid, { path: '/link' });
+        temp = await this.ipld.get(cid, { path: '/link' });
         res.payload = {
             ...temp,
         };
@@ -175,11 +185,11 @@ export class IPFSManager {
 
     async encryptObject(did: DID, cleartext, dids: string[]) {
         const jwe = await did.createDagJWE(cleartext, dids)
-        return this.client.dag.put(jwe, { format: this.format, hashAlg: 'sha2-256' })
+        return this.ipld.put(jwe, multicodec.DAG_CBOR);
     }
 
     async decryptObject(did: DID, cid, query) {
-        const jwe = (await this.client.dag.get(cid, query)).value
+        const jwe = (await this.ipld.get(cid, query)).value
         const cleartext = await did.decryptDagJWE(jwe)
         return cleartext;
     }
