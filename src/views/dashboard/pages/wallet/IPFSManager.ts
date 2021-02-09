@@ -32,11 +32,8 @@ export class IPFSManager {
     ipld: any;
 
     async start(){
-        const repo = new Repo('/xdv/ipfs-repo');
-        await repo.init({host: 'ipfs.infura.io', port: 5001, protocol: 'https' , ipld: { formats: [dagCBOR] }})
-        await repo.open()
-        this.client = repo;
-        this.ipld = await initIpld(this.client);
+       this.client = IPFSClient({ url: `http://ifesa.ipfs.pa:5001` });
+       this.ipld = await initIpld(this.client);
     }
 
     async stop() {
