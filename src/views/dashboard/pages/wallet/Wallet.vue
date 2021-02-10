@@ -135,7 +135,7 @@
         </v-card-title>
 
         <v-card-text>
-            <v-text-field
+          <v-text-field
             required
             v-model="requestMinting.minterDid"
             label="DID del certificador"
@@ -184,24 +184,18 @@
             v-model="burnToken.tokenId"
             label="ID del Token"
           ></v-text-field>
-
         </v-card-text>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            text
-            @click="burnServiceDialog = false"
+          <v-btn color="blue darken-1" text @click="burnServiceDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="burn()"
-            >Pagar</v-btn
-          >
+          <v-btn color="blue darken-1" text @click="burn()">Pagar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-      <v-dialog v-model="mintServiceDialog" max-width="500px">
+    <v-dialog v-model="mintServiceDialog" max-width="500px">
       <v-card>
         <v-card-title>
           <span class="headline">Emitir documento tokenizado</span>
@@ -230,15 +224,10 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="blue darken-1"
-            text
-            @click="mintServiceDialog = false"
+          <v-btn color="blue darken-1" text @click="mintServiceDialog = false"
             >Close</v-btn
           >
-          <v-btn color="blue darken-1" text @click="mint()"
-            >Emitir</v-btn
-          >
+          <v-btn color="blue darken-1" text @click="mint()">Emitir</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -446,11 +435,6 @@
               </v-list-item-content>
             </v-list-item>
 
-            <v-list-item>
-              <v-list-item-content class="text--primary">
-                <b>Created</b> {{ new Date(currentKeystore.created) }}
-              </v-list-item-content>
-            </v-list-item>
           </v-list>
         </v-card-text>
 
@@ -496,7 +480,7 @@
           <v-tooltip top>
             <span>Mint</span>
             <template v-slot:activator="{ on }">
-              <v-btn v-if="currentKeystore" v-on="on" @click="mint()" small>
+              <v-btn v-if="selected.id" v-on="on" @click="mint()" small>
                 <v-icon>mdi-gold</v-icon>
               </v-btn>
             </template></v-tooltip
@@ -505,7 +489,7 @@
           <v-tooltip top>
             <span>Burn</span>
             <template v-slot:activator="{ on }">
-              <v-btn v-if="currentKeystore" v-on="on" @click="burn()" small>
+              <v-btn v-if="selected.id" v-on="on" @click="burn()" small>
                 <v-icon>mdi-fire</v-icon>
               </v-btn>
             </template></v-tooltip
@@ -514,17 +498,16 @@
       </v-card>
 
       <v-data-table
-    v-model="selected"
-    :headers="headers"
-    :items="items"
-    :item-per-page="5"
-    :single-select= "true" 
-    item-key="decoded.id"
-    show-select
-    class="elevation-1"
-  >
-  </v-data-table>
-      
+        v-model="selected"
+        :headers="headers"
+        :items="items"
+        :item-per-page="5"
+        :single-select="true"
+        item-key="decoded.id"
+        show-select
+        class="elevation-1"
+      >
+      </v-data-table>
     </v-card>
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -566,14 +549,13 @@ import copy from "copy-to-clipboard";
 import { Subject, forkJoin } from "rxjs";
 import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
-import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
 import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
 import { DriveManager } from "../wallet/DriveManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
-import { BigNumber } from "ethers/utils";
+import { BigNumber } from "bignumber.js";
 import { window } from "rxjs/operators";
 import Upload from "../documents/Upload.vue";
 import Web3 from "web3";
@@ -615,21 +597,20 @@ export default class WalletComponent extends Vue {
   };
   currentAccount: any = "";
   requestMinting = {
-    minterAddress: '',
+    minterAddress: "",
     minterDid: null,
     userDid: null,
     didDoc: null,
   };
   mintToken = {
-    userAddress: '',
+    userAddress: "",
     requestId: null,
-    
   };
   burnToken = {
     tokenId: null,
     requestId: null,
   };
-    
+
   walletPassword: any;
   show(e) {
     this.open = false;
@@ -665,6 +646,7 @@ export default class WalletComponent extends Vue {
   cert = "";
   shareAddressDialog = false;
   mintServiceDialog = false;
+  burnServiceDialog = false;
   createDataIssuerDialog = false;
   sendDocumentToDataProviderDialog = false;
   linkExternals = {
@@ -733,7 +715,7 @@ export default class WalletComponent extends Vue {
       this.currentAccount = (await BinanceChain.enable())[0];
       await this.onContractConnect();
       await this.fetchDocuments();
-//      await this.createDataWallet();
+      //      await this.createDataWallet();
     } catch (error) {
       console.log(error);
     }
@@ -803,8 +785,6 @@ export default class WalletComponent extends Vue {
 
   async createDataIssuer() {
     if (this.createDataIssuerDialog) {
-      
-    
       const res = await this.nftContracts.NFTManager.registerMinter(
         (this.nftContracts.NFTDocumentMinter as ethers.Contract).address,
         this.dataIssuer.name,
@@ -827,20 +807,24 @@ export default class WalletComponent extends Vue {
       null,
       null,
       null,
-      null,
+      null
     );
 
-    const logs = await (this.nftContracts.NFTManager as ethers.Contract).queryFilter(
-      filter
-    );
+    const logs = await (this.nftContracts
+      .NFTManager as ethers.Contract).queryFilter(filter);
 
     const parsed = logs.map(async (l) => {
       const data = l.decode(l.data, l.topics);
-      const props =  await this.nftContracts.NFTManager.dataProviderMinters(data.id);
+      const props = await this.nftContracts.NFTManager.dataProviderMinters(
+        data.id
+      );
       return {
         ...l,
         decoded: {
-          ...props,
+           feeStructure: props.feeStructure.div('1000000000000000000').toNumber(2),
+          id: props.id,
+          paymentAddress: props.paymentAddress,
+          name: props.name,
         },
       };
     });
@@ -854,9 +838,10 @@ export default class WalletComponent extends Vue {
       const res = await this.nftContracts.DocumentAnchoring.requestMint(
         this.nftContracts.NFTDocumentMinter.address,
         this.did._id,
-        this.did._id,  //for testing proposes
+        this.did._id, //for testing proposes
         false,
-        this.requestMinting.didDoc, "prueba de testnet"
+        this.requestMinting.didDoc,
+        "prueba de testnet"
       );
       await res.wait();
     } else {
@@ -868,24 +853,27 @@ export default class WalletComponent extends Vue {
       .sendDocumentToDataProviderDialog;
   }
 
-  // Necesitamos el ID, el Address y el Doc. hay que leer el ID del current ITEM
   async mint() {
     if (this.mintServiceDialog) {
       const res = await this.nftContracts.NFTDocumentMinter.mint(
-        this.nftContracts.NFTDocumentMinter.address,
-        this.did._id,
-        this.did._id,  //for testing proposes
-        false,
-        this.requestMinting.didDoc, "prueba de testnet"
+        this.mintToken.requestId,
+        this.mintToken.userAddress,
+        this.mintToken.documentUri,
       );
       await res.wait();
-    } else {
-      const did = localStorage.getItem("did:" + this.currentAccount);
-      this.requestMinting.minterDid = did;
-      this.requestMinting.userDid = did;
     }
-    this.mintServiceDialog = !this
-      .mintServiceDialog;
+    this.mintServiceDialog = !this.mintServiceDialog;
+  }
+
+  async burn() {
+    if (this.burnServiceDialog) {
+      const res = await this.nftContracts.NFTDocumentMinter.burn(
+        this.burnToken.requestId,
+        this.burnToken.tokenId,
+      );
+      await res.wait();
+    }
+    this.burnServiceDialog = !this.burnServiceDialog;
   }
 
   requestSignerActivation(address) {
