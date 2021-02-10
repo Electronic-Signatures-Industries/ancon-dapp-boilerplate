@@ -440,7 +440,6 @@ import Web3 from "web3";
 import { BigNumber } from "ethers/utils";
 const Venus = require('@swipewallet/venus-js'); // in Node.js
 const xdvAbi = require('../../../../abi/xdv');
-const mainAbi = require('../../../../abi/main');
 
 @Component({
   components: {
