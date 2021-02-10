@@ -109,9 +109,10 @@ export class IPFSManager {
             signaturePreset: undefined
         });
         // put the JWS into the ipfs dag
-        const jwsCid = await this.ipld.put(jws, multicodec.DAG_CBOR);
+        const jwsCid = await this.client.dag.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
-        //await this.client.blocks.put(linkedBlock, { cid: jws.link })
+        //await this.client.block.put(linkedBlock, { cid: jws.link })
+        console.log('cid', jwsCid.toString());
         return jwsCid.toString()
     }
 
@@ -150,7 +151,7 @@ export class IPFSManager {
         });
         
         // put the JWS into the ipfs dag
-        const jwsCid = await this.ipld.put(jws, multicodec.DAG_CBOR);
+        const jwsCid = await this.client.dag.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
         //await this.client.blocks.put(linkedBlock, { cid: jws.link });
         const cid = jwsCid.toString()
@@ -161,14 +162,14 @@ export class IPFSManager {
      * @param cid content id
      */
     async getObject(cid: string): Promise<any> {
-        let temp = await this.ipld.get(cid);
+        let temp = await this.client.dag.get(cid);
         const res = {
             metadata: {
                 ...temp,
             },
             payload: undefined
         }
-        temp = await this.ipld.get(cid, { path: '/link' });
+        temp = await this.client.dag.get(cid, { path: '/link' });
         res.payload = {
             ...temp,
         };
@@ -182,11 +183,11 @@ export class IPFSManager {
 
     async encryptObject(did: DID, cleartext, dids: string[]) {
         const jwe = await did.createDagJWE(cleartext, dids)
-        return this.ipld.put(jwe, multicodec.DAG_CBOR);
+        return this.client.dag.put(jwe, multicodec.DAG_CBOR);
     }
 
     async decryptObject(did: DID, cid, query) {
-        const jwe = (await this.ipld.get(cid, query)).value
+        const jwe = (await this.client.dag.get(cid, query)).value
         const cleartext = await did.decryptDagJWE(jwe)
         return cleartext;
     }

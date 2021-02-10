@@ -391,6 +391,8 @@
         :did="did"
         :mode="'integrated'"
         :contract="contract"
+        :daiContract="daiContract"
+        :web3="web3"
       ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
@@ -510,6 +512,7 @@ export default class WalletComponent extends Vue {
   currentAddress = "";
   blockchainWallet: any;
   contract: any = {};
+  daiContract: any = {};
   fab = false;
   items: any & KeystoreIndex[] = [
     {
@@ -521,6 +524,7 @@ export default class WalletComponent extends Vue {
   ipfs: IPFSManager;
   didManager: DIDManager;
   oauthUniqueId = "";
+  web3: Web3;
 
   async mounted() {
     this.ipfs = new IPFSManager();
@@ -578,16 +582,13 @@ export default class WalletComponent extends Vue {
     this.loading = false;
     
     const web3_data = (await this.getWeb3(this.wallet));
-    const web3 = web3_data.web3;
-    const account = web3_data.account;
+    this.web3 = web3_data.web3;
+    const daiContractAddress = '0x960A3e3be97A1Ee4108e25e5F4D9cB530B1Aabe1'
+    const xdvContractAddress = '0xc00ddc4eDaCca318a1a41319C0D801c9FF567374';
 
-    this.contract = new web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, 
-      xdvAbi.XDVDocumentAnchoring.address.bsctestnet, 
-      { 
-        from: account.address,
-        gasPrice: new BigNumber(20*1e9).toString(),
-        gas: 20000000 
-      });
+    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, daiContractAddress);
+    this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvContractAddress
+      /*xdvAbi.XDVDocumentAnchoring.address.bsctestnet*/);
   }
 
   requestSignerActivation(address) {
@@ -772,17 +773,16 @@ export default class WalletComponent extends Vue {
         // Init with HD mnemonic (server side)
         const network = {
           name: 'Chapel',
-          networkId: 97,
-          chainId: 97,
+          networkId: 10,
+          chainId: 10,
         };
-        const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+        const providerUrl = 'http://127.0.0.1:8545'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
         const web3 = new Web3(providerUrl);
-        const private_key = (await wallet.getPrivateKey("ES256K")).getPrivate("hex");
+        const private_key = '5ad53543cdbffb2aba59777b93ec1f97dc3c0c09293ffe24f466d733f95e10a7'; //(await wallet.getPrivateKey("ES256K")).getPrivate("hex");
         web3.eth.accounts.wallet.add(private_key);
-        const account = web3.eth.accounts.privateKeyToAccount(private_key);
+        const account = '0xA83B070a68336811e9265fbEc6d49B98538F61EA'; // web3.eth.accounts.privateKeyToAccount(private_key);
 
-        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any,network);
-        return {web3, provider, account};
+        return {web3, account};
   }
 
   async createKeys() {
@@ -823,9 +823,8 @@ export default class WalletComponent extends Vue {
 
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
-        const provider = (await this.getWeb3(wallet)).provider;
         keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
-        this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
+        //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
         this.did = await this.didManager.create3ID(
           wallet as any
         );

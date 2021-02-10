@@ -363,6 +363,7 @@ import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
 import { DIDManager } from "../wallet/DIDManager";
+import Web3 from "web3";
 const cbor = require("cbor-sync");
 
 @Component({
@@ -444,9 +445,11 @@ export default class DriveComponent extends Vue {
   sub: Unsubscribable;
   wallet;
   ipfs: IPFSManager;
-  contract: ethers.Contract;
+  contract: any;
+  daiContract: any;
   did: DID;
   driveManager: DriveManager;
+  web3: Web3;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -771,29 +774,24 @@ export default class DriveComponent extends Vue {
   }
   
   async fetchDocuments() {
-    debugger;
-    const filter = this.contract.filters.DocumentAnchored(
-      null,
-      null,
-      null,
-      null,
-    );
-    console.log('addres ',this.wallet.ethersWallet.address);
 
-    const logs = await (this.contract as ethers.Contract).queryFilter(
-      filter
-    );
-    const parsed = logs.map(async (l) => {
-      const data = l.decode(l.data, l.topics);
-      const props =  await this.contract.minterDocumentAnchors(this.wallet.ethersWallet.address,data.id);
-      return {
-        ...l,
-        decoded: {
-          ...props,
-        },
-      };
-    });
-    this.items = await forkJoin(parsed).toPromise();
+    const filter = new Promise((resolve,reject) => {
+      this.contract.events.DocumentAnchored({ 
+        toBlock: 'latest',
+        fromBlock: 0 },
+        (err,val) => {
+          if(!err){
+            resolve(val);
+          }
+          else{
+            reject(err);
+          }
+        });
+      });
+    const response = await filter;
+    debugger;
+    
+    this.items = await forkJoin(response).toPromise();
   }
 
   async createDocumentNode() {
@@ -803,9 +801,11 @@ export default class DriveComponent extends Vue {
     this.driveManager = new DriveManager(this.ipfs, this.did);
     const indexes = await this.driveManager.createDocumentSet(this.files);
     console.log(indexes);
-    const document = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description').send();
+    const gas = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description').estimateGas();
 
-    debugger;
+    const document = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description')
+      .send({ from: '0xA83B070a68336811e9265fbEc6d49B98538F61EA', gasLimit: 200000, gas: gas });
+
     console.log('txt ',document);
     this.loading = false;
     this.canUpload = false;
