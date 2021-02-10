@@ -851,21 +851,15 @@ export default class DriveComponent extends Vue {
   async allowanceNextStep(){
     this.setAllowanceDialog = false;
     this.loading = true;
-    if(this.currentAddress.length == 0){
-      this.currentAddress = '0xA83B070a68336811e9265fbEc6d49B98538F61EA';
-    }
     try{
       const spender = this.contract._address;
-      await this.daiContract.methods.allowance(this.currentAddress,spender);
+      const amount = await this.daiContract.methods.allowance(this.currentAddress,spender).call();
+      console.log('amount',amount);
+      await this.daiContract.methods.approve(spender, "9000000000000000000").send(
+        { from: this.currentAddress, gasLimit: 4000000, gas: 300000 }
+      );
       this.setEstimateGasDialog = true;
-
-      this.ipfs = new IPFSManager();
-      await this.ipfs.start();
-      this.driveManager = new DriveManager(this.ipfs, this.did);
-      this.indexes = await this.driveManager.createDocumentSet(this.files);
-      console.log(this.indexes);
-      const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
-      this.estimatedGas = gas;
+      debugger;
     }
     catch(e){
       console.log('allowance error',e);
@@ -877,16 +871,25 @@ export default class DriveComponent extends Vue {
     this.setEstimateGasDialog = false;
     console.log('wallet',this.currentAddress);
     
-    try{
-    const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-      .send({ from: this.currentAddress, gasLimit: 400000, gas: this.estimatedGas });
+    try{      
+      this.ipfs = new IPFSManager();
+      await this.ipfs.start();
+      this.driveManager = new DriveManager(this.ipfs, this.did);
+      this.indexes = await this.driveManager.createDocumentSet(this.files);
+      console.log(this.indexes);
+      /*const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
+      this.estimatedGas = gas;
 
-    console.log('txt ',document);
-    this.loading = false;
-    this.canUpload = false;
-    this.close();
-    await this.fetchDocuments();
-    this.setEstimateGasDialog = false;
+      console.log(this.estimatedGas);*/
+      
+      const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
+        .send({ from: this.currentAddress, gasLimit: 4000000, gas: 300000 });
+
+      console.log('txt ',document);
+      this.loading = false;
+      this.canUpload = false;
+      this.close();
+      await this.fetchDocuments();
     }
     catch(e){
       console.log('confirmation error',e);

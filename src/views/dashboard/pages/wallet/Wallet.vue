@@ -583,13 +583,8 @@ export default class WalletComponent extends Vue {
     
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
-    const daiContractAddress = '0x960A3e3be97A1Ee4108e25e5F4D9cB530B1Aabe1';
-    const xdvContractAddress = '0xc00ddc4eDaCca318a1a41319C0D801c9FF567374';
-
-    this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvContractAddress
-        /*xdvAbi.XDVDocumentAnchoring.address.bsctestnet*/);
-    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, daiContractAddress);
-    debugger;
+    this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvAbi.XDVDocumentAnchoring.address.bsctestnet);
+    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, xdvAbi.DAI.address.bsctestnet);
   }
 
   requestSignerActivation(address) {
@@ -773,15 +768,19 @@ export default class WalletComponent extends Vue {
     // Init with HD mnemonic (server side)
     const network = {
       name: 'Chapel',
-      networkId: 10,
-      chainId: 10,
+      networkId: 97,
+      chainId: 97,
     };
-    const providerUrl = 'http://127.0.0.1:8545'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
     const web3 = new Web3(providerUrl);
-    const private_key = '5ad53543cdbffb2aba59777b93ec1f97dc3c0c09293ffe24f466d733f95e10a7'; //(await wallet.getPrivateKey("ES256K")).getPrivate("hex");
+    this.web3 = web3;
+    const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
     web3.eth.accounts.wallet.add(private_key);
-    this.currentAddress = '0xA83B070a68336811e9265fbEc6d49B98538F61EA'; // web3.eth.accounts.privateKeyToAccount(private_key);
-
+    const account = web3.eth.accounts.privateKeyToAccount(private_key);
+    this.web3.eth.defaultAccount = account.address;
+    this.currentAddress = account.address;
+    console.log('defaultAccount', this.currentAddress);
+    
     return {web3};
   }
 
