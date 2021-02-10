@@ -859,7 +859,6 @@ export default class DriveComponent extends Vue {
         { from: this.currentAddress, gasLimit: 4000000, gas: 300000 }
       );
       this.setEstimateGasDialog = true;
-      debugger;
     }
     catch(e){
       console.log('allowance error',e);
@@ -883,7 +882,7 @@ export default class DriveComponent extends Vue {
       console.log(this.estimatedGas);*/
       
       const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-        .send({ from: this.currentAddress, gasLimit: 4000000, gas: 300000 });
+        .send({ from: this.currentAddress, gasLimit: 4000000, gas: 400000 });
 
       console.log('txt ',document);
       this.loading = false;
