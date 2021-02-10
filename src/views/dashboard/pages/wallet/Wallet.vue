@@ -387,7 +387,7 @@
       <xdv-drive
         :updateWallet="currentKeystore"
         :wallet="wallet"
-        :ipfs="ipfs"
+        :currentAddress="currentAddress"
         :did="did"
         :mode="'integrated'"
         :contract="contract"
@@ -440,6 +440,7 @@ import Web3 from "web3";
 import { BigNumber } from "ethers/utils";
 const Venus = require('@swipewallet/venus-js'); // in Node.js
 const xdvAbi = require('../../../../abi/xdv');
+const mainAbi = require('../../../../abi/main');
 
 @Component({
   components: {
@@ -581,14 +582,15 @@ export default class WalletComponent extends Vue {
     await this.loadWallets();
     this.loading = false;
     
-    const web3_data = (await this.getWeb3(this.wallet));
+    const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
-    const daiContractAddress = '0x960A3e3be97A1Ee4108e25e5F4D9cB530B1Aabe1'
+    const daiContractAddress = '0x960A3e3be97A1Ee4108e25e5F4D9cB530B1Aabe1';
     const xdvContractAddress = '0xc00ddc4eDaCca318a1a41319C0D801c9FF567374';
 
-    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, daiContractAddress);
     this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvContractAddress
-      /*xdvAbi.XDVDocumentAnchoring.address.bsctestnet*/);
+        /*xdvAbi.XDVDocumentAnchoring.address.bsctestnet*/);
+    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, daiContractAddress);
+    debugger;
   }
 
   requestSignerActivation(address) {
@@ -768,21 +770,20 @@ export default class WalletComponent extends Vue {
     }
   }
 
-  async getWeb3(wallet: Wallet){
+  async getWeb3(){
+    // Init with HD mnemonic (server side)
+    const network = {
+      name: 'Chapel',
+      networkId: 10,
+      chainId: 10,
+    };
+    const providerUrl = 'http://127.0.0.1:8545'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const web3 = new Web3(providerUrl);
+    const private_key = '5ad53543cdbffb2aba59777b93ec1f97dc3c0c09293ffe24f466d733f95e10a7'; //(await wallet.getPrivateKey("ES256K")).getPrivate("hex");
+    web3.eth.accounts.wallet.add(private_key);
+    this.currentAddress = '0xA83B070a68336811e9265fbEc6d49B98538F61EA'; // web3.eth.accounts.privateKeyToAccount(private_key);
 
-        // Init with HD mnemonic (server side)
-        const network = {
-          name: 'Chapel',
-          networkId: 10,
-          chainId: 10,
-        };
-        const providerUrl = 'http://127.0.0.1:8545'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
-        const web3 = new Web3(providerUrl);
-        const private_key = '5ad53543cdbffb2aba59777b93ec1f97dc3c0c09293ffe24f466d733f95e10a7'; //(await wallet.getPrivateKey("ES256K")).getPrivate("hex");
-        web3.eth.accounts.wallet.add(private_key);
-        const account = '0xA83B070a68336811e9265fbEc6d49B98538F61EA'; // web3.eth.accounts.privateKeyToAccount(private_key);
-
-        return {web3, account};
+    return {web3};
   }
 
   async createKeys() {

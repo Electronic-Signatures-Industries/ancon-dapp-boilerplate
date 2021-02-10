@@ -284,6 +284,55 @@
       @load="onUnlock"
     ></xdv-unlock> -->
 
+      <v-dialog v-model="setAllowanceDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Token Allowance</span>
+          </v-card-title>
+
+          <v-card-text>
+            <v-row>
+              <v-col cols="12" md="12">
+                Token allowance
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="setAllowanceDialog = false"
+              >Cancel</v-btn>
+            <v-btn color="blue darken-1" text @click="allowanceNextStep()"
+              >OK</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <v-dialog v-model="setEstimateGasDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Estimated Gas</span>
+          </v-card-title>
+
+          <v-card-text>
+              <v-row>
+                <v-col cols="12" md="12">
+                  <b>Gas</b> {{ estimatedGas }}
+                </v-col>
+              </v-row>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="setEstimateGasDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="blue darken-1" text @click="confirmContract()"
+              >OK</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     <xdv-upload
       :loading="loading"
       :show="canUpload"
@@ -368,7 +417,7 @@ const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode", "wallet", "ipfs", "did", "contract"],
+  props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3"],
   components: {
     "xdv-unlock": Unlock,
     "xdv-upload": Upload,
@@ -386,6 +435,8 @@ export default class DriveComponent extends Vue {
   valid = false;
   form = {};
   validations: any = { password: false };
+  setAllowanceDialog: boolean = false;
+  setEstimateGasDialog: boolean = false;
   didDialog = false;
   fileDialog = false;
   files: File[] = [];
@@ -450,6 +501,9 @@ export default class DriveComponent extends Vue {
   did: DID;
   driveManager: DriveManager;
   web3: Web3;
+  currentAddress = "";
+  estimatedGas = "";
+  indexes = "";
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -794,23 +848,54 @@ export default class DriveComponent extends Vue {
     this.items = await forkJoin(response).toPromise();
   }
 
-  async createDocumentNode() {
+  async allowanceNextStep(){
+    this.setAllowanceDialog = false;
     this.loading = true;
-    this.ipfs = new IPFSManager();
-    await this.ipfs.start();
-    this.driveManager = new DriveManager(this.ipfs, this.did);
-    const indexes = await this.driveManager.createDocumentSet(this.files);
-    console.log(indexes);
-    const gas = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description').estimateGas();
+    if(this.currentAddress.length == 0){
+      this.currentAddress = '0xA83B070a68336811e9265fbEc6d49B98538F61EA';
+    }
+    try{
+      const spender = this.contract._address;
+      await this.daiContract.methods.allowance(this.currentAddress,spender);
+      this.setEstimateGasDialog = true;
 
-    const document = await this.contract.methods.addDocument(this.did.id, indexes, 'dummy description')
-      .send({ from: '0xA83B070a68336811e9265fbEc6d49B98538F61EA', gasLimit: 200000, gas: gas });
+      this.ipfs = new IPFSManager();
+      await this.ipfs.start();
+      this.driveManager = new DriveManager(this.ipfs, this.did);
+      this.indexes = await this.driveManager.createDocumentSet(this.files);
+      console.log(this.indexes);
+      const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
+      this.estimatedGas = gas;
+    }
+    catch(e){
+      console.log('allowance error',e);
+      debugger;
+    }
+  }
+
+  async confirmContract(){
+    this.setEstimateGasDialog = false;
+    console.log('wallet',this.currentAddress);
+    
+    try{
+    const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
+      .send({ from: this.currentAddress, gasLimit: 400000, gas: this.estimatedGas });
 
     console.log('txt ',document);
     this.loading = false;
     this.canUpload = false;
     this.close();
     await this.fetchDocuments();
+    this.setEstimateGasDialog = false;
+    }
+    catch(e){
+      console.log('confirmation error',e);
+      debugger;
+    }
+  }
+  
+  async createDocumentNode() {
+    this.setAllowanceDialog = true;
   }
 
   getUrl(ref) {
