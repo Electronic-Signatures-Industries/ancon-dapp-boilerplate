@@ -103,7 +103,7 @@
           <v-card v-if="canCreateWallet">
             <v-card-title>
               <span class="headline" v-if="walletType !== 'rsa'"
-                >Add new wallet</span
+                >Agregar nuevo wallet</span
               >
             </v-card-title>
 
@@ -142,6 +142,11 @@
                     @input="handlePasswordUpdate"
                     autocomplete="new-password"
                   ></v-text-field>
+                  <v-textarea
+                    v-model="importSeedPhrase"
+                    v-if="setImportSeedPhrase"
+                    label="12 (o 24) palabras semilla">
+                  </v-textarea>
                 </v-col>
                 <v-col v-if="walletType === 'rsa'" cols="12" md="12">
                   <div>Detalle del certificado de pruebas</div>
@@ -205,16 +210,22 @@
                 :disabled="isSignIn"
                 text
                 @click="signInGoogle"
-                >Sign in With Google</v-btn
+                >Ingresar con Google</v-btn
+              >
+              <v-btn
+                color="blue darken-1"
+                text
+                @click="importWallet"
+                >Importar wallet existente</v-btn
               >
               <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="close">Cancelar</v-btn>
               <v-btn
                 color="blue darken-1"
                 :disabled="!isSignIn"
                 text
                 @click="createKeys"
-                >Save</v-btn
+                >Guardar</v-btn
               >
             </v-card-actions>
           </v-card>
@@ -256,7 +267,7 @@
         <v-expansion-panel>
           <v-expansion-panel-header>
             <v-list-item>
-              <v-list-item-avatar>
+              <v-list-item-avatar v-if="!existingWallet">
                 <v-tooltip top>
                   <span>Create wallet</span>
                   <template v-slot:activator="{ on }">
@@ -437,7 +448,6 @@ import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
 import { WalletResolver } from "./WalletResolver";
 import Web3 from "web3";
-import { BigNumber } from "ethers/utils";
 const Venus = require('@swipewallet/venus-js'); // in Node.js
 const xdvAbi = require('../../../../abi/xdv');
 
@@ -525,6 +535,9 @@ export default class WalletComponent extends Vue {
   didManager: DIDManager;
   oauthUniqueId = "";
   web3: Web3;
+  setImportSeedPhrase: boolean = false;
+  importSeedPhrase: string = "";
+  existingWallet: boolean = false;
 
   async mounted() {
     this.ipfs = new IPFSManager();
@@ -572,13 +585,16 @@ export default class WalletComponent extends Vue {
 
   async onUnlock() {
     this.loading = true;
+    
     const did: any = await this.didManager.create3ID(
-      this.wallet as any
+      this.wallet
     );
     this.ipfs = new IPFSManager();
     this.did = did;
     
     await this.loadWallets();
+
+    this.currentAddress = this.currentKeystore.address;
     this.loading = false;
     
     const web3_data = (await this.getWeb3());
@@ -764,21 +780,25 @@ export default class WalletComponent extends Vue {
     }
   }
 
+  async importWallet(){
+    this.setImportSeedPhrase = !this.setImportSeedPhrase;
+  }
+
   async getWeb3(){
     // Init with HD mnemonic (server side)
     const network = {
-      name: 'Chapel',
-      networkId: 97,
-      chainId: 97,
+      name: 'BSC',
+      networkId: 56,
+      chainId: 56,
     };
-    const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const providerUrl = 'https://bsc-dataseed1.ninicoin.io/'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
     const web3 = new Web3(providerUrl);
     this.web3 = web3;
     const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
     web3.eth.accounts.wallet.add(private_key);
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
-    this.web3.eth.defaultAccount = account.address;
-    this.currentAddress = account.address;
+    this.web3.eth.defaultAccount = this.currentKeystore.address;
+    this.currentAddress = this.currentKeystore.address;
     console.log('defaultAccount', this.currentAddress);
     
     return {web3};
@@ -796,6 +816,9 @@ export default class WalletComponent extends Vue {
 
     const wallet = new Wallet();
     let { phrase } = Wallet.generateMnemonic() as any;
+    if(this.importSeedPhrase.length > 0){
+      phrase = this.importSeedPhrase;
+    }
     let keys;
     let id;
     let keystoreIndexItem: KeystoreIndex;
@@ -808,7 +831,7 @@ export default class WalletComponent extends Vue {
         this.alertMessage = "Creating keys...please wait";
         const w = await wallet.createWallet(this.password, phrase);
         id = w.id;
-
+        debugger;
         keystoreIndexItem = {
           created: new Date(),
           name: this.oauthUniqueId,
@@ -817,16 +840,12 @@ export default class WalletComponent extends Vue {
         } as KeystoreIndex;
 
 
-        this.currentAddress = wallet.ethersWallet.address;//blockchainWallet.address;
-        this.blockchainWallet = wallet.ethersWallet;//blockchainWallet;
-
+        this.currentAddress = wallet.ethersWallet.address;
+        
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
         keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
         //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
-        this.did = await this.didManager.create3ID(
-          wallet as any
-        );
         keystoreIndexItem.name = this.oauthName;
         Session.set({ ks: keystoreIndexItem });
       }

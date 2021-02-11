@@ -284,40 +284,16 @@
       @load="onUnlock"
     ></xdv-unlock> -->
 
-      <v-dialog v-model="setAllowanceDialog" max-width="500px">
-        <v-card>
-          <v-card-title>
-            <span class="headline">Token Allowance</span>
-          </v-card-title>
-
-          <v-card-text>
-            <v-row>
-              <v-col cols="12" md="12">
-                Token allowance
-              </v-col>
-            </v-row>
-          </v-card-text>
-
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="setAllowanceDialog = false"
-              >Cancel</v-btn>
-            <v-btn color="blue darken-1" text @click="allowanceNextStep()"
-              >OK</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
       <v-dialog v-model="setEstimateGasDialog" max-width="500px">
         <v-card>
           <v-card-title>
-            <span class="headline">Estimated Gas</span>
+            <span class="headline">Gas</span>
           </v-card-title>
 
           <v-card-text>
               <v-row>
                 <v-col cols="12" md="12">
-                  <b>Gas</b> {{ estimatedGas }}
+                  <b>Costo del Gas</b> {{ estimatedGas }}
                 </v-col>
               </v-row>
           </v-card-text>
@@ -325,6 +301,30 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="blue darken-1" text @click="setEstimateGasDialog = false"
+              >Rechazar</v-btn>
+            <v-btn color="blue darken-1" text @click="confirmContract()"
+              >Aceptar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <v-dialog v-model="setTransactionStatusDialog" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Transacción</span>
+          </v-card-title>
+
+          <v-card-text>
+              <v-row>
+                <v-col cols="12" md="12">
+                  {{ transactionStatus }}
+                </v-col>
+              </v-row>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="setTransactionStatusDialog = false"
               >Cancel</v-btn
             >
             <v-btn color="blue darken-1" text @click="confirmContract()"
@@ -336,6 +336,7 @@
     <xdv-upload
       :loading="loading"
       :show="canUpload"
+      :uploadStatus="uploadStatus"
       v-model="files"
       @input="createDocumentNode"
     ></xdv-upload>
@@ -413,6 +414,7 @@ import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
 import { DIDManager } from "../wallet/DIDManager";
 import Web3 from "web3";
+import { BigNumber } from "bignumber.js";
 const cbor = require("cbor-sync");
 
 @Component({
@@ -435,7 +437,7 @@ export default class DriveComponent extends Vue {
   valid = false;
   form = {};
   validations: any = { password: false };
-  setAllowanceDialog: boolean = false;
+  setTransactionStatusDialog: boolean = false;
   setEstimateGasDialog: boolean = false;
   didDialog = false;
   fileDialog = false;
@@ -503,7 +505,9 @@ export default class DriveComponent extends Vue {
   web3: Web3;
   currentAddress = "";
   estimatedGas = "";
+  transactionStatus = "";
   indexes = "";
+  uploadStatus = "";
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -534,6 +538,7 @@ export default class DriveComponent extends Vue {
   didDocument: any;
   address: string;
   updateWallet;
+  gasLimit: 4000000;
 
   @Watch("updateWallet")
   async onUpdateWallet(prev, next) {
@@ -631,7 +636,11 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
+    if(ks && this.currentAddress.length === 0){
+      this.currentAddress = ks.address;
+    }
     this.driveManager = new DriveManager(this.ipfs, this.did);
+    debugger;
   }
 
   async loadWallets() {
@@ -848,56 +857,64 @@ export default class DriveComponent extends Vue {
     this.items = await forkJoin(response).toPromise();
   }
 
-  async allowanceNextStep(){
-    this.setAllowanceDialog = false;
-    this.loading = true;
-    try{
-      const spender = this.contract._address;
-      const amount = await this.daiContract.methods.allowance(this.currentAddress,spender).call();
-      console.log('amount',amount);
-      await this.daiContract.methods.approve(spender, "9000000000000000000").send(
-        { from: this.currentAddress, gasLimit: 4000000, gas: 300000 }
-      );
-      this.setEstimateGasDialog = true;
-    }
-    catch(e){
-      console.log('allowance error',e);
-      debugger;
-    }
-  }
-
   async confirmContract(){
     this.setEstimateGasDialog = false;
-    console.log('wallet',this.currentAddress);
+    this.setTransactionStatusDialog = true;
     
     try{      
+      this.transactionStatus = "Guardando archivo...";
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
       console.log(this.indexes);
-      /*const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
-      this.estimatedGas = gas;
-
-      console.log(this.estimatedGas);*/
-      
+      this.transactionStatus = "Creando transacción en blockchain...";
       const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-        .send({ from: this.currentAddress, gasLimit: 4000000, gas: 400000 });
+        .send({ from: this.currentAddress, gasPrice: '22000000000', gas: 300000 });
 
       console.log('txt ',document);
+      this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
       this.close();
       await this.fetchDocuments();
     }
     catch(e){
+      this.transactionStatus = "Ha ocurrido un error";
       console.log('confirmation error',e);
       debugger;
     }
   }
   
   async createDocumentNode() {
-    this.setAllowanceDialog = true;
+    this.loading = true;
+    try{
+      const spender = this.contract._address;
+      /*const amount = await this.daiContract.methods.allowance(this.currentAddress, spender).call(
+        { from: this.currentAddress, gasPrice: '22000000000', gas: 0 }
+      );
+      debugger;
+      console.log('amount',amount);
+      const bnAmount = new BigNumber(amount);*/
+
+      /*if(bnAmount.gt(0)){*/
+        this.uploadStatus = "Aprovando la transaccion...";
+        await this.daiContract.methods.approve(spender, "9000000000000000000").send(
+          { from: this.currentAddress, gasPrice: '22000000000', gas: 4000000 }
+        );
+      /*}*/
+
+      this.uploadStatus = "Estimando costo del gas...";
+      const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
+      this.estimatedGas = gas;
+
+      this.setEstimateGasDialog = true;
+      console.log('estimatedGas',this.estimatedGas);
+    }
+    catch(e){
+      console.log('allowance error',e);
+      debugger;
+    }
   }
 
   getUrl(ref) {
