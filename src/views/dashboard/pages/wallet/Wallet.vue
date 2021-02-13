@@ -797,6 +797,7 @@ export default class WalletComponent extends Vue {
     const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
     web3.eth.accounts.wallet.add(private_key);
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
+    console.log('account.address',account.address);
     this.web3.eth.defaultAccount = this.currentKeystore.address;
     this.currentAddress = this.currentKeystore.address;
     console.log('defaultAccount', this.currentAddress);
