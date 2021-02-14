@@ -791,15 +791,16 @@ export default class WalletComponent extends Vue {
       networkId: 56,
       chainId: 56,
     };
-    const providerUrl = 'https://bsc-dataseed1.ninicoin.io/'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const providerUrl = 'https://bsc-dataseed1.ninicoin.io/'; //https://data-seed-prebsc-1-s1.binance.org:8545';
     const web3 = new Web3(providerUrl);
     this.web3 = web3;
+    
     const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
     web3.eth.accounts.wallet.add(private_key);
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
     console.log('account.address',account.address);
-    this.web3.eth.defaultAccount = this.currentKeystore.address;
-    this.currentAddress = this.currentKeystore.address;
+    this.web3.eth.defaultAccount = account.address; //this.currentKeystore.address;
+    this.currentAddress = account.address;//this.currentKeystore.address;
     console.log('defaultAccount', this.currentAddress);
     
     return {web3};

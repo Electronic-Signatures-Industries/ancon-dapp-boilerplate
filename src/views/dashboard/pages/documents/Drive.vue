@@ -640,7 +640,6 @@ export default class DriveComponent extends Vue {
       this.currentAddress = ks.address;
     }
     this.driveManager = new DriveManager(this.ipfs, this.did);
-    debugger;
   }
 
   async loadWallets() {
@@ -869,15 +868,17 @@ export default class DriveComponent extends Vue {
       this.indexes = await this.driveManager.createDocumentSet(this.files);
       console.log(this.indexes);
       this.transactionStatus = "Creando transacción en blockchain...";
+      /*
       const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
         .send({ from: this.currentAddress, gasPrice: '22000000000', gas: 300000 });
 
       console.log('txt ',document);
-      this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
+      */
+      this.transactionStatus = "Transacción hecha con exito: " + this.indexes;
       this.loading = false;
       this.canUpload = false;
       this.close();
-      await this.fetchDocuments();
+      //await this.fetchDocuments();
     }
     catch(e){
       this.transactionStatus = "Ha ocurrido un error";
@@ -890,19 +891,20 @@ export default class DriveComponent extends Vue {
     this.loading = true;
     try{
       const spender = this.contract._address;
-      /*const amount = await this.daiContract.methods.allowance(this.currentAddress, spender).call(
-        { from: this.currentAddress, gasPrice: '22000000000', gas: 0 }
-      );
+
+      /*---------
+      const amount = await this.daiContract.methods.allowance(this.currentAddress, spender).call();
       debugger;
       console.log('amount',amount);
-      const bnAmount = new BigNumber(amount);*/
+      const bnAmount = new BigNumber(amount);
 
-      /*if(bnAmount.gt(0)){*/
+      if(bnAmount.gt(0)){
         this.uploadStatus = "Aprovando la transaccion...";
         await this.daiContract.methods.approve(spender, "9000000000000000000").send(
           { from: this.currentAddress, gasPrice: '22000000000', gas: 4000000 }
         );
-      /*}*/
+      }
+      ------------------------*/
 
       this.uploadStatus = "Estimando costo del gas...";
       const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
