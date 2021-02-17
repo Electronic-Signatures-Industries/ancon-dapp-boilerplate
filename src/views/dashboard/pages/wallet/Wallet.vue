@@ -550,6 +550,8 @@ export default class WalletComponent extends Vue {
     }
 
     await this.wallet.open(currentKeystore.keystore);
+    const wallet = this.wallet;
+    console.log('wallet wallet',wallet);
   }
 
   openDialog() {
@@ -599,8 +601,29 @@ export default class WalletComponent extends Vue {
     
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
+    const contractAddress = '0xeE99AdEb56B01B005EC24884F3F6E770E7e6f926';
+    const daiContractAddress = '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3';
     this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvAbi.XDVDocumentAnchoring.address.bsctestnet);
     this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, xdvAbi.DAI.address.bsctestnet);
+    /*const _this = this;
+    const filter = new Promise((resolve,reject) => {
+      debugger;
+      _this.contract.events.DocumentAnchored({ 
+        toBlock: 'latest',
+        fromBlock: 0 },
+        (err,val) => {
+          if(!err){
+            resolve(val);
+          }
+          else{
+            reject(err);
+          }
+        });
+    });
+    const response = await filter;
+    debugger;
+    
+    this.items = await forkJoin(response).toPromise();*/
   }
 
   requestSignerActivation(address) {
@@ -710,7 +733,6 @@ export default class WalletComponent extends Vue {
     );
   }
   keystoreIndexItem = new KeystoreIndex();
-
   async setWallet() {
     await Session.set({
       ks: {
@@ -718,6 +740,7 @@ export default class WalletComponent extends Vue {
         isDefault: true,
       },
     });
+    debugger;
     await this.wallet.open(this.currentKeystore.keystore);
   }
 
@@ -791,15 +814,15 @@ export default class WalletComponent extends Vue {
       networkId: 56,
       chainId: 56,
     };
-    const providerUrl = 'https://bsc-dataseed1.ninicoin.io/'; //'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545'; //'https://bsc-dataseed1.ninicoin.io/';
     const web3 = new Web3(providerUrl);
     this.web3 = web3;
     const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
-    web3.eth.accounts.wallet.add(private_key);
-    const account = web3.eth.accounts.privateKeyToAccount(private_key);
+    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);
+    web3.eth.accounts.wallet.add(account);
     console.log('account.address',account.address);
-    this.web3.eth.defaultAccount = this.currentKeystore.address;
-    this.currentAddress = this.currentKeystore.address;
+    this.web3.eth.defaultAccount = account.address;
+    this.currentAddress = account.address;
     console.log('defaultAccount', this.currentAddress);
     
     return {web3};
@@ -831,6 +854,7 @@ export default class WalletComponent extends Vue {
       ) {
         this.alertMessage = "Creating keys...please wait";
         const w = await wallet.createWallet(this.password, phrase);
+        console.log('w',w);
         id = w.id;
         debugger;
         keystoreIndexItem = {
@@ -842,7 +866,7 @@ export default class WalletComponent extends Vue {
 
 
         this.currentAddress = wallet.ethersWallet.address;
-        
+        console.log('currentAddress',this.currentAddress);
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
         keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
