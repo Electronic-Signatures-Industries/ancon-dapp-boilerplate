@@ -3,12 +3,12 @@ import dagJose from 'dag-jose'
 import multiformats from 'multiformats/cjs/src/basics'
 import legacy from 'multiformats/cjs/src/legacy'
 import { DID } from 'dids'
-import { keccak256 } from 'ethers/utils'
 import { ethers } from 'ethers'
 import moment from 'moment'
 import axios from 'axios'
 import IPFSClient from 'ipfs-http-client';
 import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent'
+import { keccak256 } from 'ethers/lib/utils'
 const dagCBOR = require('ipld-dag-cbor');
 const Ipld = require('ipld')
 const IpfsRepo = require('ipfs-repo')
@@ -95,25 +95,29 @@ export class IPFSManager {
         }
         temp = temp.replace('0x', '');
         // sign the payload as dag-cbor
-        
+        //* display on grid
         const { jws, linkedBlock } = await did.createDagJWS({
+            content: content.toString('base64'),//*
+        });
+        const metadata = {
             contentType: payload.type,
-            name: payload.name,
-            lastModified: payload.lastModified,
+            name: payload.name, //*
+            lastModified: payload.lastModified,//*
             timestamp: moment().unix(),
-            hash: temp,
+            hash: temp,//*
             id: atob(moment().unix() + temp),
-            content: content.toString('base64'),
             documentPubCert: undefined,
             documentSignature: undefined,
-            signaturePreset: undefined
-        });
+            signaturePreset: undefined,
+            contentRef: undefined
+        }
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
-        //await this.client.block.put(linkedBlock, { cid: jws.link })
+        await this.client.block.put(linkedBlock, { cid: jws.link })
         console.log('cid', jwsCid.toString());
-        return jwsCid.toString()
+        metadata.contentRef = jwsCid.toString();
+        return metadata;
     }
 
     createSignedContent({
@@ -153,10 +157,12 @@ export class IPFSManager {
         // put the JWS into the ipfs dag
         const jwsCid = await this.client.dag.put(jws, multicodec.DAG_CBOR);
         // put the payload into the ipfs dag
-        //await this.client.blocks.put(linkedBlock, { cid: jws.link });
+        
+        await this.client.block.put(linkedBlock, { cid: jws.link });
         const cid = jwsCid.toString()
         return cid;
     }
+    
     /**
      * Get IPLD object
      * @param cid content id

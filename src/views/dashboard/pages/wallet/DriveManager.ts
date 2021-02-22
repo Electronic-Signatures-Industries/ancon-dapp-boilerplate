@@ -19,7 +19,7 @@ export class DriveManager {
 
         // run promises
         const items = await forkJoin(pushFiles).toPromise();
-
+        
         // get indexed of ipfs
         const parentindex = await this.ipfs.addIndex(this.did, items);
 

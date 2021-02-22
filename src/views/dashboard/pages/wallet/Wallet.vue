@@ -404,6 +404,8 @@
         :contract="contract"
         :daiContract="daiContract"
         :web3="web3"
+        :ethersInstance="ethersInstance"
+        :ethersContract="ethersContract"
       ></xdv-drive>
     </v-card>
     <xdv-link-external-keystore
@@ -427,7 +429,7 @@ import {
   X509,
   LDCryptoTypes,
   DIDDocument,
-} from "xdvplatform-wallet/src";
+} from "xdvplatform-wallet/lib";
 import { X509Info, KeyConvert } from "xdvplatform-wallet/src/index";
 import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
 
@@ -535,6 +537,8 @@ export default class WalletComponent extends Vue {
   didManager: DIDManager;
   oauthUniqueId = "";
   web3: Web3;
+  ethersInstance: any;
+  ethersContract: any;
   setImportSeedPhrase: boolean = false;
   importSeedPhrase: string = "";
   existingWallet: boolean = false;
@@ -588,11 +592,7 @@ export default class WalletComponent extends Vue {
   async onUnlock() {
     this.loading = true;
     
-    const did: any = await this.didManager.create3ID(
-      this.wallet
-    );
-    this.ipfs = new IPFSManager();
-    this.did = did;
+    this.restoreDid(this.wallet);
     
     await this.loadWallets();
 
@@ -601,10 +601,16 @@ export default class WalletComponent extends Vue {
     
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
+    this.ethersInstance = web3_data.ethersInstance;
     const contractAddress = '0xeE99AdEb56B01B005EC24884F3F6E770E7e6f926';
     const daiContractAddress = '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3';
-    this.contract = new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvAbi.XDVDocumentAnchoring.address.bsctestnet);
+    this.contract =  new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvAbi.XDVDocumentAnchoring.address.bsctestnet);
     this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, xdvAbi.DAI.address.bsctestnet);
+    this.ethersContract = new ethers.Contract(
+      xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
+      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      this.ethersInstance.getSigner(this.currentAddress),
+    );
     /*const _this = this;
     const filter = new Promise((resolve,reject) => {
       debugger;
@@ -811,21 +817,37 @@ export default class WalletComponent extends Vue {
     // Init with HD mnemonic (server side)
     const network = {
       name: 'BSC',
-      networkId: 56,
-      chainId: 56,
+      networkId: 97,
+      chainId: 97,
     };
-    const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545'; //'https://bsc-dataseed1.ninicoin.io/';
-    const web3 = new Web3(providerUrl);
+    const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    const provider = new Web3.providers.HttpProvider(providerUrl);
+    const web3 = new Web3(provider);
+    web3.setProvider(provider);
     this.web3 = web3;
-    const private_key = (await this.wallet.getPrivateKey("ES256K")).getPrivate("hex");
-    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);
+    const ethersInstance = new ethers.providers.Web3Provider(web3.currentProvider as any);
+    /*
+    const pk = (await this.wallet.getPrivateKey("ES256K"));
+    debugger;
+    const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
+    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
+
+    let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
+    const private_key = mnemonicWallet.privateKey;
+    const account = web3.eth.accounts.privateKeyToAccount(private_key);
     web3.eth.accounts.wallet.add(account);
-    console.log('account.address',account.address);
     this.web3.eth.defaultAccount = account.address;
     this.currentAddress = account.address;
-    console.log('defaultAccount', this.currentAddress);
     
-    return {web3};
+    return { web3, ethersInstance };
+  }
+
+  async restoreDid(w: Wallet){
+    const did: any = await this.didManager.create3ID(
+      w
+    );
+    this.ipfs = new IPFSManager();
+    this.did = did;
   }
 
   async createKeys() {
@@ -854,14 +876,16 @@ export default class WalletComponent extends Vue {
       ) {
         this.alertMessage = "Creating keys...please wait";
         const w = await wallet.createWallet(this.password, phrase);
-        console.log('w',w);
+        await this.restoreDid(w);
+        this.wallet = w;
+        
         id = w.id;
         debugger;
         keystoreIndexItem = {
           created: new Date(),
-          name: this.oauthUniqueId,
+          name: this.oauthUniqueId, 
           keystore: id,
-          description: this.walletDescription,
+          description: this.walletDescription
         } as KeystoreIndex;
 
 

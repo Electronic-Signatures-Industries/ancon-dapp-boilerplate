@@ -403,6 +403,9 @@ import {
   debounceTime,
   groupBy,
   toArray,
+  tap,
+  delay,
+  repeat,
 } from "rxjs/operators";
 import SignatureManagementDialog from "./SignatureManagementDialog.vue";
 import { SigningOutput } from "../shared/SigningOutput";
@@ -419,7 +422,7 @@ const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3"],
+  props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3", "ethersInstance", "ethersContract"],
   components: {
     "xdv-unlock": Unlock,
     "xdv-upload": Upload,
@@ -497,6 +500,8 @@ export default class DriveComponent extends Vue {
   hasCopyRef = false;
   sub: Unsubscribable;
   wallet;
+  ethersInstance: any;
+  ethersContract: any;
   ipfs: IPFSManager;
   contract: any;
   daiContract: any;
@@ -508,6 +513,7 @@ export default class DriveComponent extends Vue {
   transactionStatus = "";
   indexes = "";
   uploadStatus = "";
+  subscription: any;
 
   passphraseSubject: Subject<any> = new Subject();
   signManagerProps = {
@@ -544,7 +550,11 @@ export default class DriveComponent extends Vue {
   async onUpdateWallet(prev, next) {
     this.items = [];
     await this.loadWallets();
-    let { currentKeystore, unlock } = await Session.getSessionInfo();
+    if(this.subscription){
+      this.subscription.unsubscribe()
+    }
+    await this.fetchDocuments();
+    
   }
 
   async onUnlock() {
@@ -777,7 +787,6 @@ export default class DriveComponent extends Vue {
   @Watch("tree.data")
   async onTreeChanges(current, old) {
     const hasItems = current.toString().split(":");
-    debugger;
 
     if (hasItems.length === 2) {
       console.log(this.items);
@@ -797,7 +806,7 @@ export default class DriveComponent extends Vue {
       this.documentBlock = node;
     } else {
       const node = this.items.find(
-        (i) => i.block.toString() === current.toString()
+        (i) => i.id.toString() === current.toString()
       );
       this.currentDocument = null;
       this.showDetail = false;
@@ -834,26 +843,19 @@ export default class DriveComponent extends Vue {
     this.didDialog = false;
     this.fileDialog = false;
   }
-  
-  async fetchDocuments() {
 
-    const filter = new Promise((resolve,reject) => {
-      this.contract.events.DocumentAnchored({ 
-        toBlock: 'latest',
-        fromBlock: 0 },
-        (err,val) => {
-          if(!err){
-            resolve(val);
-          }
-          else{
-            reject(err);
-          }
-        });
-      });
-    const response = await filter;
-    debugger;
-    
-    this.items = await forkJoin(response).toPromise();
+  async fetchDocuments() {
+    if(this.currentAddress.length > 0){
+      const filter = this.contract.getPastEvents('DocumentAnchored',{ 
+          toBlock: 'latest',
+          fromBlock: 0,
+          filter: { user: this.currentAddress } },
+      );
+      
+      const response = await filter;
+      
+      this.items = response;
+    }
   }
 
   async confirmContract(){

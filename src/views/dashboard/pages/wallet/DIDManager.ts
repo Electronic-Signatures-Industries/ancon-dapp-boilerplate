@@ -5,8 +5,7 @@ import { CID, IpfsHttpClient } from 'ipfs-http-client'
 import { Ed25519Provider } from 'key-did-provider-ed25519'
 import KeyResolver from '@ceramicnetwork/key-did-resolver'
 import { DID } from 'dids'
-import { mnemonicToSeed } from 'ethers/utils/hdnode';
-import { arrayify } from 'ethers/utils';
+import { arrayify, mnemonicToSeed } from 'ethers/lib/utils';
 
 export class DIDManager {
 
