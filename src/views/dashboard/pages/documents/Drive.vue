@@ -18,12 +18,13 @@
         <v-col col-xs-6>
           <v-treeview :active.sync="tree.data" :items="items" activatable>
             <template v-slot:prepend="{ item, open }">
-              <v-icon v-if="!item.contentType">
+              <v-icon v-if="!item.folder.contentType">
                 {{ open ? "mdi-folder-open" : "mdi-folder" }}
               </v-icon>
               <v-icon v-else>
-                {{ fileIcons[item.contentType] }}
+                {{ fileIcons[item.folder.contentType] }}
               </v-icon>
+              {{ item.folder.length }} archivo(s)
             </template>
           </v-treeview>
         </v-col>
@@ -126,40 +127,23 @@
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
-                    <b>Document Block</b> {{ documentBlock.block }}
+                    <b>Nombre</b> {{ documentBlock.folder[0].name }}
                   </v-list-item-content>
                 </v-list-item>
 
                 <v-list-item>
                   <v-list-item-content class="text--primary">
-                    <b>Root hash</b>
-                    <a target="_blank" :href="getUrl(documentBlock.rootHash)">{{
-                      documentBlock.rootHash
-                    }}</a>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Parent hash</b>
-                    <a
-                      target="_blank"
-                      :href="getUrl(documentBlock.parentHash)"
-                      >{{ documentBlock.parentHash }}</a
+                    <b>File</b>
+                    <a @click="downloadFile(documentBlock.folder[0])"
+                      >{{documentBlock.folder[0].contentType}}</a
                     >
                   </v-list-item-content>
                 </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Content transaction reference</b> {{ documentBlock.txs }}
-                  </v-list-item-content>
-                </v-list-item>
-
+                
                 <v-list-item>
                   <v-list-item-content class="text--primary">
                     <b>Timestamp</b>
-                    {{ new Date(1000 * documentBlock.timestamp) }}
+                    {{ new Date(1000 * documentBlock.folder[0].timestamp) }}
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
@@ -737,7 +721,7 @@ export default class DriveComponent extends Vue {
         temp[block.parentHash] = block;
         temp[block.parentHash].id = block.block;
         temp[block.parentHash].name = `Content Block # ${block.block}`;
-
+        
         const items = block.metadata.map(
           async (reference: SwarmNodeSignedContent, index) => {
             // @ts-ignore
@@ -812,6 +796,7 @@ export default class DriveComponent extends Vue {
       this.showDetail = false;
       this.showLog = true;
       this.documentBlock = node;
+      console.log(node);
     }
   }
 
@@ -827,16 +812,17 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  async downloadFile(item, index) {
-    const { currentKeystore } = await Session.getSessionInfo();
-    const res = await ShareUtils.openEphemeralLink(
-      currentKeystore.address,
-      this.documentBlock.txs,
-      null,
-      item.hash
-    );
-
-    await res.downloadFile();
+  async downloadFile(item) {
+    this.ipfs = new IPFSManager();
+    await this.ipfs.start();  
+    const file = await this.ipfs.getObject('bafyreif2od2p274wcjdyjr77lbiqdskelqtl744fhcuhxvzxe7m2dvinqy');
+    console.log('file',file);
+    const blob = new Blob([file.value.content], { type: item.contentType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = item.name;
+    link.click();
+    URL.revokeObjectURL(link.href);
   }
 
   close() {
@@ -853,8 +839,15 @@ export default class DriveComponent extends Vue {
       );
       
       const response = await filter;
+      console.log('response',response);
+      this.ipfs = new IPFSManager();
+      await this.ipfs.start();  
+      const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
+      const forkedItems = forkJoin(items).pipe(debounce(x => x as any)).toPromise();
       
-      this.items = response;
+      this.items = (await forkedItems);
+      this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
+      console.log(this.items);
     }
   }
 
@@ -895,13 +888,12 @@ export default class DriveComponent extends Vue {
       console.log('amount',amount);
       const bnAmount = new BigNumber(amount);
 
-      debugger;
-      if(bnAmount.gt(0)){
+      /*if(bnAmount.gt(0)){*/
         this.uploadStatus = "Aprovando la transaccion...";
         await this.daiContract.methods.approve(spender, "9000000000000000000").send(
           { from: this.currentAddress, gasPrice: '22000000000', gas: 4000000 }
         );
-      }
+      /*}*/
 
       this.uploadStatus = "Estimando costo del gas...";
       const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
