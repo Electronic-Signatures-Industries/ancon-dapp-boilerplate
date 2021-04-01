@@ -24,34 +24,31 @@ export class SmartCardConnectorPKCS11 {
     async getSlots() {
         // const slots = await axios(`${CLIENT_API}/sc/get_slots`);
         this.stompClient.publish({ destination: "/app/get_slots", skipContentLengthHeader: true });
-
-
     }
 
     async sign(index: string, pin: string, data: Buffer) {
-        // const res = await axios.post(`${CLIENT_API}/sc/sign/${index}`, {
-        //     pin,
-        //     data: data.toString('base64')
-        // });
-        // // return res.data;
         this.stompClient.publish({
-            destination: "/app/sign", body: 
-                JSON.stringify({tokenIndex: index, pin: pin, data: data.toString('base64')}), 
+            destination: "/app/sign", body:
+                JSON.stringify({ tokenIndex: index, pin: pin, data: data.toString('base64') }),
         });
     }
 
     connect() {
-        this.stompClient = Stomp.client((CLIENT_API + '/ws'));
+        try {
+            this.stompClient = Stomp.client((CLIENT_API + '/ws'));
 
-        this.stompClient.onConnect = (frame) => {
-            this.stompClient.subscribe('/xdv/messages', (data) => {
-                console.log(data)
-                this.subscribe.next(JSON.parse(data.body));
-            });
+            this.stompClient.onConnect = (frame) => {
+                this.stompClient.subscribe('/xdv/messages', (data) => {
+                    console.log(data)
+                    this.subscribe.next(JSON.parse(data.body));
+                });
 
-        };
-        if (this.stompClient.connected === false) {
-            this.stompClient.activate();
+            };
+            if (this.stompClient.connected === false) {
+                this.stompClient.activate();
+            }
+        } catch (e) {
+            console.log('no client found')
         }
     }
 }

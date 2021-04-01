@@ -4,10 +4,12 @@ import QRCodeModal from '@walletconnect/qrcode-modal';
 import WalletConnect from '@walletconnect/client';
 import { DIDDocument, Wallet } from 'xdvplatform-wallet/src';
 import { DIDSigner, KeystoreIndex } from './KeystoreIndex';
+import { Token } from './Token';
 
 PouchDB.plugin(require('pouchdb-find'));
 
 const WALLET_REFS_KEY = 'xdv:wallet:refs';
+const TOKENS_KEY = 'xdv:tokens';
 
 export class Session {
 
@@ -33,7 +35,46 @@ export class Session {
         }
         return null;
     }
+    static async getTokens({ chain }) {
+        try {
+            const tokens: Token[] = await this.db.get(TOKENS_KEY);
+            if (tokens) {
+                return Object.values(tokens).filter(i => i.chain === chain);
+            } else {
+                return Object.values(tokens);
 
+            }
+        } catch (e) {
+            // missing
+            return [];
+        }
+    }
+
+    /**
+     * Sets tokens
+     * @param token Token
+     * @param update if update otherwise create
+     */
+    static async setTokens(token: Token, update: boolean = false) {
+
+        try {
+            const ref: any = await this.db.get(TOKENS_KEY);
+            return this.db.put({
+                _id: TOKENS_KEY,
+                ...ref,
+                [token.symbol]: token,
+                _rev: ref._rev,
+                timestamp: new Date(),
+            });
+        } catch (e) {
+            return this.db.put({
+                _id: TOKENS_KEY,
+                [token.symbol]: token,
+                timestamp: new Date(),
+            });
+
+        }
+    }
 
     /**
      * Resolves and stores a DID in wallet
@@ -203,12 +244,12 @@ export class Session {
         // remove
         let refs = {};
         const keys = Object.keys(ref.refs);
-        for (let i = 0;i<keys.length;i++) {
+        for (let i = 0; i < keys.length; i++) {
             if (ref.refs[keys[i]].name !== item.name) {
                 refs = {
                     ...refs,
                     [keys[i]]: ref.refs[keys[i]]
-                }                
+                }
             }
         }
 

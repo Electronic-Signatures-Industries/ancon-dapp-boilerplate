@@ -23,6 +23,14 @@
                 label="Files"
               ></v-file-input>
             </v-col>
+            <v-col cols="12" xs="12">
+              <!--TODO poner descripcion-->
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12" xs="12">
+              {{ uploadStatus }}
+            </v-col>
           </v-row>
         </v-form>
       </v-card-text>
@@ -40,7 +48,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({
   name: 'xdv-upload',
-  props: ['show', 'value', 'loading'],
+  props: ['show', 'value', 'loading', 'uploadStatus'],
 })
 export default class Upload extends Vue {
   value: string;

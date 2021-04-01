@@ -23,6 +23,10 @@ export class LinkedExternalKeystores {
         chain: number;
         capability: Capability;
     };
+    pkcs12?: {
+        name: string;
+        capability: Capability;
+    };
     pkcs11?: {
         tokenIndex: string;
         capability: Capability;
@@ -48,6 +52,8 @@ export class KeystoreIndex {
     publicKeyFromDID?: any;
     address?: string;
     keystore: string;
+    description: string;
     name: string;
     created: Date = new Date();
+  walletRegistry: string;
 }

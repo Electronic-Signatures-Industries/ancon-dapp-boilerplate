@@ -12,6 +12,13 @@ import './plugins/vee-validate';
 import './plugins/appconfig';
 import Vuebar from 'vuebar';
 
+import GAuth from 'vue-google-oauth2'
+const gauthOption = {
+  clientId: '779014570531-bvmnb5bq69uov2cc1vkr4jhh03pgdrvj.apps.googleusercontent.com',
+  scope: 'profile email',
+  prompt: 'select_account'
+}
+Vue.use(GAuth, gauthOption)
 // @ts-nocheck
 // @ts-ignore
 Vue.use(VueSkycons, {

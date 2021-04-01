@@ -8,7 +8,7 @@
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-card>
       <v-card-title>
-        <span class="headline">Signed document viewer</span>
+        <span class="headline">XDV Document Viewer</span>
       </v-card-title>
 
       <v-card-text>
@@ -130,34 +130,36 @@ import {
   JOSEService,
   JWTService,
   PublicKey,
-} from 'xdvplatform-wallet/src';
-import { SwarmFeed } from 'xdvplatform-wallet/src/swarm/feed';
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { KeystoreIndex } from '../shared/KeystoreIndex';
-import moment from 'moment';
-import { createKeyPair, sign } from '@erebos/secp256k1';
-import { ethers } from 'ethers';
-import { JWE, JWK } from 'node-jose';
-import { arrayify, BigNumber, base64, Interface } from 'ethers/utils';
-import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent';
-import { forkJoin, Subject } from 'rxjs';
-import { Session } from '../shared/Session';
-import { MessagingTimelineDuplexClient } from '../shared/MessagingTimelineDuplexClient';
-import copy from 'copy-to-clipboard';
-import { PartialChapter } from '@erebos/timeline';
-const bs58 = require('bs58');
-import { SubscriptionManager } from '../shared/SubscriptionManager';
-import { DriveSwarmManager } from '../shared/DriveSwarmManager';
-import Unlock from './Unlock.vue';
-import { SigningOutput } from '../shared/SigningOutput';
-import { create } from 'xmlbuilder2';
-import { ShareUtils, XDVFileFormat } from '../shared/ShareUtils';
-import { ec, eddsa } from 'elliptic';
-import forge from 'node-forge';
-import { CAGOB } from './cagob.pem';
-import { CARAIZ } from './caraiz.pem';
-import { CAPC2 } from './capc2.pem';
-const cbor = require('cbor-sync');
+} from "xdvplatform-wallet/src";
+import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
+import { Component, Prop, Vue } from "vue-property-decorator";
+import { KeystoreIndex } from "../shared/KeystoreIndex";
+import moment from "moment";
+import { createKeyPair, sign } from "@erebos/secp256k1";
+import { ethers } from "ethers";
+import { JWE, JWK } from "node-jose";
+import { arrayify, BigNumber, base64, Interface } from "ethers/utils";
+import { SwarmNodeSignedContent } from "../shared/SwarmNodeSignedContent";
+import { forkJoin, from, Subject } from "rxjs";
+import { Session } from "../shared/Session";
+import { MessagingTimelineDuplexClient } from "../shared/MessagingTimelineDuplexClient";
+import copy from "copy-to-clipboard";
+import { PartialChapter } from "@erebos/timeline";
+const bs58 = require("bs58");
+import { SubscriptionManager } from "../shared/SubscriptionManager";
+import { DriveSwarmManager } from "../shared/DriveSwarmManager";
+import Unlock from "./Unlock.vue";
+import { SigningOutput } from "../shared/SigningOutput";
+import { create } from "xmlbuilder2";
+import { ShareUtils, XDVFileFormat } from "../shared/ShareUtils";
+import { ec, eddsa } from "elliptic";
+import forge from "node-forge";
+import { ACME_X3_CROSS_SIGNED } from "./lets-encrypt-x3-cross-signeed.pem";
+import { CAGOB } from "./cagob.pem";
+import { CARAIZ } from "./caraiz.pem";
+import { CAPC2 } from "./capc2.pem";
+import { ACME_R3_CROSS_SIGNED } from "./lets-encrypt-r3-cross-signed.pem";
+const cbor = require("cbor-sync");
 
 export interface ShareableSignedContent {
   sig: string;
@@ -167,15 +169,15 @@ export interface ShareableSignedContent {
 @Component({})
 export default class ViewerComponent extends Vue {
   loading = false;
-  fromOwner = '';
+  fromOwner = "";
   document: SwarmNodeSignedContent = null;
   sharedSignedDocument: XDVFileFormat = null;
   apiurl = `${(Vue as any).appconfig.CLIENT_API}xdv_verify`;
   validated: any = null;
   contentValidated: any;
-  alertMessage: string = '';
-  alertType: string = ' ';
-  linkJwt: string = '';
+  alertMessage: string = "";
+  alertType: string = " ";
+  linkJwt: string = "";
   verificationReport: any = null;
   downloadableContent: () => Promise<void>;
   operationType: string;
@@ -183,7 +185,7 @@ export default class ViewerComponent extends Vue {
 
   async mounted() {
     const currentLocation = location;
-    this.linkJwt = location.hash.split('link=')[1];
+    this.linkJwt = location.hash.split("link=")[1];
 
     await this.loadLinkContents();
     await this.verify();
@@ -197,17 +199,17 @@ export default class ViewerComponent extends Vue {
    * Opens as XDV compatible format and downloads document
    */
   async loadLinkContents() {
-    this.alertMessage = '';
-    this.alertType = '';
+    this.alertMessage = "";
+    this.alertType = "";
     this.loading = true;
     try {
-      this.operationType = 'Downloading...';
+      this.operationType = "Downloading...";
       const payload = await ShareUtils.openEphemeralLinkIndex(
         decodeURIComponent(this.linkJwt)
       );
       this.payload = payload;
       let documentSignature = payload.sig;
-      let swarmContentIndex = payload.did.id.split(':');
+      let swarmContentIndex = payload.did.id.split(":");
       let swarmContent = {
         from: swarmContentIndex[2],
         txs: swarmContentIndex[3],
@@ -231,7 +233,7 @@ export default class ViewerComponent extends Vue {
       };
     } catch (e) {
       console.log(e);
-      this.alertType = 'red';
+      this.alertType = "red";
       this.alertMessage = e.message;
     } finally {
       this.loading = false;
@@ -245,7 +247,7 @@ export default class ViewerComponent extends Vue {
     switch (this.document.signaturePreset) {
       case SigningOutput.Base64:
         this.loading = true;
-        this.operationType = 'Verifying...';
+        this.operationType = "Verifying...";
         try {
           const payload = {
             signature: this.sharedSignedDocument.signature,
@@ -254,26 +256,35 @@ export default class ViewerComponent extends Vue {
               .sha256(
                 ethers.utils.base64.decode(this.sharedSignedDocument.content)
               )
-              .replace('0x', ''),
-            token: '12345',
+              .replace("0x", ""),
+            token: "12345",
             filename: this.document.name,
             certificate: this.sharedSignedDocument.pubCert,
           };
           const cert = this.sharedSignedDocument.pubCert;
-          const caStore = forge.pki.createCaStore([CAGOB, CARAIZ, CAPC2]);
+          const caStore = forge.pki.createCaStore([
+            CAGOB,
+            CARAIZ,
+            CAPC2,
+            ACME_X3_CROSS_SIGNED,
+            ACME_R3_CROSS_SIGNED,
+          ]);
           const data = ethers.utils.sha256(
             ethers.utils.base64.decode(this.sharedSignedDocument.content)
           );
+
           const sig = ethers.utils.base64.decode(
             this.sharedSignedDocument.signature
+              .replace("-----END PKCS7-----", "")
+              .replace("-----BEGIN PKCS7-----", "")
           );
           // RSA signature generation
-          const r = require('jsrsasign');
-          const rsa = new r.Signature({ alg: 'SHA256withRSA' });
+          const r = require("jsrsasign");
+          const rsa = new r.Signature({ alg: "SHA256withRSA" });
           const pub = caStore.listAllCertificates()[3];
           rsa.init(cert);
-          rsa.updateHex(data.replace('0x', ''));
-          const isValid = rsa.verify(Buffer.from(sig).toString('hex'));
+          rsa.updateHex(data.replace("0x", ""));
+          const isValid = rsa.verify(Buffer.from(sig).toString("hex"));
 
           const certificate = forge.pki.certificateFromPem(cert);
           forge.pki.verifyCertificateChain(
@@ -294,17 +305,17 @@ export default class ViewerComponent extends Vue {
               } else {
                 this.verificationReport.push({
                   isError: true,
-                  title: `Invalid document signature`,
+                  title: `Document verification incomplete`,
                 });
               }
               const vsubject = subjectCert.verifySubjectKeyIdentifier();
-              if (vsubject) {
+              if (vsubject && isValid) {
                 const subjectKeyId = forge.pki.getPublicKeyFingerprint(
                   subjectCert.publicKey,
                   {
-                    type: 'SubjectPublicKeyInfo',
-                    encoding: 'hex',
-                    delimiter: ':',
+                    type: "SubjectPublicKeyInfo",
+                    encoding: "hex",
+                    delimiter: ":",
                   }
                 );
                 this.verificationReport.push({
@@ -317,7 +328,7 @@ export default class ViewerComponent extends Vue {
                   title: `Invalid subject key identifier`,
                 });
               }
-              if (vfd) {
+              if (vfd && vfd.indexOf('UnknownCertificateAuth') === -1) {
                 this.verificationReport.push({
                   title: `Verified certificate chain issued by`,
                   subtitle: `C=${subjectCert.issuer.attributes[0].value}, O=${subjectCert.issuer.attributes[1].value},
@@ -339,26 +350,26 @@ export default class ViewerComponent extends Vue {
         break;
       case SigningOutput.PKCS7PEM:
         this.loading = true;
-        this.operationType = 'Verifying...';
+        this.operationType = "Verifying...";
         try {
           const payload = {
             signature: this.sharedSignedDocument.signature,
             from: this.fromOwner,
             contents: this.sharedSignedDocument.content,
-            token: '12345',
+            token: "12345",
             filename: this.document.name,
             certificate: btoa(this.sharedSignedDocument.pubCert),
           };
           const res = await fetch(this.apiurl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
           this.validated = null;
 
           const text = await res.text();
           this.validated = create(text).end({
-            format: 'object',
+            format: "object",
           });
           this.addVerificationReport(this.validated);
           this.contentValidated = this.sharedSignedDocument;
@@ -373,19 +384,19 @@ export default class ViewerComponent extends Vue {
           const payload = {
             signature: this.sharedSignedDocument.signature,
             from: this.fromOwner,
-            token: '12345',
+            token: "12345",
             certificate: btoa(this.sharedSignedDocument.pubCert),
-            filename: 'fe.xml',
+            filename: "fe.xml",
           };
           const res = await fetch(this.apiurl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
           this.validated = null;
           const text = await res.text();
           this.validated = create(text).end({
-            format: 'object',
+            format: "object",
           });
           this.addVerificationReport(this.validated);
           this.contentValidated = this.sharedSignedDocument;
@@ -395,9 +406,9 @@ export default class ViewerComponent extends Vue {
         break;
     }
 
-    const eddsaImpl = new eddsa('ed25519');
+    const eddsaImpl = new eddsa("ed25519");
     const pubKey = bs58.decode(this.payload.did.publicKey[0].publicKeyBase58);
-    const pubString = Buffer.from(pubKey).toString('hex');
+    const pubString = Buffer.from(pubKey).toString("hex");
     const kp = eddsaImpl.keyFromPublic(pubString);
     const results = kp.verify(
       Buffer.from(atob(this.document.content)),
@@ -415,7 +426,7 @@ export default class ViewerComponent extends Vue {
   addVerificationReport({ SimpleReport }) {
     this.verificationReport = [
       {
-        subtitle: `Signature Id ${SimpleReport.Signature['@Id']}`,
+        subtitle: `Signature Id ${SimpleReport.Signature["@Id"]}`,
         headline: `Signed by ${SimpleReport.Signature.CertificateChain.Certificate.qualifiedName} - Signed by ${SimpleReport.Signature.CertificateChain.Certificate.id}`,
       },
     ];

@@ -11,9 +11,6 @@
       </v-btn> -->
       </v-container>
     </v-content>
-    <Sidebar :expand-on-hover.sync="expandOnHover"></Sidebar>
-    
-    <Customizer v-model="expandOnHover"></Customizer>
      
     <Footer></Footer> 
     
@@ -32,9 +29,7 @@ export default {
 
   components: {
     Header,
-    Sidebar,
     Footer,
-    Customizer
   },
 
   props: {

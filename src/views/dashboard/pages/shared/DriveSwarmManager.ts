@@ -98,8 +98,7 @@ export class DriveSwarmManager {
         );
     }
 
-
-
+    async addContent() {}
     async pushFiles(options: PushFilesOptions) {
 
         const swarmFeed = await this.wallet.getSwarmNodeClient(options.address, 'ES256K');
