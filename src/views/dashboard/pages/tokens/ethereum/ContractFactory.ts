@@ -85,9 +85,7 @@ export class ContractFactory {
                 })
             }
         } catch (e) {
-            debugger
             console.log(e)
-
         }
     }
 

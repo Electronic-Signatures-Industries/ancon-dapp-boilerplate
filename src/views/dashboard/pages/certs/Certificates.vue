@@ -250,7 +250,6 @@ export default class CertificatesComponent extends Vue {
     const name = this.purchaseDomainModel.name;
     let accessToken // = await SumSubUtils.getAccessToken(name);
     this.displayPurchaseCert = false
-debugger
     this.snsWebSdkInstance.launch(this.$refs.kyc);
   }
   async verifyDomain() {
