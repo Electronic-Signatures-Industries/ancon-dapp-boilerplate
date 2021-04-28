@@ -876,7 +876,6 @@ export default class DriveComponent extends Vue {
     catch(e){
       this.transactionStatus = "Ha ocurrido un error";
       console.log('confirmation error',e);
-      debugger;
     }
   }
   
@@ -904,7 +903,6 @@ export default class DriveComponent extends Vue {
     }
     catch(e){
       console.log('allowance error',e);
-      debugger;
     }
   }
 

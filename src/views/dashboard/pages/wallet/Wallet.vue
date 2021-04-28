@@ -613,7 +613,6 @@ export default class WalletComponent extends Vue {
     );
     /*const _this = this;
     const filter = new Promise((resolve,reject) => {
-      debugger;
       _this.contract.events.DocumentAnchored({ 
         toBlock: 'latest',
         fromBlock: 0 },
@@ -627,8 +626,6 @@ export default class WalletComponent extends Vue {
         });
     });
     const response = await filter;
-    debugger;
-    
     this.items = await forkJoin(response).toPromise();*/
   }
 
@@ -746,7 +743,6 @@ export default class WalletComponent extends Vue {
         isDefault: true,
       },
     });
-    debugger;
     await this.wallet.open(this.currentKeystore.keystore);
   }
 
@@ -828,7 +824,6 @@ export default class WalletComponent extends Vue {
     const ethersInstance = new ethers.providers.Web3Provider(web3.currentProvider as any);
     /*
     const pk = (await this.wallet.getPrivateKey("ES256K"));
-    debugger;
     const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
     const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
 
@@ -880,7 +875,6 @@ export default class WalletComponent extends Vue {
         this.wallet = w;
         
         id = w.id;
-        debugger;
         keystoreIndexItem = {
           created: new Date(),
           name: this.oauthUniqueId, 
