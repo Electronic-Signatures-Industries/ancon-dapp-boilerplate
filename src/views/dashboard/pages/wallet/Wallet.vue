@@ -1,4 +1,4 @@
-`<template>
+<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -292,12 +292,8 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>DID</b
-                      ><a
-                        target="_blank"
-                        :href="currentKeystore.walletRegistry"
-                        >{{ did._id }}</a
-                      >
+                      <b>DID</b>
+                      {{ did._id }}
                     </v-list-item-content>
                   </v-list-item>
 
