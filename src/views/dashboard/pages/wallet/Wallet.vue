@@ -1,4 +1,4 @@
-`<template>
+<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -87,13 +87,6 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-    <v-alert
-      ><a
-        href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
-        target="_blank"
-        >Download PKCS#11 Java Signer</a
-      ></v-alert
-    >
     <v-card>
       <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
@@ -299,12 +292,8 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content class="text--primary">
-                      <b>DID</b
-                      ><a
-                        target="_blank"
-                        :href="currentKeystore.walletRegistry"
-                        >{{ did._id }}</a
-                      >
+                      <b>DID</b>
+                      {{ did._id }}
                     </v-list-item-content>
                   </v-list-item>
 
@@ -423,35 +412,32 @@
     ></xdv-unlock>
   </v-container>
 </template>
-<script lang="ts">
-import {
-  Wallet,
-  X509,
-  LDCryptoTypes,
-  DIDDocument,
-} from "xdvplatform-wallet/lib";
-import { X509Info, KeyConvert } from "xdvplatform-wallet/src/index";
-import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
 
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+<script lang="ts">
+import { Wallet } from "xdvplatform-wallet/lib";
+import { X509Info } from "xdvplatform-wallet/src/index";
+import { Component, Vue } from "vue-property-decorator";
 import { KeystoreIndex, DIDSigner, X509Signer } from "../shared/KeystoreIndex";
 import { ethers } from "ethers";
 import moment from "moment";
 import { Session } from "../shared/Session";
-import { pubKeyToAddress } from "@erebos/keccak256";
 import copy from "copy-to-clipboard";
-import { Subject, forkJoin } from "rxjs";
+import { forkJoin } from "rxjs";
 import Unlock from "../documents/Unlock.vue";
 import LinkExternalKeystore from "./LinkExternalKeystore.vue";
-import { it } from "ethers/wordlists";
 import Drive from "../documents/Drive.vue";
 import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
 import { DID } from "dids";
-import { WalletResolver } from "./WalletResolver";
 import Web3 from "web3";
-const Venus = require('@swipewallet/venus-js'); // in Node.js
 const xdvAbi = require('../../../../abi/xdv');
+
+// Extra declarations missing from `vue-google-oauth2`
+declare module "vue-property-decorator" {
+  interface Vue {
+    readonly $gAuth: any;
+  }
+}
 
 @Component({
   components: {
