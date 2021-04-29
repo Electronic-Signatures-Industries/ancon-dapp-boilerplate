@@ -87,13 +87,6 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-    <v-alert
-      ><a
-        href="https://drive.google.com/file/d/1oZCZChHmedtne3E1M7wyvyQLWQm01Z1r/view?usp=sharing"
-        target="_blank"
-        >Download PKCS#11 Java Signer</a
-      ></v-alert
-    >
     <v-card>
       <!-- <v-toolbar color="black accent-4" dark>
         <v-toolbar-title>Wallet</v-toolbar-title>
