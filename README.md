@@ -66,6 +66,16 @@ CBOR                 CBOR, CBOR, CBOR                                CBOR
 
 ## Protocolo Blockchain
 
+### Binance Smart Chain Mainnet Contract Address
+
+- 0xee99adeb56b01b005ec24884f3f6e770e7e6f926
+
+### Precio por documento enlazado 
+
+- 1 DAI = 1 USD
+- Costos de gas en BNB por separado
+
+
 ### Almacenamiento en IPLD
 
 Instanciar `IPFSManager` y `DIDManager`, estos dos usados para iniciar `DriveManager`.
