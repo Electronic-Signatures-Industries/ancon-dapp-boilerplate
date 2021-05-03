@@ -493,9 +493,9 @@ export default class WalletComponent extends Vue {
   ipfs: IPFSManager;
   didManager: DIDManager;
   oauthUniqueId = "";
-  web3: Web3;
-  ethersInstance: any;
-  ethersContract: any;
+  web3?: Web3 = null;
+  ethersInstance?: ethers.providers.Web3Provider = null;
+  ethersContract?: ethers.Contract = null;
   setImportSeedPhrase: boolean = false;
   importSeedPhrase: string = "";
   existingWallet: boolean = false;
