@@ -167,10 +167,9 @@
     </v-dialog>
   </v-main>
 </template>
-<script lang="ts">
-import { TypedRFE, TasaISC, ISC } from "xdvplatform-wallet/src";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
+<script lang="ts">
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 import Eth from "@ledgerhq/hw-app-eth";
@@ -181,25 +180,32 @@ import {
   X509Signer,
 } from "../shared/KeystoreIndex";
 import { Session } from "../shared/Session";
-import { async } from "rxjs/internal/scheduler/async";
 import { map, filter } from "rxjs/operators";
 import { Wallet } from "xdvplatform-wallet";
 import forge from "node-forge";
 
 @Component({
-  name: "xdv-link-external-keystore",
-  props: ["show", "value", "keystore", "wallet"],
+  name: "xdv-link-external-keystore"
 })
 export default class LinkExternalKeystore extends Vue {
-  wallet: Wallet;
-  value: {
+  @Prop()
+  readonly wallet: Wallet;
+
+  @Prop()
+  readonly value: {
     type: "walletconnect" | "xdv" | "pkcs11" | "ledger";
     defaultDIDSigner: DIDSigner;
     defaultX509Signer: X509Signer;
     hw: "";
   };
-  show;
-  keystore: KeystoreIndex;
+
+  @Prop()
+  readonly show: boolean;
+
+  @Prop()
+  readonly keystore: KeystoreIndex;
+
+  private _modifiedKeystore: KeystoreIndex;
 
   defaultDIDSignerOptions = [
     {
@@ -243,6 +249,10 @@ export default class LinkExternalKeystore extends Vue {
   message = "";
   smartCardConnector = new SmartCardConnectorPKCS11();
 
+  get localKeystore(): KeystoreIndex {
+    return this._modifiedKeystore ?? this.keystore;
+  }
+
   async setHardwareModule() {}
 
   async setPIN() {
@@ -265,22 +275,22 @@ export default class LinkExternalKeystore extends Vue {
 
   @Watch("value.hw")
   async onSelectHWModule(current, old) {
-    let keystore;
+    let keystore: KeystoreIndex;
     if (this.value.defaultX509Signer === X509Signer.PKCS11) {
       keystore = {
-        ...this.keystore,
+        ...this.localKeystore,
         linkedExternalKeystores: {
-          ...this.keystore.linkedExternalKeystores,
+          ...this.localKeystore.linkedExternalKeystores,
           pkcs11: {
             tokenIndex: this.slots.findIndex(
               (i) => i.key === current.slotDescription
-            ),
+            ).toString(),
             capability: Capability.Sign,
           },
         },
       };
     }
-    this.keystore = keystore;
+    this._modifiedKeystore = keystore;
     await Session.setWalletRefs(keystore, true);
   }
 
@@ -326,7 +336,7 @@ export default class LinkExternalKeystore extends Vue {
   }
 
   async storeP12() {
-    let keystore;
+    let keystore: KeystoreIndex;
     let ab = await (this.p12.file as Blob).arrayBuffer();
     let b64 = this.arrayBufferToBase64(ab);
     const temp = forge.asn1.fromDer(forge.util.decode64(b64), false);
@@ -337,9 +347,9 @@ export default class LinkExternalKeystore extends Vue {
 
     if (this.value.defaultX509Signer === X509Signer.PKCS12) {
       keystore = {
-        ...this.keystore,
+        ...this.localKeystore,
         linkedExternalKeystores: {
-          ...this.keystore.linkedExternalKeystores,
+          ...this.localKeystore.linkedExternalKeystores,
           pkcs12: {
             name: commonName,
             capability: Capability.Any,
@@ -359,7 +369,7 @@ export default class LinkExternalKeystore extends Vue {
         `key:P12:${this.wallet.id}`
       );
 
-      this.keystore = keystore;
+      this._modifiedKeystore = keystore;
       await Session.setWalletRefs(keystore, true);
     } catch (e) {
       this.message = 'P12 slot already assigned'
@@ -386,7 +396,7 @@ export default class LinkExternalKeystore extends Vue {
 
   async setDefaultSignerProtocol() {
     const keystore = {
-      ...this.keystore,
+      ...this.localKeystore,
       defaultDIDSigner: this.value.defaultDIDSigner,
       defaultX509Signer: this.value.defaultX509Signer,
     };
@@ -408,7 +418,7 @@ export default class LinkExternalKeystore extends Vue {
       this.commonName = "";
     } else {
       const keystore = {
-        ...this.keystore,
+        ...this.localKeystore,
         defaultDIDSigner: this.value.defaultDIDSigner,
         defaultX509Signer: this.value.defaultX509Signer,
       };
@@ -423,7 +433,7 @@ export default class LinkExternalKeystore extends Vue {
       await this.linkLedger();
     } else {
       const keystore = {
-        ...this.keystore,
+        ...this.localKeystore,
         defaultDIDSigner: this.value.defaultDIDSigner,
         defaultX509Signer: this.value.defaultX509Signer,
       };
