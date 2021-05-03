@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`WalletDetails.vue should match snapshot 1`] = `
+<v-expansion-panel-content-stub>
+  <v-list-stub tag="div">
+    <v-list-item-stub activeclass="" tag="div" twoline="true">
+      <v-list-item-content-stub>
+        <v-list-item-title-stub>DID</v-list-item-title-stub>
+        <v-list-item-subtitle-stub>did:test</v-list-item-subtitle-stub>
+      </v-list-item-content-stub>
+    </v-list-item-stub>
+    <v-list-item-stub activeclass="" tag="div" twoline="true">
+      <v-list-item-content-stub>
+        <v-list-item-title-stub>Address</v-list-item-title-stub>
+        <v-list-item-subtitle-stub>0x000</v-list-item-subtitle-stub>
+      </v-list-item-content-stub>
+    </v-list-item-stub>
+    <v-list-item-stub activeclass="" tag="div" twoline="true">
+      <v-list-item-content-stub>
+        <v-list-item-title-stub>Linked to Smart Card</v-list-item-title-stub>
+        <v-list-item-subtitle-stub>no</v-list-item-subtitle-stub>
+      </v-list-item-content-stub>
+    </v-list-item-stub>
+    <v-list-item-stub activeclass="" tag="div" twoline="true">
+      <v-list-item-content-stub>
+        <v-list-item-title-stub>Linked to P12</v-list-item-title-stub>
+        <v-list-item-subtitle-stub>no</v-list-item-subtitle-stub>
+      </v-list-item-content-stub>
+    </v-list-item-stub>
+    <v-list-item-stub activeclass="" tag="div" twoline="true">
+      <v-list-item-content-stub>
+        <v-list-item-title-stub>Creation Date</v-list-item-title-stub>
+        <v-list-item-subtitle-stub></v-list-item-subtitle-stub>
+      </v-list-item-content-stub>
+    </v-list-item-stub>
+  </v-list-stub>
+</v-expansion-panel-content-stub>
+`;
