@@ -1,5 +1,5 @@
 <template>
-  <v-content>
+  <v-main>
     <v-dialog v-model="show" max-width="600px">
       <v-card>
         <v-card-title>
@@ -165,7 +165,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-content>
+  </v-main>
 </template>
 <script lang="ts">
 import { TypedRFE, TasaISC, ISC } from "xdvplatform-wallet/src";

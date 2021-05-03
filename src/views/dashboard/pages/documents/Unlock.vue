@@ -1,5 +1,5 @@
 <template>
-  <v-content>
+  <v-main>
     <v-dialog v-model="canRequestTx" max-width="500px">
       <v-card>
         <v-card-title>
@@ -67,7 +67,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-content>
+  </v-main>
 </template>
 <script lang="ts">
 import { TypedRFE, TasaISC, ISC, Wallet } from "xdvplatform-wallet/src";
