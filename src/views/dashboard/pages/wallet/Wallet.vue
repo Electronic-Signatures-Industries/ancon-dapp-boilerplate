@@ -375,8 +375,8 @@
     >
     </xdv-link-external-keystore>
     <xdv-unlock
-      v-model="password"
       :wallet="wallet"
+      @result="onUnlockResult"
       @load="onUnlock"
     ></xdv-unlock>
   </v-container>
@@ -519,6 +519,10 @@ export default class WalletComponent extends Vue {
     this.dialog = true;
     this.password = "";
     this.confirmPassword = "";
+  }
+
+  onUnlockResult(result: string) {
+    this.password = result;
   }
 
   async onUnlock() {

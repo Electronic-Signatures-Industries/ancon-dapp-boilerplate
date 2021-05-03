@@ -261,13 +261,6 @@
         </v-col>
       </v-row>
     </v-card>
-
-    <!-- <xdv-unlock
-      v-model="password"
-      :wallet="wallet"
-      @load="onUnlock"
-    ></xdv-unlock> -->
-
       <v-dialog v-model="setEstimateGasDialog" max-width="500px">
         <v-card>
           <v-card-title>
@@ -374,7 +367,6 @@ import { BigNumber } from "bignumber.js";
   name: "xdv-drive",
   props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3", "ethersInstance", "ethersContract"],
   components: {
-    "xdv-unlock": Unlock,
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
