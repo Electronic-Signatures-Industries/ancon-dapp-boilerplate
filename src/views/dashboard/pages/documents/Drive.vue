@@ -845,7 +845,7 @@ export default class DriveComponent extends Vue {
       const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
       const forkedItems = forkJoin(items).pipe(debounce(x => x as any)).toPromise();
       
-      this.items = (await forkedItems);
+      this.items = (await forkedItems) || [];
       this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
       console.log(this.items);
     }
