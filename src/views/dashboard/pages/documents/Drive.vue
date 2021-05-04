@@ -735,7 +735,6 @@ export default class DriveComponent extends Vue {
     const hasItems = current.toString().split(":");
 
     if (hasItems.length === 2) {
-      console.log(this.items);
       const node = this.items.find(
         (i) => i.block.toString() === hasItems[0].toString()
       );
@@ -758,7 +757,6 @@ export default class DriveComponent extends Vue {
       this.showDetail = false;
       this.showLog = true;
       this.documentBlock = node;
-      console.log(node);
     }
   }
 
@@ -778,7 +776,6 @@ export default class DriveComponent extends Vue {
     this.ipfs = new IPFSManager();
     await this.ipfs.start();  
     const file = await this.ipfs.getObject('bafyreif2od2p274wcjdyjr77lbiqdskelqtl744fhcuhxvzxe7m2dvinqy');
-    console.log('file',file);
     const blob = new Blob([file.value.content], { type: item.contentType });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -801,7 +798,6 @@ export default class DriveComponent extends Vue {
       );
       
       const response = await filter;
-      console.log('response',response);
       this.ipfs = new IPFSManager();
       await this.ipfs.start();  
       const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
@@ -809,7 +805,6 @@ export default class DriveComponent extends Vue {
       
       this.items = (await forkedItems) || [];
       this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
-      console.log(this.items);
     }
   }
 
@@ -823,12 +818,10 @@ export default class DriveComponent extends Vue {
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
-      console.log(this.indexes);
       this.transactionStatus = "Creando transacción en blockchain...";
       const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
         .send({ from: this.localAddress, gasPrice: '22000000000', gas: 400000 });
 
-      console.log('txt ',document);
       this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
@@ -846,7 +839,6 @@ export default class DriveComponent extends Vue {
     try{
       const spender = this.contract._address;
       const amount = await this.daiContract.methods.allowance(this.localAddress, spender).call();
-      console.log('amount',amount);
       const bnAmount = new BigNumber(amount);
 
       /*if(bnAmount.gt(0)){*/
@@ -861,7 +853,6 @@ export default class DriveComponent extends Vue {
       this.estimatedGas = gas;
 
       this.setEstimateGasDialog = true;
-      console.log('estimatedGas',this.estimatedGas);
     }
     catch(e){
       console.log('allowance error',e);

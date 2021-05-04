@@ -172,7 +172,6 @@ export default class Unlock extends Vue {
                 ks: currentKeystore,
                 unlock: true,
               });
-              console.log('unlock wallet',this.wallet);
               this.wallet.onRequestPassphraseWallet.next({
                 type: "ui",
                 passphrase,

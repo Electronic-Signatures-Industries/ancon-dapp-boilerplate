@@ -1,4 +1,4 @@
-<template>
+-<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -511,8 +511,6 @@ export default class WalletComponent extends Vue {
     }
 
     await this.wallet.open(currentKeystore.keystore);
-    const wallet = this.wallet;
-    console.log('wallet wallet',wallet);
   }
 
   openDialog() {
