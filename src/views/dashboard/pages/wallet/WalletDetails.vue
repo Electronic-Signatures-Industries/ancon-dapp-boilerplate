@@ -18,6 +18,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { KeystoreIndex } from "../shared/KeystoreIndex";
+import Moment from "moment";
 
 interface WalletDetailsItem {
   title: String;
@@ -56,7 +57,7 @@ export default class WalletDetails extends Vue {
 
   getKeystoreCreationDate(): String {
     if (!this.currentKeystore) return '';
-    return new Date(this.currentKeystore.created).toString();
+    return Moment(this.currentKeystore.created).toISOString();
   }
 
   getP11Name() {
