@@ -383,8 +383,7 @@
 </template>
 
 <script lang="ts">
-import { Wallet } from "xdvplatform-wallet/lib";
-import { X509Info } from "xdvplatform-wallet/src/index";
+import { Wallet, X509Info } from "xdvplatform-wallet/lib";
 import { Component, Vue } from "vue-property-decorator";
 import { KeystoreIndex, DIDSigner, X509Signer } from "../shared/KeystoreIndex";
 import { ethers } from "ethers";
@@ -790,7 +789,7 @@ export default class WalletComponent extends Vue {
     this.valid = true;
 
     const wallet = new Wallet();
-    let { phrase } = Wallet.generateMnemonic() as any;
+    let { phrase } = Wallet.generateMnemonic();
     if(this.importSeedPhrase.length > 0){
       phrase = this.importSeedPhrase;
     }
@@ -818,13 +817,12 @@ export default class WalletComponent extends Vue {
 
 
         this.currentAddress = wallet.ethersWallet.address;
-        console.log('currentAddress',this.currentAddress);
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
         keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
         //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
         keystoreIndexItem.name = this.oauthName;
-        Session.set({ ks: keystoreIndexItem });
+        await Session.set({ ks: keystoreIndexItem });
       }
 
       this.loading = false;

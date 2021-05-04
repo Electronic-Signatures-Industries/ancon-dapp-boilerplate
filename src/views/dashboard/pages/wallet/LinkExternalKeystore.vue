@@ -270,6 +270,9 @@ export default class LinkExternalKeystore extends Vue {
   async linkSmartCard() {
     // login
     this.slots = (await this.smartCardConnector.getSlots()) as any;
+    if (!this.slots) {
+      return;
+    }
     await this.onSelectHWModule(this.slots[0], null);
   }
 
@@ -415,7 +418,6 @@ export default class LinkExternalKeystore extends Vue {
       await this.linkSmartCard();
     } else if (current === X509Signer.PKCS12) {
       this.p12.canSelect = true;
-      this.commonName = "";
     } else {
       const keystore = {
         ...this.localKeystore,
