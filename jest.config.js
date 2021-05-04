@@ -11,6 +11,7 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  setupFilesAfterEnv: ["./jest.setup.ts"],
   snapshotSerializers: ["jest-serializer-vue"],
   testMatch: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
   testURL: "http://localhost/",
