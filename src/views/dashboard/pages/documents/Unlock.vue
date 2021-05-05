@@ -1,5 +1,5 @@
 <template>
-  <v-content>
+  <v-main>
     <v-dialog v-model="canRequestTx" max-width="500px">
       <v-card>
         <v-card-title>
@@ -67,18 +67,17 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-content>
+  </v-main>
 </template>
+
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC, Wallet } from "xdvplatform-wallet/src";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Wallet } from "xdvplatform-wallet/src";
+import { Component, Emit, Prop, Vue } from "vue-property-decorator";
 import { Session } from "../shared/Session";
 import { Subject } from "rxjs";
 import { KeystoreIndex, DIDSigner } from "../shared/KeystoreIndex";
-import { ethers } from "ethers";
+
 @Component({
-  name: "xdv-unlock",
-  props: ["value", "txview", "wallet"],
   watch: {
     show: async function (current, old) {
       if (old === false && current) {
@@ -92,12 +91,17 @@ import { ethers } from "ethers";
   },
 })
 export default class Unlock extends Vue {
+  @Prop()
+  readonly txview: boolean;
+
+  @Prop()
+  readonly wallet: Wallet;
+
+  private value: string = "";
+
   trackSubscriptions = {};
-  value: string;
-  txview: boolean;
   show: boolean = false;
   showPassword = false;
-  wallet: Wallet;
   validations: any = { password: undefined };
   passphraseSubject: Subject<any> = new Subject();
   payloadReq: any = null;
@@ -107,8 +111,11 @@ export default class Unlock extends Vue {
   sub2: any;
   sub3: any;
   currentKeystore: KeystoreIndex = new KeystoreIndex();
-  async change() {
+
+  @Emit('result')
+  change() {
     this.passphraseSubject.next(this.value);
+    return this.value;
   }
 
   async mounted() {
@@ -165,7 +172,6 @@ export default class Unlock extends Vue {
                 ks: currentKeystore,
                 unlock: true,
               });
-              console.log('unlock wallet',this.wallet);
               this.wallet.onRequestPassphraseWallet.next({
                 type: "ui",
                 passphrase,

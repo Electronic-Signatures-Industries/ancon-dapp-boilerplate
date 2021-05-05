@@ -261,13 +261,6 @@
         </v-col>
       </v-row>
     </v-card>
-
-    <!-- <xdv-unlock
-      v-model="password"
-      :wallet="wallet"
-      @load="onUnlock"
-    ></xdv-unlock> -->
-
       <v-dialog v-model="setEstimateGasDialog" max-width="500px">
         <v-card>
           <v-card-title>
@@ -341,74 +334,39 @@
     ></xdv-sign>
   </v-container>
 </template>
-<script lang="ts">
-import {
-  TypedRFE,
-  Totales,
-  DGen,
-  Emisor,
-  Receptor,
-  DIDDocumentBuilder,
-  LDCryptoTypes,
-  DIDNodeSchema,
-  DIDDocument,
-  DocumentNodeSchema,
-  JWTService,
-  PublicKey,
-} from "xdvplatform-wallet";
-import { Wallet } from "xdvplatform-wallet/src";
 
+<script lang="ts">
+import { Wallet } from "xdvplatform-wallet/src";
 import { SwarmFeed } from "xdvplatform-wallet/src/swarm/feed";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import { KeystoreIndex, DIDSigner } from "../shared/KeystoreIndex";
+import { Component, Vue, Watch } from "vue-property-decorator";
+import { KeystoreIndex } from "../shared/KeystoreIndex";
 import moment from "moment";
-import { createKeyPair, sign } from "@erebos/secp256k1";
 import { ethers } from "ethers";
-import { arrayify } from "ethers/utils";
 import { SwarmNodeSignedContent } from "../shared/SwarmNodeSignedContent";
-import { forkJoin, Unsubscribable, Subject, fromEvent, of, from } from "rxjs";
+import { forkJoin, Unsubscribable, Subject } from "rxjs";
 import { Session } from "../shared/Session";
-import { MessagingTimelineDuplexClient } from "../shared/MessagingTimelineDuplexClient";
-import copy from "copy-to-clipboard";
-const bs58 = require("bs58");
 import {
   DriveSwarmManager,
   XVDSwarmNodeBlock,
 } from "../shared/DriveSwarmManager";
-import { ec } from "elliptic";
 import Unlock from "./Unlock.vue";
 import Upload from "./Upload.vue";
 import SendTo from "./Recipients.vue";
 import { SubscriptionManager } from "../shared/SubscriptionManager";
-import {
-  filter,
-  mergeMap,
-  debounce,
-  debounceTime,
-  groupBy,
-  toArray,
-  tap,
-  delay,
-  repeat,
-} from "rxjs/operators";
+import { debounce } from "rxjs/operators";
 import SignatureManagementDialog from "./SignatureManagementDialog.vue";
 import { SigningOutput } from "../shared/SigningOutput";
-import { async } from "rxjs/internal/scheduler/async";
 import { CacheService } from "../shared/CacheService";
-import { ShareUtils } from "../shared/ShareUtils";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
-import { DIDManager } from "../wallet/DIDManager";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
-const cbor = require("cbor-sync");
 
 @Component({
   name: "xdv-drive",
   props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3", "ethersInstance", "ethersContract"],
   components: {
-    "xdv-unlock": Unlock,
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
@@ -492,7 +450,7 @@ export default class DriveComponent extends Vue {
   did: DID;
   driveManager: DriveManager;
   web3: Web3;
-  currentAddress = "";
+  readonly currentAddress: String;
   estimatedGas = "";
   transactionStatus = "";
   indexes = "";
@@ -514,7 +472,6 @@ export default class DriveComponent extends Vue {
   currentDocument = {};
   allWallets: any = [];
   cache = new CacheService();
-  currentPage: XVDSwarmNodeBlock = {};
   headers = [
     { text: "Name", value: "reference.name" },
     { text: "Content Type", value: "reference.contentType" },
@@ -527,8 +484,13 @@ export default class DriveComponent extends Vue {
   ];
   didDocument: any;
   address: string;
+  keystoreAddress: string = null;
   updateWallet;
   gasLimit: 4000000;
+
+  get localAddress(): String {
+    return this.keystoreAddress ?? this.currentAddress ?? '';
+  }
 
   @Watch("updateWallet")
   async onUpdateWallet(prev, next) {
@@ -630,8 +592,8 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
-    if(ks && this.currentAddress.length === 0){
-      this.currentAddress = ks.address;
+    if(ks){
+      this.keystoreAddress = ks.address;
     }
     this.driveManager = new DriveManager(this.ipfs, this.did);
   }
@@ -773,7 +735,6 @@ export default class DriveComponent extends Vue {
     const hasItems = current.toString().split(":");
 
     if (hasItems.length === 2) {
-      console.log(this.items);
       const node = this.items.find(
         (i) => i.block.toString() === hasItems[0].toString()
       );
@@ -796,7 +757,6 @@ export default class DriveComponent extends Vue {
       this.showDetail = false;
       this.showLog = true;
       this.documentBlock = node;
-      console.log(node);
     }
   }
 
@@ -816,7 +776,6 @@ export default class DriveComponent extends Vue {
     this.ipfs = new IPFSManager();
     await this.ipfs.start();  
     const file = await this.ipfs.getObject('bafyreif2od2p274wcjdyjr77lbiqdskelqtl744fhcuhxvzxe7m2dvinqy');
-    console.log('file',file);
     const blob = new Blob([file.value.content], { type: item.contentType });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -831,23 +790,21 @@ export default class DriveComponent extends Vue {
   }
 
   async fetchDocuments() {
-    if(this.currentAddress.length > 0){
+    if(this.localAddress.length > 0){
       const filter = this.contract.getPastEvents('DocumentAnchored',{ 
           toBlock: 'latest',
           fromBlock: 0,
-          filter: { user: this.currentAddress } },
+          filter: { user: this.localAddress } },
       );
       
       const response = await filter;
-      console.log('response',response);
       this.ipfs = new IPFSManager();
       await this.ipfs.start();  
       const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
       const forkedItems = forkJoin(items).pipe(debounce(x => x as any)).toPromise();
       
-      this.items = (await forkedItems);
+      this.items = (await forkedItems) || [];
       this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
-      console.log(this.items);
     }
   }
 
@@ -861,12 +818,10 @@ export default class DriveComponent extends Vue {
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
-      console.log(this.indexes);
       this.transactionStatus = "Creando transacción en blockchain...";
       const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-        .send({ from: this.currentAddress, gasPrice: '22000000000', gas: 400000 });
+        .send({ from: this.localAddress, gasPrice: '22000000000', gas: 400000 });
 
-      console.log('txt ',document);
       this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
@@ -883,14 +838,13 @@ export default class DriveComponent extends Vue {
     this.loading = true;
     try{
       const spender = this.contract._address;
-      const amount = await this.daiContract.methods.allowance(this.currentAddress, spender).call();
-      console.log('amount',amount);
+      const amount = await this.daiContract.methods.allowance(this.localAddress, spender).call();
       const bnAmount = new BigNumber(amount);
 
       /*if(bnAmount.gt(0)){*/
         this.uploadStatus = "Aprobando la transaccion...";
         await this.daiContract.methods.approve(spender, "9000000000000000000").send(
-          { from: this.currentAddress, gasPrice: '22000000000', gas: 4000000 }
+          { from: this.localAddress, gasPrice: '22000000000', gas: 4000000 }
         );
       /*}*/
 
@@ -899,7 +853,6 @@ export default class DriveComponent extends Vue {
       this.estimatedGas = gas;
 
       this.setEstimateGasDialog = true;
-      console.log('estimatedGas',this.estimatedGas);
     }
     catch(e){
       console.log('allowance error',e);

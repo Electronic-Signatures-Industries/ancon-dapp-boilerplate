@@ -133,9 +133,9 @@
       </v-card>
 
       <xdv-unlock
-        v-model="password"
         :wallet="wallet"
         @load="onUnlock"
+        @result="onUnlockResult"
       ></xdv-unlock>
     </div>
   </v-container>
@@ -168,6 +168,7 @@ export default class DocumentDetails extends Vue {
   wallet: Wallet = new Wallet();
   itemIndex: any;
   itemHash: any;
+  password: string;
 
   async shareTo(item, index) {
     const { currentKeystore } = await Session.getSessionInfo();
@@ -200,6 +201,10 @@ export default class DocumentDetails extends Vue {
     } catch (e) {
       console.log(e);
     }
+  }
+
+  onUnlockResult(result: string) {
+    this.password = result;
   }
 
   async downloadFile(item, index) {

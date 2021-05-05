@@ -204,10 +204,6 @@
             </v-row>
           </v-form>
         </v-card-text>
-        <!-- 
-        <xdv-unlock
-          :wallet="this.value.wallet"
-        ></xdv-unlock> -->
         <v-card-actions>
           <v-btn
             color="blue darken-1"
@@ -305,9 +301,6 @@ interface SignatureManagementModel {
 }
 
 @Component({
-  components: {
-    "xdv-unlock": Unlock,
-  },
   name: "xdv-sign",
   props: ["value", "wallet", "show"],
 })

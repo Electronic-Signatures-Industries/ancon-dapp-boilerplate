@@ -116,9 +116,9 @@
       </v-toolbar>
 
       <xdv-unlock
-        v-model="password"
         :wallet="wallet"
         @load="onUnlock"
+        @result="onUnlockResult"
       ></xdv-unlock>
 
       <xdv-add-token
@@ -253,6 +253,10 @@ export default class TokensComponent extends Vue {
 
   async onUnlock() {
     await this.loadTokens();
+  }
+
+  onUnlockResult(result: string) {
+    this.password = result;
   }
 
   send(item) {

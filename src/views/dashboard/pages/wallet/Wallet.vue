@@ -1,4 +1,4 @@
-<template>
+-<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -286,102 +286,71 @@
               </v-list-item-content>
             </v-list-item>
           </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-card class="mx-auto">
-              <v-card-text>
-                <v-list>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>DID</b>
-                      {{ did._id }}
-                    </v-list-item-content>
-                  </v-list-item>
+          <xdv-wallet-details
+            :didId="did._id"
+            :currentAddress="currentAddress"
+            :currentKeystore="currentKeystore"
+            />
 
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Address</b> {{ currentAddress }}
-                    </v-list-item-content>
-                  </v-list-item>
+          <v-card class="mx-auto">
+            <v-card-actions>
+              <v-spacer></v-spacer>
 
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Linked to Smart Card</b>
-                      {{ getP11Name(currentKeystore) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Linked to P12</b>
-                      {{ getP12Name(currentKeystore) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-content class="text--primary">
-                      <b>Created</b> {{ new Date(currentKeystore.created) }}
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
-              </v-card-text>
+              <v-tooltip top>
+                <span>Link external</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="currentKeystore"
+                    v-on="on"
+                    @click="linkDialog = true"
+                    small
+                  >
+                    <v-icon>mdi-key-link</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
 
-              <v-card-actions>
-                <v-spacer></v-spacer>
-
-                <v-tooltip top>
-                  <span>Link external</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="linkDialog = true"
-                      small
-                    >
-                      <v-icon>mdi-key-link</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-
-                <v-tooltip top>
-                  <span>Share address</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="shareAddressDialog = true"
-                      small
-                    >
-                      <v-icon>mdi-share</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-                <v-tooltip top>
-                  <span>Remove</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="remove(item)"
-                      small
-                    >
-                      <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-                <v-tooltip top>
-                  <span>Export wallet</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-if="currentKeystore"
-                      v-on="on"
-                      @click="exportWallet()"
-                      small
-                    >
-                      <v-icon>mdi-export</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-              </v-card-actions>
-            </v-card>
-          </v-expansion-panel-content>
+              <v-tooltip top>
+                <span>Share address</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="currentKeystore"
+                    v-on="on"
+                    @click="shareAddressDialog = true"
+                    small
+                  >
+                    <v-icon>mdi-share</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Remove</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="currentKeystore"
+                    v-on="on"
+                    @click="remove(item)"
+                    small
+                  >
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+              <v-tooltip top>
+                <span>Export wallet</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-if="currentKeystore"
+                    v-on="on"
+                    @click="exportWallet()"
+                    small
+                  >
+                    <v-icon>mdi-export</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+            </v-card-actions>
+          </v-card>
         </v-expansion-panel>
       </v-expansion-panels>
       <xdv-drive
@@ -406,16 +375,15 @@
     >
     </xdv-link-external-keystore>
     <xdv-unlock
-      v-model="password"
       :wallet="wallet"
+      @result="onUnlockResult"
       @load="onUnlock"
     ></xdv-unlock>
   </v-container>
 </template>
 
 <script lang="ts">
-import { Wallet } from "xdvplatform-wallet/lib";
-import { X509Info } from "xdvplatform-wallet/src/index";
+import { Wallet, X509Info } from "xdvplatform-wallet/lib";
 import { Component, Vue } from "vue-property-decorator";
 import { KeystoreIndex, DIDSigner, X509Signer } from "../shared/KeystoreIndex";
 import { ethers } from "ethers";
@@ -428,6 +396,7 @@ import LinkExternalKeystore from "./LinkExternalKeystore.vue";
 import Drive from "../documents/Drive.vue";
 import { DIDManager } from "./DIDManager";
 import { IPFSManager } from "./IPFSManager";
+import WalletDetails from "./WalletDetails.vue";
 import { DID } from "dids";
 import Web3 from "web3";
 const xdvAbi = require('../../../../abi/xdv');
@@ -444,6 +413,7 @@ declare module "vue-property-decorator" {
     "xdv-unlock": Unlock,
     "xdv-drive": Drive,
     "xdv-link-external-keystore": LinkExternalKeystore,
+    "xdv-wallet-details": WalletDetails
   },
 })
 export default class WalletComponent extends Vue {
@@ -522,9 +492,9 @@ export default class WalletComponent extends Vue {
   ipfs: IPFSManager;
   didManager: DIDManager;
   oauthUniqueId = "";
-  web3: Web3;
-  ethersInstance: any;
-  ethersContract: any;
+  web3?: Web3 = null;
+  ethersInstance?: ethers.providers.Web3Provider = null;
+  ethersContract?: ethers.Contract = null;
   setImportSeedPhrase: boolean = false;
   importSeedPhrase: string = "";
   existingWallet: boolean = false;
@@ -540,8 +510,6 @@ export default class WalletComponent extends Vue {
     }
 
     await this.wallet.open(currentKeystore.keystore);
-    const wallet = this.wallet;
-    console.log('wallet wallet',wallet);
   }
 
   openDialog() {
@@ -550,29 +518,8 @@ export default class WalletComponent extends Vue {
     this.confirmPassword = "";
   }
 
-  getP11Name() {
-    if (
-      this.currentKeystore &&
-      this.currentKeystore.linkedExternalKeystores &&
-      this.currentKeystore.linkedExternalKeystores.pkcs11
-    ) {
-      return this.currentKeystore.linkedExternalKeystores.pkcs11.tokenIndex;
-    }
-    return "no";
-  }
-
-  getP12Name() {
-    if (
-      this.currentKeystore &&
-      this.currentKeystore.linkedExternalKeystores &&
-      this.currentKeystore.linkedExternalKeystores.pkcs12
-    ) {
-      return (
-        this.currentKeystore.linkedExternalKeystores.pkcs12.name ||
-        "No name found"
-      );
-    }
-    return "no";
+  onUnlockResult(result: string) {
+    this.password = result;
   }
 
   async onUnlock() {
@@ -842,7 +789,7 @@ export default class WalletComponent extends Vue {
     this.valid = true;
 
     const wallet = new Wallet();
-    let { phrase } = Wallet.generateMnemonic() as any;
+    let { phrase } = Wallet.generateMnemonic();
     if(this.importSeedPhrase.length > 0){
       phrase = this.importSeedPhrase;
     }
@@ -870,13 +817,12 @@ export default class WalletComponent extends Vue {
 
 
         this.currentAddress = wallet.ethersWallet.address;
-        console.log('currentAddress',this.currentAddress);
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
         keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
         //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
         keystoreIndexItem.name = this.oauthName;
-        Session.set({ ks: keystoreIndexItem });
+        await Session.set({ ks: keystoreIndexItem });
       }
 
       this.loading = false;

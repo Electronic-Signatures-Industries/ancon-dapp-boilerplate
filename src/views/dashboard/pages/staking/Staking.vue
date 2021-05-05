@@ -564,9 +564,9 @@
       >
       </xdv-link-external-keystore>
       <xdv-unlock
-        v-model="password"
         :wallet="wallet"
         @load="onUnlock"
+        @result="onUnlockResult"
       ></xdv-unlock>
   </v-container>
 </template>
@@ -685,6 +685,10 @@ export default class StakingComponent extends Vue {
     await this.loadWallets();
 
     this.loading = false;
+  }
+
+  onUnlockResult(result: string) {
+    this.password = result;
   }
 
   requestSignerActivation(address) {

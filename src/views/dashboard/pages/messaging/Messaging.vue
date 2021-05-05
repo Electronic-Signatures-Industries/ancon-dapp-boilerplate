@@ -181,9 +181,9 @@
       </v-list>
     </v-card>
         <xdv-unlock
-          v-model="password"
           :wallet="wallet"
           @load="onUnlock"
+          @result="onUnlockResult"
         ></xdv-unlock>
 
   </v-container>
@@ -313,6 +313,9 @@ export default class MessagingComponent extends Vue {
     this.selectedDocument = item;
   }
 
+  onUnlockResult(result: string) {
+    this.password = result;
+  }
 
   async addSub() {
     const { currentKeystore } = await Session.getSessionInfo();
