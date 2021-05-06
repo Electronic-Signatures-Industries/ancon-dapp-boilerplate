@@ -286,10 +286,12 @@
               </v-list-item-content>
             </v-list-item>
           </v-expansion-panel-header>
-          <xdv-wallet-details
+
+          <wallet-details
             :didId="did._id"
             :currentAddress="currentAddress"
             :currentKeystore="currentKeystore"
+            :erc20Contract="daiContract"
             />
 
           <v-card class="mx-auto">
@@ -413,7 +415,7 @@ declare module "vue-property-decorator" {
     "xdv-unlock": Unlock,
     "xdv-drive": Drive,
     "xdv-link-external-keystore": LinkExternalKeystore,
-    "xdv-wallet-details": WalletDetails
+    WalletDetails
   },
 })
 export default class WalletComponent extends Vue {
