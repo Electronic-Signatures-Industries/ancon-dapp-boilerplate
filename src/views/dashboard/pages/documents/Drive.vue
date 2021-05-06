@@ -312,11 +312,10 @@
       </v-dialog>
     <xdv-upload
       :loading="loading"
-      :show="canUpload"
+      :show.sync="canUpload"
       :uploadStatus="uploadStatus"
-      v-model="files"
-      @input="createDocumentNode"
-    ></xdv-upload>
+      @result="createDocumentNode"
+    />
 
     <xdv-send
       :show="canSend"
@@ -349,8 +348,7 @@ import {
   DriveSwarmManager,
   XVDSwarmNodeBlock,
 } from "../shared/DriveSwarmManager";
-import Unlock from "./Unlock.vue";
-import Upload from "./Upload.vue";
+import Upload from "./UploadDialog.vue";
 import SendTo from "./Recipients.vue";
 import { SubscriptionManager } from "../shared/SubscriptionManager";
 import { debounce } from "rxjs/operators";
@@ -834,7 +832,9 @@ export default class DriveComponent extends Vue {
     }
   }
   
-  async createDocumentNode() {
+  async createDocumentNode(files: File[]) {
+    this.files = files;
+    this.canUpload = false;
     this.loading = true;
     try{
       const spender = this.contract._address;
@@ -856,6 +856,7 @@ export default class DriveComponent extends Vue {
     }
     catch(e){
       console.log('allowance error',e);
+      this.loading = false;
     }
   }
 
