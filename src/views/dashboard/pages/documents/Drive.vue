@@ -1,19 +1,20 @@
 <template>
-  <v-container fluid class="down-top-padding">
+  <v-card class="local-container">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
     <v-overlay :value="loading">
       <v-progress-circular indeterminate size="64"></v-progress-circular>
     </v-overlay>
-    <v-card>
-      <v-toolbar color="black accent-4" dark v-if="mode === ''">
-        <v-toolbar-title>Documents </v-toolbar-title>
 
-        <v-spacer></v-spacer>
+    <v-toolbar flat>
+      <v-toolbar-title>Documentos</v-toolbar-title>
+    </v-toolbar>
 
-        <template v-slot:extension> </template>
-      </v-toolbar>
+    <v-card-text v-if="items.length < 1">
+      No hay documentos disponibles.
+    </v-card-text>
 
+    <v-card-text v-else>
       <v-row>
         <v-col col-xs-6>
           <v-treeview :active.sync="tree.data" :items="items" activatable>
@@ -149,167 +150,136 @@
               </v-list>
             </v-card-text>
           </v-card>
-          <v-btn color="red" dark small absolute bottom right fab>
-            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
-              ><template v-slot:activator>
-                <v-icon>mdi-plus</v-icon>
-              </template>
-
-              <v-tooltip top>
-                <span>Upload</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="canUpload = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-text-box-plus</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-
-              <!-- <v-tooltip top>
-                <span>Send subscription link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    @click="openShareDialog(selected)"
-
-                    dark
-                    v-on="on"
-                    @click="canUpload = true"
-                    small
-                    v-if="selected && selected.type!=='did'"
-                     color="red accent-4"
-                  >
-                    <v-icon>mdi-key-change</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-
-              <v-tooltip top>
-                <span>Share link</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="shareTo(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-link-box-variant</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <!-- <v-tooltip top>
-                <span>Send encrypted to</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="openShareDialog(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-publish</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-
-              <v-tooltip top>
-                <span>Sign documents</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    v-if="updateWallet.linkedExternalKeystores"
-                    @click="openSignatureDialog()"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-file-certificate</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <!--
-              <v-tooltip top>
-                <span>Execute chain job</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    v-if="tab === 1 && currentItem"
-                    dark
-                    v-on="on"
-                    @click="openChainDialog(currentItem)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-link-lock</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              > -->
-            </v-speed-dial>
-          </v-btn>
         </v-col>
       </v-row>
-    </v-card>
-      <v-dialog v-model="setEstimateGasDialog" max-width="500px">
-        <v-card>
-          <v-card-title>
-            <span class="headline">Gas</span>
-          </v-card-title>
+    </v-card-text>
 
-          <v-card-text>
-              <v-row>
-                <v-col cols="12" md="12">
-                  <b>Costo del Gas</b> {{ estimatedGas }}
-                </v-col>
-              </v-row>
-          </v-card-text>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn text @click="canUpload = true">
+        <v-icon>mdi-text-box-plus</v-icon>
+        Subir Documento
+      </v-btn>
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="setEstimateGasDialog = false"
-              >Rechazar</v-btn>
-            <v-btn color="blue darken-1" text @click="confirmContract()"
-              >Aceptar</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <!-- <v-tooltip top>
+        <span>Send subscription link</span>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            fab
+            @click="openShareDialog(selected)"
 
-      <v-dialog v-model="setTransactionStatusDialog" max-width="500px">
-        <v-card>
-          <v-card-title>
-            <span class="headline">Transacción</span>
-          </v-card-title>
+            dark
+            v-on="on"
+            @click="canUpload = true"
+            small
+            v-if="selected && selected.type!=='did'"
+              color="red accent-4"
+          >
+            <v-icon>mdi-key-change</v-icon>
+          </v-btn>
+        </template></v-tooltip
+      > -->
+      <v-btn
+        v-if="tab === 1 && currentItem"
+        @click="shareTo(currentItem)"
+        text
+      >
+        <v-icon>mdi-link-box-variant</v-icon>
+        Compartir
+      </v-btn>
 
-          <v-card-text>
-              <v-row>
-                <v-col cols="12" md="12">
-                  {{ transactionStatus }}
-                </v-col>
-              </v-row>
-          </v-card-text>
+      <!-- <v-tooltip top>
+        <span>Send encrypted to</span>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-if="tab === 1 && currentItem"
+            dark
+            v-on="on"
+            @click="openShareDialog(currentItem)"
+            small
+            color="red accent-4"
+          >
+            <v-icon>mdi-publish</v-icon>
+          </v-btn>
+        </template></v-tooltip
+      > -->
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="setTransactionStatusDialog = false"
-              >Cancel</v-btn
-            >
-            <v-btn color="blue darken-1" text @click="confirmContract()"
-              >OK</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <v-btn
+        v-if="updateWallet.linkedExternalKeystores"
+        @click="openSignatureDialog()"
+        text
+      >
+        <v-icon>mdi-file-certificate</v-icon>
+        Firmar Documentos
+      </v-btn>
+
+      <!--
+      <v-tooltip top>
+        <span>Execute chain job</span>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-if="tab === 1 && currentItem"
+            dark
+            v-on="on"
+            @click="openChainDialog(currentItem)"
+            small
+            color="red accent-4"
+          >
+            <v-icon>mdi-link-lock</v-icon>
+          </v-btn>
+        </template></v-tooltip
+      > -->
+    </v-card-actions>
+
+    <v-dialog v-model="setEstimateGasDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Gas</span>
+        </v-card-title>
+
+        <v-card-text>
+            <v-row>
+              <v-col cols="12" md="12">
+                <b>Costo del Gas</b> {{ estimatedGas }}
+              </v-col>
+            </v-row>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="setEstimateGasDialog = false"
+            >Rechazar</v-btn>
+          <v-btn color="blue darken-1" text @click="confirmContract()"
+            >Aceptar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="setTransactionStatusDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Transacción</span>
+        </v-card-title>
+
+        <v-card-text>
+            <v-row>
+              <v-col cols="12" md="12">
+                {{ transactionStatus }}
+              </v-col>
+            </v-row>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="setTransactionStatusDialog = false"
+            >Cancel</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="confirmContract()"
+            >OK</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <xdv-upload
       :loading="loading"
       :show.sync="canUpload"
@@ -331,8 +301,14 @@
       v-on:close="closeSign"
       v-model="signManagerProps"
     ></xdv-sign>
-  </v-container>
+  </v-card>
 </template>
+
+<style lang="scss" scoped>
+.local-container {
+  margin-top: 24px;
+}
+</style>
 
 <script lang="ts">
 import { Wallet } from "xdvplatform-wallet/src";
