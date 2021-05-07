@@ -197,8 +197,8 @@
       </v-card>
 
       <event-log
+        v-if="showLog"
         :documentMetadata="currentDocumentMetadata"
-        :show="showLog"
         @download="downloadFile"
       />
     </v-col>
@@ -310,6 +310,7 @@ import { DriveManager } from "../wallet/DriveManager";
 import EventLog from "./EventLog.vue";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
+import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
 
 @Component({
   name: "xdv-drive",
@@ -725,10 +726,10 @@ export default class DriveComponent extends Vue {
     );
   }
 
-  async downloadFile(item) {
+  async downloadFile(item: DocumentMetadata) {
     this.ipfs = new IPFSManager();
     await this.ipfs.start();  
-    const file = await this.ipfs.getObject('bafyreif2od2p274wcjdyjr77lbiqdskelqtl744fhcuhxvzxe7m2dvinqy');
+    const file = await this.ipfs.getObject(item.contentRef);
     const blob = new Blob([file.value.content], { type: item.contentType });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);

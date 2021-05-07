@@ -16,9 +16,6 @@ describe("EventLog.vue", () => {
     component = mount(EventLog, {
       localVue: createLocalVue(),
       vuetify: new Vuetify(),
-      propsData: {
-        show: true,
-      },
     });
   });
 

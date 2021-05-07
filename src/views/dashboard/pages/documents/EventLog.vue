@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto" v-if="show">
+  <v-card>
     <v-card-title>Event log</v-card-title>
 
     <v-card-text>
@@ -14,11 +14,7 @@
         <v-list-item>
           <v-list-item-content>
             <v-list-item-title>Archivo</v-list-item-title>
-            <v-list-item-subtitle>
-              <a @click="onDownload" data-cy="download-button">
-                {{ this.contentType }}
-              </a>
-            </v-list-item-subtitle>
+            <v-list-item-subtitle>{{ this.contentType }}</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         
@@ -30,6 +26,19 @@
         </v-list-item>
       </v-list>
     </v-card-text>
+
+    <v-card-actions>
+      <v-spacer />
+      <v-btn
+        v-if="this.documentMetadata"
+        @click="onDownload"
+        data-cy="download-button"
+        text
+        >
+          <v-icon>mdi-download</v-icon>
+          Descargar Archivo
+      </v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 
@@ -43,9 +52,6 @@ import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
 export default class EventLog extends Vue {
   @Prop()
   readonly documentMetadata: DocumentMetadata | null;
-
-  @Prop()
-  readonly show: boolean;
 
   @Emit('download')
   onDownload() {
