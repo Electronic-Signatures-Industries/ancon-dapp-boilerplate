@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EventLog.vue should emit the document metadata when the link is pressed 1`] = `
+Object {
+  "contentType": "application/json",
+  "name": "Mocked Document Name",
+  "timestamp": 1000,
+}
+`;
+
+exports[`EventLog.vue snapshots should match when document is defined 1`] = `
+<div class="mx-auto v-card v-sheet theme--light">
+  <div class="v-card__title">Event log</div>
+  <div class="v-card__text">
+    <div role="list" class="v-list v-sheet theme--light">
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Nombre</div>
+          <div class="v-list-item__subtitle">Mocked Document Name</div>
+        </div>
+      </div>
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Archivo</div>
+          <div class="v-list-item__subtitle"><a data-cy="download-button">
+              application/json
+            </a></div>
+        </div>
+      </div>
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Timestamp</div>
+          <div class="v-list-item__subtitle">Wed Dec 31 1969 19:16:40 GMT-0500</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`EventLog.vue snapshots should match when document is null 1`] = `
+<div class="mx-auto v-card v-sheet theme--light">
+  <div class="v-card__title">Event log</div>
+  <div class="v-card__text">
+    <div role="list" class="v-list v-sheet theme--light">
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Nombre</div>
+          <div class="v-list-item__subtitle"></div>
+        </div>
+      </div>
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Archivo</div>
+          <div class="v-list-item__subtitle"><a data-cy="download-button">
+
+            </a></div>
+        </div>
+      </div>
+      <div tabindex="-1" role="listitem" class="v-list-item theme--light">
+        <div class="v-list-item__content">
+          <div class="v-list-item__title">Timestamp</div>
+          <div class="v-list-item__subtitle"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
