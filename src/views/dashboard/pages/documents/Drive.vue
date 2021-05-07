@@ -1,22 +1,20 @@
 <template>
-  <v-card class="local-container">
+  <v-row class="local-container">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
-    <v-overlay :value="loading">
-      <v-progress-circular indeterminate size="64"></v-progress-circular>
-    </v-overlay>
+    <v-col col-xs-6>
+      <v-card>
+        <v-overlay :value="loading">
+          <v-progress-circular indeterminate size="64"></v-progress-circular>
+        </v-overlay>
 
-    <v-toolbar flat>
-      <v-toolbar-title>Documentos</v-toolbar-title>
-    </v-toolbar>
+        <v-card-title>Documentos</v-card-title>
 
-    <v-card-text v-if="items.length < 1">
-      No hay documentos disponibles.
-    </v-card-text>
+        <v-card-text v-if="items.length < 1">
+          No hay documentos disponibles.
+        </v-card-text>
 
-    <v-card-text v-else>
-      <v-row>
-        <v-col col-xs-6>
+        <v-card-text v-else>
           <v-treeview :active.sync="tree.data" :items="items" activatable>
             <template v-slot:prepend="{ item, open }">
               <v-icon v-if="!item.folder.contentType">
@@ -28,208 +26,182 @@
               {{ item.folder.length }} archivo(s)
             </template>
           </v-treeview>
-        </v-col>
-        <v-col col-xs-6>
-          <v-card v-if="showDetail" class="mx-auto">
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="canUpload = true">
+            <v-icon>mdi-text-box-plus</v-icon>
+            Subir Documento
+          </v-btn>
+
+          <!-- <v-tooltip top>
+            <span>Send subscription link</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                fab
+                @click="openShareDialog(selected)"
+
+                dark
+                v-on="on"
+                @click="canUpload = true"
+                small
+                v-if="selected && selected.type!=='did'"
+                  color="red accent-4"
+              >
+                <v-icon>mdi-key-change</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          > -->
+          <v-btn
+            v-if="tab === 1 && currentItem"
+            @click="shareTo(currentItem)"
+            text
+          >
+            <v-icon>mdi-link-box-variant</v-icon>
+            Compartir
+          </v-btn>
+
+          <!-- <v-tooltip top>
+            <span>Send encrypted to</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="tab === 1 && currentItem"
+                dark
+                v-on="on"
+                @click="openShareDialog(currentItem)"
+                small
+                color="red accent-4"
+              >
+                <v-icon>mdi-publish</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          > -->
+
+          <v-btn
+            v-if="updateWallet.linkedExternalKeystores"
+            @click="openSignatureDialog()"
+            text
+          >
+            <v-icon>mdi-file-certificate</v-icon>
+            Firmar Documentos
+          </v-btn>
+
+          <!--
+          <v-tooltip top>
+            <span>Execute chain job</span>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-if="tab === 1 && currentItem"
+                dark
+                v-on="on"
+                @click="openChainDialog(currentItem)"
+                small
+                color="red accent-4"
+              >
+                <v-icon>mdi-link-lock</v-icon>
+              </v-btn>
+            </template></v-tooltip
+          > -->
+        </v-card-actions>
+      </v-card>
+    </v-col>
+
+    <v-col col-xs-6>
+      <v-card v-if="showDetail" class="mx-auto">
+        <v-list-item>
+          <v-list-item-avatar>
+            <v-icon v-if="currentDocument.reference.contentType">{{
+              fileIcons[currentDocument.reference.contentType]
+            }}</v-icon>
+            <v-icon v-else>mdi-file</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title class="headline">{{
+              currentDocument.reference.name
+            }}</v-list-item-title>
+            <v-list-item-subtitle>{{
+              currentDocument.reference.contentType
+            }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+
+        <v-card-text>
+          <v-list>
             <v-list-item>
-              <v-list-item-avatar>
-                <v-icon v-if="currentDocument.reference.contentType">{{
-                  fileIcons[currentDocument.reference.contentType]
-                }}</v-icon>
-                <v-icon v-else>mdi-file</v-icon>
-              </v-list-item-avatar>
               <v-list-item-content>
-                <v-list-item-title class="headline">{{
-                  currentDocument.reference.name
-                }}</v-list-item-title>
-                <v-list-item-subtitle>{{
-                  currentDocument.reference.contentType
-                }}</v-list-item-subtitle>
+                <h3>Document detail</h3>
               </v-list-item-content>
             </v-list-item>
 
-            <v-card-text>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-content>
-                    <h3>Document detail</h3>
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Hash</b>
+                {{ currentDocument.reference.hash.replace("0x", "") }}
+              </v-list-item-content>
+            </v-list-item>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Hash</b>
-                    {{ currentDocument.reference.hash.replace("0x", "") }}
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Signature</b>
+                {{ getSignature(currentDocument.reference) }}
+              </v-list-item-content>
+            </v-list-item>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Signature</b>
-                    {{ getSignature(currentDocument.reference) }}
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Has Qualified Signature</b>
+                {{
+                  !!currentDocument.reference.documentSignature
+                    ? "yes"
+                    : "no"
+                }}
+              </v-list-item-content>
+            </v-list-item>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Has Qualified Signature</b>
-                    {{
-                      !!currentDocument.reference.documentSignature
-                        ? "yes"
-                        : "no"
-                    }}
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Size</b> {{ currentDocument.reference.size / 1000 }} kb
+              </v-list-item-content>
+            </v-list-item>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Size</b> {{ currentDocument.reference.size / 1000 }} kb
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Last Modified</b>
+                {{ new Date(currentDocument.reference.lastModified) }}
+              </v-list-item-content>
+            </v-list-item>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Last Modified</b>
-                    {{ new Date(currentDocument.reference.lastModified) }}
-                  </v-list-item-content>
-                </v-list-item>
+            <v-list-item>
+              <v-list-item-content class="text--primary">
+                <b>Created</b>
+                {{ new Date(1000 * currentDocument.reference.created) }}
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
 
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Created</b>
-                    {{ new Date(1000 * currentDocument.reference.created) }}
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn icon>
-                <v-icon @click="downloadFile(currentDocument.reference, index)"
-                  >mdi-download</v-icon
-                >
-              </v-btn>
-              <v-btn icon>
-                <v-icon @click="shareTo(currentDocument.reference, index)"
-                  >mdi-share-variant</v-icon
-                >
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-          <v-card class="mx-auto" v-if="showLog">
-            <v-card-text>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-content>
-                    <h3>Event log</h3>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Nombre</b> {{ documentBlock.folder[0].name }}
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>File</b>
-                    <a @click="downloadFile(documentBlock.folder[0])"
-                      >{{documentBlock.folder[0].contentType}}</a
-                    >
-                  </v-list-item-content>
-                </v-list-item>
-                
-                <v-list-item>
-                  <v-list-item-content class="text--primary">
-                    <b>Timestamp</b>
-                    {{ new Date(1000 * documentBlock.folder[0].timestamp) }}
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-card-text>
-
-    <v-card-actions>
-      <v-spacer />
-      <v-btn text @click="canUpload = true">
-        <v-icon>mdi-text-box-plus</v-icon>
-        Subir Documento
-      </v-btn>
-
-      <!-- <v-tooltip top>
-        <span>Send subscription link</span>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            fab
-            @click="openShareDialog(selected)"
-
-            dark
-            v-on="on"
-            @click="canUpload = true"
-            small
-            v-if="selected && selected.type!=='did'"
-              color="red accent-4"
-          >
-            <v-icon>mdi-key-change</v-icon>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn icon>
+            <v-icon @click="downloadFile(currentDocument.reference, index)"
+              >mdi-download</v-icon
+            >
           </v-btn>
-        </template></v-tooltip
-      > -->
-      <v-btn
-        v-if="tab === 1 && currentItem"
-        @click="shareTo(currentItem)"
-        text
-      >
-        <v-icon>mdi-link-box-variant</v-icon>
-        Compartir
-      </v-btn>
-
-      <!-- <v-tooltip top>
-        <span>Send encrypted to</span>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-if="tab === 1 && currentItem"
-            dark
-            v-on="on"
-            @click="openShareDialog(currentItem)"
-            small
-            color="red accent-4"
-          >
-            <v-icon>mdi-publish</v-icon>
+          <v-btn icon>
+            <v-icon @click="shareTo(currentDocument.reference, index)"
+              >mdi-share-variant</v-icon
+            >
           </v-btn>
-        </template></v-tooltip
-      > -->
+        </v-card-actions>
+      </v-card>
 
-      <v-btn
-        v-if="updateWallet.linkedExternalKeystores"
-        @click="openSignatureDialog()"
-        text
-      >
-        <v-icon>mdi-file-certificate</v-icon>
-        Firmar Documentos
-      </v-btn>
-
-      <!--
-      <v-tooltip top>
-        <span>Execute chain job</span>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-if="tab === 1 && currentItem"
-            dark
-            v-on="on"
-            @click="openChainDialog(currentItem)"
-            small
-            color="red accent-4"
-          >
-            <v-icon>mdi-link-lock</v-icon>
-          </v-btn>
-        </template></v-tooltip
-      > -->
-    </v-card-actions>
+      <event-log
+        :documentMetadata="currentDocumentMetadata"
+        :show="showLog"
+        @download="downloadFile"
+      />
+    </v-col>
 
     <v-dialog v-model="setEstimateGasDialog" max-width="500px">
       <v-card>
@@ -301,7 +273,8 @@
       v-on:close="closeSign"
       v-model="signManagerProps"
     ></xdv-sign>
-  </v-card>
+
+  </v-row>
 </template>
 
 <style lang="scss" scoped>
@@ -334,6 +307,7 @@ import { CacheService } from "../shared/CacheService";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
+import EventLog from "./EventLog.vue";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
 
@@ -344,6 +318,7 @@ import { BigNumber } from "bignumber.js";
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
+    EventLog
   },
 })
 export default class DriveComponent extends Vue {
@@ -464,6 +439,10 @@ export default class DriveComponent extends Vue {
 
   get localAddress(): String {
     return this.keystoreAddress ?? this.currentAddress ?? '';
+  }
+
+  get currentDocumentMetadata(): any | null {
+    return this.documentBlock?.folder[0] || null
   }
 
   @Watch("updateWallet")
@@ -764,6 +743,7 @@ export default class DriveComponent extends Vue {
   }
 
   async fetchDocuments() {
+    this.loading = true;
     if(this.localAddress.length > 0){
       const filter = this.contract.getPastEvents('DocumentAnchored',{ 
           toBlock: 'latest',
@@ -780,6 +760,7 @@ export default class DriveComponent extends Vue {
       this.items = (await forkedItems) || [];
       this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
     }
+    this.loading = false;
   }
 
   async confirmContract(){
