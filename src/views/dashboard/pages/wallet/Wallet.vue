@@ -1,4 +1,4 @@
--<template>
+<template>
   <v-container fluid class="down-top-padding">
     <v-dialog v-model="removeDialog" max-width="500px">
       <v-card>
@@ -87,10 +87,7 @@
     <v-alert :type="alertType" v-if="alertType.length > 0">{{
       alertMessage
     }}</v-alert>
-    <v-card>
-      <!-- <v-toolbar color="black accent-4" dark>
-        <v-toolbar-title>Wallet</v-toolbar-title>
-      </v-toolbar> -->
+
       <v-dialog v-model="dialog" max-width="800px">
         <v-form v-model="valid" autocomplete="off">
           <v-card v-if="canCreateWallet">
@@ -256,8 +253,13 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
       <v-expansion-panels>
         <v-expansion-panel>
+          <v-toolbar flat>
+            <v-toolbar-title>Wallet</v-toolbar-title>
+          </v-toolbar>
+
           <v-expansion-panel-header>
             <v-list-item>
               <v-list-item-avatar v-if="!existingWallet">
@@ -293,68 +295,48 @@
             :currentKeystore="currentKeystore"
             :erc20Contract="daiContract"
             />
+          <v-card-actions>
+            <v-spacer></v-spacer>
 
-          <v-card class="mx-auto">
-            <v-card-actions>
-              <v-spacer></v-spacer>
+            <v-btn
+              v-if="currentKeystore"
+              @click="linkDialog = true"
+              text
+            >
+              <v-icon>mdi-key-link</v-icon>
+              Link External
+            </v-btn>
 
-              <v-tooltip top>
-                <span>Link external</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="linkDialog = true"
-                    small
-                  >
-                    <v-icon>mdi-key-link</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
+            <v-btn
+              v-if="currentKeystore"
+              @click="shareAddressDialog = true"
+              text
+            >
+              <v-icon>mdi-share</v-icon>
+              Share Addresses
+            </v-btn>
 
-              <v-tooltip top>
-                <span>Share address</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="shareAddressDialog = true"
-                    small
-                  >
-                    <v-icon>mdi-share</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Remove</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="remove(item)"
-                    small
-                  >
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-              <v-tooltip top>
-                <span>Export wallet</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-if="currentKeystore"
-                    v-on="on"
-                    @click="exportWallet()"
-                    small
-                  >
-                    <v-icon>mdi-export</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-            </v-card-actions>
-          </v-card>
+            <v-btn
+              v-if="currentKeystore"
+              @click="remove(item)"
+              text
+            >
+              <v-icon>mdi-delete</v-icon>
+              Remove
+            </v-btn>
+
+            <v-btn
+              v-if="currentKeystore"
+              @click="exportWallet()"
+              text
+            >
+              <v-icon>mdi-export</v-icon>
+              Export Wallet
+            </v-btn>
+          </v-card-actions>
         </v-expansion-panel>
       </v-expansion-panels>
+
       <xdv-drive
         :updateWallet="currentKeystore"
         :wallet="wallet"
@@ -366,8 +348,8 @@
         :web3="web3"
         :ethersInstance="ethersInstance"
         :ethersContract="ethersContract"
-      ></xdv-drive>
-    </v-card>
+      />
+
     <xdv-link-external-keystore
       v-model="linkExternals"
       :wallet="wallet"

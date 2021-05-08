@@ -11,7 +11,7 @@ exports[`WalletDetails.vue should match snapshot 1`] = `
     </v-list-item-stub>
     <v-list-item-stub activeclass="" tag="div" twoline="true">
       <v-list-item-content-stub>
-        <v-list-item-title-stub>Ethereum Address</v-list-item-title-stub>
+        <v-list-item-title-stub>Address</v-list-item-title-stub>
         <v-list-item-subtitle-stub>0x000</v-list-item-subtitle-stub>
         <!---->
       </v-list-item-content-stub>

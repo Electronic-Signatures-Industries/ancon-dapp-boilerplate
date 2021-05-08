@@ -13,7 +13,7 @@
         :three-line="this.balance !== ''"
         >
         <v-list-item-content>
-          <v-list-item-title>Ethereum Address</v-list-item-title>
+          <v-list-item-title>Address</v-list-item-title>
           <v-list-item-subtitle>{{ this.currentAddress }}</v-list-item-subtitle>
           <v-list-item-subtitle v-if="this.balance !== ''">
             Balance: {{ this.balance }} {{ this.currencyName }}
