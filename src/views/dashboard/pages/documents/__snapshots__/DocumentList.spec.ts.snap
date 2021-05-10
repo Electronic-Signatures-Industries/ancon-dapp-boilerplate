@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DocumentList.vue should match snapshot 1`] = `
+<v-card-stub loaderheight="4" tag="div">
+  <v-card-title-stub>Documentos</v-card-title-stub>
+  <v-card-text-stub>
+    <v-treeview-stub active="" items="[object Object],[object Object]" open="" value="" activatable="true" activeclass="v-treeview-node--active" color="primary" expandicon="$subgroup" indeterminateicon="$checkboxIndeterminate" itemchildren="children" itemdisabled="disabled" itemkey="id" itemtext="name" loadingicon="$loading" officon="$checkboxOff" onicon="$checkboxOn" selectedcolor="accent" selectiontype="leaf"></v-treeview-stub>
+  </v-card-text-stub>
+  <v-card-actions-stub>
+    <v-spacer-stub></v-spacer-stub>
+  </v-card-actions-stub>
+</v-card-stub>
+`;
