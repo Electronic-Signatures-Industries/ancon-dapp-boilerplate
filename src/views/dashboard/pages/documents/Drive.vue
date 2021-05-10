@@ -209,31 +209,12 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="setTransactionStatusDialog" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Transacción</span>
-        </v-card-title>
+    <transaction-status-dialog
+      :show.sync="setTransactionStatusDialog"
+      :transactionStatus="transactionStatus"
+      @confirm="confirmContract()"
+    />
 
-        <v-card-text>
-            <v-row>
-              <v-col cols="12" md="12">
-                {{ transactionStatus }}
-              </v-col>
-            </v-row>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="setTransactionStatusDialog = false"
-            >Cancel</v-btn
-          >
-          <v-btn color="blue darken-1" text @click="confirmContract()"
-            >OK</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
     <xdv-upload
       :loading="loading"
       :show.sync="canUpload"
@@ -291,6 +272,7 @@ import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
 import EventLog from "./EventLog.vue";
 import DocumentList from "./DocumentList.vue";
+import TransactionStatusDialog from "./TransactionStatusDialog.vue";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
 import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
@@ -304,6 +286,7 @@ import { FileIcons } from "./FileIcons";
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
+    TransactionStatusDialog,
     EventLog
   },
 })
