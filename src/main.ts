@@ -2,7 +2,6 @@ import App from './App.vue';
 import router from './router';
 import store from './store';
 import Vue from 'vue';
-import VueQrcode from '@chenfengyuan/vue-qrcode';
 import VueSkycons from 'vue-skycons';
 import vuetify from './plugins/vuetify';
 import VueWorker from 'vue-worker';
@@ -26,7 +25,6 @@ Vue.use(VueSkycons, {
 });
 
 Vue.use(Vuebar);
-Vue.component(VueQrcode.name, VueQrcode);
 Vue.use(VueWorker)
 Vue.config.productionTip = true;
 

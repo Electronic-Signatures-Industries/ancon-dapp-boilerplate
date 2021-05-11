@@ -181,6 +181,7 @@
       <event-log
         v-if="showLog"
         :documentMetadata="currentDocumentMetadata"
+        :did="this.did"
         @download="downloadFile"
       />
     </v-col>
@@ -397,7 +398,7 @@ export default class DriveComponent extends Vue {
     return this.keystoreAddress ?? this.currentAddress ?? '';
   }
 
-  get currentDocumentMetadata(): any | null {
+  get currentDocumentMetadata(): DocumentMetadata | null {
     return this.documentBlock?.folder[0] || null
   }
 

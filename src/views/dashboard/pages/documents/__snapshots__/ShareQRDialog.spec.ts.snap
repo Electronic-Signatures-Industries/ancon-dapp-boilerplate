@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ShareQRDialog.vue Component with data should match snapshot when data is provided 1`] = `
+<v-dialog-stub opendelay="0" closedelay="0" contentclass="" maxwidth="700px" origin="center center" persistent="true" retainfocus="true" transition="dialog-transition" width="auto" value="true">
+  <v-card-stub loaderheight="4" tag="div">
+    <v-card-title-stub>Compartir Documento</v-card-title-stub>
+    <v-card-text-stub>
+      <v-row-stub tag="div">
+        <v-col-stub cols="4" tag="div">
+          <qrcode-stub value="ipld:Mock-Content-Ref|did:mock:1" tag="canvas"></qrcode-stub>
+        </v-col-stub>
+        <v-col-stub cols="8" tag="div">
+          <v-list-stub tag="div">
+            <v-list-item-stub activeclass="" tag="div" twoline="true">
+              <v-list-item-content-stub>
+                <v-list-item-title-stub>DID</v-list-item-title-stub>
+                <v-list-item-subtitle-stub>did:mock:1</v-list-item-subtitle-stub>
+              </v-list-item-content-stub>
+            </v-list-item-stub>
+            <v-list-item-stub activeclass="" tag="div" twoline="true">
+              <v-list-item-content-stub>
+                <v-list-item-title-stub>IPLD Content ID</v-list-item-title-stub>
+                <v-list-item-subtitle-stub>Mock-Content-Ref</v-list-item-subtitle-stub>
+              </v-list-item-content-stub>
+            </v-list-item-stub>
+          </v-list-stub>
+        </v-col-stub>
+      </v-row-stub>
+    </v-card-text-stub>
+    <v-card-actions-stub>
+      <v-spacer-stub></v-spacer-stub>
+      <v-btn-stub tag="button" activeclass="" text="true" type="button">
+        Cerrar
+      </v-btn-stub>
+    </v-card-actions-stub>
+  </v-card-stub>
+</v-dialog-stub>
+`;
+
+exports[`ShareQRDialog.vue Empty Component should match snapshot 1`] = `
+<v-dialog-stub opendelay="0" closedelay="0" contentclass="" maxwidth="700px" origin="center center" persistent="true" retainfocus="true" transition="dialog-transition" width="auto">
+  <v-card-stub loaderheight="4" tag="div">
+    <v-card-title-stub>Compartir Documento</v-card-title-stub>
+    <v-card-text-stub>
+      <v-row-stub tag="div">
+        <v-col-stub cols="4" tag="div">
+          <!---->
+        </v-col-stub>
+        <v-col-stub cols="8" tag="div">
+          <v-list-stub tag="div">
+            <v-list-item-stub activeclass="" tag="div" twoline="true">
+              <v-list-item-content-stub>
+                <v-list-item-title-stub>DID</v-list-item-title-stub>
+                <v-list-item-subtitle-stub></v-list-item-subtitle-stub>
+              </v-list-item-content-stub>
+            </v-list-item-stub>
+            <v-list-item-stub activeclass="" tag="div" twoline="true">
+              <v-list-item-content-stub>
+                <v-list-item-title-stub>IPLD Content ID</v-list-item-title-stub>
+                <v-list-item-subtitle-stub></v-list-item-subtitle-stub>
+              </v-list-item-content-stub>
+            </v-list-item-stub>
+          </v-list-stub>
+        </v-col-stub>
+      </v-row-stub>
+    </v-card-text-stub>
+    <v-card-actions-stub>
+      <v-spacer-stub></v-spacer-stub>
+      <v-btn-stub tag="button" activeclass="" text="true" type="button">
+        Cerrar
+      </v-btn-stub>
+    </v-card-actions-stub>
+  </v-card-stub>
+</v-dialog-stub>
+`;
