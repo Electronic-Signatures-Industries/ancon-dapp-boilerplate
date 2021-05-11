@@ -29,6 +29,17 @@
 
     <v-card-actions>
       <v-spacer />
+
+      <v-btn
+        v-if="this.documentMetadata"
+        @click="showShareQRDialog = true"
+        data-cy="share-button"
+        text
+      >
+        <v-icon>mdi-share</v-icon>
+        Compartir
+      </v-btn>
+
       <v-btn
         v-if="this.documentMetadata"
         @click="onDownload"
@@ -39,6 +50,13 @@
           Descargar Archivo
       </v-btn>
     </v-card-actions>
+
+    <share-q-r-dialog
+      v-if="this.did"
+      :documentMetadata="this.documentMetadata"
+      :show.sync="showShareQRDialog"
+      :did="this.did"
+    />
   </v-card>
 </template>
 
@@ -47,11 +65,25 @@ import Vue from 'vue'
 import { Component, Emit, Prop } from 'vue-property-decorator';
 import Moment from "moment";
 import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
+import ShareQRDialog from "./ShareQRDialog.vue";
+import { DID } from 'dids';
 
-@Component({})
+@Component({
+  components: {
+    ShareQRDialog
+  }
+})
 export default class EventLog extends Vue {
   @Prop()
   readonly documentMetadata: DocumentMetadata | null;
+
+  @Prop()
+  readonly show: boolean;
+
+  @Prop()
+  readonly did?: DID;
+
+  showShareQRDialog = false;
 
   @Emit('download')
   onDownload() {

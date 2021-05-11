@@ -34,10 +34,13 @@ exports[`EventLog.vue snapshots should match when document is defined 1`] = `
     </div>
   </div>
   <div class="v-card__actions">
-    <div class="spacer"></div> <button type="button" class="v-btn v-btn--text theme--light v-size--default" data-cy="download-button"><span class="v-btn__content"><i aria-hidden="true" class="v-icon notranslate mdi mdi-download theme--light"></i>
+    <div class="spacer"></div> <button type="button" class="v-btn v-btn--text theme--light v-size--default" data-cy="share-button"><span class="v-btn__content"><i aria-hidden="true" class="v-icon notranslate mdi mdi-share theme--light"></i>
+      Compartir
+    </span></button> <button type="button" class="v-btn v-btn--text theme--light v-size--default" data-cy="download-button"><span class="v-btn__content"><i aria-hidden="true" class="v-icon notranslate mdi mdi-download theme--light"></i>
         Descargar Archivo
     </span></button>
   </div>
+  <!---->
 </div>
 `;
 
@@ -69,6 +72,8 @@ exports[`EventLog.vue snapshots should match when document is null 1`] = `
   <div class="v-card__actions">
     <div class="spacer"></div>
     <!---->
+    <!---->
   </div>
+  <!---->
 </div>
 `;

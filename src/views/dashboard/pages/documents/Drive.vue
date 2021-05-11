@@ -2,34 +2,16 @@
   <v-row class="local-container">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
 
+    <v-overlay :value="loading">
+      <v-progress-circular indeterminate size="64" />
+    </v-overlay>
+
     <v-col col-xs-6>
-      <v-card>
-        <v-overlay :value="loading">
-          <v-progress-circular indeterminate size="64"></v-progress-circular>
-        </v-overlay>
-
-        <v-card-title>Documentos</v-card-title>
-
-        <v-card-text v-if="items.length < 1">
-          No hay documentos disponibles.
-        </v-card-text>
-
-        <v-card-text v-else>
-          <v-treeview :active.sync="tree.data" :items="items" activatable>
-            <template v-slot:prepend="{ item, open }">
-              <v-icon v-if="!item.folder.contentType">
-                {{ open ? "mdi-folder-open" : "mdi-folder" }}
-              </v-icon>
-              <v-icon v-else>
-                {{ fileIcons[item.folder.contentType] }}
-              </v-icon>
-              {{ item.folder.length }} archivo(s)
-            </template>
-          </v-treeview>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
+      <document-list
+        :selectedValue.sync="selectedOnDocumentList"
+        :items="items"
+      >
+        <template v-slot:buttons>
           <v-btn text @click="canUpload = true">
             <v-icon>mdi-text-box-plus</v-icon>
             Subir Documento
@@ -103,17 +85,17 @@
               </v-btn>
             </template></v-tooltip
           > -->
-        </v-card-actions>
-      </v-card>
+        </template>
+      </document-list>
     </v-col>
 
     <v-col col-xs-6>
       <v-card v-if="showDetail" class="mx-auto">
         <v-list-item>
           <v-list-item-avatar>
-            <v-icon v-if="currentDocument.reference.contentType">{{
-              fileIcons[currentDocument.reference.contentType]
-            }}</v-icon>
+            <v-icon v-if="currentDocument.reference.contentType">
+              {{ getFileIcon(currentDocument.reference.contentType) }}
+            </v-icon>
             <v-icon v-else>mdi-file</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
@@ -199,6 +181,7 @@
       <event-log
         v-if="showLog"
         :documentMetadata="currentDocumentMetadata"
+        :did="this.did"
         @download="downloadFile"
       />
     </v-col>
@@ -227,31 +210,12 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="setTransactionStatusDialog" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Transacción</span>
-        </v-card-title>
+    <transaction-status-dialog
+      :show.sync="setTransactionStatusDialog"
+      :transactionStatus="transactionStatus"
+      @confirm="confirmContract()"
+    />
 
-        <v-card-text>
-            <v-row>
-              <v-col cols="12" md="12">
-                {{ transactionStatus }}
-              </v-col>
-            </v-row>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="setTransactionStatusDialog = false"
-            >Cancel</v-btn
-          >
-          <v-btn color="blue darken-1" text @click="confirmContract()"
-            >OK</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
     <xdv-upload
       :loading="loading"
       :show.sync="canUpload"
@@ -308,17 +272,22 @@ import { IPFSManager } from "../wallet/IPFSManager";
 import { DID } from "dids";
 import { DriveManager } from "../wallet/DriveManager";
 import EventLog from "./EventLog.vue";
+import DocumentList from "./DocumentList.vue";
+import TransactionStatusDialog from "./TransactionStatusDialog.vue";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
 import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
+import { FileIcons } from "./FileIcons";
 
 @Component({
   name: "xdv-drive",
   props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3", "ethersInstance", "ethersContract"],
   components: {
+    DocumentList,
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
+    TransactionStatusDialog,
     EventLog
   },
 })
@@ -339,17 +308,6 @@ export default class DriveComponent extends Vue {
   files: File[] = [];
   open = false;
   fab = false;
-  fileIcons = {
-    "text/html": "mdi-language-html5",
-    js: "mdi-nodejs",
-    "application/json": "mdi-json",
-    md: "mdi-markdown",
-    "application/pdf": "mdi-file-pdf",
-    "image/png": "mdi-file-image",
-    "image/jpeg": "mdi-file-image",
-    "text/text": "mdi-file-document-outline",
-    xls: "mdi-file-excel",
-  };
   walletDescription = "";
   search = "";
   showPassword = false;
@@ -357,9 +315,7 @@ export default class DriveComponent extends Vue {
   mnemonic = [];
   showLog = false;
   documentBlock = null;
-  tree = {
-    data: [],
-  };
+  selectedOnDocumentList = [];
   alertMessage = "";
   alertType = "";
   selectedDocument = {};
@@ -442,8 +398,12 @@ export default class DriveComponent extends Vue {
     return this.keystoreAddress ?? this.currentAddress ?? '';
   }
 
-  get currentDocumentMetadata(): any | null {
+  get currentDocumentMetadata(): DocumentMetadata | null {
     return this.documentBlock?.folder[0] || null
+  }
+
+  getFileIcon(type: string): string {
+    return FileIcons[type];
   }
 
   @Watch("updateWallet")
@@ -684,7 +644,7 @@ export default class DriveComponent extends Vue {
     };
   }
 
-  @Watch("tree.data")
+  @Watch('selectedOnDocumentList')
   async onTreeChanges(current, old) {
     const hasItems = current.toString().split(":");
 
