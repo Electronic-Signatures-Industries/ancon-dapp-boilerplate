@@ -690,7 +690,8 @@ export default class DriveComponent extends Vue {
     this.ipfs = new IPFSManager();
     await this.ipfs.start();  
     const file = await this.ipfs.getObject(item.contentRef);
-    const blob = new Blob([file.value.content], { type: item.contentType });
+    const buffer = Buffer.from(file.value.content, "base64");
+    const blob = new Blob([buffer], { type: item.contentType });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = item.name;
