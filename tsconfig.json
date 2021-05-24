@@ -35,8 +35,6 @@
     "tests/**/*.ts",
     "tests/**/*.tsx"  ],
   "exclude": [
-    "node_modules/@erebos/hex",
-    "node_modules/@erebos/bzz-feed",
     "node_modules"
   ]
 }
