@@ -300,11 +300,11 @@
 
             <v-btn
               v-if="currentKeystore"
-              @click="linkDialog = true"
+              :href="'smartcard'"
               text
             >
               <v-icon>mdi-key-link</v-icon>
-              Link External
+              Sign with Smartcard
             </v-btn>
 
             <v-btn

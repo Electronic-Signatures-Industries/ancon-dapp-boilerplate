@@ -263,7 +263,6 @@ import {
 } from "../shared/DriveSwarmManager";
 import Upload from "./UploadDialog.vue";
 import SendTo from "./Recipients.vue";
-import { SubscriptionManager } from "../shared/SubscriptionManager";
 import { debounce } from "rxjs/operators";
 import SignatureManagementDialog from "./SignatureManagementDialog.vue";
 import { SigningOutput } from "../shared/SigningOutput";
@@ -545,39 +544,6 @@ export default class DriveComponent extends Vue {
     this.selectedDocument = item;
   }
   async share() {
-    this.loading = true;
-    const { currentKeystore } = await Session.getSessionInfo();
-    // open
-    //    await this.wallet.open(this.select.keystore, this.onAskPassphrase);
-
-    // user
-    const userKp = await this.wallet.getPublicKey(
-      // @ts-ignore
-      this.shareInfo.recipients[0].name
-    );
-    this.alertMessage =
-      "Connecting to Swarm at https://ipfs.auth2factor.com/...";
-    const swarmFeed = await this.wallet.getSwarmNodeClient(
-      currentKeystore.address,
-      "ES256K",
-      "https://ipfs.auth2factor.com/"
-    );
-
-    const messageIO = new SubscriptionManager(this.wallet, userKp, swarmFeed);
-    this.alertMessage = "Encrypting and sending message...";
-    await messageIO.sendEncryptedCommPayload(
-      // @ts-ignore
-      this.shareInfo.recipients[0].address,
-      // @ts-ignore
-      this.selectedDocument.item,
-      // @ts-ignore
-      this.selectedDocument.item.txs,
-      // @ts-ignore
-      this.selectedDocument.item.index
-    );
-
-    this.loading = false;
-    this.shareDialog = false;
   }
 
   async changeWallet(i: KeystoreIndex) {

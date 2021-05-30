@@ -11,7 +11,7 @@ import Vue from 'vue';
 import WalletComponent from './views/dashboard/pages/wallet/Wallet.vue';
 import CertificatesComponent from './views/dashboard/pages/certs/Certificates.vue';
 import TokensComponent from './views/dashboard/pages/tokens/Tokens.vue';
-import StakingComponent from './views/dashboard/pages/staking/Staking.vue';
+import SmartcardDocuments from './views/dashboard/pages/documents/SmartcardDocuments.vue';
 
 Vue.use(Router);
 
@@ -38,10 +38,10 @@ export default new Router({
 
       children: [
         {
-          path: "staking",
-          name: "staking",
+          path: "smartcard",
+          name: "smartcard",
           // @ts-ignore
-          component: StakingComponent,
+          component: SmartcardDocuments,
         },
         {
           path: "certs",

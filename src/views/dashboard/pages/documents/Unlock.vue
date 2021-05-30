@@ -25,7 +25,7 @@
     </v-dialog>
 
     <v-dialog v-model="show" max-width="500px">
-      <v-card dark color="indigo">
+      <v-card>
         <v-card-title>
           <v-row>
             <v-col> <div class="subtitle">Unlock</div></v-col></v-row
@@ -33,8 +33,6 @@
           <v-row
             ><v-col>
               <div>
-                <h6 class="subtitle">{{ currentKeystore.description ||
-                  currentKeystore.address  }}</h6>
               </div></v-col
             ></v-row
           >
