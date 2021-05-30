@@ -34,7 +34,7 @@ export class IPFSManager {
     ipld: any;
 
     async start(){
-       this.client = IPFSClient({ url: `http://ifesa.ipfs.pa:5001` });
+       this.client = IPFSClient({ url: `https://ipfs.xdv.digital` });
        this.ipld = await initIpld(this.client);
     }
 

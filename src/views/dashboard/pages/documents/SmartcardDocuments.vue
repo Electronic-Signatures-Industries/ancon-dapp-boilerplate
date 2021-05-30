@@ -341,7 +341,7 @@ export default class SmartcardDocuments extends Vue {
       await didRSA.did.authenticate();
 
       const ipfsManager = new IPLDManager(didRSA.did);
-      await ipfsManager.start(`http://ifesa.ipfs.pa:5001`);
+      await ipfsManager.start(`https://ipfs.xdv.digital`);
       this.ipfs = ipfsManager;
 
       for (let index = 0; index < this.files.length; index++) {
