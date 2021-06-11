@@ -254,7 +254,7 @@
         </v-card>
       </v-dialog>
 
-      <v-expansion-panels>
+      <v-expansion-panels v-if="false">
         <v-expansion-panel>
           <v-toolbar flat>
             <v-toolbar-title>Wallet</v-toolbar-title>
@@ -344,7 +344,7 @@
         :did="did"
         :mode="'integrated'"
         :contract="contract"
-        :daiContract="daiContract"
+        :daiContract="mockContract"
         :web3="web3"
         :ethersInstance="ethersInstance"
         :ethersContract="ethersContract"
@@ -383,6 +383,8 @@ import { IPFSManager } from "./IPFSManager";
 import WalletDetails from "./WalletDetails.vue";
 import { DID } from "dids";
 import Web3 from "web3";
+const KLIP = require('../../../../contracts/KLIP.sol/KLIP');
+const MockCoin = require('../../../../contracts/MockCoin.sol/MockCoin');
 const xdvAbi = require('../../../../abi/xdv');
 
 // Extra declarations missing from `vue-google-oauth2`
@@ -416,6 +418,7 @@ export default class WalletComponent extends Vue {
   isSignIn: any = false;
   oauthName: any = null;
   avatar: any = null;
+  mockContract: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
@@ -519,13 +522,13 @@ export default class WalletComponent extends Vue {
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
     this.ethersInstance = web3_data.ethersInstance;
-    const contractAddress = '0xeE99AdEb56B01B005EC24884F3F6E770E7e6f926';
-    const daiContractAddress = '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3';
-    this.contract =  new this.web3.eth.Contract(xdvAbi.XDVDocumentAnchoring.raw.abi, xdvAbi.XDVDocumentAnchoring.address.bsctestnet);
-    this.daiContract = new this.web3.eth.Contract(xdvAbi.DAI.raw.abi, xdvAbi.DAI.address.bsctestnet);
+    const contractAddress = '0x6d925938Edb8A16B3035A4cF34FAA090f490202a';
+    const mockContractAddress = '0x391342f5acAcaaC9DE1dC4eC3E03f2678f7c78F1';
+    this.contract =  new this.web3.eth.Contract(KLIP.abi, contractAddress);
+    this.mockContract = new this.web3.eth.Contract(MockCoin.abi, mockContractAddress);
     this.ethersContract = new ethers.Contract(
-      xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
-      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      contractAddress,
+      KLIP.abi,
       this.ethersInstance.getSigner(this.currentAddress),
     );
     /*const _this = this;
@@ -733,7 +736,8 @@ export default class WalletComponent extends Vue {
       networkId: 97,
       chainId: 97,
     };
-    const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    //const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    const providerUrl = 'http://localhost:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
     const provider = new Web3.providers.HttpProvider(providerUrl);
     const web3 = new Web3(provider);
     web3.setProvider(provider);
@@ -745,7 +749,7 @@ export default class WalletComponent extends Vue {
     const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
 
     let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    const private_key = mnemonicWallet.privateKey;
+    const private_key = 'df57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e';
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
     web3.eth.accounts.wallet.add(account);
     this.web3.eth.defaultAccount = account.address;

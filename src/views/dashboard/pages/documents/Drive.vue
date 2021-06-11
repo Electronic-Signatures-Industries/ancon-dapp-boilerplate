@@ -60,14 +60,14 @@
             </template></v-tooltip
           > -->
 
-          <v-btn
+          <!-- <v-btn
             v-if="updateWallet.linkedExternalKeystores"
             @click="openSignatureDialog()"
             text
           >
             <v-icon>mdi-file-certificate</v-icon>
             Firmar Documentos
-          </v-btn>
+          </v-btn> -->
 
           <!--
           <v-tooltip top>
@@ -220,7 +220,7 @@
       :loading="loading"
       :show.sync="canUpload"
       :uploadStatus="uploadStatus"
-      @result="createDocumentNode"
+      @result="confirmContract"
     />
 
     <xdv-send
@@ -394,7 +394,8 @@ export default class DriveComponent extends Vue {
   gasLimit: 4000000;
 
   get localAddress(): String {
-    return this.keystoreAddress ?? this.currentAddress ?? '';
+    //return this.keystoreAddress ?? this.currentAddress ?? '';
+    return this.currentAddress;
   }
 
   get currentDocumentMetadata(): DocumentMetadata | null {
@@ -412,11 +413,12 @@ export default class DriveComponent extends Vue {
     if(this.subscription){
       this.subscription.unsubscribe()
     }
-    await this.fetchDocuments();
+    //await this.fetchDocuments();
     
   }
 
   async onUnlock() {
+    debugger
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
     this.loading = true;
@@ -692,6 +694,7 @@ export default class DriveComponent extends Vue {
   }
 
   async confirmContract(){
+    debugger
     this.setEstimateGasDialog = false;
     this.setTransactionStatusDialog = true;
     
@@ -702,14 +705,69 @@ export default class DriveComponent extends Vue {
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
       this.transactionStatus = "Creando transacción en blockchain...";
-      const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-        .send({ from: this.localAddress, gasPrice: '22000000000', gas: 400000 });
 
-      this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
+      const testName = 'Test Name';
+      const testAddresss = '0xFf07B5c84d6dE7d14C194A1B6921BF4004288C37';
+      const testKYC = true;
+      const royalties = 100000;
+      const txregister = 
+      await this.ethersContract.functions.registerMinter(
+        testName,
+        testAddresss,
+        testKYC,
+        royalties,
+        //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
+      ); 
+      
+      await txregister.wait(1);
+
+      const testminterDid = this.did.id;
+      const testminterAddress = this.localAddress;
+      const testuserDid = this.did.id;
+      const txrequestdata = 
+      await this.ethersContract.functions.requestDataProviderService(
+        testminterDid,
+        testminterAddress,
+        testuserDid,
+        this.indexes,
+        'testdescription',
+        //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
+      ); 
+      
+      await txrequestdata.wait(1);
+
+      const filter = this.contract.getPastEvents('DocumentAnchored',{ 
+          toBlock: 'latest',
+          fromBlock: 0,
+          filter: { user: this.localAddress } },
+      );
+      
+      const response = await filter;
+
+      const items = response.map((item) => (item.returnValues[3]));
+      
+      debugger 
+
+      const id = txrequestdata.value.toNumber();
+      debugger
+      const bob = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      const txmint = 
+      await this.ethersContract.functions.mint(
+        id,
+        bob,
+        this.localAddress,
+        this.indexes,
+      //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
+      ); 
+      
+      await txmint.wait(1);
+
+      //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
       this.close();
-      await this.fetchDocuments();
+      console.log(txmint);
+      //await this.fetchDocuments();
     }
     catch(e){
       this.transactionStatus = "Ha ocurrido un error";
