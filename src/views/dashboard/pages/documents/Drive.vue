@@ -134,9 +134,7 @@
               <v-list-item-content class="text--primary">
                 <b>Has Qualified Signature</b>
                 {{
-                  !!currentDocument.reference.documentSignature
-                    ? "yes"
-                    : "no"
+                  !!currentDocument.reference.documentSignature ? "yes" : "no"
                 }}
               </v-list-item-content>
             </v-list-item>
@@ -193,19 +191,24 @@
         </v-card-title>
 
         <v-card-text>
-            <v-row>
-              <v-col cols="12" md="12">
-                <b>Costo del Gas</b> {{ estimatedGas }}
-              </v-col>
-            </v-row>
+          <v-row>
+            <v-col cols="12" md="12">
+              <b>Costo del Gas</b> {{ estimatedGas }}
+            </v-col>
+          </v-row>
         </v-card-text>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="setEstimateGasDialog = false"
-            >Rechazar</v-btn>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="setEstimateGasDialog = false"
+            >Rechazar</v-btn
+          >
           <v-btn color="blue darken-1" text @click="confirmContract()"
-            >Aceptar</v-btn>
+            >Aceptar</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -237,7 +240,6 @@
       v-on:close="closeSign"
       v-model="signManagerProps"
     ></xdv-sign>
-
   </v-row>
 </template>
 
@@ -275,19 +277,30 @@ import DocumentList from "./DocumentList.vue";
 import TransactionStatusDialog from "./TransactionStatusDialog.vue";
 import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
-import { DocumentMetadata } from '@/views/dashboard/pages/wallet/IPFSManager';
+import { DocumentMetadata } from "@/views/dashboard/pages/wallet/IPFSManager";
 import { FileIcons } from "./FileIcons";
 
 @Component({
   name: "xdv-drive",
-  props: ["updateWallet", "mode", "wallet", "did", "contract", "daiContract", "currentAddress", "web3", "ethersInstance", "ethersContract"],
+  props: [
+    "updateWallet",
+    "mode",
+    "wallet",
+    "did",
+    "contract",
+    "daiContract",
+    "currentAddress",
+    "web3",
+    "ethersInstance",
+    "ethersContract",
+  ],
   components: {
     DocumentList,
     "xdv-upload": Upload,
     "xdv-send": SendTo,
     "xdv-sign": SignatureManagementDialog,
     TransactionStatusDialog,
-    EventLog
+    EventLog,
   },
 })
 export default class DriveComponent extends Vue {
@@ -399,7 +412,7 @@ export default class DriveComponent extends Vue {
   }
 
   get currentDocumentMetadata(): DocumentMetadata | null {
-    return this.documentBlock?.folder[0] || null
+    return this.documentBlock?.folder[0] || null;
   }
 
   getFileIcon(type: string): string {
@@ -410,15 +423,14 @@ export default class DriveComponent extends Vue {
   async onUpdateWallet(prev, next) {
     this.items = [];
     await this.loadWallets();
-    if(this.subscription){
-      this.subscription.unsubscribe()
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
     //await this.fetchDocuments();
-    
   }
 
   async onUnlock() {
-    debugger
+    debugger;
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
     this.loading = true;
@@ -507,7 +519,7 @@ export default class DriveComponent extends Vue {
   async mounted() {
     await this.loadWallets();
     const ks = await this.loadSession();
-    if(ks){
+    if (ks) {
       this.keystoreAddress = ks.address;
     }
     this.driveManager = new DriveManager(this.ipfs, this.did);
@@ -545,8 +557,7 @@ export default class DriveComponent extends Vue {
     this.canSend = true;
     this.selectedDocument = item;
   }
-  async share() {
-  }
+  async share() {}
 
   async changeWallet(i: KeystoreIndex) {
     this.selectWalletDialog = true;
@@ -565,7 +576,7 @@ export default class DriveComponent extends Vue {
         temp[block.parentHash] = block;
         temp[block.parentHash].id = block.block;
         temp[block.parentHash].name = `Content Block # ${block.block}`;
-        
+
         const items = block.metadata.map(
           async (reference: SwarmNodeSignedContent, index) => {
             // @ts-ignore
@@ -612,7 +623,7 @@ export default class DriveComponent extends Vue {
     };
   }
 
-  @Watch('selectedOnDocumentList')
+  @Watch("selectedOnDocumentList")
   async onTreeChanges(current, old) {
     const hasItems = current.toString().split(":");
 
@@ -656,11 +667,11 @@ export default class DriveComponent extends Vue {
 
   async downloadFile(item: DocumentMetadata) {
     this.ipfs = new IPFSManager();
-    await this.ipfs.start();  
+    await this.ipfs.start();
     const file = await this.ipfs.getObject(item.contentRef);
     const buffer = Buffer.from(file.value.content, "base64");
     const blob = new Blob([buffer], { type: item.contentType });
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = item.name;
     link.click();
@@ -674,131 +685,111 @@ export default class DriveComponent extends Vue {
 
   async fetchDocuments() {
     this.loading = true;
-    if(this.localAddress.length > 0){
-      const filter = this.contract.getPastEvents('DocumentAnchored',{ 
-          toBlock: 'latest',
-          fromBlock: 0,
-          filter: { user: this.localAddress } },
-      );
-      
+    if (this.localAddress.length > 0) {
+      const filter = this.contract.getPastEvents("DocumentAnchored", {
+        toBlock: "latest",
+        fromBlock: 0,
+        filter: { user: this.localAddress },
+      });
+
       const response = await filter;
       this.ipfs = new IPFSManager();
-      await this.ipfs.start();  
-      const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
-      const forkedItems = forkJoin(items).pipe(debounce(x => x as any)).toPromise();
-      
+      await this.ipfs.start();
+      const items = response.map((item) =>
+        this.ipfs.getObject(item.returnValues[2])
+      );
+      const forkedItems = forkJoin(items)
+        .pipe(debounce((x) => x as any))
+        .toPromise();
+
       this.items = (await forkedItems) || [];
-      this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
+      this.items = this.items.map((folder, i) => ({
+        folder: folder.value.documents,
+        id: i,
+      }));
     }
     this.loading = false;
   }
 
-  async confirmContract(){
-    debugger
+  async confirmContract () {
+    
     this.setEstimateGasDialog = false;
     this.setTransactionStatusDialog = true;
-    
-    try{      
+
+    try {
       this.transactionStatus = "Guardando archivo...";
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
       this.transactionStatus = "Creando transacción en blockchain...";
+      const bob = "0x90f1fBd6C84c6baF64BDe678d99529FF44FaEd2B";
 
-      const testName = 'Test Name';
-      const testAddresss = '0xFf07B5c84d6dE7d14C194A1B6921BF4004288C37';
-      const testKYC = true;
-      const royalties = 100000;
-      const txregister = 
-      await this.ethersContract.functions.registerMinter(
-        testName,
-        testAddresss,
-        testKYC,
-        royalties,
-        //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
-      ); 
-      
-      await txregister.wait(1);
-
-      const testminterDid = this.did.id;
-      const testminterAddress = this.localAddress;
-      const testuserDid = this.did.id;
-      const txrequestdata = 
-      await this.ethersContract.functions.requestDataProviderService(
-        testminterDid,
-        testminterAddress,
-        testuserDid,
-        this.indexes,
-        'testdescription',
-        //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
-      ); 
-      
-      await txrequestdata.wait(1);
-
-      const filter = this.contract.getPastEvents('DocumentAnchored',{ 
-          toBlock: 'latest',
-          fromBlock: 0,
-          filter: { user: this.localAddress } },
+      const txmint = await this.contract.methods.mint(
+        "1", // qty
+        bob,
+        "", //
+        ethers.utils.hexlify(this.indexes),
+        false, // encrypted
+        "xdv",
+        "").send(
+        {gasPrice: '22000000000', gas: 400000, from: "0x6b06e45f4459Ce6eCaCB19Af57470799d75D1894" }
       );
-      
+
+      //await txmint.wait(1);
+debugger;
+      const filter = this.contract.getPastEvents("Transfer", {
+        toBlock: "latest",
+        fromBlock: 0,
+        filter: { user: this.localAddress },
+      });
+
       const response = await filter;
 
-      const items = response.map((item) => (item.returnValues[3]));
-      
-      debugger 
-
-      const id = txrequestdata.value.toNumber();
-      debugger
-      const bob = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-      const txmint = 
-      await this.ethersContract.functions.mint(
-        id,
-        bob,
-        this.localAddress,
-        this.indexes,
-      //{ from: this.localAddress, gasPrice: '22000000000', gas: 400000 }
-      ); 
-      
-      await txmint.wait(1);
-
+      debugger;
       //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
       this.close();
       console.log(txmint);
       //await this.fetchDocuments();
-    }
-    catch(e){
+    } catch (e) {
       this.transactionStatus = "Ha ocurrido un error";
-      console.log('confirmation error',e);
+      console.log("confirmation error", e);
     }
   }
-  
+
   async createDocumentNode(files: File[]) {
     this.files = files;
     this.canUpload = false;
     this.loading = true;
-    try{
+    try {
       const spender = this.contract._address;
-      const amount = await this.daiContract.methods.allowance(this.localAddress, spender).call();
+      const amount = await this.daiContract.methods
+        .allowance(this.localAddress, spender)
+        .call();
       const bnAmount = new BigNumber(amount);
 
       /*if(bnAmount.gt(0)){*/
-        this.uploadStatus = "Aprobando la transaccion...";
-        await this.daiContract.methods.approve(spender, "9000000000000000000").send(
-          { from: this.localAddress, gasPrice: '22000000000', gas: 4000000 }
-        );
+      this.uploadStatus = "Aprobando la transaccion...";
+      await this.daiContract.methods
+        .approve(spender, "9000000000000000000")
+        .send({
+          from: this.localAddress,
+          gasPrice: "22000000000",
+          gas: 4000000,
+        });
       /*}*/
 
       this.uploadStatus = "Estimando costo del gas...";
-      const gas = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description').estimateGas();
+      const gas = await this.contract.methods
+        .addDocument(this.did.id, this.indexes, "dummy description")
+        .estimateGas();
       this.estimatedGas = gas;
 
       this.setEstimateGasDialog = true;
-    }
-    catch(e){
-      console.log('allowance error',e);
+    } catch (e) {
+      console.log("allowance error", e);
       this.loading = false;
     }
   }

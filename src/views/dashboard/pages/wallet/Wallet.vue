@@ -254,7 +254,7 @@
         </v-card>
       </v-dialog>
 
-      <v-expansion-panels v-if="false">
+      <v-expansion-panels>
         <v-expansion-panel>
           <v-toolbar flat>
             <v-toolbar-title>Wallet</v-toolbar-title>
@@ -300,11 +300,11 @@
 
             <v-btn
               v-if="currentKeystore"
-              :href="'smartcard'"
+              @click="linkDialog = true"
               text
             >
               <v-icon>mdi-key-link</v-icon>
-              Sign with Smartcard
+              Link External
             </v-btn>
 
             <v-btn
@@ -344,7 +344,7 @@
         :did="did"
         :mode="'integrated'"
         :contract="contract"
-        :daiContract="mockContract"
+        :daiContract="daiContract"
         :web3="web3"
         :ethersInstance="ethersInstance"
         :ethersContract="ethersContract"
@@ -365,6 +365,7 @@
     ></xdv-unlock>
   </v-container>
 </template>
+
 
 <script lang="ts">
 import { Wallet, X509Info } from "xdvplatform-wallet/lib";
@@ -522,8 +523,8 @@ export default class WalletComponent extends Vue {
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
     this.ethersInstance = web3_data.ethersInstance;
-    const contractAddress = '0x6d925938Edb8A16B3035A4cF34FAA090f490202a';
-    const mockContractAddress = '0x391342f5acAcaaC9DE1dC4eC3E03f2678f7c78F1';
+    const contractAddress = '0x130e000F54065cA00C78564D45f77a73207cDC32';
+    const mockContractAddress = '0x72a2c89BA1C1a94b684657868228685876C7015D';
     this.contract =  new this.web3.eth.Contract(KLIP.abi, contractAddress);
     this.mockContract = new this.web3.eth.Contract(MockCoin.abi, mockContractAddress);
     this.ethersContract = new ethers.Contract(
@@ -736,20 +737,20 @@ export default class WalletComponent extends Vue {
       networkId: 97,
       chainId: 97,
     };
-    //const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
-    const providerUrl = 'http://localhost:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    // const providerUrl = 'http://localhost:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
     const provider = new Web3.providers.HttpProvider(providerUrl);
     const web3 = new Web3(provider);
     web3.setProvider(provider);
     this.web3 = web3;
     const ethersInstance = new ethers.providers.Web3Provider(web3.currentProvider as any);
-    /*
+    
     const pk = (await this.wallet.getPrivateKey("ES256K"));
     const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
-    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
+    // const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);
 
     let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    const private_key = 'df57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e';
+    
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
     web3.eth.accounts.wallet.add(account);
     this.web3.eth.defaultAccount = account.address;
