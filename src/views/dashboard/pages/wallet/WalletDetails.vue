@@ -1,46 +1,7 @@
 <template>
   <v-expansion-panel-content>
     <v-list>
-      <v-list-item two-line>
-        <v-list-item-content>
-          <v-list-item-title>DID</v-list-item-title>
-          <v-list-item-subtitle>{{ this.didId }}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item
-        :two-line="this.balance === ''"
-        :three-line="this.balance !== ''"
-        >
-        <v-list-item-content>
-          <v-list-item-title>Address</v-list-item-title>
-          <v-list-item-subtitle>{{ this.currentAddress }}</v-list-item-subtitle>
-          <v-list-item-subtitle v-if="this.balance !== ''">
-            Balance: {{ this.balance }} {{ this.currencyName }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item two-line>
-        <v-list-item-content>
-          <v-list-item-title>Linked to Smart Card</v-list-item-title>
-          <v-list-item-subtitle>{{ this.P11Name }}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item two-line>
-        <v-list-item-content>
-          <v-list-item-title>Linked to P12</v-list-item-title>
-          <v-list-item-subtitle>{{ this.P12Name }}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item two-line>
-        <v-list-item-content>
-          <v-list-item-title>Creation Date</v-list-item-title>
-          <v-list-item-subtitle>{{ this.keystoreCreationDate }}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
+      
     </v-list>
   </v-expansion-panel-content>
 </template>

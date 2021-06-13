@@ -93,7 +93,7 @@
           <v-card v-if="canCreateWallet">
             <v-card-title>
               <span class="headline" v-if="walletType !== 'rsa'"
-                >Agregar nuevo wallet</span
+                >Importar wallet</span
               >
             </v-card-title>
 
@@ -675,6 +675,7 @@ export default class WalletComponent extends Vue {
         ks: {
           ...this.keystoreIndexItem,
           isDefault: true,
+          did: this.did._id
         },
       });
       this.keystoreIndexItem = new KeystoreIndex();
@@ -795,6 +796,9 @@ export default class WalletComponent extends Vue {
         await this.restoreDid(w);
         this.wallet = w;
         
+        console.log("DID GENERATED");
+        console.log(this.did);
+
         id = w.id;
         keystoreIndexItem = {
           created: new Date(),
@@ -821,6 +825,7 @@ export default class WalletComponent extends Vue {
         this.alertMessage = "";
       }, 2500);
       this.disableBtns = false;
+      location.reload();
     } catch (e) {
       console.log(e);
       this.valid = false;
