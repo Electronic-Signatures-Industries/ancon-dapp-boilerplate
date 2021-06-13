@@ -729,7 +729,7 @@ export default class DriveComponent extends Vue {
         "1", // qty
         bob,
         "", //
-        ethers.utils.hexlify(this.indexes),
+    this.web3.utils.fromUtf8(this.indexes),
         false, // encrypted
         "xdv",
         "").send(
