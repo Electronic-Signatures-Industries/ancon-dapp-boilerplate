@@ -293,7 +293,7 @@
             :didId="did._id"
             :currentAddress="currentAddress"
             :currentKeystore="currentKeystore"
-            :erc20Contract="daiContract"
+            :erc20Contract="mockContract"
             />
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -344,7 +344,7 @@
         :did="did"
         :mode="'integrated'"
         :contract="contract"
-        :daiContract="daiContract"
+        :daiContract="mockContract"
         :web3="web3"
         :ethersInstance="ethersInstance"
         :ethersContract="ethersContract"
@@ -419,13 +419,13 @@ export default class WalletComponent extends Vue {
   isSignIn: any = false;
   oauthName: any = null;
   avatar: any = null;
-  mockContract: any;
   show(e) {
     this.open = false;
     setTimeout(() => {
       this.open = true;
     }, 100);
   }
+  
   loading = false;
   validations: any = { password: false };
   searchResults = [];
@@ -468,7 +468,7 @@ export default class WalletComponent extends Vue {
   currentAddress = "";
   blockchainWallet: any;
   contract: any = {};
-  daiContract: any = {};
+  mockContract: any = {};
   fab = false;
   items: any & KeystoreIndex[] = [
     {
@@ -517,20 +517,19 @@ export default class WalletComponent extends Vue {
     
     await this.loadWallets();
 
-    this.currentAddress = this.currentKeystore.address;
     this.loading = false;
     
     const web3_data = (await this.getWeb3());
     this.web3 = web3_data.web3;
     this.ethersInstance = web3_data.ethersInstance;
-    const contractAddress = '0x130e000F54065cA00C78564D45f77a73207cDC32';
-    const mockContractAddress = '0x72a2c89BA1C1a94b684657868228685876C7015D';
+    const contractAddress = '0x03659591c344e90fD926cf9E4b463C5530422698';
+    const mockContractAddress = '0xeB398229cDBB348E6076fd89d488FD14a05cA3B8';
     this.contract =  new this.web3.eth.Contract(KLIP.abi, contractAddress);
     this.mockContract = new this.web3.eth.Contract(MockCoin.abi, mockContractAddress);
     this.ethersContract = new ethers.Contract(
       contractAddress,
       KLIP.abi,
-      this.ethersInstance.getSigner(this.currentAddress),
+      this.ethersInstance.getSigner(0),
     );
     /*const _this = this;
     const filter = new Promise((resolve,reject) => {
