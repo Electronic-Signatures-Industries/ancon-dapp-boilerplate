@@ -257,7 +257,7 @@ import { KeystoreIndex } from "../shared/KeystoreIndex";
 import moment from "moment";
 import { ethers } from "ethers";
 import { SwarmNodeSignedContent } from "../shared/SwarmNodeSignedContent";
-import { forkJoin, Unsubscribable, Subject } from "rxjs";
+import { forkJoin, Unsubscribable, Subject, interval } from "rxjs";
 import { Session } from "../shared/Session";
 import {
   DriveSwarmManager,
@@ -265,7 +265,7 @@ import {
 } from "../shared/DriveSwarmManager";
 import Upload from "./UploadDialog.vue";
 import SendTo from "./Recipients.vue";
-import { debounce } from "rxjs/operators";
+import { debounce, repeat, timeout } from "rxjs/operators";
 import SignatureManagementDialog from "./SignatureManagementDialog.vue";
 import { SigningOutput } from "../shared/SigningOutput";
 import { CacheService } from "../shared/CacheService";
@@ -711,8 +711,7 @@ export default class DriveComponent extends Vue {
     this.loading = false;
   }
 
-  async confirmContract () {
-    
+  async confirmContract() {
     this.setEstimateGasDialog = false;
     this.setTransactionStatusDialog = true;
 
@@ -723,21 +722,35 @@ export default class DriveComponent extends Vue {
       this.driveManager = new DriveManager(this.ipfs, this.did);
       this.indexes = await this.driveManager.createDocumentSet(this.files);
       this.transactionStatus = "Creando transacción en blockchain...";
-      const bob = "0x90f1fBd6C84c6baF64BDe678d99529FF44FaEd2B";
+      const bob = this.contract.defaultAccount;
 
-      const txmint = await this.contract.methods.mint(
-        "1", // qty
-        bob,
-        "", //
-    this.web3.utils.fromUtf8(this.indexes),
-        false, // encrypted
-        "xdv",
-        "").send(
-        {gasPrice: '22000000000', gas: 400000, from: "0x6b06e45f4459Ce6eCaCB19Af57470799d75D1894" }
-      );
+      await this.daiContract.methods
+        .approve(this.contract._address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: this.contract.defaultAccount,
+        });
+
+
+      const txmint = await this.contract.methods
+        .mint(
+          "1", // qty
+          bob,
+          this.did.id, //
+          this.web3.utils.fromUtf8(this.indexes),
+          false, // encrypted
+          "xdv",
+          this.did.id
+        )
+        .send({
+          gasPrice: "22000000000",
+          gas: 4000000,
+          from: this.contract.defaultAccount,
+        });
 
       //await txmint.wait(1);
-debugger;
+      debugger;
       const filter = this.contract.getPastEvents("Transfer", {
         toBlock: "latest",
         fromBlock: 0,
