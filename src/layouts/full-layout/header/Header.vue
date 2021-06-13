@@ -118,22 +118,22 @@
 
       <v-list>
         <v-list-item-content>
-          <div style="width:500px;height:200px;padding:10px">
+          <div style="width:600px;height:200px;padding:10px">
             <v-list-item two-line>
               <v-list-item-title>
                 <p><b>DID</b></p> 
-                {{ this.didId }}
+                {{ this.walletInfo.did }}
               </v-list-item-title>
             </v-list-item>
             <v-list-item two-line>
               <v-list-item-title>
                 <p><b>ADDRESS</b></p> 
-                {{ this.currentAddress }}</v-list-item-title>
+                {{ this.walletInfo.address }}</v-list-item-title>
             </v-list-item>
             <v-list-item two-line>
               <v-list-item-title>
                 <p><b>BALANCE</b></p> 
-                {{ this.balance }} {{this.currencyName}} 
+                9 MOCKS
               </v-list-item-title>
             </v-list-item>
           </div>
@@ -180,7 +180,6 @@ import Moment from "moment";
 import { Contract } from "web3-eth-contract";
 import Web3 from "web3";
 import BN from "bn.js";
-
 
 
 export default {
@@ -294,6 +293,9 @@ export default {
     this.walletInfo = currentKeystore || {
       address: "",
     };
+
+    console.log(this.walletInfo);
+
   },
 
   methods: {
@@ -342,6 +344,7 @@ export default {
       // }
     },
   },
+  
 };
 </script>
 
