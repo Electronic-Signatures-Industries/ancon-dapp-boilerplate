@@ -3,7 +3,8 @@
     <!---Logo part -->
     <v-toolbar-title class="align-center d-flex">
       <span class="logo-icon">
-        <img src="../../../assets/xdv.png" width="64" />
+        <img src="../../../assets/klip_white.png" width="64" />
+
       </span>
       <!-- 
         <span class="logo-text ml-2" :class="`${showLogo ? '' : 'hidelogo'}`">
@@ -111,20 +112,32 @@
     >
       <template v-slot:activator="{ on }">
         <v-btn dark icon v-on="on" class="mr-2">
-          <v-icon>mdi-qrcode-scan</v-icon>
+          <v-icon>mdi-account</v-icon>
         </v-btn>
       </template>
 
       <v-list>
-        <v-list-item
-          v-for="(item, i) in walletActions"
-          :key="i"
-          @click="handleAction(item)"
-        >
-          <v-list-item-title>
-            {{ item.key }}
-          </v-list-item-title>
-        </v-list-item>
+        <v-list-item-content>
+          <div style="width:500px;height:200px;padding:10px">
+            <v-list-item two-line>
+              <v-list-item-title>
+                <p><b>DID</b></p> 
+                {{ this.didId }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item two-line>
+              <v-list-item-title>
+                <p><b>ADDRESS</b></p> 
+                {{ this.currentAddress }}</v-list-item-title>
+            </v-list-item>
+            <v-list-item two-line>
+              <v-list-item-title>
+                <p><b>BALANCE</b></p> 
+                {{ this.balance }} {{this.currencyName}} 
+              </v-list-item-title>
+            </v-list-item>
+          </div>
+        </v-list-item-content>
       </v-list>
     </v-menu>
     <!---User -->
@@ -150,12 +163,26 @@
     </v-dialog>
   </v-app-bar>
 </template>
+
+
+
+
 <script lang="ts">
 import VueQrcode from '@chenfengyuan/vue-qrcode';
 import { Session } from "../../../views/dashboard/pages/shared/Session";
 import copy from "copy-to-clipboard";
 // Utilities
 import { mapState, mapMutations } from "vuex";
+
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { KeystoreIndex } from "../shared/KeystoreIndex";
+import Moment from "moment";
+import { Contract } from "web3-eth-contract";
+import Web3 from "web3";
+import BN from "bn.js";
+
+
+
 export default {
   name: "Header",
 
@@ -168,6 +195,22 @@ export default {
       type: Boolean,
       default: false,
     },
+    didId: {
+      type: String,
+      default: '12345678',
+    },
+    currentAddress:{
+      type: String,
+      default: '12345678',
+    },
+    balance:{
+      type: String,
+      default: '12345678',
+    },
+    currencyName:{
+      type: String,
+      default: '12345678',
+    }
   },
   data: () => ({
     shareAddressDialog: false,
