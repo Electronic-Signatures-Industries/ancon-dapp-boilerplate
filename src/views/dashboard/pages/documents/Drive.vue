@@ -14,7 +14,7 @@
         <template v-slot:buttons>
           <v-btn text @click="canUpload = true">
             <v-icon>mdi-text-box-plus</v-icon>
-            Subir Documento
+            Subir Video
           </v-btn>
 
           <!-- <v-tooltip top>

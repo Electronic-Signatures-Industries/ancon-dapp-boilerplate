@@ -1,9 +1,9 @@
 <template>
   <v-card>
-    <v-card-title>Documentos</v-card-title>
+    <v-card-title>Videos</v-card-title>
 
     <v-card-text v-if="items.length < 1">
-      No hay documentos disponibles.
+      No hay videos disponibles.
     </v-card-text>
 
     <v-card-text v-else>

@@ -264,7 +264,7 @@
             <v-list-item>
               <v-list-item-avatar v-if="!existingWallet">
                 <v-tooltip top>
-                  <span>Create wallet</span>
+                  <span>Importar wallet</span>
                   <template v-slot:activator="{ on }">
                     <v-btn v-on="on" @click="openDialog" small>
                       <v-icon>mdi-wallet-plus</v-icon>
