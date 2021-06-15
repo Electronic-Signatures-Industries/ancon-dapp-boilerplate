@@ -730,7 +730,7 @@ export default class DriveComponent extends Vue {
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
-      console.log('files',files);
+      console.log("files", files);
       this.indexes = await this.driveManager.createDocumentSet(files);
       this.transactionStatus = "Creando transacción en blockchain...";
       const bob = this.contract.defaultAccount;
@@ -768,11 +768,13 @@ export default class DriveComponent extends Vue {
 
       const response = await filter;
       const blockItem = response.reverse()[0];
-      const cid = await this.ipfs.getObject(this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI));
+      const cid = await this.ipfs.getObject(
+        this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
+      );
       const document = cid.value.documents[0];
-      console.log('document',document);
+      console.log("document", document);
       const root = await this.ipfs.getObject(document.contentRef);
-      this.showVideo=true;
+      this.showVideo = true;
       this.videoBase64 = root.value.content;
 
       //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
