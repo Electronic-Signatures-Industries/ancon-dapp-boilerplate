@@ -240,14 +240,6 @@
       :addresses="publicWallets"
       v-model="shareInfo.recipients"
     ></xdv-send>
-
-    <xdv-sign
-      :wallet="wallet"
-      :show="canSign"
-      @input="signOrVerify"
-      v-on:close="closeSign"
-      v-model="signManagerProps"
-    ></xdv-sign>
   </v-row>
 </template>
 
@@ -274,7 +266,6 @@ import {
 import Upload from "./UploadDialog.vue";
 import SendTo from "./Recipients.vue";
 import { debounce, repeat, timeout } from "rxjs/operators";
-import SignatureManagementDialog from "./SignatureManagementDialog.vue";
 import { SigningOutput } from "../shared/SigningOutput";
 import { CacheService } from "../shared/CacheService";
 import { IPFSManager } from "../wallet/IPFSManager";
@@ -308,7 +299,6 @@ import Video from 'vue-video';
     DocumentList,
     "xdv-upload": Upload,
     "xdv-send": SendTo,
-    "xdv-sign": SignatureManagementDialog,
     TransactionStatusDialog,
     EventLog,
     Video
@@ -753,7 +743,6 @@ export default class DriveComponent extends Vue {
           from: this.contract.defaultAccount,
         });
 
-      
       const txmint = await this.contract.methods
         .mint(
           "1", // qty
