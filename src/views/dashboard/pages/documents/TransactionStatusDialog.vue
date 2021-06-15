@@ -11,24 +11,21 @@
       <v-card-text>
         {{ transactionStatus }}
       </v-card-text>
+      <v-card show="showTransactionCancelBtn">
+        Trx hash
+          <a target="_blank" :href="'https://testnet.bscscan.com/tx/' + transationAddress">{{ transationAddress }}</a><br/>
+        IPLD Url
+          <a target="_blank" :href="'https://explore.ipld.io/#/explore/' + ipfsId + '/link'">{{ ipfsId }}</a>
+      </v-card>
 
-      <v-card-actions>
+      <v-card-actions >
         <v-spacer></v-spacer>
         <v-btn
           color="blue darken-1"
           text
           @click="setVisible(false)"
         >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          data-cy="confirm"
-          color="blue darken-1"
-          text
-          @click="onConfirm()"
-        >
-          OK
+          Close
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -47,6 +44,16 @@ export default class TransactionStatusDialog extends Vue {
 
   @Prop()
   readonly transactionStatus?: string;
+
+  @Prop()
+  readonly showTransactionCancelBtn?: boolean;
+
+  @Prop()
+  readonly transationAddress?: string;
+
+  @Prop() 
+  readonly ipfsId? : string;
+
 
   @Emit('update:show')
   setVisible(newStatus: boolean) {

@@ -16,7 +16,6 @@
             <v-icon>mdi-text-box-plus</v-icon>
             Subir Video
           </v-btn>
-
           <!-- <v-tooltip top>
             <span>Send subscription link</span>
             <template v-slot:activator="{ on }">
@@ -87,6 +86,11 @@
           > -->
         </template>
       </document-list>
+    </v-col>
+    <v-col>
+      <video controls v-if="showVideo">
+        <source type="video/mp4" :src="`data:video/mp4;base64,${videoBase64}`">
+      </video>
     </v-col>
 
     <v-col col-xs-6>
@@ -216,6 +220,9 @@
     <transaction-status-dialog
       :show.sync="setTransactionStatusDialog"
       :transactionStatus="transactionStatus"
+      :showTransactionCancelBtn="showTransactionCancelBtn"
+      :transationAddress="transationAddress"
+      :ipfsId="ipfsId"
       @confirm="confirmContract()"
     />
 
@@ -223,7 +230,8 @@
       :loading="loading"
       :show.sync="canUpload"
       :uploadStatus="uploadStatus"
-      @result="confirmContract"
+      :files="files"
+      @result="createDocumentNode"
     />
 
     <xdv-send
@@ -279,6 +287,8 @@ import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
 import { DocumentMetadata } from "@/views/dashboard/pages/wallet/IPFSManager";
 import { FileIcons } from "./FileIcons";
+//@ts-ignore
+import Video from 'vue-video';
 
 @Component({
   name: "xdv-drive",
@@ -301,6 +311,7 @@ import { FileIcons } from "./FileIcons";
     "xdv-sign": SignatureManagementDialog,
     TransactionStatusDialog,
     EventLog,
+    Video
   },
 })
 export default class DriveComponent extends Vue {
@@ -371,6 +382,11 @@ export default class DriveComponent extends Vue {
   readonly currentAddress: String;
   estimatedGas = "";
   transactionStatus = "";
+  showTransactionCancelBtn = false;
+  transationAddress = "";
+  ipfsId= "";
+  showVideo=false;
+  videoBase64="";
   indexes = "";
   uploadStatus = "";
   subscription: any;
@@ -711,16 +727,21 @@ export default class DriveComponent extends Vue {
     this.loading = false;
   }
 
-  async confirmContract() {
+  async createDocumentNode(files: File[]) {
     this.setEstimateGasDialog = false;
     this.setTransactionStatusDialog = true;
+    this.showTransactionCancelBtn = false;
+    this.transationAddress = "";
+    this.ipfsId = "";
+    this.showVideo = false;
 
     try {
       this.transactionStatus = "Guardando archivo...";
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
       this.driveManager = new DriveManager(this.ipfs, this.did);
-      this.indexes = await this.driveManager.createDocumentSet(this.files);
+      console.log('files',files);
+      this.indexes = await this.driveManager.createDocumentSet(files);
       this.transactionStatus = "Creando transacción en blockchain...";
       const bob = this.contract.defaultAccount;
 
@@ -732,7 +753,7 @@ export default class DriveComponent extends Vue {
           from: this.contract.defaultAccount,
         });
 
-
+      
       const txmint = await this.contract.methods
         .mint(
           "1", // qty
@@ -750,21 +771,30 @@ export default class DriveComponent extends Vue {
         });
 
       //await txmint.wait(1);
-      debugger;
-      const filter = this.contract.getPastEvents("Transfer", {
+      const filter = this.contract.getPastEvents("DocumentAnchored", {
         toBlock: "latest",
         fromBlock: 0,
         filter: { user: this.localAddress },
       });
 
       const response = await filter;
+      const blockItem = response.reverse()[0];
+      const cid = await this.ipfs.getObject(this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI));
+      const document = cid.value.documents[0];
+      console.log('document',document);
+      const root = await this.ipfs.getObject(document.contentRef);
+      this.showVideo=true;
+      this.videoBase64 = root.value.content;
 
-      debugger;
       //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
       this.close();
       console.log(txmint);
+      this.showTransactionCancelBtn = true;
+      this.transationAddress = txmint.transactionHash;
+      this.ipfsId = this.indexes;
+      this.transactionStatus = "";
       //await this.fetchDocuments();
     } catch (e) {
       this.transactionStatus = "Ha ocurrido un error";
@@ -772,7 +802,7 @@ export default class DriveComponent extends Vue {
     }
   }
 
-  async createDocumentNode(files: File[]) {
+  /* async createDocumentNode(files: File[]) {
     this.files = files;
     this.canUpload = false;
     this.loading = true;
@@ -783,7 +813,7 @@ export default class DriveComponent extends Vue {
         .call();
       const bnAmount = new BigNumber(amount);
 
-      /*if(bnAmount.gt(0)){*/
+      /*if(bnAmount.gt(0)){* /
       this.uploadStatus = "Aprobando la transaccion...";
       await this.daiContract.methods
         .approve(spender, "9000000000000000000")
@@ -792,7 +822,7 @@ export default class DriveComponent extends Vue {
           gasPrice: "22000000000",
           gas: 4000000,
         });
-      /*}*/
+      /*}* /
 
       this.uploadStatus = "Estimando costo del gas...";
       const gas = await this.contract.methods
@@ -805,7 +835,7 @@ export default class DriveComponent extends Vue {
       console.log("allowance error", e);
       this.loading = false;
     }
-  }
+  } */
 
   getUrl(ref) {
     return `#/user/${this.$router.currentRoute.params.user}/details/${ref}`;

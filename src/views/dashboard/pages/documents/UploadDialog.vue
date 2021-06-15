@@ -77,6 +77,7 @@ export default class UploadDialog extends Vue {
   @Prop()
   readonly uploadStatus: string;
 
+  @Prop()
   files: File[] = [];
 
   @Emit('update:show')
