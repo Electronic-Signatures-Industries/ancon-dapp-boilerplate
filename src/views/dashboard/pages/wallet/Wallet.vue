@@ -134,7 +134,6 @@
                   ></v-text-field>
                   <v-textarea
                     v-model="importSeedPhrase"
-                    v-if="setImportSeedPhrase"
                     label="12 (o 24) palabras semilla">
                   </v-textarea>
                 </v-col>
@@ -201,12 +200,6 @@
                 text
                 @click="signInGoogle"
                 >Ingresar con Google</v-btn
-              >
-              <v-btn
-                color="blue darken-1"
-                text
-                @click="importWallet"
-                >Importar wallet existente</v-btn
               >
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="close">Cancelar</v-btn>
@@ -727,7 +720,7 @@ export default class WalletComponent extends Vue {
   }
 
   async importWallet(){
-    this.setImportSeedPhrase = !this.setImportSeedPhrase;
+    this.setImportSeedPhrase = false;
   }
 
   async getWeb3(){
