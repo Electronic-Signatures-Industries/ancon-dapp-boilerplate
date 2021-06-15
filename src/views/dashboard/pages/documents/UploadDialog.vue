@@ -18,7 +18,6 @@
               <v-file-input
                 prepend-icon="mdi-paperclip"
                 v-model="files"
-                multiple
                 show-size
                 label="Files"
               ></v-file-input>
@@ -78,7 +77,7 @@ export default class UploadDialog extends Vue {
   readonly uploadStatus: string;
 
   @Prop()
-  files: File[] = [];
+  files: File[];
 
   @Emit('update:show')
   updateShow(newValue: boolean) {
@@ -87,7 +86,7 @@ export default class UploadDialog extends Vue {
 
   @Emit('result')
   sendFiles() {
-    return this.files;
+    return [this.files];
   }
 }
 </script>
