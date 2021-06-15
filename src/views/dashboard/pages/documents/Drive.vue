@@ -5,7 +5,9 @@
     <v-overlay :value="loading">
       <v-progress-circular indeterminate size="64" />
     </v-overlay>
-
+    <div>
+      <video ref="videoPlayer" class="video-js"></video>
+    </div>
     <v-col col-xs-6>
       <document-list
         :selectedValue.sync="selectedOnDocumentList"
@@ -88,9 +90,11 @@
       </document-list>
     </v-col>
     <v-col>
-      <video controls v-if="showVideo">
-        <source type="video/mp4" :src="`data:video/mp4;base64,${videoBase64}`">
-      </video>
+      <!-- <video controls v-if="showVideo">
+        <source type="video/mp4" :src="`data:video/mp4;base64,${videoBase64}`" :options = "videoOptions" :autoplay = "true">
+      </video> -->
+      <d-player ref="player"></d-player>
+      <video-player :options="videoOptions"/>
     </v-col>
 
     <v-col col-xs-6>
@@ -279,7 +283,8 @@ import { BigNumber } from "bignumber.js";
 import { DocumentMetadata } from "@/views/dashboard/pages/wallet/IPFSManager";
 import { FileIcons } from "./FileIcons";
 //@ts-ignore
-import Video from 'vue-video';
+import vidmp4 from "../../../../../public/vidmp4.mp4";
+import videojs from "video.js";
 
 @Component({
   name: "xdv-drive",
@@ -301,7 +306,6 @@ import Video from 'vue-video';
     "xdv-send": SendTo,
     TransactionStatusDialog,
     EventLog,
-    Video
   },
 })
 export default class DriveComponent extends Vue {
@@ -374,9 +378,9 @@ export default class DriveComponent extends Vue {
   transactionStatus = "";
   showTransactionCancelBtn = false;
   transationAddress = "";
-  ipfsId= "";
-  showVideo=false;
-  videoBase64="";
+  ipfsId = "";
+  showVideo = false;
+  videoBase64 = "";
   indexes = "";
   uploadStatus = "";
   subscription: any;
@@ -411,6 +415,17 @@ export default class DriveComponent extends Vue {
   keystoreAddress: string = null;
   updateWallet;
   gasLimit: 4000000;
+  videoOptions = {
+    autoplay: true,
+    controls: true,
+    sources: [
+      {
+        src: vidmp4,
+        type: "video/mp4",
+      },
+    ],
+  };
+  player = null;
 
   get localAddress(): String {
     //return this.keystoreAddress ?? this.currentAddress ?? '';
@@ -529,6 +544,19 @@ export default class DriveComponent extends Vue {
       this.keystoreAddress = ks.address;
     }
     this.driveManager = new DriveManager(this.ipfs, this.did);
+    this.player = videojs(
+      this.$refs.videoPlayer,
+      this.videoOptions,
+      function onPlayerReady() {
+        console.log("onPlayerReady", this);
+      }
+    );
+  }
+
+  beforeDestroy() {
+    if (this.player) {
+      this.player.dispose();
+    }
   }
 
   async loadWallets() {
@@ -776,6 +804,7 @@ export default class DriveComponent extends Vue {
       const root = await this.ipfs.getObject(document.contentRef);
       this.showVideo = true;
       this.videoBase64 = root.value.content;
+      // player.switchVideo({ url: "data:video/mp4;base64,${this.videoBase64}" });
 
       //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
