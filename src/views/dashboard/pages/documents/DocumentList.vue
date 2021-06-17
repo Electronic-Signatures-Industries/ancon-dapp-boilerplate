@@ -3,7 +3,7 @@
     <v-card-title>Videos</v-card-title>
 
     <v-card-text v-if="items.length < 1">
-      No hay videos disponibles.
+      No videos available
     </v-card-text>
 
     <v-card-text v-else>
@@ -20,7 +20,7 @@
           <v-icon v-else>
             {{ getFileIcon(item.folder.contentType) }}
           </v-icon>
-          {{ item.folder.length }} archivo(s)
+          {{ item.folder.length }} Files
         </template>
       </v-treeview>
     </v-card-text>
@@ -28,16 +28,16 @@
     <v-card-actions>
       <v-spacer />
 
-      <slot name="buttons"/>
+      <slot name="buttons" />
     </v-card-actions>
   </v-card>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { Component, Emit, Prop } from 'vue-property-decorator';
-import { FileIcons } from './FileIcons';
-import { DocumentListItem } from './DocumentListItem';
+import Vue from "vue";
+import { Component, Emit, Prop } from "vue-property-decorator";
+import { FileIcons } from "./FileIcons";
+import { DocumentListItem } from "./DocumentListItem";
 
 @Component({})
 export default class DocumentList extends Vue {
@@ -47,13 +47,13 @@ export default class DocumentList extends Vue {
   @Prop()
   readonly items: DocumentListItem[];
 
-  @Emit('update:selectedValue')
+  @Emit("update:selectedValue")
   updateSelected(newValue) {
     return newValue;
   }
 
   getFileIcon(contentType: string): string {
-    return FileIcons[contentType]
+    return FileIcons[contentType];
   }
 }
 </script>

@@ -88,247 +88,232 @@
       alertMessage
     }}</v-alert>
 
-      <v-dialog v-model="dialog" max-width="800px">
-        <v-form v-model="valid" autocomplete="off">
-          <v-card v-if="canCreateWallet">
-            <v-card-title>
-              <span class="headline" v-if="walletType !== 'rsa'"
-                >Importar wallet</span
-              >
-            </v-card-title>
-
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" md="12" v-if="walletType !== 'rsa'">
-                  <v-row v-if="avatar">
-                    <v-col cols="1" md="1">
-                      <v-avatar color="primary" size="56">
-                        <v-img :src="avatar"></v-img>
-                      </v-avatar>
-                    </v-col>
-                    <v-col cols="11" md="11">
-                      <h3>{{ walletDescription }}</h3>
-                    </v-col>
-                  </v-row>
-
-                  <v-text-field
-                    v-model="password"
-                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    :type="showPassword ? 'text' : 'password'"
-                    label="Passphrase"
-                    class="input-group--focused"
-                    @input="handlePasswordUpdate"
-                    @click:append="showPassword = !showPassword"
-                    autocomplete="new-password"
-                  ></v-text-field>
-
-                  <v-text-field
-                    v-model="confirmPassword"
-                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                    :type="showPassword ? 'text' : 'password'"
-                    label="Confirm passphrase"
-                    class="input-group--focused"
-                    @click:append="showPassword = !showPassword"
-                    @input="handlePasswordUpdate"
-                    autocomplete="new-password"
-                  ></v-text-field>
-                  <v-textarea
-                    v-model="importSeedPhrase"
-                    label="12 (o 24) palabras semilla">
-                  </v-textarea>
-                </v-col>
-                <v-col v-if="walletType === 'rsa'" cols="12" md="12">
-                  <div>Detalle del certificado de pruebas</div>
-
-                  <v-text-field
-                    required
-                    v-model="x509Info.commonName"
-                    label="Nombre"
-                    autocomplete="new-password"
-                  ></v-text-field>
-                  <v-text-field
-                    required
-                    hint="Codigo ISO"
-                    v-model="x509Info.countryName"
-                    label="Pais"
-                  ></v-text-field>
-
-                  <v-text-field
-                    required
-                    v-model="x509Info.stateOrProvinceName"
-                    label="Provincia"
-                  ></v-text-field>
-                  <v-text-field
-                    required
-                    v-model="x509Info.localityName"
-                    label="Ciudad"
-                  ></v-text-field>
-                  <v-text-field
-                    required
-                    v-model="x509Info.organizationName"
-                    label="Organizacion"
-                  ></v-text-field>
-
-                  <v-text-field
-                    required
-                    v-model="x509Info.organizationalUnitName"
-                    label="Unidad Organizacional"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col md="12" cols="12">
-                  <v-alert text color="blue" v-if="loading">
-                    <v-progress-circular
-                      indeterminate
-                      v-if="loading"
-                      color="blue darken-1"
-                    ></v-progress-circular>
-                    {{ alertMessage }}
-                  </v-alert>
-                  <v-alert text color="red" v-if="hasErrors">
-                    {{ alertMessage }}
-                  </v-alert>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-btn
-                color="blue darken-1"
-                :disabled="isSignIn"
-                text
-                @click="signInGoogle"
-                >Ingresar con Google</v-btn
-              >
-              <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="close">Cancelar</v-btn>
-              <v-btn
-                color="blue darken-1"
-                :disabled="!isSignIn"
-                text
-                @click="createKeys"
-                >Guardar</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-form>
-      </v-dialog>
-
-      <v-dialog v-model="setDIDNameDialog" max-width="500px">
-        <v-card>
+    <v-dialog v-model="dialog" max-width="800px">
+      <v-form v-model="valid" autocomplete="off">
+        <v-card v-if="canCreateWallet">
           <v-card-title>
-            <span class="headline">Enter a wallet name to import DID</span>
+            <span class="headline" v-if="walletType !== 'rsa'"
+              >Import wallet</span
+            >
           </v-card-title>
 
           <v-card-text>
-            <v-form autocomplete="off">
-              <v-row>
-                <v-col cols="12" md="12">
-                  <v-text-field
-                    required
-                    v-model="didName"
-                    class="input-group--focused"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-form>
+            <v-row>
+              <v-col cols="12" md="12" v-if="walletType !== 'rsa'">
+                <v-row v-if="avatar">
+                  <v-col cols="1" md="1">
+                    <v-avatar color="primary" size="56">
+                      <v-img :src="avatar"></v-img>
+                    </v-avatar>
+                  </v-col>
+                  <v-col cols="11" md="11">
+                    <h3>{{ walletDescription }}</h3>
+                  </v-col>
+                </v-row>
+
+                <v-text-field
+                  v-model="password"
+                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="showPassword ? 'text' : 'password'"
+                  label="Passphrase"
+                  class="input-group--focused"
+                  @input="handlePasswordUpdate"
+                  @click:append="showPassword = !showPassword"
+                  autocomplete="new-password"
+                ></v-text-field>
+
+                <v-text-field
+                  v-model="confirmPassword"
+                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="showPassword ? 'text' : 'password'"
+                  label="Confirm passphrase"
+                  class="input-group--focused"
+                  @click:append="showPassword = !showPassword"
+                  @input="handlePasswordUpdate"
+                  autocomplete="new-password"
+                ></v-text-field>
+                <v-textarea
+                  v-model="importSeedPhrase"
+                  label="12 (o 24) palabras semilla"
+                >
+                </v-textarea>
+              </v-col>
+              <v-col v-if="walletType === 'rsa'" cols="12" md="12">
+                <div>Test certificate details</div>
+
+                <v-text-field
+                  required
+                  v-model="x509Info.commonName"
+                  label="Nombre"
+                  autocomplete="new-password"
+                ></v-text-field>
+                <v-text-field
+                  required
+                  hint="Codigo ISO"
+                  v-model="x509Info.countryName"
+                  label="Pais"
+                ></v-text-field>
+
+                <v-text-field
+                  required
+                  v-model="x509Info.stateOrProvinceName"
+                  label="Provincia"
+                ></v-text-field>
+                <v-text-field
+                  required
+                  v-model="x509Info.localityName"
+                  label="Ciudad"
+                ></v-text-field>
+                <v-text-field
+                  required
+                  v-model="x509Info.organizationName"
+                  label="Organizacion"
+                ></v-text-field>
+
+                <v-text-field
+                  required
+                  v-model="x509Info.organizationalUnitName"
+                  label="Unidad Organizacional"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col md="12" cols="12">
+                <v-alert text color="blue" v-if="loading">
+                  <v-progress-circular
+                    indeterminate
+                    v-if="loading"
+                    color="blue darken-1"
+                  ></v-progress-circular>
+                  {{ alertMessage }}
+                </v-alert>
+                <v-alert text color="red" v-if="hasErrors">
+                  {{ alertMessage }}
+                </v-alert>
+              </v-col>
+            </v-row>
           </v-card-text>
 
           <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="setDIDNameDialog = false"
-              >Cancel</v-btn
+            <v-btn
+              color="blue darken-1"
+              :disabled="isSignIn"
+              text
+              @click="signInGoogle"
+              >Ingresar con Google</v-btn
             >
-            <v-btn color="blue darken-1" text @click="pendingDIDName(didName)"
-              >OK</v-btn
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="close">Cancelar</v-btn>
+            <v-btn
+              color="blue darken-1"
+              :disabled="!isSignIn"
+              text
+              @click="createKeys"
+              >Guardar</v-btn
             >
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-form>
+    </v-dialog>
 
-      <v-expansion-panels>
-        <v-expansion-panel>
-          <v-toolbar flat>
-            <v-toolbar-title>Wallet</v-toolbar-title>
-          </v-toolbar>
+    <v-dialog v-model="setDIDNameDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Enter a wallet name to import DID</span>
+        </v-card-title>
 
-          <v-expansion-panel-header>
-            <v-list-item>
-              <v-list-item-avatar v-if="!existingWallet">
-                <v-tooltip top>
-                  <span>Importar wallet</span>
-                  <template v-slot:activator="{ on }">
-                    <v-btn v-on="on" @click="openDialog" small>
-                      <v-icon>mdi-wallet-plus</v-icon>
-                    </v-btn>
-                  </template></v-tooltip
-                >
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-row
-                  ><v-col>
-                    <v-select
-                      v-model="currentKeystore"
-                      :items="items"
-                      :loading="loading"
-                      item-text="headline"
-                      return-object
-                      chips
-                      @change="setWallet"
-                    ></v-select> </v-col
-                ></v-row>
-              </v-list-item-content>
-            </v-list-item>
-          </v-expansion-panel-header>
+        <v-card-text>
+          <v-form autocomplete="off">
+            <v-row>
+              <v-col cols="12" md="12">
+                <v-text-field
+                  required
+                  v-model="didName"
+                  class="input-group--focused"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
 
-          <wallet-details
-            :didId="did._id"
-            :currentAddress="currentAddress"
-            :currentKeystore="currentKeystore"
-            :erc20Contract="mockContract"
-            />
-          <v-card-actions>
-            <v-spacer></v-spacer>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="setDIDNameDialog = false"
+            >Cancel</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="pendingDIDName(didName)"
+            >OK</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-            <v-btn
-              v-if="currentKeystore"
-              @click="linkDialog = true"
-              text
-            >
-              <v-icon>mdi-key-link</v-icon>
-              Link External
-            </v-btn>
+    <v-expansion-panels>
+      <v-expansion-panel>
+        <v-toolbar flat>
+          <v-toolbar-title>Wallet</v-toolbar-title>
+        </v-toolbar>
 
-            <v-btn
-              v-if="currentKeystore"
-              @click="shareAddressDialog = true"
-              text
-            >
-              <v-icon>mdi-share</v-icon>
-              Share Addresses
-            </v-btn>
+        <v-expansion-panel-header>
+          <v-list-item>
+            <v-list-item-avatar v-if="!existingWallet">
+              <v-tooltip top>
+                <span>Importar wallet</span>
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" @click="openDialog" small>
+                    <v-icon>mdi-wallet-plus</v-icon>
+                  </v-btn>
+                </template></v-tooltip
+              >
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-row
+                ><v-col>
+                  <v-select
+                    v-model="currentKeystore"
+                    :items="items"
+                    :loading="loading"
+                    item-text="headline"
+                    return-object
+                    chips
+                    @change="setWallet"
+                  ></v-select> </v-col
+              ></v-row>
+            </v-list-item-content>
+          </v-list-item>
+        </v-expansion-panel-header>
 
-            <v-btn
-              v-if="currentKeystore"
-              @click="remove(item)"
-              text
-            >
-              <v-icon>mdi-delete</v-icon>
-              Remove
-            </v-btn>
+        <wallet-details
+          :didId="did._id"
+          :currentAddress="currentAddress"
+          :currentKeystore="currentKeystore"
+          :erc20Contract="mockContract"
+        />
+        <v-card-actions>
+          <v-spacer></v-spacer>
 
-            <v-btn
-              v-if="currentKeystore"
-              @click="exportWallet()"
-              text
-            >
-              <v-icon>mdi-export</v-icon>
-              Export Wallet
-            </v-btn>
-          </v-card-actions>
-        </v-expansion-panel>
-      </v-expansion-panels>
+          <v-btn v-if="currentKeystore" @click="linkDialog = true" text>
+            <v-icon>mdi-key-link</v-icon>
+            Link External
+          </v-btn>
+
+          <v-btn v-if="currentKeystore" @click="shareAddressDialog = true" text>
+            <v-icon>mdi-share</v-icon>
+            Share Addresses
+          </v-btn>
+
+          <v-btn v-if="currentKeystore" @click="remove(item)" text>
+            <v-icon>mdi-delete</v-icon>
+            Remove
+          </v-btn>
+
+          <v-btn v-if="currentKeystore" @click="exportWallet()" text>
+            <v-icon>mdi-export</v-icon>
+            Export Wallet
+          </v-btn>
+        </v-card-actions>
+      </v-expansion-panel>
+    </v-expansion-panels>
 
       <xdv-drive
         :updateWallet="currentKeystore"
@@ -351,14 +336,10 @@
       @input="loadWallets"
     >
     </xdv-link-external-keystore>
-    <xdv-unlock
-      :wallet="wallet"
-      @result="onUnlockResult"
-      @load="onUnlock"
-    ></xdv-unlock>
+    <xdv-unlock :wallet="wallet" @result="onUnlockResult" @load="onUnlock">
+    </xdv-unlock>
   </v-container>
 </template>
-
 
 <script lang="ts">
 import { Wallet, X509Info } from "xdvplatform-wallet/lib";
@@ -377,9 +358,9 @@ import { IPFSManager } from "./IPFSManager";
 import WalletDetails from "./WalletDetails.vue";
 import { DID } from "dids";
 import Web3 from "web3";
-const KLIP = require('../../../../contracts/KLIP.sol/KLIP');
-const MockCoin = require('../../../../contracts/MockCoin.sol/MockCoin');
-const xdvAbi = require('../../../../abi/xdv');
+const KLIP = require("../../../../contracts/KLIP.sol/KLIP");
+const MockCoin = require("../../../../contracts/MockCoin.sol/MockCoin");
+const xdvAbi = require("../../../../abi/xdv");
 
 // Extra declarations missing from `vue-google-oauth2`
 declare module "vue-property-decorator" {
@@ -393,7 +374,7 @@ declare module "vue-property-decorator" {
     "xdv-unlock": Unlock,
     "xdv-drive": Drive,
     "xdv-link-external-keystore": LinkExternalKeystore,
-    WalletDetails
+    WalletDetails,
   },
 })
 export default class WalletComponent extends Vue {
@@ -418,7 +399,7 @@ export default class WalletComponent extends Vue {
       this.open = true;
     }, 100);
   }
-  
+
   loading = false;
   validations: any = { password: false };
   searchResults = [];
@@ -505,41 +486,28 @@ export default class WalletComponent extends Vue {
 
   async onUnlock() {
     this.loading = true;
-    
+
     this.restoreDid(this.wallet);
-    
+
     await this.loadWallets();
 
     this.loading = false;
-    
-    const web3_data = (await this.getWeb3());
+
+    const web3_data = await this.getWeb3();
     this.web3 = web3_data.web3;
     this.ethersInstance = web3_data.ethersInstance;
-    const contractAddress = '0x03659591c344e90fD926cf9E4b463C5530422698';
-    const mockContractAddress = '0xeB398229cDBB348E6076fd89d488FD14a05cA3B8';
-    this.contract =  new this.web3.eth.Contract(KLIP.abi, contractAddress);
-    this.mockContract = new this.web3.eth.Contract(MockCoin.abi, mockContractAddress);
+    const contractAddress = "0x03659591c344e90fD926cf9E4b463C5530422698";
+    const mockContractAddress = "0xeB398229cDBB348E6076fd89d488FD14a05cA3B8";
+    this.contract = new this.web3.eth.Contract(KLIP.abi, contractAddress);
+    this.mockContract = new this.web3.eth.Contract(
+      MockCoin.abi,
+      mockContractAddress
+    );
     this.ethersContract = new ethers.Contract(
       contractAddress,
       KLIP.abi,
-      this.ethersInstance.getSigner(0),
+      this.ethersInstance.getSigner(0)
     );
-    /*const _this = this;
-    const filter = new Promise((resolve,reject) => {
-      _this.contract.events.DocumentAnchored({ 
-        toBlock: 'latest',
-        fromBlock: 0 },
-        (err,val) => {
-          if(!err){
-            resolve(val);
-          }
-          else{
-            reject(err);
-          }
-        });
-    });
-    const response = await filter;
-    this.items = await forkJoin(response).toPromise();*/
   }
 
   requestSignerActivation(address) {
@@ -668,7 +636,7 @@ export default class WalletComponent extends Vue {
         ks: {
           ...this.keystoreIndexItem,
           isDefault: true,
-          did: this.did._id
+          did: this.did._id,
         },
       });
       this.keystoreIndexItem = new KeystoreIndex();
@@ -719,43 +687,42 @@ export default class WalletComponent extends Vue {
     }
   }
 
-  async importWallet(){
+  async importWallet() {
     this.setImportSeedPhrase = false;
   }
 
-  async getWeb3(){
+  async getWeb3() {
     // Init with HD mnemonic (server side)
     const network = {
-      name: 'BSC',
+      name: "BSC",
       networkId: 97,
       chainId: 97,
     };
-    const providerUrl = 'https://data-seed-prebsc-1-s2.binance.org:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    const providerUrl = "https://data-seed-prebsc-1-s2.binance.org:8545/"; //'https://bsc-dataseed1.ninicoin.io/';
     // const providerUrl = 'http://localhost:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
     const provider = new Web3.providers.HttpProvider(providerUrl);
     const web3 = new Web3(provider);
     web3.setProvider(provider);
     this.web3 = web3;
-    const ethersInstance = new ethers.providers.Web3Provider(web3.currentProvider as any);
-    
-    const pk = (await this.wallet.getPrivateKey("ES256K"));
-    const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
-    // const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);
+    const ethersInstance = new ethers.providers.Web3Provider(
+      web3.currentProvider as any
+    );
+
+    const pk = await this.wallet.getPrivateKey("ES256K");
+    const private_key = pk.getPrivate("hex");
 
     let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    
+
     const account = web3.eth.accounts.privateKeyToAccount(private_key);
     web3.eth.accounts.wallet.add(account);
     this.web3.eth.defaultAccount = account.address;
     this.currentAddress = account.address;
-    
+
     return { web3, ethersInstance };
   }
 
-  async restoreDid(w: Wallet){
-    const did: any = await this.didManager.create3ID(
-      w
-    );
+  async restoreDid(w: Wallet) {
+    const did: any = await this.didManager.create3ID(w);
     this.ipfs = new IPFSManager();
     this.did = did;
   }
@@ -772,7 +739,7 @@ export default class WalletComponent extends Vue {
 
     const wallet = new Wallet();
     let { phrase } = Wallet.generateMnemonic();
-    if(this.importSeedPhrase.length > 0){
+    if (this.importSeedPhrase.length > 0) {
       phrase = this.importSeedPhrase;
     }
     let keys;
@@ -788,23 +755,22 @@ export default class WalletComponent extends Vue {
         const w = await wallet.createWallet(this.password, phrase);
         await this.restoreDid(w);
         this.wallet = w;
-        
+
         console.log("DID GENERATED");
         console.log(this.did);
 
         id = w.id;
         keystoreIndexItem = {
           created: new Date(),
-          name: this.oauthUniqueId, 
+          name: this.oauthUniqueId,
           keystore: id,
-          description: this.walletDescription
+          description: this.walletDescription,
         } as KeystoreIndex;
-
 
         this.currentAddress = wallet.ethersWallet.address;
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
-        keystoreIndexItem.address = this.currentAddress;//pubKeyToAddress(keys.getPublic("array"));
+        keystoreIndexItem.address = this.currentAddress; //pubKeyToAddress(keys.getPublic("array"));
         //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
         keystoreIndexItem.name = this.oauthName;
         await Session.set({ ks: keystoreIndexItem });

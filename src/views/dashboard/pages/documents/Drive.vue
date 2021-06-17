@@ -1,7 +1,6 @@
 <template>
   <v-row class="local-container">
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-
     <v-overlay :value="loading">
       <v-progress-circular indeterminate size="64" />
     </v-overlay>
@@ -16,85 +15,22 @@
         <template v-slot:buttons>
           <v-btn text @click="canUpload = true">
             <v-icon>mdi-text-box-plus</v-icon>
-            Subir Video
+            Upload Video
           </v-btn>
-          <!-- <v-tooltip top>
-            <span>Send subscription link</span>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                fab
-                @click="openShareDialog(selected)"
-
-                dark
-                v-on="on"
-                @click="canUpload = true"
-                small
-                v-if="selected && selected.type!=='did'"
-                  color="red accent-4"
-              >
-                <v-icon>mdi-key-change</v-icon>
-              </v-btn>
-            </template></v-tooltip
-          > -->
           <v-btn
             v-if="tab === 1 && currentItem"
             @click="shareTo(currentItem)"
             text
           >
             <v-icon>mdi-link-box-variant</v-icon>
-            Compartir
+            Share
           </v-btn>
-
-          <!-- <v-tooltip top>
-            <span>Send encrypted to</span>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                v-if="tab === 1 && currentItem"
-                dark
-                v-on="on"
-                @click="openShareDialog(currentItem)"
-                small
-                color="red accent-4"
-              >
-                <v-icon>mdi-publish</v-icon>
-              </v-btn>
-            </template></v-tooltip
-          > -->
-
-          <!-- <v-btn
-            v-if="updateWallet.linkedExternalKeystores"
-            @click="openSignatureDialog()"
-            text
-          >
-            <v-icon>mdi-file-certificate</v-icon>
-            Firmar Documentos
-          </v-btn> -->
-
-          <!--
-          <v-tooltip top>
-            <span>Execute chain job</span>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                v-if="tab === 1 && currentItem"
-                dark
-                v-on="on"
-                @click="openChainDialog(currentItem)"
-                small
-                color="red accent-4"
-              >
-                <v-icon>mdi-link-lock</v-icon>
-              </v-btn>
-            </template></v-tooltip
-          > -->
         </template>
       </document-list>
     </v-col>
     <v-col>
-      <!-- <video controls v-if="showVideo">
-        <source type="video/mp4" :src="`data:video/mp4;base64,${videoBase64}`" :options = "videoOptions" :autoplay = "true">
-      </video> -->
       <d-player ref="player"></d-player>
-      <video-player :options="videoOptions"/>
+      <video-player :options="videoOptions" />
     </v-col>
 
     <v-col col-xs-6>
@@ -120,7 +56,7 @@
           <v-list>
             <v-list-item>
               <v-list-item-content>
-                <h3>Document detail</h3>
+                <h3>Document details</h3>
               </v-list-item-content>
             </v-list-item>
 
@@ -201,7 +137,7 @@
         <v-card-text>
           <v-row>
             <v-col cols="12" md="12">
-              <b>Costo del Gas</b> {{ estimatedGas }}
+              <b>Gas cost</b> {{ estimatedGas }}
             </v-col>
           </v-row>
         </v-card-text>
@@ -212,10 +148,10 @@
             color="blue darken-1"
             text
             @click="setEstimateGasDialog = false"
-            >Rechazar</v-btn
+            >Deny</v-btn
           >
           <v-btn color="blue darken-1" text @click="confirmContract()"
-            >Aceptar</v-btn
+            >Accept</v-btn
           >
         </v-card-actions>
       </v-card>
@@ -447,11 +383,10 @@ export default class DriveComponent extends Vue {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-    //await this.fetchDocuments();
+    await this.fetchDocuments();
   }
 
   async onUnlock() {
-    debugger;
     await this.loadWallets();
     const ks = await this.loadSession({ reset: true });
     this.loading = true;
@@ -538,6 +473,8 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
+    this.ipfs = new IPFSManager();
+    await this.ipfs.start();
     await this.loadWallets();
     const ks = await this.loadSession();
     if (ks) {
@@ -702,10 +639,12 @@ export default class DriveComponent extends Vue {
   async downloadFile(item: DocumentMetadata) {
     this.ipfs = new IPFSManager();
     await this.ipfs.start();
+
     const file = await this.ipfs.getObject(item.contentRef);
     const buffer = Buffer.from(file.value.content, "base64");
     const blob = new Blob([buffer], { type: item.contentType });
     const link = document.createElement("a");
+
     link.href = URL.createObjectURL(blob);
     link.download = item.name;
     link.click();
@@ -742,6 +681,7 @@ export default class DriveComponent extends Vue {
         id: i,
       }));
     }
+
     this.loading = false;
   }
 
@@ -804,9 +744,7 @@ export default class DriveComponent extends Vue {
       const root = await this.ipfs.getObject(document.contentRef);
       this.showVideo = true;
       this.videoBase64 = root.value.content;
-      // player.switchVideo({ url: "data:video/mp4;base64,${this.videoBase64}" });
 
-      //this.transactionStatus = "Transacción hecha con exito: " + document.transactionHash;
       this.loading = false;
       this.canUpload = false;
       this.close();
@@ -821,41 +759,6 @@ export default class DriveComponent extends Vue {
       console.log("confirmation error", e);
     }
   }
-
-  /* async createDocumentNode(files: File[]) {
-    this.files = files;
-    this.canUpload = false;
-    this.loading = true;
-    try {
-      const spender = this.contract._address;
-      const amount = await this.daiContract.methods
-        .allowance(this.localAddress, spender)
-        .call();
-      const bnAmount = new BigNumber(amount);
-
-      /*if(bnAmount.gt(0)){* /
-      this.uploadStatus = "Aprobando la transaccion...";
-      await this.daiContract.methods
-        .approve(spender, "9000000000000000000")
-        .send({
-          from: this.localAddress,
-          gasPrice: "22000000000",
-          gas: 4000000,
-        });
-      /*}* /
-
-      this.uploadStatus = "Estimando costo del gas...";
-      const gas = await this.contract.methods
-        .addDocument(this.did.id, this.indexes, "dummy description")
-        .estimateGas();
-      this.estimatedGas = gas;
-
-      this.setEstimateGasDialog = true;
-    } catch (e) {
-      console.log("allowance error", e);
-      this.loading = false;
-    }
-  } */
 
   getUrl(ref) {
     return `#/user/${this.$router.currentRoute.params.user}/details/${ref}`;
