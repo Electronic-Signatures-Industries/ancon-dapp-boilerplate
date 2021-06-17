@@ -480,7 +480,6 @@ export default class DriveComponent extends Vue {
     if (ks) {
       this.keystoreAddress = ks.address;
     }
-    this.driveManager = new DriveManager(this.ipfs, this.did);
     this.player = videojs(
       this.$refs.videoPlayer,
       this.videoOptions,
@@ -697,9 +696,9 @@ export default class DriveComponent extends Vue {
       this.transactionStatus = "Guardando archivo...";
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
-      this.driveManager = new DriveManager(this.ipfs, this.did);
+      this.indexes = await this.ipfs.addVideoObject(this.did, files[0]);
+
       console.log("files", files);
-      this.indexes = await this.driveManager.createDocumentSet(files);
       this.transactionStatus = "Creando transacción en blockchain...";
       const bob = this.contract.defaultAccount;
 
@@ -736,12 +735,12 @@ export default class DriveComponent extends Vue {
 
       const response = await filter;
       const blockItem = response.reverse()[0];
-      const cid = await this.ipfs.getObject(
+      const root = await this.ipfs.getObject(
         this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
       );
-      const document = cid.value.documents[0];
+      const document = root.value;
+      console.log("ROOT VALUE", root.value);
       console.log("document", document);
-      const root = await this.ipfs.getObject(document.contentRef);
       this.showVideo = true;
       this.videoBase64 = root.value.content;
 

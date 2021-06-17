@@ -9,6 +9,7 @@ import axios from 'axios'
 import IPFSClient from 'ipfs-http-client'
 import { SwarmNodeSignedContent } from '../shared/SwarmNodeSignedContent'
 import { keccak256 } from 'ethers/lib/utils'
+import { version } from 'vue/types/umd'
 const dagCBOR = require('ipld-dag-cbor')
 const Ipld = require('ipld')
 const IpfsRepo = require('ipfs-repo')
@@ -99,12 +100,13 @@ export class IPFSManager {
       lastModified: payload.lastModified, //*
       timestamp: moment().unix(),
       hash: temp, //*
-      videourl: video.cid,
+      videourl: video.cid.toString(),
+      kind: "klip:video",
+      version: 2
     }
     const { jws, linkedBlock } = await did.createDagJWS({
       metadata,
     })
-
     // put the JWS into the ipfs dag
     const jwsCid = await this.client.dag.put(jws, multicodec.DAG_CBOR)
     // put the payload into the ipfs dag
