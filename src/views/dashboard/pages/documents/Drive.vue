@@ -4,9 +4,7 @@
     <v-overlay :value="loading">
       <v-progress-circular indeterminate size="64" />
     </v-overlay>
-    <div>
-      <video ref="videoPlayer" class="video-js"></video>
-    </div>
+
     <v-col col-xs-6>
       <document-list
         :selectedValue.sync="selectedOnDocumentList"
@@ -29,10 +27,15 @@
       </document-list>
     </v-col>
     <v-col>
-      <d-player ref="player"></d-player>
-      <video-player :options="videoOptions" />
+        <video
+          controls="true"
+          ref="videoPlayer"
+          class="video-js vjs-default-skin"
+        ></video>
+      <!-- <div>
+        <video-player :options="videoOptions"/>
+      </div> -->
     </v-col>
-
     <v-col col-xs-6>
       <v-card v-if="showDetail" class="mx-auto">
         <v-list-item>
@@ -356,11 +359,12 @@ export default class DriveComponent extends Vue {
     controls: true,
     sources: [
       {
-        src: vidmp4,
+        src: " ",
         type: "video/mp4",
       },
     ],
   };
+  videoSource = "";
   player = null;
 
   get localAddress(): String {
@@ -383,7 +387,7 @@ export default class DriveComponent extends Vue {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-    await this.fetchDocuments();
+    //await this.fetchDocuments();
   }
 
   async onUnlock() {
@@ -480,13 +484,6 @@ export default class DriveComponent extends Vue {
     if (ks) {
       this.keystoreAddress = ks.address;
     }
-    this.player = videojs(
-      this.$refs.videoPlayer,
-      this.videoOptions,
-      function onPlayerReady() {
-        console.log("onPlayerReady", this);
-      }
-    );
   }
 
   beforeDestroy() {
@@ -753,6 +750,33 @@ export default class DriveComponent extends Vue {
       this.ipfsId = this.indexes;
       this.transactionStatus = "";
       //await this.fetchDocuments();
+      this.videoSource = "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString()
+      console.log("VIDEOSOURCE", this.videoSource)
+      this.player = videojs(
+        this.$refs.videoPlayer,
+        {
+          autoplay: true,
+          controls: true,
+          muted: true,
+          height: 100,
+          width: 100,
+          aspectRatio: "16:9",
+          fluid: false,
+          loop: true,
+          responsive: false,
+          liveui: true,
+          sources: [
+            {
+              src: this.videoSource,
+              type: "video/mp4",
+            },
+          ],
+        },
+        function onPlayerReady() {
+          console.log("onPlayerReady", this);
+        }
+      );
+
     } catch (e) {
       this.transactionStatus = "Ha ocurrido un error";
       console.log("confirmation error", e);
