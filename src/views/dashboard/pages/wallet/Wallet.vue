@@ -315,18 +315,18 @@
       </v-expansion-panel>
     </v-expansion-panels>
 
-      <xdv-drive
-        :updateWallet="currentKeystore"
-        :wallet="wallet"
-        :currentAddress="currentAddress"
-        :did="did"
-        :mode="'integrated'"
-        :contract="contract"
-        :daiContract="mockContract"
-        :web3="web3"
-        :ethersInstance="ethersInstance"
-        :ethersContract="ethersContract"
-      />
+    <xdv-drive
+      :updateWallet="currentKeystore"
+      :wallet="wallet"
+      :currentAddress="currentAddress"
+      :did="did"
+      :mode="'integrated'"
+      :contract="contract"
+      :daiContract="mockContract"
+      :web3="web3"
+      :ethersInstance="ethersInstance"
+      :ethersContract="ethersContract"
+    />
 
     <xdv-link-external-keystore
       v-model="linkExternals"
@@ -358,6 +358,7 @@ import { IPFSManager } from "./IPFSManager";
 import WalletDetails from "./WalletDetails.vue";
 import { DID } from "dids";
 import Web3 from "web3";
+import Onboard from "bnc-onboard";
 const KLIP = require("../../../../contracts/KLIP.sol/KLIP");
 const MockCoin = require("../../../../contracts/MockCoin.sol/MockCoin");
 const xdvAbi = require("../../../../abi/xdv");
@@ -460,8 +461,40 @@ export default class WalletComponent extends Vue {
   setImportSeedPhrase: boolean = false;
   importSeedPhrase: string = "";
   existingWallet: boolean = false;
+  onboard = null;
 
   async mounted() {
+    
+    this.onboard = Onboard({
+      dappId: "4182319a-e36b-463f-93ce-d79ee3ab53e4", // [String] The API key created by step one above
+      networkId: 97, // [Integer] The Ethereum network ID your Dapp uses.
+      subscriptions: {
+        wallet: async (wallet) => {
+          const account = await wallet.provider.enable();
+          this.currentAddress = account[0];
+          
+          this.web3 = new Web3(wallet.provider);
+          this.web3.eth.defaultAccount = account[0];
+          await this.bindContracts();
+          
+        },
+      },
+      walletSelect: {
+        wallets: [
+          {
+            walletName: "metamask",
+            appUrl:
+              "https://chrome.google.com/webstore/detail/binance-chain-wallet/fhbohimaelbohpjbbldcngcnapndodjp",
+            rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
+            //preferred: true,
+          },
+          // {
+          //   walletName: "walletConnect",
+          //   rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
+          // },
+        ],
+      },
+    });
     this.ipfs = new IPFSManager();
     this.didManager = new DIDManager();
 
@@ -491,11 +524,19 @@ export default class WalletComponent extends Vue {
 
     await this.loadWallets();
 
+    await this.onboard.walletSelect();
+    await this.onboard.walletCheck();
+
     this.loading = false;
 
-    const web3_data = await this.getWeb3();
-    this.web3 = web3_data.web3;
-    this.ethersInstance = web3_data.ethersInstance;
+    //const web3_data = await this.getWeb3();
+    //this.web3 = web3_data.web3;
+  }
+
+  async bindContracts() {
+    this.ethersInstance = new ethers.providers.Web3Provider(
+      this.web3.givenProvider
+    );
     const contractAddress = "0x03659591c344e90fD926cf9E4b463C5530422698";
     const mockContractAddress = "0xeB398229cDBB348E6076fd89d488FD14a05cA3B8";
     this.contract = new this.web3.eth.Contract(KLIP.abi, contractAddress);

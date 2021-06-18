@@ -27,11 +27,11 @@
       </document-list>
     </v-col>
     <v-col>
-        <video
-          controls="true"
-          ref="videoPlayer"
-          class="video-js vjs-default-skin"
-        ></video>
+      <video
+        controls="true"
+        ref="videoPlayer"
+        class="video-js vjs-default-skin"
+      ></video>
       <!-- <div>
         <video-player :options="videoOptions"/>
       </div> -->
@@ -221,6 +221,7 @@ import Web3 from "web3";
 import { BigNumber } from "bignumber.js";
 import { DocumentMetadata } from "@/views/dashboard/pages/wallet/IPFSManager";
 import { FileIcons } from "./FileIcons";
+
 //@ts-ignore
 import vidmp4 from "../../../../../public/vidmp4.mp4";
 import videojs from "video.js";
@@ -477,6 +478,7 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
+
     this.ipfs = new IPFSManager();
     await this.ipfs.start();
     await this.loadWallets();
@@ -699,6 +701,7 @@ export default class DriveComponent extends Vue {
       this.transactionStatus = "Creando transacción en blockchain...";
       const bob = this.contract.defaultAccount;
 
+      
       await this.daiContract.methods
         .approve(this.contract._address, "1000000000000000000")
         .send({
@@ -706,7 +709,7 @@ export default class DriveComponent extends Vue {
           gas: 400000,
           from: this.contract.defaultAccount,
         });
-
+        
       const txmint = await this.contract.methods
         .mint(
           "1", // qty
@@ -750,8 +753,9 @@ export default class DriveComponent extends Vue {
       this.ipfsId = this.indexes;
       this.transactionStatus = "";
       //await this.fetchDocuments();
-      this.videoSource = "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString()
-      console.log("VIDEOSOURCE", this.videoSource)
+      this.videoSource =
+        "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString();
+      console.log("VIDEOSOURCE", this.videoSource);
       this.player = videojs(
         this.$refs.videoPlayer,
         {
@@ -776,7 +780,6 @@ export default class DriveComponent extends Vue {
           console.log("onPlayerReady", this);
         }
       );
-
     } catch (e) {
       this.transactionStatus = "Ha ocurrido un error";
       console.log("confirmation error", e);

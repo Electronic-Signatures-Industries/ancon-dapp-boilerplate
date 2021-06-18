@@ -37,7 +37,7 @@
     "axios": "^0.19.2",
     "bl": "^4.0.2",
     "bn.js": "^5.1.1",
-    "bnc-onboard": "^1.6.0",
+    "bnc-onboard": "^1.28.0",
     "bs58": "^4.0.1",
     "cbor-sync": "^1.0.4",
     "class-validator": "^0.12.2",
