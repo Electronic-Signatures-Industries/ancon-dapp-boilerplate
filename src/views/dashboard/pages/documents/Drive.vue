@@ -889,7 +889,7 @@ export default class DriveComponent extends Vue {
       const bnAmount = new BigNumber(amount);
 
       /*if(bnAmount.gt(0)){*/
-        this.uploadStatus = "Aprovando la transaccion...";
+        this.uploadStatus = "Aprobando la transaccion...";
         await this.daiContract.methods.approve(spender, "9000000000000000000").send(
           { from: this.currentAddress, gasPrice: '22000000000', gas: 4000000 }
         );
