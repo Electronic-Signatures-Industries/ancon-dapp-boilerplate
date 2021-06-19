@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TransactionStatusDialog.vue should match snapshot 1`] = `
+<div data-app="true" class="v-application v-application--is-ltr theme--light" id="app">
+  <div class="v-overlay theme--dark" style="z-index: 5;">
+    <div class="v-overlay__scrim" style="opacity: 0; background-color: rgb(33, 33, 33); border-color: #212121;"></div>
+  </div>
+  <div class="v-application--wrap">
+    <div role="dialog" class="v-dialog__container" id="dialog"></div>
+  </div>
+</div>
+`;

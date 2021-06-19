@@ -209,9 +209,13 @@ export class Session {
         }
     }
 
-    static async getWalletRefs() {
-        const doc: any = await this.db.get(WALLET_REFS_KEY);
-        return Object.values(doc.refs);
+    static async getWalletRefs(): Promise<KeystoreIndex[]> {
+        try {
+            const doc: any = await this.db.get(WALLET_REFS_KEY);
+            return Object.values(doc.refs);
+        } catch (error) {
+            return [];
+        }
     }
 
     /**

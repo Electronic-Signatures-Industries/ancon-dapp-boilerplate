@@ -151,6 +151,7 @@
   </v-app-bar>
 </template>
 <script lang="ts">
+import VueQrcode from '@chenfengyuan/vue-qrcode';
 import { Session } from "../../../views/dashboard/pages/shared/Session";
 import copy from "copy-to-clipboard";
 // Utilities
@@ -158,7 +159,9 @@ import { mapState, mapMutations } from "vuex";
 export default {
   name: "Header",
 
-  components: {},
+  components: {
+    [VueQrcode.name]: VueQrcode
+  },
 
   props: {
     value: {

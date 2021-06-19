@@ -16,6 +16,8 @@ const IpfsBlockService = require('ipfs-block-service')
 const multicodec = require('multicodec')
 const Repo = require('ipfs-repo');
 
+export type DocumentMetadata = any;
+
 const initIpld = async (repo) => {
   //const repo = new IpfsRepo(ipfsRepoPath)
   //await repo.init({})

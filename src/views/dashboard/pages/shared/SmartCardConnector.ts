@@ -1,9 +1,5 @@
-import * as SockJS from 'sockjs-client';
-import { Client, Message, Stomp } from '@stomp/stompjs';
-import { filter, map, mergeMap } from 'rxjs/operators';
+import { CompatClient, Stomp } from '@stomp/stompjs';
 import { Subject } from 'rxjs';
-const os = require('os');
-const axios = require('axios');
 
 export interface SmartCardConnectorEvent {
     eventName: string;
@@ -14,15 +10,18 @@ export class SmartCardConnectorPKCS11 {
     module: string;
     subscribe: Subject<any> = new Subject();
     socket: any;
-    stompClient: any;
+    stompClient: CompatClient;
     constructor(private keyId?: string) {
         this.keyId = keyId;
     }
     async initialize() {
         this.connect();
     }
-    async getSlots() {
+    async getSlots(): Promise<void> {
         // const slots = await axios(`${CLIENT_API}/sc/get_slots`);
+        if (!this.stompClient.connected){
+            return;
+        }
         this.stompClient.publish({ destination: "/app/get_slots", skipContentLengthHeader: true });
     }
 
