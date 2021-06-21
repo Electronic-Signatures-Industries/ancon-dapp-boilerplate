@@ -413,7 +413,7 @@ export default class DriveComponent extends Vue {
   handleCopyDIDReference(item) {
     let ref;
     if (item.didReference) {
-      // copy(item.didReference.did);
+
       const sharedUrl = `https://app.xdv.digital/#/wallet?did=${item.didReference.did}`;
 
       // @ts-ignore
@@ -478,7 +478,6 @@ export default class DriveComponent extends Vue {
   }
 
   async mounted() {
-
     this.ipfs = new IPFSManager();
     await this.ipfs.start();
     await this.loadWallets();
@@ -683,6 +682,10 @@ export default class DriveComponent extends Vue {
     this.loading = false;
   }
 
+  /**
+   * Mints the document on Binance Smart Chain and stores it on IPFS
+   * @param files
+   */
   async createDocumentNode(files: File[]) {
     this.setEstimateGasDialog = false;
     this.setTransactionStatusDialog = true;
@@ -692,16 +695,15 @@ export default class DriveComponent extends Vue {
     this.showVideo = false;
 
     try {
-      this.transactionStatus = "Guardando archivo...";
+      this.transactionStatus = "Saving file...";
       this.ipfs = new IPFSManager();
       await this.ipfs.start();
       this.indexes = await this.ipfs.addVideoObject(this.did, files[0]);
 
       console.log("files", files);
-      this.transactionStatus = "Creando transacción en blockchain...";
+      this.transactionStatus = "Creating transaction on the blockchain...";
       const bob = this.contract.defaultAccount;
 
-      
       await this.daiContract.methods
         .approve(this.contract._address, "1000000000000000000")
         .send({
@@ -762,10 +764,14 @@ export default class DriveComponent extends Vue {
     }
   }
 
+  /**
+   * Instances video player with hardcoded custom config
+   * @param files
+   */
+
   instanceVideoPlayer(url: string) {
     this.videoSource = url;
     console.log("VIDEOSOURCE", this.videoSource);
-    //Videos js player instance created with hardcoded custom config
     this.player = videojs(
       this.$refs.videoPlayer,
       {
@@ -790,10 +796,6 @@ export default class DriveComponent extends Vue {
         console.log("onPlayerReady", this);
       }
     );
-    } catch (e) {
-      this.transactionStatus = "Ha ocurrido un error";
-      console.log("confirmation error", e);
-    }
   }
 
   getUrl(ref) {

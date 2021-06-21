@@ -5,7 +5,7 @@
   >
     <v-card>
       <v-card-title>
-        <span class="headline">Transacción</span>
+        <span class="headline">Transaction</span>
       </v-card-title>
 
       <v-card-text>

@@ -486,12 +486,7 @@ export default class WalletComponent extends Vue {
             appUrl:
               "https://chrome.google.com/webstore/detail/binance-chain-wallet/fhbohimaelbohpjbbldcngcnapndodjp",
             rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
-            //preferred: true,
           },
-          // {
-          //   walletName: "walletConnect",
-          //   rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
-          // },
         ],
       },
     });
@@ -529,8 +524,6 @@ export default class WalletComponent extends Vue {
 
     this.loading = false;
 
-    //const web3_data = await this.getWeb3();
-    //this.web3 = web3_data.web3;
   }
 
   async bindContracts() {
@@ -610,8 +603,6 @@ export default class WalletComponent extends Vue {
       return;
     }
 
-    //    this.googleOnboarding = true;
-
     const index: any = await Session.getWalletRefs();
 
     const promises = index.map(async (i: KeystoreIndex) => {
@@ -647,7 +638,6 @@ export default class WalletComponent extends Vue {
         action: moment(i.created).fromNow(),
         title: i.name,
         headline,
-        // subtitle: `id ${(i.keystore || '').substring(0, 8)}...`,
       };
     });
 
@@ -739,8 +729,7 @@ export default class WalletComponent extends Vue {
       networkId: 97,
       chainId: 97,
     };
-    const providerUrl = "https://data-seed-prebsc-1-s2.binance.org:8545/"; //'https://bsc-dataseed1.ninicoin.io/';
-    // const providerUrl = 'http://localhost:8545/'; //'https://bsc-dataseed1.ninicoin.io/';
+    const providerUrl = "https://data-seed-prebsc-1-s2.binance.org:8545/";
     const provider = new Web3.providers.HttpProvider(providerUrl);
     const web3 = new Web3(provider);
     web3.setProvider(provider);
@@ -811,8 +800,8 @@ export default class WalletComponent extends Vue {
         this.currentAddress = wallet.ethersWallet.address;
         this.alertMessage =
           "Creating DID (Decentralized Identity)...please wait";
-        keystoreIndexItem.address = this.currentAddress; //pubKeyToAddress(keys.getPublic("array"));
-        //this.contract = new ethers.Contract(xdvAbi.XDVDocumentAnchoring.address.bsctestnet, xdvAbi.XDVDocumentAnchoring.raw.abi, provider.getSigner());
+        keystoreIndexItem.address = this.currentAddress;
+        
         keystoreIndexItem.name = this.oauthName;
         await Session.set({ ks: keystoreIndexItem });
       }
