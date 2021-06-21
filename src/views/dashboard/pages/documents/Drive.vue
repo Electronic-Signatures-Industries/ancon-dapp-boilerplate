@@ -709,7 +709,7 @@ export default class DriveComponent extends Vue {
           gas: 400000,
           from: this.contract.defaultAccount,
         });
-        
+
       const txmint = await this.contract.methods
         .mint(
           "1", // qty
@@ -753,33 +753,43 @@ export default class DriveComponent extends Vue {
       this.ipfsId = this.indexes;
       this.transactionStatus = "";
       //await this.fetchDocuments();
-      this.videoSource =
-        "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString();
-      console.log("VIDEOSOURCE", this.videoSource);
-      this.player = videojs(
-        this.$refs.videoPlayer,
-        {
-          autoplay: true,
-          controls: true,
-          muted: true,
-          height: 100,
-          width: 100,
-          aspectRatio: "16:9",
-          fluid: false,
-          loop: true,
-          responsive: false,
-          liveui: true,
-          sources: [
-            {
-              src: this.videoSource,
-              type: "video/mp4",
-            },
-          ],
-        },
-        function onPlayerReady() {
-          console.log("onPlayerReady", this);
-        }
-      );
+
+      this.instanceVideoPlayer("https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString());
+
+    } catch (e) {
+      this.transactionStatus = "An error has occurred";
+      console.log("confirmation error", e);
+    }
+  }
+
+  instanceVideoPlayer(url: string) {
+    this.videoSource = url;
+    console.log("VIDEOSOURCE", this.videoSource);
+    //Videos js player instance created with hardcoded custom config
+    this.player = videojs(
+      this.$refs.videoPlayer,
+      {
+        autoplay: true,
+        controls: true,
+        muted: true,
+        height: 100,
+        width: 100,
+        aspectRatio: "16:9",
+        fluid: false,
+        loop: true,
+        responsive: false,
+        liveui: true,
+        sources: [
+          {
+            src: this.videoSource,
+            type: "video/mp4",
+          },
+        ],
+      },
+      function onPlayerReady() {
+        console.log("onPlayerReady", this);
+      }
+    );
     } catch (e) {
       this.transactionStatus = "Ha ocurrido un error";
       console.log("confirmation error", e);
