@@ -13,9 +13,9 @@
       </v-card-text>
       <v-card show="showTransactionCancelBtn">
         Trx hash
-          <a target="_blank" :href="'https://testnet.bscscan.com/tx/' + transationAddress">{{ transationAddress }}</a><br/>
+          <a target="_blank" :href="'https://testnet.bscscan.com/tx/' + transationAddress">{{'https://testnet.bscscan.com/tx/'+transationAddress }}</a><br/>
         IPLD Url
-          <a target="_blank" :href="'https://explore.ipld.io/#/explore/' + ipfsId + '/link'">{{ ipfsId }}</a>
+          <a target="_blank" :href="'https://explore.ipld.io/#/explore/' + ipfsId + '/link'">{{ 'https://explore.ipld.io/#/explore/'+ ipfsId }}</a>
       </v-card>
 
       <v-card-actions >
