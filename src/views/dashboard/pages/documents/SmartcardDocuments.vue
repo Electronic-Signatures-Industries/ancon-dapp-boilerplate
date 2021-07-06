@@ -381,7 +381,9 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-  async anchorBlockchain() {}
+  async anchorBlockchain() {
+    // anchor to nft
+  }
 
   async printPdf() {}
 }
