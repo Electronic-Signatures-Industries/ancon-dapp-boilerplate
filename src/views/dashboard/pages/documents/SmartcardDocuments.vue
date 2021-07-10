@@ -279,6 +279,9 @@ import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
+import { ethers } from "ethers";
+const xdvAbi = require('../../../../abi/xdv');
+
 
 @Component({
   components: {
@@ -306,6 +309,12 @@ export default class SmartcardDocuments extends Vue {
   search = {};
   searchInput = null;
   reports = [];
+  currentAccount: any;
+  web3: ethers.providers.Web3Provider;
+  contract: any;
+  daiContract: any;
+  ethersContract: any;
+  ethersInstance: ethers.providers.Web3Provider;
 
   async mounted() {}
 
@@ -391,98 +400,61 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-  async getWeb3() {
-    // Init with HD mnemonic (server side)
-    const network = {
-      name: "BSC",
-      networkId: 97,
-      chainId: 97,
-    };
-    const providerUrl = "https://data-seed-prebsc-1-s2.binance.org:8545/"; //'https://bsc-dataseed1.ninicoin.io/';
-    const provider = new Web3.providers.HttpProvider(providerUrl);
-    const web3 = new Web3(provider);
-    web3.setProvider(provider);
-    this.web3 = web3;
-    const ethersInstance = new ethers.providers.Web3Provider(
-      web3.currentProvider as any
-    );
-    /*
-    const pk = (await this.wallet.getPrivateKey("ES256K"));
-    const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
-    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
-
-    let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
-    const private_key = mnemonicWallet.privateKey;
-    const account = web3.eth.accounts.privateKeyToAccount(private_key);
-    web3.eth.accounts.wallet.add(account);
-    this.web3.eth.defaultAccount = account.address;
-    this.currentAddress = account.address;
-
-    return { web3, ethersInstance };
-  }
 
   async anchorBlockchain() {
     // anchor to nft
-    const web3_data = await this.getWeb3();
-    this.web3 = web3_data.web3;
-    this.ethersInstance = web3_data.ethersInstance;
-    const contractAddress = "0xeE99AdEb56B01B005EC24884F3F6E770E7e6f926";
-    const daiContractAddress = "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3";
-    this.contract = new this.web3.eth.Contract(
-      xdvAbi.XDVDocumentAnchoring.raw.abi,
-      xdvAbi.XDVDocumentAnchoring.address.bsctestnet
-    );
-    this.daiContract = new this.web3.eth.Contract(
+    this.currentAccount = (await BinanceChain.enable())[0];
+    this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain)
+
+    this.daiContract = new ethers.Contract(
+      xdvAbi.DAI.address.bsctestnet,
       xdvAbi.DAI.raw.abi,
-      xdvAbi.DAI.address.bsctestnet
+      this.ethersInstance.getSigner()
     );
     this.ethersContract = new ethers.Contract(
       xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
       xdvAbi.XDVDocumentAnchoring.raw.abi,
-      this.ethersInstance.getSigner(this.currentAddress)
+      this.ethersInstance.getSigner()
     );
 
-    await this.daiContract.methods
-      .approve(this.contract._address, "1000000000000000000")
-      .send({
-        gasPrice: "22000000000",
-        gas: 400000,
-        from: this.contract.defaultAccount,
+    const approve = await this.daiContract.methods
+      .approve(this.contract._address, "1000000000000000000", {
+        gas: "22000000000",
+        gasLimit: 400000,
       });
+
+    await approve.wait();
 
     const txmint = await this.contract.methods
       .mint(
         "1", // qty
         bob,
         this.did.id, //
-        this.web3.utils.fromUtf8(this.indexes),
+        this.web3.utils.fromUtf8(this.manifest),
         false, // encrypted
         "xdv",
-        this.did.id
-      )
-      .send({
-        gasPrice: "22000000000",
-        gas: 4000000,
-        from: this.contract.defaultAccount,
+        this.did.id, {
+        gas: "22000000000",
+        gasLimit: 4000000,
       });
 
-    //await txmint.wait(1);
-    const filter = this.contract.getPastEvents("DocumentAnchored", {
-      toBlock: "latest",
-      fromBlock: 0,
-      filter: { user: this.localAddress },
-    });
+    await txmint.wait(1);
+    // const filter = this.contract.getPastEvents("DocumentAnchored", {
+    //   toBlock: "latest",
+    //   fromBlock: 0,
+    //   filter: { user: this.localAddress },
+    // });
 
-    const response = await filter;
-    const blockItem = response.reverse()[0];
-    const root = await this.ipfs.getObject(
-      this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
-    );
-    const document = root.value;
-    console.log("ROOT VALUE", root.value);
-    console.log("document", document);
-    this.showVideo = true;
-    this.videoBase64 = root.value.content;
+    // const response = await filter;
+    // const blockItem = response.reverse()[0];
+    // const root = await this.ipfs.getObject(
+    //   this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
+    // );
+    // const document = root.value;
+    // console.log("ROOT VALUE", root.value);
+    // console.log("document", document);
+    // this.showVideo = true;
+    // this.videoBase64 = root.value.content;
   }
 
   async printPdf() {}
