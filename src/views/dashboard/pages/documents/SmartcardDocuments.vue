@@ -124,8 +124,10 @@
             <v-list-item-content>
               <v-list-item-title>Indice</v-list-item-title>
               <v-list-item-subtitle>
-                  <v-btn @click="openCid(manifest)" text color="primary">{{ manifest }}</v-btn>
-                  </v-list-item-subtitle>
+                <v-btn @click="openCid(manifest)" text color="primary">{{
+                  manifest
+                }}</v-btn>
+              </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
 
@@ -151,62 +153,70 @@
       <v-spacer />
     </v-card-actions>
 
-<v-row>
-    <v-col cols="6" sm>
-    <v-list two-line flat style="z-index: -5">
-      <v-list-item-group active-class="indigo lighten-5" class="indigo--text">
-        <template v-for="(item, index) in items">
-          <v-list-item :key="item.file.name">
-            <template v-slot:default="{ active }">
-              <v-list-item-content>
-                <v-list-item-title v-text="item.file.name"></v-list-item-title>
-                <v-list-item-subtitle
-                  class="text--primary"
-                  v-text="item.cid"
-                ></v-list-item-subtitle>
-                <v-list-item-subtitle
-                  v-text="item.file.contentType"
-                ></v-list-item-subtitle>
-              </v-list-item-content>
-              <v-list-item-action>
-                <v-list-item-action-text
-                  v-text="item.action"
-                ></v-list-item-action-text>
+    <v-row>
+      <v-col cols="6" sm>
+        <v-list two-line flat style="z-index: -5">
+          <v-list-item-group
+            active-class="indigo lighten-5"
+            class="indigo--text"
+          >
+            <template v-for="(item, index) in items">
+              <v-list-item :key="item.file.name">
+                <template v-slot:default="{ active }">
+                  <v-list-item-content>
+                    <v-list-item-title
+                      v-text="item.file.name"
+                    ></v-list-item-title>
+                    <v-list-item-subtitle
+                      class="text--primary"
+                      v-text="item.cid"
+                    ></v-list-item-subtitle>
+                    <v-list-item-subtitle
+                      v-text="item.file.contentType"
+                    ></v-list-item-subtitle>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-list-item-action-text
+                      v-text="item.action"
+                    ></v-list-item-action-text>
 
-                <v-icon
-                  @click="verifyChain(item.cid)"
-                  v-if="!active"
-                  color="green lighten-1"
-                >
-                  mdi-certificate
-                </v-icon>
-              </v-list-item-action>
-            </template>
-          </v-list-item>
+                    <v-icon
+                      @click="verifyChain(item.cid)"
+                      v-if="!active"
+                      color="green lighten-1"
+                    >
+                      mdi-certificate
+                    </v-icon>
+                  </v-list-item-action>
+                </template>
+              </v-list-item>
 
-          <v-divider
-            v-if="index + 1 < items.length"
-            :key="index"
-          ></v-divider> </template></v-list-item-group></v-list
-  >
-    </v-col>
-    <v-col cols="6" sm>
-    <v-list two-line flat style="z-index: -5">
-      <v-list-item-group active-class="indigo lighten-5" class="indigo--text">
-        <template v-for="(item, index) in reports">
-          <v-list-item :key="index">
-              <v-list-item-content>
+              <v-divider
+                v-if="index + 1 < items.length"
+                :key="index"
+              ></v-divider> </template></v-list-item-group
+        ></v-list>
+      </v-col>
+      <v-col cols="6" sm>
+        <v-list two-line flat style="z-index: -5">
+          <v-list-item-group
+            active-class="indigo lighten-5"
+            class="indigo--text"
+          >
+            <template v-for="(item, index) in reports">
+              <v-list-item :key="index">
+                <v-list-item-content>
                   {{ item }}
-              </v-list-item-content>
-          </v-list-item>
+                </v-list-item-content>
+              </v-list-item>
 
-          <v-divider
-            v-if="index + 1 < items.length"
-            :key="index"
-          ></v-divider> </template></v-list-item-group></v-list
-  >        
-    </v-col>
-</v-row>
+              <v-divider
+                v-if="index + 1 < items.length"
+                :key="index"
+              ></v-divider> </template></v-list-item-group
+        ></v-list>
+      </v-col>
+    </v-row>
     <v-card>
       <!-- 
     <share-q-r-dialog
@@ -286,7 +296,7 @@ export default class SmartcardDocuments extends Vue {
   ipfs: any = {};
   report: unknown = {};
   cids: any = [];
-  manifest: any = '';
+  manifest: any = "";
   items: any = [];
   did = "";
   alertMessage = "";
@@ -322,7 +332,7 @@ export default class SmartcardDocuments extends Vue {
       [CAGOB, CAPC2, CARAIZ]
     );
 
-    return report.map(i => `${i.title}: ${i.subtitle}`).join('\r\n');
+    return report.map((i) => `${i.title}: ${i.subtitle}`).join("\r\n");
   }
 
   async createDocumentNode(files?: File[]) {
@@ -364,8 +374,8 @@ export default class SmartcardDocuments extends Vue {
           },
         ];
         this.reports = [
-            ...this.reports,
-            await this.verifyChain(cid.toString())
+          ...this.reports,
+          await this.verifyChain(cid.toString()),
         ];
       }
       this.did = didRSA.did.id;
@@ -381,8 +391,98 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
+  async getWeb3() {
+    // Init with HD mnemonic (server side)
+    const network = {
+      name: "BSC",
+      networkId: 97,
+      chainId: 97,
+    };
+    const providerUrl = "https://data-seed-prebsc-1-s2.binance.org:8545/"; //'https://bsc-dataseed1.ninicoin.io/';
+    const provider = new Web3.providers.HttpProvider(providerUrl);
+    const web3 = new Web3(provider);
+    web3.setProvider(provider);
+    this.web3 = web3;
+    const ethersInstance = new ethers.providers.Web3Provider(
+      web3.currentProvider as any
+    );
+    /*
+    const pk = (await this.wallet.getPrivateKey("ES256K"));
+    const private_key = pk.getPrivate("hex");//.getSecret('hex'); 
+    const account = web3.eth.accounts.privateKeyToAccount('0x'+private_key);*/
+
+    let mnemonicWallet = ethers.Wallet.fromMnemonic(this.wallet.mnemonic);
+    const private_key = mnemonicWallet.privateKey;
+    const account = web3.eth.accounts.privateKeyToAccount(private_key);
+    web3.eth.accounts.wallet.add(account);
+    this.web3.eth.defaultAccount = account.address;
+    this.currentAddress = account.address;
+
+    return { web3, ethersInstance };
+  }
+
   async anchorBlockchain() {
     // anchor to nft
+    const web3_data = await this.getWeb3();
+    this.web3 = web3_data.web3;
+    this.ethersInstance = web3_data.ethersInstance;
+    const contractAddress = "0xeE99AdEb56B01B005EC24884F3F6E770E7e6f926";
+    const daiContractAddress = "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3";
+    this.contract = new this.web3.eth.Contract(
+      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      xdvAbi.XDVDocumentAnchoring.address.bsctestnet
+    );
+    this.daiContract = new this.web3.eth.Contract(
+      xdvAbi.DAI.raw.abi,
+      xdvAbi.DAI.address.bsctestnet
+    );
+    this.ethersContract = new ethers.Contract(
+      xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
+      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      this.ethersInstance.getSigner(this.currentAddress)
+    );
+
+    await this.daiContract.methods
+      .approve(this.contract._address, "1000000000000000000")
+      .send({
+        gasPrice: "22000000000",
+        gas: 400000,
+        from: this.contract.defaultAccount,
+      });
+
+    const txmint = await this.contract.methods
+      .mint(
+        "1", // qty
+        bob,
+        this.did.id, //
+        this.web3.utils.fromUtf8(this.indexes),
+        false, // encrypted
+        "xdv",
+        this.did.id
+      )
+      .send({
+        gasPrice: "22000000000",
+        gas: 4000000,
+        from: this.contract.defaultAccount,
+      });
+
+    //await txmint.wait(1);
+    const filter = this.contract.getPastEvents("DocumentAnchored", {
+      toBlock: "latest",
+      fromBlock: 0,
+      filter: { user: this.localAddress },
+    });
+
+    const response = await filter;
+    const blockItem = response.reverse()[0];
+    const root = await this.ipfs.getObject(
+      this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
+    );
+    const document = root.value;
+    console.log("ROOT VALUE", root.value);
+    console.log("document", document);
+    this.showVideo = true;
+    this.videoBase64 = root.value.content;
   }
 
   async printPdf() {}
