@@ -187,6 +187,15 @@
                     >
                       mdi-certificate
                     </v-icon>
+
+
+                    <v-icon
+                      @click="anchorBlockchain(item.cid)"
+                      v-if="!active"
+                      color="blue lighten-1"
+                    >
+                      mdi-anchor
+                    </v-icon>                    
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -280,7 +289,7 @@ import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
 import { ethers } from "ethers";
-const xdvAbi = require('../../../../abi/xdv');
+const xdvnftAbi = require('../../../../abi/xdvnft');
 
 
 @Component({
@@ -401,40 +410,35 @@ export default class SmartcardDocuments extends Vue {
   }
 
 
-  async anchorBlockchain() {
+  async anchorBlockchain(uri: string) {
     // anchor to nft
     this.currentAccount = (await BinanceChain.enable())[0];
     this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain)
 
     this.daiContract = new ethers.Contract(
-      xdvAbi.DAI.address.bsctestnet,
-      xdvAbi.DAI.raw.abi,
+      xdvnftAbi.DAI.address.bsctestnet,
+      xdvnftAbi.DAI.raw.abi,
       this.ethersInstance.getSigner()
     );
     this.ethersContract = new ethers.Contract(
-      xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
-      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      xdvnftAbi.XDVNFT.address.bsctestnet,
+      xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
 
-    const approve = await this.daiContract.methods
-      .approve(this.contract._address, "1000000000000000000", {
-        gas: "22000000000",
+    const approve = await this.daiContract.functions
+      .approve(this.ethersContract.address, "1000000000000000000", {
+        gasPrice: "22000000000",
         gasLimit: 400000,
       });
 
-    await approve.wait();
+    await approve.wait(1);
 
-    const txmint = await this.contract.methods
+    const txmint = await this.ethersContract.functions
       .mint(
-        "1", // qty
-        bob,
-        this.did.id, //
-        this.web3.utils.fromUtf8(this.manifest),
-        false, // encrypted
-        "xdv",
-        this.did.id, {
-        gas: "22000000000",
+        this.currentAccount,
+        uri, {
+        gasPrice: "22000000000",
         gasLimit: 4000000,
       });
 
