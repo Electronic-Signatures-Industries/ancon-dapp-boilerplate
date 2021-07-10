@@ -385,6 +385,7 @@ import { DID } from "dids";
 import Web3 from "web3";
 const xdvAbi = require('../../../../abi/xdv');
 
+
 // Extra declarations missing from `vue-google-oauth2`
 declare module "vue-property-decorator" {
   interface Vue {
