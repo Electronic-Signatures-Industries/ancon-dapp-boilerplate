@@ -20,10 +20,10 @@
     </v-row>
     <v-row>
       <v-col cols="3" align="right">
-        <v-btn color="pink" dark> Simple </v-btn>
+        <v-btn color="pink" @click="createDocumentSimple" dark> Simple </v-btn>
       </v-col>
       <v-col cols="3" align="center">
-        <v-btn color="pink"    @click="createDocumentNode" dark> Protected </v-btn>
+        <v-btn color="pink" @click="createDocumentNode" dark> Protected </v-btn>
       </v-col>
       <v-col cols="6" align="left">
         <v-radio-group v-model="typelink.mode" mandatory row>
@@ -98,7 +98,7 @@
                     </v-icon>
 
                     <v-icon
-                      @click="anchorBlockchain(item.cid)"
+                      @click="mintNft(item.cid)"
                       v-if="!active"
                       color="blue lighten-1"
                     >
@@ -178,13 +178,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- <xdv-upload
-      :loading="loading"
-      :show.sync="canUpload"
-      :uploadStatus="uploadStatus"
-      @result="createDocumentNode"
-    /> -->
   </v-container>
 </template>
 <script lang="ts">
@@ -211,7 +204,7 @@ export default class SmartcardDocuments extends Vue {
   pin = "";
   showPassword = false;
   uploadStatus = false;
-  typelink = { mode: 2};
+  typelink = { mode: 2 };
   unlockPin = false;
   ipfs: any = {};
   report: unknown = {};
@@ -261,6 +254,26 @@ export default class SmartcardDocuments extends Vue {
     return report.map((i) => `${i.title}: ${i.subtitle}`).join("\r\n");
   }
 
+
+  async xdvifySimple() {
+    
+    const lnk = await this.createDocumentNode(this.files);
+    if (this.typelink.mode === 1) {
+      await this.anchor(lnk)
+    } else {
+      await this.mintNft(lnk);
+    }
+  }
+
+  async xdvifyPro() {
+    const lnk = await this.createDocumentNode(this.files);
+    if (this.typelink.mode === 1) {
+      await this.anchor(lnk)
+    } else {
+      await this.mintNft(lnk);
+    }
+  }
+  /** Creates document node */
   async createDocumentNode(files?: File[]) {
     if (files.length > 0 && this.pin.length === 0) {
       this.files = files;
@@ -305,7 +318,7 @@ export default class SmartcardDocuments extends Vue {
         ];
       }
       this.did = didRSA.did.id;
-      this.manifest = await ipfsManager.addSignedObject(
+      return await ipfsManager.addSignedObject(
         Buffer.from(JSON.stringify({ index: true })),
         {
           signedFiles: this.cids,
@@ -315,9 +328,10 @@ export default class SmartcardDocuments extends Vue {
       this.loading = false;
     }
     this.loading = false;
+    return;
   }
 
-  async anchorBlockchain(uri: string) {
+  async mintNft(uri: string) {
     // anchor to nft
     this.currentAccount = (await BinanceChain.enable())[0];
     this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
