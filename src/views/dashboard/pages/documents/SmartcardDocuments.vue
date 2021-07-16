@@ -6,119 +6,22 @@
       color="indigo"
     ></v-progress-linear>
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-    <v-card class="mx-auto">
-      <v-toolbar color="indigo accent-4" dark>
-        <v-toolbar-title>Smartcard upload and sign</v-toolbar-title>
+          <v-row>
+            <v-col cols="1" xs="1">
+              <v-progress-circular
+                indeterminate v-if="loading"
+                color="primary"
+              ></v-progress-circular>
+            </v-col>
+            <v-col xs="12">
+              <v-file-input
+                multiple
+                show-size chips
+                label="Files"
+              ></v-file-input>
+            </v-col>
+          </v-row>
 
-        <v-spacer></v-spacer>
-        <v-autocomplete
-          v-model="cid"
-          :loading="loading"
-          :search-input.sync="search"
-          clearable
-          hide-details
-          @input="openCid"
-          hide-selected
-          return-object
-          label="Add IPLD address to query"
-          solo
-        >
-          <template v-slot:no-data>
-            <v-list-item>
-              <v-list-item-title> Add IPLD address to query </v-list-item-title>
-            </v-list-item>
-          </template>
-          <template v-slot:selection="{ attr, on, item, selected }">
-            <v-chip
-              v-bind="attr"
-              :input-value="selected"
-              color="green accent-5"
-              class="white--text"
-              v-on="on"
-            >
-              <v-icon left>mdi-link</v-icon>
-              <span v-text="item"></span>
-            </v-chip>
-            <v-chip
-              v-if="from"
-              v-bind="attr"
-              :input-value="from"
-              color="blue accent-5"
-              class="white--text"
-              v-on="on"
-            >
-              <v-icon left>mdi-link</v-icon>
-              <span v-text="item"></span>
-            </v-chip>
-          </template>
-          <template v-slot:item="{ item }">
-            <v-list-item-avatar
-              color="indigo"
-              class="headline font-weight-light white--text"
-            >
-              {{ item.address }}
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title v-text="item.name"></v-list-item-title>
-              <v-list-item-subtitle
-                v-text="item.address"
-              ></v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon>mdi-coin</v-icon>
-            </v-list-item-action>
-          </template>
-        </v-autocomplete>
-        <template v-slot:extension>
-          <v-btn color="red" dark small absolute bottom right fab>
-            <v-speed-dial transition="slide-y" v-model="fab" direction="left"
-              ><template v-slot:activator>
-                <v-icon>mdi-plus</v-icon>
-              </template>
-
-              <v-tooltip top>
-                <span>Upload</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-on="on"
-                    @click="canUpload = true"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-upload</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-
-              <v-tooltip top>
-                <span>Upload</span>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    fab
-                    dark
-                    v-if="selected.file && selected.file.name"
-                    v-on="on"
-                    @click="openCid(selected.cid)"
-                    small
-                    color="red accent-4"
-                  >
-                    <v-icon>mdi-magnify</v-icon>
-                  </v-btn>
-                </template></v-tooltip
-              >
-            </v-speed-dial>
-          </v-btn>
-          <!-- <v-tabs v-model="tab" align-with-title>
-            <v-tabs-slider color="yellow"></v-tabs-slider>
-            <v-tab v-for="item in activeSubscriptions" :key="item.title">
-              {{ item.title }}
-            </v-tab>
-          </v-tabs> -->
-        </template>
-      </v-toolbar>
-      <v-card-text v-if="items.length > 0">
         <v-list>
           <v-list-item>
             <v-list-item-content>
@@ -145,13 +48,8 @@
                 <v-list-item-subtitle>{{ item.value }}</v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
-          </template></v-list
-        ></v-card-text
-      ></v-card
-    >
-    <v-card-actions v-if="items.length > 0">
-      <v-spacer />
-    </v-card-actions>
+          </template>
+      </v-list>
 
     <v-row>
       <v-col cols="6" sm>
@@ -271,12 +169,12 @@
       </v-card>
     </v-dialog>
 
-    <xdv-upload
+    <!-- <xdv-upload
       :loading="loading"
       :show.sync="canUpload"
       :uploadStatus="uploadStatus"
       @result="createDocumentNode"
-    />
+    /> -->
   </v-container>
 </template>
 <script lang="ts">
