@@ -6,50 +6,61 @@
       color="indigo"
     ></v-progress-linear>
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-          <v-row>
-            <v-col cols="1" xs="1">
-              <v-progress-circular
-                indeterminate v-if="loading"
-                color="primary"
-              ></v-progress-circular>
-            </v-col>
-            <v-col xs="12">
-              <v-file-input
-                multiple
-                show-size chips
-                label="Files"
-              ></v-file-input>
-            </v-col>
-          </v-row>
+    <v-row>
+      <v-col cols="1" xs="1">
+        <v-progress-circular
+          indeterminate
+          v-if="loading"
+          color="primary"
+        ></v-progress-circular>
+      </v-col>
+      <v-col xs="12">
+        <v-file-input multiple show-size chips label="Files"></v-file-input>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="3" align="right">
+        <v-btn color="pink" dark> Simple </v-btn>
+      </v-col>
+      <v-col cols="3" align="center">
+        <v-btn color="pink"    @click="createDocumentNode" dark> Protected </v-btn>
+      </v-col>
+      <v-col cols="6" align="left">
+        <v-radio-group v-model="typelink.mode" mandatory row>
+          <v-radio label="Onchain timestamp" value="1"></v-radio>
+          <v-radio label="Non fungible token" value="2"></v-radio>
+        </v-radio-group>
+      </v-col>
+    </v-row>
 
-        <v-list>
-          <v-list-item>
-            <v-list-item-content>
-              <v-list-item-title>Indice</v-list-item-title>
-              <v-list-item-subtitle>
-                <v-btn @click="openCid(manifest)" text color="primary">{{
-                  manifest
-                }}</v-btn>
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
+    <v-list>
+      <v-list-item>
+        <v-list-item-content>
+          <v-list-item-title>Indice</v-list-item-title>
+          <v-list-item-subtitle>
+            <v-btn @click="openCid(manifest)" text color="primary">{{
+              manifest
+            }}</v-btn>
+          </v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
 
-          <v-list-item>
-            <v-list-item-content>
-              <v-list-item-title>DID</v-list-item-title>
-              <v-list-item-subtitle>{{ this.did }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
+      <v-list-item>
+        <v-list-item-content>
+          <v-list-item-title>DID</v-list-item-title>
+          <v-list-item-subtitle>{{ this.did }}</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
 
-          <template v-for="(item, index) in report">
-            <v-list-item :key="index">
-              <v-list-item-content>
-                <v-list-item-title>{{ item.name }}</v-list-item-title>
-                <v-list-item-subtitle>{{ item.value }}</v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </template>
-      </v-list>
+      <template v-for="(item, index) in report">
+        <v-list-item :key="index">
+          <v-list-item-content>
+            <v-list-item-title>{{ item.name }}</v-list-item-title>
+            <v-list-item-subtitle>{{ item.value }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
+    </v-list>
 
     <v-row>
       <v-col cols="6" sm>
@@ -86,14 +97,13 @@
                       mdi-certificate
                     </v-icon>
 
-
                     <v-icon
                       @click="anchorBlockchain(item.cid)"
                       v-if="!active"
                       color="blue lighten-1"
                     >
                       mdi-anchor
-                    </v-icon>                    
+                    </v-icon>
                   </v-list-item-action>
                 </template>
               </v-list-item>
@@ -187,8 +197,7 @@ import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
 import { ethers } from "ethers";
-const xdvnftAbi = require('../../../../abi/xdvnft');
-
+const xdvnftAbi = require("../../../../abi/xdvnft");
 
 @Component({
   components: {
@@ -202,6 +211,7 @@ export default class SmartcardDocuments extends Vue {
   pin = "";
   showPassword = false;
   uploadStatus = false;
+  typelink = { mode: 2};
   unlockPin = false;
   ipfs: any = {};
   report: unknown = {};
@@ -307,11 +317,10 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-
   async anchorBlockchain(uri: string) {
     // anchor to nft
     this.currentAccount = (await BinanceChain.enable())[0];
-    this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain)
+    this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
 
     this.daiContract = new ethers.Contract(
       xdvnftAbi.DAI.address.bsctestnet,
@@ -324,21 +333,25 @@ export default class SmartcardDocuments extends Vue {
       this.ethersInstance.getSigner()
     );
 
-    const approve = await this.daiContract.functions
-      .approve(this.ethersContract.address, "1000000000000000000", {
+    const approve = await this.daiContract.functions.approve(
+      this.ethersContract.address,
+      "1000000000000000000",
+      {
         gasPrice: "22000000000",
         gasLimit: 400000,
-      });
+      }
+    );
 
     await approve.wait(1);
 
-    const txmint = await this.ethersContract.functions
-      .mint(
-        this.currentAccount,
-        uri, {
+    const txmint = await this.ethersContract.functions.mint(
+      this.currentAccount,
+      uri,
+      {
         gasPrice: "22000000000",
         gasLimit: 4000000,
-      });
+      }
+    );
 
     await txmint.wait(1);
     // const filter = this.contract.getPastEvents("DocumentAnchored", {
