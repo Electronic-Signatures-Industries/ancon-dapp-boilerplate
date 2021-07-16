@@ -38,7 +38,7 @@ export default new Router({
 
       children: [
         {
-          path: "smartcard",
+          path: "/",
           name: "smartcard",
           // @ts-ignore
           component: SmartcardDocuments,
@@ -68,7 +68,7 @@ export default new Router({
         //   component: MessagingComponent
         // },
         {
-          path: "/",
+          path: "wallet",
           name: "wallet",
           // @ts-ignore
           component: WalletComponent

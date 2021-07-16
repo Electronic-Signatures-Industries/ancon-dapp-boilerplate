@@ -102,31 +102,6 @@
       <!-- <v-col> <b>Wallet address</b> {{ walletInfo.address }} </v-col> -->
     </v-row>
     <!---User -->
-    <v-menu
-      bottom
-      left
-      offset-y
-      origin="top right"
-      transition="scale-transition"
-    >
-      <template v-slot:activator="{ on }">
-        <v-btn dark icon v-on="on" class="mr-2">
-          <v-icon>mdi-qrcode-scan</v-icon>
-        </v-btn>
-      </template>
-
-      <v-list>
-        <v-list-item
-          v-for="(item, i) in walletActions"
-          :key="i"
-          @click="handleAction(item)"
-        >
-          <v-list-item-title>
-            {{ item.key }}
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu>
     <!---User -->
     <v-dialog v-model="shareAddressDialog" max-width="500px">
       <v-card>

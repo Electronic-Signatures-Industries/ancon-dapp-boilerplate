@@ -3,7 +3,7 @@
     <Header v-model="expandOnHover"></Header>
     
     <v-main>
-      <v-container fluid class="page-wrapper">
+      <v-container fluid>
         
         <router-view />
         <!-- <v-btn bottom color="success" dark fab fixed right  @click.stop="setCustomizerDrawer(!Customizer_drawer)">
