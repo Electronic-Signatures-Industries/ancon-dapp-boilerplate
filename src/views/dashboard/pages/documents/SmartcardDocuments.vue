@@ -33,7 +33,7 @@
       </v-col>
     </v-row>
 
-    <v-list>
+    <v-list v-if="loading">
       <v-list-item>
         <v-list-item-content>
           <v-list-item-title>Indice</v-list-item-title>
@@ -62,7 +62,7 @@
       </template>
     </v-list>
 
-    <v-row>
+    <v-row v-if="loading">
       <v-col cols="6" sm>
         <v-list two-line flat style="z-index: -5">
           <v-list-item-group
