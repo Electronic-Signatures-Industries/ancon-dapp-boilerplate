@@ -29,13 +29,15 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="3" align="right">
+      <v-col align="right" xs="6">
         <v-btn color="pink" @click="xdvifySimple" dark> Simple </v-btn>
       </v-col>
-      <v-col cols="3" align="center">
+      <v-col xs="6">
         <v-btn color="pink" @click="unlockPin = true" dark> Protected </v-btn>
       </v-col>
-      <v-col cols="6" align="left">
+    </v-row>
+    <v-row>
+      <v-col cols="12" xs="12">
         <v-radio-group v-model="typelink.mode" mandatory row>
           <v-radio label="Onchain timestamp" value="1"></v-radio>
           <v-radio label="Non fungible token" value="2"></v-radio>
@@ -43,25 +45,26 @@
       </v-col>
     </v-row>
 
-    <v-alert type="success" dense dismissible
+    <v-alert type="success" v-if="txid.length > 0" dense dismissible
       >{{ cids.length }} file(s) has been signed and uploaded</v-alert
     >
-    <v-card>
+    <v-card v-if="txid.length > 0">
       <v-row dense>
         <v-col cols="12">
           <v-card color="indigo" dark>
             <v-card-title class="text-h5"> Transaction details </v-card-title>
 
             <v-card-text>
-              Tx {{txid}}
+              <div>Tx {{ txid }}</div>
+              <div>{{ reportVerify }}</div>
             </v-card-text>
 
             <v-card-actions>
-              <v-btn @click="shareTo" text
-                ><v-icon right dark> mdi-link </v-icon> Share link
+              <v-btn @click="shareTo(manifest)" text
+                ><v-icon right dark> mdi-link </v-icon> Share
               </v-btn>
-              <v-btn @click="shareTo" text>
-                <v-icon right dark> mdi-certificate </v-icon> Verify link
+              <v-btn @click="verifyChain(manifest)" text>
+                <v-icon right dark> mdi-certificate </v-icon> Verify
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -128,10 +131,11 @@ import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
 import { BigNumber, ethers } from "ethers";
-import IPFS from "ipfs-core/src/components";
 import { IPFSManager } from "../wallet/IPFSManager";
+import { eddsa } from "elliptic";
+import { base64 } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
-const xdvAbi = require("../../../../abi/xdv");
+const xdvAbi = require("../../../../abi/xdv.json");
 
 @Component({
   components: {},
@@ -151,6 +155,7 @@ export default class SmartcardDocuments extends Vue {
   manifest: any = "";
   items: any = [];
   did = "";
+  reportVerify = '';
   alertMessage = "";
   fab = false;
   selected = [0];
@@ -166,7 +171,8 @@ export default class SmartcardDocuments extends Vue {
   ethersInstance: ethers.providers.Web3Provider;
   anchorContract: ethers.Contract;
   result: void;
-  txid: any;
+  txid: any = "";
+  DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
 
   async mounted() {}
 
@@ -206,21 +212,39 @@ export default class SmartcardDocuments extends Vue {
     );
   }
 
+  // ==========================================
+  //      Verify chain
+  // ==========================================
   async verifyChain(cid: string): Promise<any> {
-    const res = await (this.ipfs as IPLDManager).get(cid);
+    try {
+      const res = await (this.ipfs as IPLDManager).get(cid);
 
-    const obj = await this.ipfs?.getObject(cid);
-    const decoded = fromDagJWS(res.value).split(".");
-    const data = `${decoded[0]}.${decoded[1]}`;
-    const sig = `${decoded[2]}`;
-    const report = await X509Utils.verifyChain(
-      data,
-      sig,
-      obj.value.documentPubCert,
-      [CAGOB, CAPC2, CARAIZ]
-    );
+      const obj = await this.ipfs?.getObject(cid);
+      const decoded = fromDagJWS(res.value).split(".");
+      const data = `${decoded[0]}.${decoded[1]}`;
+      const sig = `${decoded[2]}`;
 
-    return report.map((i) => `${i.title}: ${i.subtitle}`).join("\r\n");
+      let pub = obj.value.documentPubCert;
+      let report = {};
+      if (obj.value.alg === "ED25519") {
+        // const kp = new eddsa('ed25519')
+        // const kk = kp.keyFromPublic((base64.decode(obj.value.public))
+        // const a = kk.verify(data, sig);
+        return;
+      }
+      report = await X509Utils.verifyChain(
+        data,
+        sig,
+        obj.value.documentPubCert,
+        [CAGOB, CAPC2, CARAIZ]
+      );
+
+      // @ts-ignore
+      this.reportVerify = report.map((i) => `${i.title}: ${i.subtitle}`).join("<br />");
+    } catch (e) {
+      // TODO: log
+      console.log(e);
+    }
   }
 
   /**
@@ -285,7 +309,6 @@ export default class SmartcardDocuments extends Vue {
     this.canUpload = false;
     this.loading = true;
     try {
-
       this.cids = [];
       this.items = [];
       const didManager = new DIDManager();
@@ -325,9 +348,12 @@ export default class SmartcardDocuments extends Vue {
       const lnk = await ipfsManager.addSignedObject(
         Buffer.from(JSON.stringify({ index: true })),
         {
+          alg: "RS256",
           signedFiles: this.cids,
+          certificate: (didRSA as any).certificate,
         }
       );
+      this.manifest = lnk.toString();
       return lnk.toString();
     } catch (e) {
       this.loading = false;
@@ -344,8 +370,13 @@ export default class SmartcardDocuments extends Vue {
     try {
       this.cids = [];
       this.items = [];
-      const ipfsManager = new IPFSManager();
-      await ipfsManager.start();
+      const oneTimeWallet = await this.createEphimericalWallet();
+      const didEDDSA = oneTimeWallet;
+      await didEDDSA.did.authenticate();
+
+      const ipfsManager = new IPLDManager(didEDDSA.did);
+      await ipfsManager.start(`https://ipfs.xdv.digital`);
+      this.ipfs = ipfsManager;
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
         const arr = await file.arrayBuffer();
@@ -369,10 +400,16 @@ export default class SmartcardDocuments extends Vue {
         // ];
       }
 
-      const lnk = await ipfsManager.client.add({
-        path: "index.json",
-        content: JSON.stringify(this.cids),
-      });
+      this.did = didEDDSA.did.id;
+      const lnk = await ipfsManager.addSignedObject(
+        Buffer.from(JSON.stringify({ index: true })),
+        {
+          alg: "ED25519",
+          publicKey: base64.encode(didEDDSA.publicKey),
+          signedFiles: this.cids,
+        }
+      );
+      this.manifest = lnk.toString();
       return lnk.toString();
     } catch (e) {
       this.loading = false;
@@ -380,10 +417,21 @@ export default class SmartcardDocuments extends Vue {
     return null;
   }
 
+  get web3Selector() {
+    // @ts-ignore
+    if (window.BinanceChain) {
+      // @ts-ignore
+      return BinanceChain;
+    } else {
+      // @ts-ignore
+      return window.ethereum;
+    }
+  }
+
   async mintNft(uri: string) {
     // anchor to nft
-    this.currentAccount = (await BinanceChain.enable())[0];
-    this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
+    this.currentAccount = (await this.web3Selector.enable())[0];
+    this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
 
     this.daiContract = new ethers.Contract(
       xdvnftAbi.DAI.address.bsctestnet,
@@ -401,7 +449,7 @@ export default class SmartcardDocuments extends Vue {
       this.ethersContract.address
     );
 
-    if (!(allowed as BigNumber).gt(1)) {
+    if (!(allowed as BigNumber).eq("1000000000000000000")) {
       const approve = await this.daiContract.functions.approve(
         this.ethersContract.address,
         "1000000000000000000",
@@ -423,14 +471,14 @@ export default class SmartcardDocuments extends Vue {
     );
 
     const log = await txmint.wait(1);
-   // debugger;
+    //
     this.txid = log.blockHash;
-//     console.log(
-//       log.events[3].decode(log.events[3].data, log.events[3].topics)
-//     );
-// console.log(
-//       log.events[2].decode(log.events[2].data, log.events[2].topics)
-//     );
+    //     console.log(
+    //       log.events[3].decode(log.events[3].data, log.events[3].topics)
+    //     );
+    // console.log(
+    //       log.events[2].decode(log.events[2].data, log.events[2].topics)
+    //     );
 
     // const filter = this.contract.getPastEvents("DocumentAnchored", {
     //   toBlock: "latest",
@@ -449,22 +497,21 @@ export default class SmartcardDocuments extends Vue {
     // this.showVideo = true;
     // this.videoBase64 = root.value.content;
     this.loading = false;
-
-}
+  }
 
   async anchor(uri: string) {
     // anchor to nft
-    this.currentAccount = (await BinanceChain.enable())[0];
-    this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
+    this.currentAccount = (await this.web3Selector.enable())[0];
+    this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
 
     this.daiContract = new ethers.Contract(
-      xdvAbi.DAI.address.bsctestnet,
-      xdvAbi.DAI.raw.abi,
+      this.DAIAddress,
+      xdvnftAbi.DAI.raw.abi,
       this.ethersInstance.getSigner()
     );
     this.anchorContract = new ethers.Contract(
-      xdvAbi.XDVDocumentAnchoring.address.bsctestnet,
-      xdvAbi.XDVDocumentAnchoring.raw.abi,
+      xdvAbi.networks["97"].address,
+      xdvAbi.abi,
       this.ethersInstance.getSigner()
     );
 
@@ -473,12 +520,12 @@ export default class SmartcardDocuments extends Vue {
       this.anchorContract.address
     );
 
-    if (!(allowed as BigNumber).gt(5)) {
+    if (!(allowed as BigNumber).eq("1000000000000000000")) {
       const approve = await this.daiContract.functions.approve(
         this.anchorContract.address,
         "1000000000000000000",
         {
-          gasPrice: "2200000000",
+          gasPrice: "22000000000",
           gasLimit: 4000000,
         }
       );
@@ -490,8 +537,9 @@ export default class SmartcardDocuments extends Vue {
       `did:ethr:${this.currentAccount}`,
       uri,
       "anchoring",
+      [this.currentAccount],
       {
-        gasPrice: "2200000000",
+        gasPrice: "22000000000",
         gasLimit: 400000,
       }
     );
@@ -499,7 +547,6 @@ export default class SmartcardDocuments extends Vue {
     const log = await document.wait(1);
     this.txid = log.blockHash;
     this.loading = false;
-
   }
   async printPdf() {}
 }
