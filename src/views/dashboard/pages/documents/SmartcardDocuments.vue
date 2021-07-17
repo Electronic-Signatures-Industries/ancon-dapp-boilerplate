@@ -190,6 +190,8 @@ import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
 import { ethers } from "ethers";
+import IPFS from "ipfs-core/src/components";
+import { IPFSManager } from "../wallet/IPFSManager";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 
 @Component({
@@ -256,10 +258,10 @@ export default class SmartcardDocuments extends Vue {
 
 
   async xdvifySimple() {
-    
-    const lnk = await this.createDocumentNode(this.files);
+    const lnk = await this.createSimpleDocumentNode(this.files);
+
     if (this.typelink.mode === 1) {
-      await this.anchor(lnk)
+     // await this.anchor(lnk)
     } else {
       await this.mintNft(lnk);
     }
@@ -268,7 +270,7 @@ export default class SmartcardDocuments extends Vue {
   async xdvifyPro() {
     const lnk = await this.createDocumentNode(this.files);
     if (this.typelink.mode === 1) {
-      await this.anchor(lnk)
+     // await this.anchor(lnk)
     } else {
       await this.mintNft(lnk);
     }
@@ -318,20 +320,69 @@ export default class SmartcardDocuments extends Vue {
         ];
       }
       this.did = didRSA.did.id;
-      return await ipfsManager.addSignedObject(
+      const lnk = await ipfsManager.addSignedObject(
         Buffer.from(JSON.stringify({ index: true })),
         {
           signedFiles: this.cids,
         }
       );
+      return lnk.toString();
     } catch (e) {
       this.loading = false;
     }
     this.loading = false;
-    return;
+    return null;
   }
 
-  async mintNft(uri: string) {
+  /** Creates simple document node */
+  async createSimpleDocumentNode(files?: File[]) {
+    if (files.length > 0 && this.pin.length === 0) {
+      this.files = files;
+      this.unlockPin = true;
+      return;
+    }
+    this.unlockPin = false;
+    this.canUpload = false;
+    this.loading = true;
+    try {
+      const ipfsManager =  new IPFSManager() 
+      await ipfsManager.start();
+
+      for (let index = 0; index < this.files.length; index++) {
+        const file = this.files[index];
+        const arr = await file.arrayBuffer();
+        const cid = await ipfsManager.client.files.add({
+          path: file.name,
+          content: arr,
+        })
+        this.cids.push({
+          cid,
+        });
+        this.items = [
+          ...this.items,
+          {
+            file,
+            cid,
+          },
+        ];
+        this.reports = [
+          ...this.reports,
+          await this.verifyChain(cid.toString()),
+        ];
+      }
+      const lnk = await ipfsManager.client.files.add({
+          path: 'index.json',
+          content: JSON.stringify(this.cids),
+        })
+      return lnk.toString();
+    } catch (e) {
+      this.loading = false;
+    }
+    this.loading = false;
+    return null;
+  }
+
+async mintNft(uri: string) {
     // anchor to nft
     this.currentAccount = (await BinanceChain.enable())[0];
     this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
