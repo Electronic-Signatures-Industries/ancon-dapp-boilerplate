@@ -5,6 +5,10 @@
       v-if="loading"
       color="teal"
     ></v-progress-linear>
+
+    <v-alert type="warning" dense dismissible
+      >Facturador Simple Gratuito con Firma Calificada DGI - Beta</v-alert
+    >
     <v-expansion-panels>
       <v-expansion-panel>
         <v-expansion-panel-header v-slot="{ open }">
@@ -95,7 +99,7 @@ import {
   DGen,
   Emisor,
   Receptor,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import TotalIndex from './widgets/totales/Totales.vue';
 import Countries from './widgets/Countries.vue';

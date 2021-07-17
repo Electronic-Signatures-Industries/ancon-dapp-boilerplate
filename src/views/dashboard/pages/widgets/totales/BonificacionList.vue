@@ -56,7 +56,7 @@ import {
   OtrosImpuestos,
   CodigoRetencion,
   Bonificaciones,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import moment from 'moment';
 import TotalBonificacion from './Bonificacion.vue';

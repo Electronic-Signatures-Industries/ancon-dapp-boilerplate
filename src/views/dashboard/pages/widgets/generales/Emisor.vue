@@ -80,7 +80,7 @@ import {
   TasaITBMS,
   ITBMS,
   Emisor,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import GenRucType from './RucType.vue';
 import { validate } from 'class-validator';

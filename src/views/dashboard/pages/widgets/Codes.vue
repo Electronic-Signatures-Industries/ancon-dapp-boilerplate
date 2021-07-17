@@ -15,7 +15,7 @@ import {
   
   DescBienes,
   CatBienes,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

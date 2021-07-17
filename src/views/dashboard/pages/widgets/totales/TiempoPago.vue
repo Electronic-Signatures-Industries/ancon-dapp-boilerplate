@@ -13,7 +13,7 @@
   ></v-row>
 </template>
 <script lang="ts">
-import { TypedRFE,  TiempoPago } from 'xdvplatform-wallet';
+import { TypedRFE,  TiempoPago } from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

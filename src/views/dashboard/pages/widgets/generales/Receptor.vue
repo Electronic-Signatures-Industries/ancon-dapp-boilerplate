@@ -76,7 +76,7 @@ import {
   TasaITBMS,
   ITBMS,
   Receptor,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Countries from '../Countries.vue';
 import GenRucType from './RucType.vue';
