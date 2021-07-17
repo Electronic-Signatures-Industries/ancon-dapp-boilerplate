@@ -285,6 +285,9 @@ export default class SmartcardDocuments extends Vue {
     this.canUpload = false;
     this.loading = true;
     try {
+
+      this.cids = [];
+      this.items = [];
       const didManager = new DIDManager();
       const pin = this.pin;
       const didRSA = await didManager.create3ID_PKCS11(pin);
@@ -339,6 +342,8 @@ export default class SmartcardDocuments extends Vue {
     this.canUpload = false;
     this.loading = true;
     try {
+      this.cids = [];
+      this.items = [];
       const ipfsManager = new IPFSManager();
       await ipfsManager.start();
       for (let index = 0; index < this.files.length; index++) {
@@ -372,7 +377,6 @@ export default class SmartcardDocuments extends Vue {
     } catch (e) {
       this.loading = false;
     }
-    this.loading = false;
     return null;
   }
 
@@ -419,7 +423,7 @@ export default class SmartcardDocuments extends Vue {
     );
 
     const log = await txmint.wait(1);
-    debugger;
+   // debugger;
     this.txid = log.blockHash;
 //     console.log(
 //       log.events[3].decode(log.events[3].data, log.events[3].topics)
@@ -444,7 +448,9 @@ export default class SmartcardDocuments extends Vue {
     // console.log("document", document);
     // this.showVideo = true;
     // this.videoBase64 = root.value.content;
-  }
+    this.loading = false;
+
+}
 
   async anchor(uri: string) {
     // anchor to nft
@@ -452,8 +458,8 @@ export default class SmartcardDocuments extends Vue {
     this.ethersInstance = new ethers.providers.Web3Provider(BinanceChain);
 
     this.daiContract = new ethers.Contract(
-      xdvnftAbi.DAI.address.bsctestnet,
-      xdvnftAbi.DAI.raw.abi,
+      xdvAbi.DAI.address.bsctestnet,
+      xdvAbi.DAI.raw.abi,
       this.ethersInstance.getSigner()
     );
     this.anchorContract = new ethers.Contract(
@@ -492,6 +498,8 @@ export default class SmartcardDocuments extends Vue {
 
     const log = await document.wait(1);
     this.txid = log.blockHash;
+    this.loading = false;
+
   }
   async printPdf() {}
 }
