@@ -9,7 +9,7 @@
   ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE, EntregaCafe } from 'xdvplatform-wallet';
+import { TypedRFE, EntregaCafe } from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 

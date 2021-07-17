@@ -10,7 +10,7 @@
   ></v-autocomplete>
 </template>
 <script lang="ts">
-import { TypedRFE,  Unidades } from 'xdvplatform-wallet';
+import { TypedRFE,  Unidades } from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

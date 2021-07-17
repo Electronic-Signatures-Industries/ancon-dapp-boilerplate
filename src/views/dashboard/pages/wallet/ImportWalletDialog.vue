@@ -30,7 +30,7 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import { TypedRFE, TasaISC, ISC } from 'xdvplatform-wallet';
+import { TypedRFE, TasaISC, ISC } from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

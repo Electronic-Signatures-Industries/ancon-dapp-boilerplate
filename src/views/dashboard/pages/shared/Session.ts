@@ -2,7 +2,7 @@ import moment from 'moment';
 import PouchDB from 'pouchdb';
 import QRCodeModal from '@walletconnect/qrcode-modal';
 import WalletConnect from '@walletconnect/client';
-import { DIDDocument, Wallet } from 'xdvplatform-wallet/src';
+
 import { DIDSigner, KeystoreIndex } from './KeystoreIndex';
 import { Token } from './Token';
 
@@ -16,7 +16,7 @@ export class Session {
     static timeout;
     static walletConnect: WalletConnect;
     static db = new PouchDB('xdv:session');
-    static SharedWallet: Wallet;
+    static SharedWallet;
 
     static async sign(data: Buffer, address: string, signerType: DIDSigner) {
         if (signerType === DIDSigner.Walletconnect) {
@@ -82,7 +82,7 @@ export class Session {
      * @param did DID id
      * @param name Name to save DID as
      */
-    public static async resolveAndStoreDID(wallet: Wallet, did: string, name: string = did) {
+    public static async resolveAndStoreDID(wallet, did: string, name: string = did) {
         const user = did.split(':')[2];
         // resolve DID
 
@@ -96,7 +96,7 @@ export class Session {
             swarmFeed,
             feedHash
         );
-        const document = resolver.resolve(did) as DIDDocument;
+        const document = resolver.resolve(did) as any;
         const pub = document.publicKey[0].publicKeyJwk;
 
         await wallet.setPublicKey(

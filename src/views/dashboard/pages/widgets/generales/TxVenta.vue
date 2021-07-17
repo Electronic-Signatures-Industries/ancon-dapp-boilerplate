@@ -12,7 +12,7 @@
 import {
   TypedRFE,
   TipoTransaccionVenta,
-} from 'xdvplatform-wallet';
+} from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { isNumber } from 'class-validator';
 

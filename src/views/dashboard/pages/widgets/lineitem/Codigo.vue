@@ -39,7 +39,7 @@
   </div>
 </template>
 <script lang="ts">
-import { TypedRFE,  CodigoItem } from 'xdvplatform-wallet';
+import { TypedRFE,  CodigoItem } from 'ifesa-dgi-factura-electronica';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({

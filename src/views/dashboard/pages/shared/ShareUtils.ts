@@ -6,7 +6,7 @@ import {
     validate,
     validateOrReject
     } from 'class-validator';
-import { JWTService, Wallet } from 'xdvplatform-wallet/src';
+    
 const cbor = require('cbor-sync');
 export class XDVFileFormat {
     @IsBase64()
@@ -80,21 +80,11 @@ export class ShareUtils {
     }
 
     static async openEphemeralLinkIndex(link: string) {
-        if (link.split(';').length < 2) return;
-        const wallet = new Wallet();
-        const swarmFeed = await wallet.getSwarmNodeQueryable(link.split(';')[0]);
-        // get document from reference
-        const jwt = await swarmFeed.bzz.downloadData(
-            link.split(';')[1]
-        );
-
-
-        const { payload } = JWTService.decodeWithSignature(jwt);
-
-        return payload;
+     
     }
 
-    static async getDocument(wallet: Wallet, address: string, txs: string, entry: string, hash: string) {
+    
+    static async getDocument(wallet, address: string, txs: string, entry: string, hash: string) {
         const swarmFeed = await wallet.getSwarmNodeQueryable(address);
 
         // get document from reference
