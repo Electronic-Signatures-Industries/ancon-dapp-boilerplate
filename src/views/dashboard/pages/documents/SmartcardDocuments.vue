@@ -7,8 +7,9 @@
     ></v-progress-linear>
 
     <v-alert type="warning" dense dismissible
-      >XDV 3.0 Release Candidate 1 - Codename Panama - BSC Testnet</v-alert
+      >XDV 3.0 Release Candidate 2 - Codename Panama - BSC Testnet</v-alert
     >
+
     <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
     <v-row>
       <v-col cols="1" xs="1">
@@ -18,7 +19,7 @@
           color="primary"
         ></v-progress-circular>
       </v-col>
-      <v-col xs="12">
+<v-col xs="6" sm="6" offset-sm="2">
         <v-file-input
           multiple
           show-size
@@ -27,23 +28,29 @@
           v-model="files"
         ></v-file-input>
       </v-col>
+    </v-row><v-row>
+<v-col xs="6" sm="6" offset-sm="3">
+        <v-autocomplete
+          v-model="select"
+          :items="config" chips 
+          multiple 
+          dense
+        ></v-autocomplete>
+      </v-col>
     </v-row>
     <v-row>
-      <v-col align="right" xs="6">
-        <v-btn color="pink" @click="xdvifySimple" dark> Simple </v-btn>
-      </v-col>
-      <v-col xs="6">
-        <v-btn color="pink" @click="unlockPin = true" dark> Protected </v-btn>
+      <v-col align="center" xs="12">
+        <v-btn color="pink" @click="xdvifySimple" dark> Sign </v-btn>
       </v-col>
     </v-row>
-    <v-row>
+    <!-- <v-row>
       <v-col cols="12" xs="12">
         <v-radio-group v-model="typelink.mode" mandatory row>
           <v-radio label="Onchain timestamp" value="1"></v-radio>
           <v-radio label="Non fungible token" value="2"></v-radio>
         </v-radio-group>
       </v-col>
-    </v-row>
+    </v-row> -->
 
     <v-alert type="success" v-if="txid.length > 0" dense dismissible
       >{{ cids.length }} file(s) has been signed and uploaded</v-alert
@@ -145,6 +152,26 @@ export default class SmartcardDocuments extends Vue {
   canUpload: boolean = false;
   loading: boolean = false;
   pin = "";
+  config = [{
+    text: 'Onchain timestamp',
+    value: 'onchain'
+  },{
+    text: 'Non fungible token',
+    value: 'nft'
+  },{
+    text: 'Simple',
+    value: 'simple'
+  },{
+    text: 'Protected',
+    value: 'protected'
+  },{
+    text: 'Timestamp protocol',
+    value: 'tsp'
+  },{
+    text: 'PDF stamp',
+    value: 'pdfstamp'
+  }];
+  select = ['simple','onchain'];     
   showPassword = false;
   uploadStatus = false;
   typelink = { mode: "2" };
@@ -155,7 +182,7 @@ export default class SmartcardDocuments extends Vue {
   manifest: any = "";
   items: any = [];
   did = "";
-  reportVerify = '';
+  reportVerify = "";
   alertMessage = "";
   fab = false;
   selected = [0];
@@ -240,7 +267,9 @@ export default class SmartcardDocuments extends Vue {
       );
 
       // @ts-ignore
-      this.reportVerify = report.map((i) => `${i.title}: ${i.subtitle}`).join("<br />");
+      this.reportVerify = report
+        .map((i) => `${i.title}: ${i.subtitle}`)
+        .join("<br />");
     } catch (e) {
       // TODO: log
       console.log(e);
