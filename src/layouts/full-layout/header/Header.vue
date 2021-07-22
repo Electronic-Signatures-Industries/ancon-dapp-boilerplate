@@ -1,16 +1,11 @@
 <template>
-  <v-app-bar app clipped-left clipped-right color="black" dark>
+  <v-app-bar app dense color="black" dark>
     <!---Logo part -->
     <v-toolbar-title class="align-center d-flex">
       <span class="logo-icon">
         <img src="../../../assets/xdv.png" width="64" />
       </span>
-      <!-- 
-        <span class="logo-text ml-2" :class="`${showLogo ? '' : 'hidelogo'}`">
-        <img src="../../../assets/images/logo-light-text.png" class="mt-2" />
-      </span> -->
     </v-toolbar-title>
-    <!---Logo part -->
     <!---Search part -->
     <!-- <v-btn dark icon class="mr-1 d-sm-block d-none" @click="searchbox">
       <v-icon>mdi-magnify</v-icon>
@@ -98,10 +93,26 @@
       </v-list>
     </v-menu> -->
     <!---Messages -->
-    <v-row>
-      <!-- <v-col> <b>Wallet address</b> {{ walletInfo.address }} </v-col> -->
-    </v-row>
     <!---User -->
+    
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on">
+          <v-icon>mdi-cast-education</v-icon>
+        </v-btn>
+      </template>
+      <span>Tutorials</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on">
+          <v-icon>mdi-power-standby</v-icon>
+        </v-btn>
+      </template>
+      <span>Connect</span>
+    </v-tooltip>
+
+
     <!---User -->
     <v-dialog v-model="shareAddressDialog" max-width="500px">
       <v-card>
@@ -126,7 +137,7 @@
   </v-app-bar>
 </template>
 <script lang="ts">
-import VueQrcode from '@chenfengyuan/vue-qrcode';
+import VueQrcode from "@chenfengyuan/vue-qrcode";
 import { Session } from "../../../views/dashboard/pages/shared/Session";
 import copy from "copy-to-clipboard";
 // Utilities
@@ -135,7 +146,7 @@ export default {
   name: "Header",
 
   components: {
-    [VueQrcode.name]: VueQrcode
+    [VueQrcode.name]: VueQrcode,
   },
 
   props: {
