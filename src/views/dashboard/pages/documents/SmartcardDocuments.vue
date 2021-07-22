@@ -19,7 +19,7 @@
           color="primary"
         ></v-progress-circular>
       </v-col>
-<v-col xs="6" sm="6" offset-sm="2">
+      <v-col xs="6" sm="6" offset-sm="2">
         <v-file-input
           multiple
           show-size
@@ -27,13 +27,14 @@
           label="Files"
           v-model="files"
         ></v-file-input>
-      </v-col>
-    </v-row><v-row>
-<v-col xs="6" sm="6" offset-sm="3">
+      </v-col> </v-row
+    ><v-row>
+      <v-col xs="6" sm="6" offset-sm="3">
         <v-autocomplete
           v-model="select"
-          :items="config" chips 
-          multiple 
+          :items="config"
+          chips
+          multiple
           dense
         ></v-autocomplete>
       </v-col>
@@ -152,26 +153,33 @@ export default class SmartcardDocuments extends Vue {
   canUpload: boolean = false;
   loading: boolean = false;
   pin = "";
-  config = [{
-    text: 'Onchain timestamp',
-    value: 'onchain'
-  },{
-    text: 'Non fungible token',
-    value: 'nft'
-  },{
-    text: 'Simple',
-    value: 'simple'
-  },{
-    text: 'Protected',
-    value: 'protected'
-  },{
-    text: 'Timestamp protocol',
-    value: 'tsp'
-  },{
-    text: 'PDF stamp',
-    value: 'pdfstamp'
-  }];
-  select = ['simple','onchain'];     
+  config = [
+    {
+      text: "Onchain timestamp",
+      value: "onchain",
+    },
+    {
+      text: "Non fungible token",
+      value: "nft",
+    },
+    {
+      text: "Simple",
+      value: "simple",
+    },
+    {
+      text: "Protected",
+      value: "protected",
+    },
+    {
+      text: "Timestamp protocol",
+      value: "tsp",
+    },
+    {
+      text: "PDF stamp",
+      value: "pdfstamp",
+    },
+  ];
+  select = ["simple", "onchain"];
   showPassword = false;
   uploadStatus = false;
   typelink = { mode: "2" };
@@ -305,25 +313,19 @@ export default class SmartcardDocuments extends Vue {
 
   // Stores documents and NFT
   async xdvifySimple() {
-    const lnk = await this.createSimpleDocumentNode(this.files);
-
-    if (this.typelink.mode === "1") {
+    let lnk;
+    if (this.select.includes("simple")) {
+      lnk = await this.createSimpleDocumentNode(this.files);
+    } else if (this.select.includes("protected")) {
+      lnk = await this.createDocumentNode(this.files);
+    }
+    if (this.select.includes("onchain")) {
       this.result = await this.anchor(lnk);
-    } else {
+    } else if (this.select.includes("nft")) {
       this.result = await this.mintNft(lnk);
     }
   }
-
-  // Stores digitally signed documents and NFT
-  async xdvifyProtected() {
-    const lnk = await this.createDocumentNode(this.files);
-    if (this.typelink.mode === "1") {
-      this.result = await this.anchor(lnk);
-    } else {
-      this.result = await this.mintNft(lnk);
-    }
-  }
-  /** Creates document node */
+   /** Creates document node */
   async createDocumentNode(files?: File[]) {
     if (
       files.length > 0 &&
