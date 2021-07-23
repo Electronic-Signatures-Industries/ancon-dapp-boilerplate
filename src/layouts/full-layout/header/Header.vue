@@ -94,10 +94,35 @@
     </v-menu> -->
     <!---Messages -->
     <!---User -->
-    
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <v-btn dark icon class="m-3" v-on="on">
+          <cryptoicon symbol="bnb" size="24" color="white" />
+        </v-btn>
+      </template>
+      <span>BNB {{ balances.bnb }}</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on">
+          <cryptoicon symbol="dai" size="24" color="white" />
+        </v-btn>
+      </template>
+      <span>DAI {{ balances.dai }}</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on">
+          <cryptoicon symbol="dai" size="24" color="white" />
+        </v-btn>
+      </template>
+      <span>DAI Mock {{ balances.daiMock }}</span>
+    </v-tooltip>
+
+
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on" href="https://twitter.com/molekilla/status/1416434509944393736?s=20">
           <v-icon>mdi-cast-education</v-icon>
         </v-btn>
       </template>
@@ -105,13 +130,21 @@
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn dark icon class="m-3" v-on="on">
-          <v-icon>mdi-power-standby</v-icon>
+        <v-btn dark icon class="m-3" v-on="on" @click="web3Connect">
+          <v-icon v-if="!connected">mdi-power-standby</v-icon>
+          <v-icon v-if="connected">mdi-wifi</v-icon>
         </v-btn>
       </template>
       <span>Connect</span>
     </v-tooltip>
-
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn dark icon class="m-3" v-on="on" href="/#/facturadorbeta">
+          <v-icon>mdi-xml</v-icon>
+        </v-btn>
+      </template>
+      <span>Prueba gratuita, modelador de factura electronica</span>
+    </v-tooltip>
 
     <!---User -->
     <v-dialog v-model="shareAddressDialog" max-width="500px">
@@ -142,6 +175,10 @@ import { Session } from "../../../views/dashboard/pages/shared/Session";
 import copy from "copy-to-clipboard";
 // Utilities
 import { mapState, mapMutations } from "vuex";
+import { ethers } from "ethers";
+const xdvnftAbi = require("../../../../src/abi/xdvnft");
+const xdvAbi = require("../../../../src/abi/xdv.json");
+
 export default {
   name: "Header",
 
@@ -156,6 +193,12 @@ export default {
     },
   },
   data: () => ({
+    balances: {
+      bnb: 0,
+      dai: 0,
+      daiMock: 0,
+    },
+    connected: false,
     shareAddressDialog: false,
     showLogo: true,
     showSearch: false,
@@ -243,11 +286,64 @@ export default {
     ...mapMutations({
       setSidebarDrawer: "SET_SIDEBAR_DRAWER",
     }),
+    web3Selector() {
+      // @ts-ignore
+      if (window.BinanceChain) {
+        // @ts-ignore
+        return BinanceChain;
+      } else {
+        // @ts-ignore
+        return window.ethereum;
+      }
+    },
+    async web3Connect() {
+      // @ts-ignore
+      if (window.BinanceChain) {
+        // @ts-ignore
+        await BinanceChain.enable();
+      } else {
+        // @ts-ignore
+        await window.ethereum.enable();
+      }
+      this.connected = true;
+      await this.loadBalances();
+    },
     showhideLogo: function () {
       this.showLogo = !this.showLogo;
     },
     searchbox: function () {
       this.showSearch = !this.showSearch;
+    },
+    async loadBalances() {
+      this.currentAccount = (await this.web3Selector().enable())[0];
+      this.ethersInstance = new ethers.providers.Web3Provider(
+        this.web3Selector()
+      );
+      this.DAIAddress = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+
+      const dai = new ethers.Contract(
+        this.DAIAddress,
+        xdvnftAbi.DAI.raw.abi,
+        this.ethersInstance.getSigner()
+      );
+
+      setInterval(async () => {
+        const [daiBal] = await dai.functions.balanceOf(this.currentAccount);
+        const daiMock = new ethers.Contract(
+          xdvnftAbi.DAI.address.bsctestnet,
+          xdvnftAbi.DAI.raw.abi,
+          this.ethersInstance.getSigner()
+        );
+        const [daiMockBal] = await daiMock.functions.balanceOf(
+          this.currentAccount
+        );
+
+        const bnb = await this.ethersInstance.getBalance(this.currentAccount);
+
+        this.balances.bnb = ethers.utils.formatEther(bnb);
+        this.balances.dai = ethers.utils.formatEther(daiBal);
+        this.balances.daiMock = ethers.utils.formatEther(daiMockBal);
+      }, 1250);
     },
     copyAddress: function () {
       copy(this.walletInfo.address);

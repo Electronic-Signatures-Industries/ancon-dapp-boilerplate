@@ -6,7 +6,7 @@
       color="indigo"
     ></v-progress-linear>
 
-    <v-alert type="warning" dense dismissible
+    <v-alert type="warning" dismissible
       >XDV 3.0 Release Candidate 2 - Codename Panama - BSC Testnet</v-alert
     >
 
@@ -41,7 +41,7 @@
     </v-row>
     <v-row>
       <v-col align="center" xs="12">
-        <v-btn color="pink" @click="xdvifySimple" dark> Sign </v-btn>
+        <v-btn color="pink" @click="xdvify" dark> Sign </v-btn>
       </v-col>
     </v-row>
     <!-- <v-row>
@@ -119,7 +119,7 @@
           <v-btn color="blue darken-1" text @click="unlockPin = false"
             >Cancel</v-btn
           >
-          <v-btn color="blue darken-1" text @click="xdvifyProtected">OK</v-btn>
+          <v-btn color="blue darken-1" text @click="xdvify">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -312,20 +312,20 @@ export default class SmartcardDocuments extends Vue {
   }
 
   // Stores documents and NFT
-  async xdvifySimple() {
+  async xdvify() {
     let lnk;
     if (this.select.includes("simple")) {
       lnk = await this.createSimpleDocumentNode(this.files);
     } else if (this.select.includes("protected")) {
       lnk = await this.createDocumentNode(this.files);
     }
-    if (this.select.includes("onchain")) {
+    if (lnk && this.select.includes("onchain")) {
       this.result = await this.anchor(lnk);
-    } else if (this.select.includes("nft")) {
+    } else if (lnk && this.select.includes("nft")) {
       this.result = await this.mintNft(lnk);
     }
   }
-   /** Creates document node */
+  /** Creates document node */
   async createDocumentNode(files?: File[]) {
     if (
       files.length > 0 &&
