@@ -3,7 +3,7 @@
     <v-col cols="12">
       <span
         >© Industrias de Firmas Electronicas SA,
-        {{ new Date().getFullYear() }} — https://ifesa.tech/ - XDV v3.0-rc.1 -
+        {{ new Date().getFullYear() }} — https://ifesa.tech/ - XDV v3.0-rc.2 -
         Made with <v-icon small color="red"> mdi-heart </v-icon> in Panama
       </span>
     </v-col>
