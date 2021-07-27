@@ -6,52 +6,71 @@
       color="indigo"
     ></v-progress-linear>
 
-    <v-alert type="warning" dismissible
-      >XDV 3.0 Release Candidate 2 - Codename Panama - BSC Testnet</v-alert
-    >
+    <v-card>
+      <v-tabs
+        background-color="deep-purple accent-4"
+        dark
+        right
+        v-model="tabIndex"
+      >
+        <v-tab v-for="item in tabitems" :key="item.key">
+          {{ item.label }}
+        </v-tab>
+      </v-tabs>
+      <v-tabs-items v-model="tabIndex">
+        <v-tab-item v-for="item in tabitems" :key="item.key">
+          <v-card flat>
+            <v-card-text>
+              <v-alert :type="alertType" v-if="alertMessage">{{
+                alertMessage
+              }}</v-alert>
+              <v-row>
+                <v-col cols="1" xs="1">
+                  <v-progress-circular
+                    indeterminate
+                    v-if="loading"
+                    color="primary"
+                  ></v-progress-circular>
+                </v-col>
+                <v-col xs="6" sm="6" offset-sm="2">
+                  <v-file-input
+                    multiple
+                    v-if="item.settings.signing !== 'pades'"
+                    show-size
+                    chips
+                    label="Files"
+                    v-model="files"
+                  ></v-file-input>
+                  <v-file-input
+                    multiple
+                    v-if="item.settings.signing === 'pades'"
+                    show-size
+                    chips
+                    :accept="item.settings.signing.contentType"
+                    label="PDF Documents"
+                    v-model="files"
+                  ></v-file-input>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="12" xs="12">
+                  <v-radio-group v-model="typelink.mode" mandatory row>
+                    <v-radio label="Onchain timestamp" value="1"></v-radio>
+                    <v-radio label="Non fungible token" value="2"></v-radio>
+                  </v-radio-group>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-tab-item>
+      </v-tabs-items>
+    </v-card>
 
-    <v-alert :type="alertType" v-if="alertMessage">{{ alertMessage }}</v-alert>
-    <v-row>
-      <v-col cols="1" xs="1">
-        <v-progress-circular
-          indeterminate
-          v-if="loading"
-          color="primary"
-        ></v-progress-circular>
-      </v-col>
-      <v-col xs="6" sm="6" offset-sm="2">
-        <v-file-input
-          multiple
-          show-size
-          chips
-          label="Files"
-          v-model="files"
-        ></v-file-input>
-      </v-col> </v-row
-    ><v-row>
-      <v-col xs="6" sm="6" offset-sm="3">
-        <v-autocomplete
-          v-model="select"
-          :items="config"
-          chips
-          multiple
-          dense
-        ></v-autocomplete>
-      </v-col>
-    </v-row>
     <v-row>
       <v-col align="center" xs="12">
         <v-btn color="pink" @click="xdvify" dark> Sign </v-btn>
       </v-col>
     </v-row>
-    <!-- <v-row>
-      <v-col cols="12" xs="12">
-        <v-radio-group v-model="typelink.mode" mandatory row>
-          <v-radio label="Onchain timestamp" value="1"></v-radio>
-          <v-radio label="Non fungible token" value="2"></v-radio>
-        </v-radio-group>
-      </v-col>
-    </v-row> -->
 
     <v-alert type="success" v-if="txid.length > 0" dense dismissible
       >{{ cids.length }} file(s) has been signed and uploaded</v-alert
@@ -131,6 +150,7 @@ import moment from "moment";
 import {
   DIDManager,
   IPLDManager,
+  SmartCardConnectorPKCS11,
   Wallet,
   X509Utils,
 } from "xdv-universal-wallet-core";
@@ -153,33 +173,6 @@ export default class SmartcardDocuments extends Vue {
   canUpload: boolean = false;
   loading: boolean = false;
   pin = "";
-  config = [
-    {
-      text: "Onchain timestamp",
-      value: "onchain",
-    },
-    {
-      text: "Non fungible token",
-      value: "nft",
-    },
-    {
-      text: "Simple",
-      value: "simple",
-    },
-    {
-      text: "Protected",
-      value: "protected",
-    },
-    {
-      text: "Timestamp protocol",
-      value: "tsp",
-    },
-    {
-      text: "PDF stamp",
-      value: "pdfstamp",
-    },
-  ];
-  select = ["simple", "onchain"];
   showPassword = false;
   uploadStatus = false;
   typelink = { mode: "2" };
@@ -208,6 +201,33 @@ export default class SmartcardDocuments extends Vue {
   result: void;
   txid: any = "";
   DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+  tabIndex = null;
+  tabitems = [
+    {
+      key: "simple",
+      label: "Simple",
+      settings: {
+        signing: "simple",
+        contentType: null,
+      },
+    },
+    {
+      key: "pkcsjwt",
+      label: "Protected JWT",
+      settings: {
+        signing: "pkcsjwt",
+        contentType: null,
+      },
+    },
+    {
+      key: "pades",
+      label: "Qualified PDF",
+      settings: {
+        signing: "pades",
+        contentType: "application/pdf",
+      },
+    },
+  ];
 
   async mounted() {}
 
@@ -314,15 +334,22 @@ export default class SmartcardDocuments extends Vue {
   // Stores documents and NFT
   async xdvify() {
     let lnk;
-    if (this.select.includes("simple")) {
+
+    // simple
+    if (this.tabIndex === 0) {
       lnk = await this.createSimpleDocumentNode(this.files);
-    } else if (this.select.includes("protected")) {
+    } else if (this.tabIndex === 1) {
       lnk = await this.createDocumentNode(this.files);
+    } else if (this.tabIndex === 2) {
+      lnk = await this.createPadesNode(this.files);
     }
-    if (lnk && this.select.includes("onchain")) {
+
+    if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
-    } else if (lnk && this.select.includes("nft")) {
+    } else if (lnk && this.typelink.mode === "2") {
       this.result = await this.mintNft(lnk);
+    } else {
+      // none
     }
   }
   /** Creates document node */
@@ -382,6 +409,83 @@ export default class SmartcardDocuments extends Vue {
           alg: "RS256",
           signedFiles: this.cids,
           certificate: (didRSA as any).certificate,
+        }
+      );
+      this.manifest = lnk.toString();
+      return lnk.toString();
+    } catch (e) {
+      this.loading = false;
+    }
+    this.loading = false;
+    return null;
+  }
+
+  /** Creates pades document node */
+  async createPadesNode(files?: File[]) {
+    if (
+      files.length > 0 &&
+      this.pin.length === 0 &&
+      this.typelink.mode === "2"
+    ) {
+      this.files = files;
+      this.unlockPin = true;
+      return;
+    }
+    this.unlockPin = false;
+    this.canUpload = false;
+    this.loading = true;
+    try {
+      this.cids = [];
+      this.items = [];
+
+      const didManager = new DIDManager();
+
+      const sc = new SmartCardConnectorPKCS11();
+      await sc.connect();
+      const pin = this.pin;
+
+      // const certs: any = await sc.getCerts("0", pin);
+      // const publicPem = didManager.base64toPem(certs.publicKey);
+      
+      const oneTimeWallet = await this.createEphimericalWallet();
+      const didEDDSA = oneTimeWallet;
+      await didEDDSA.did.authenticate();
+
+      const ipfsManager = new IPLDManager(didEDDSA.did);
+      await ipfsManager.start(`https://ipfs.xdv.digital`);
+      this.ipfs = ipfsManager;
+
+      for (let index = 0; index < this.files.length; index++) {
+        const file = this.files[index];
+        const arr = await file.arrayBuffer();
+        const resp = await sc.signPades(pin, new Uint8Array(arr));
+        const { cid } = await ipfsManager.client.add({
+          path: file.name,
+          content: Buffer.from(resp.signedDocument),
+        });
+        this.cids.push({
+          cid: cid.toString(),
+        });
+        this.items = [
+          ...this.items,
+          {
+            file,
+            cid,
+          },
+        ];
+        // this.reports = [
+        //   ...this.reports,
+        //   await this.verifyChain(cid.toString()),
+        // ];
+      }
+
+      this.did = didEDDSA.did.id;
+      const lnk = await ipfsManager.addSignedObject(
+        Buffer.from(JSON.stringify({ index: true })),
+        {
+          alg: "ED25519",
+          publicKey: base64.encode(didEDDSA.publicKey),
+          signedFiles: this.cids,
         }
       );
       this.manifest = lnk.toString();
