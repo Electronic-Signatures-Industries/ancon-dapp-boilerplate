@@ -7,12 +7,7 @@
     ></v-progress-linear>
 
     <v-card>
-      <v-tabs
-        background-color="deep-purple accent-4"
-        dark
-        right
-        v-model="tabIndex"
-      >
+      <v-tabs background-color="pink accent-4" dark v-model="tabIndex">
         <v-tab v-for="item in tabitems" :key="item.key">
           {{ item.label }}
         </v-tab>
@@ -24,6 +19,23 @@
               <v-alert :type="alertType" v-if="alertMessage">{{
                 alertMessage
               }}</v-alert>
+              <v-row>
+                <v-col offset-sm="9"
+                  ><cryptoicon symbol="bnb" size="24" />{{
+                    balances.bnb
+                  }}</v-col
+                >
+                <v-col
+                  ><cryptoicon symbol="dai" size="24" />{{
+                    balances.dai
+                  }}</v-col
+                >
+                <v-col
+                  ><cryptoicon symbol="dai" size="24" />{{
+                    balances.daiMock
+                  }}</v-col
+                >
+              </v-row>
               <v-row>
                 <v-col cols="1" xs="1">
                   <v-progress-circular
@@ -60,54 +72,102 @@
                   </v-radio-group>
                 </v-col>
               </v-row>
+
+              <v-row>
+                <v-col align="center" xs="12">
+                  <v-btn color="green" v-if="connected === false" @click="web3Connect" dark> Connect </v-btn>
+                  <v-btn color="pink" v-if="connected" @click="xdvify" dark> Sign </v-btn>
+                </v-col>
+              </v-row>
             </v-card-text>
           </v-card>
         </v-tab-item>
       </v-tabs-items>
     </v-card>
 
-    <v-row>
-      <v-col align="center" xs="12">
-        <v-btn color="pink" @click="xdvify" dark> Sign </v-btn>
-      </v-col>
-    </v-row>
+    <v-card>
+      <v-tabs
+        background-color="deep-purple accent-4"
+        dark
+        v-model="tabDetailIndex"
+      >
+        <v-tab v-for="item in tabDetailItems" :key="item.key">
+          {{ item.label }}
+        </v-tab>
+      </v-tabs>
+      <v-tabs-items v-model="tabDetailIndex">
+        <v-tab-item key="details">
+          <v-alert type="success" v-if="txid.length > 0" dense dismissible
+            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+          >
+          <v-card>
+            <v-row dense>
+              <v-col cols="12">
+                <v-card>
+                  <v-card-title class="text-h5">
+                    Transaction details
+                  </v-card-title>
 
-    <v-alert type="success" v-if="txid.length > 0" dense dismissible
-      >{{ cids.length }} file(s) has been signed and uploaded</v-alert
-    >
-    <v-card v-if="txid.length > 0">
-      <v-row dense>
-        <v-col cols="12">
-          <v-card color="indigo" dark>
-            <v-card-title class="text-h5"> Transaction details </v-card-title>
+                  <v-card-text v-if="txid.length === 0">
+                    <div>No hay detalle</div>
+                  </v-card-text>
+                  <v-card-text v-if="txid.length > 0">
+                    <div>Tx {{ txid }}</div>
+                    <div>{{ reportVerify }}</div>
+                  </v-card-text>
 
-            <v-card-text>
-              <div>Tx {{ txid }}</div>
-              <div>{{ reportVerify }}</div>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-btn @click="shareTo(manifest)" text
-                ><v-icon right dark> mdi-link </v-icon> Share
-              </v-btn>
-              <v-btn @click="verifyChain(manifest)" text>
-                <v-icon right dark> mdi-certificate </v-icon> Verify
-              </v-btn>
-            </v-card-actions>
+                  <v-card-actions v-if="txid.length > 0">
+                    <v-btn @click="shareTo(manifest)" text
+                      ><v-icon right dark> mdi-link </v-icon> Share
+                    </v-btn>
+                    <v-btn @click="verifyChain(manifest)" text>
+                      <v-icon right dark> mdi-certificate </v-icon> Verify
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-card>
-        </v-col>
+        </v-tab-item>
+        <v-tab-item key="transactions">
+          <v-alert type="success" v-if="txid.length > 0" dense dismissible
+            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+          >
+          <v-card>
+            <v-row dense>
+              <v-col cols="12">
+                <v-card>
+                  <v-card-title class="text-h5"> Transactions </v-card-title>
 
-        <v-col cols="12">
-          <v-card color="green" dark>
-            <v-card-title class="text-h5"> View </v-card-title>
-
-            <v-card-text></v-card-text>
-            <v-card-actions>
-              <v-btn @click="shareTo" text> Render content </v-btn>
-            </v-card-actions>
+                  <v-card-text></v-card-text>
+                  <v-card-actions>
+                    <v-btn @click="shareTo" text> Render content </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-card>
-        </v-col>
-      </v-row>
+        </v-tab-item>
+        <v-tab-item key="viewer">
+          <v-alert type="success" v-if="txid.length > 0" dense dismissible
+            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+          >
+          <v-card>
+            <v-row dense>
+              <v-col cols="12">
+                <v-card>
+                  <v-card-title class="text-h5"> Viewer </v-card-title>
+
+                  <v-card-text></v-card-text>
+                  <v-card-actions>
+                    <v-btn @click="shareTo" text> Render content </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-tab-item>
+      </v-tabs-items>
     </v-card>
 
     <v-dialog v-model="unlockPin" max-width="500px">
@@ -161,7 +221,7 @@ import { fromDagJWS } from "dids/lib/utils";
 import { BigNumber, ethers } from "ethers";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { eddsa } from "elliptic";
-import { base64 } from "ethers/lib/utils";
+import { base64, hexlify } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -200,6 +260,12 @@ export default class SmartcardDocuments extends Vue {
   anchorContract: ethers.Contract;
   result: void;
   txid: any = "";
+  balances = {
+    bnb: "0",
+    dai: "0",
+    daiMock: "0",
+  };
+  connected = false;
   DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
   tabIndex = null;
   tabitems = [
@@ -229,6 +295,34 @@ export default class SmartcardDocuments extends Vue {
     },
   ];
 
+  tabDetailIndex = null;
+  tabDetailItems = [
+    {
+      key: "details",
+      label: "Details",
+      settings: {
+        signing: "details",
+        contentType: null,
+      },
+    },
+    {
+      key: "transactions",
+      label: "Transactions",
+      settings: {
+        signing: "transactions",
+        contentType: null,
+      },
+    },
+    {
+      key: "viewer",
+      label: "Viewer",
+      settings: {
+        signing: "viewer",
+        contentType: "application/pdf",
+      },
+    },
+  ];
+
   async mounted() {}
 
   openCid(cid: string) {
@@ -238,6 +332,51 @@ export default class SmartcardDocuments extends Vue {
       "_blank",
       "top=500,left=100,frame=false,nodeIntegration=no,menubar=yes"
     );
+  }
+
+  async web3Connect() {
+    // @ts-ignore
+    if (window.BinanceChain) {
+      // @ts-ignore
+      await BinanceChain.enable();
+    } else {
+      // @ts-ignore
+      await window.ethereum.enable();
+    }
+    this.connected = true;
+    await this.loadBalances();
+  }
+
+  async loadBalances() {
+    this.currentAccount = (await this.web3Selector.enable())[0];
+    this.ethersInstance = new ethers.providers.Web3Provider(
+      this.web3Selector
+    );
+    this.DAIAddress = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+
+    const dai = new ethers.Contract(
+      this.DAIAddress,
+      xdvnftAbi.DAI.raw.abi,
+      this.ethersInstance.getSigner()
+    );
+
+    setInterval(async () => {
+      const [daiBal] = await dai.functions.balanceOf(this.currentAccount);
+      const daiMock = new ethers.Contract(
+        xdvnftAbi.DAI.address.bsctestnet,
+        xdvnftAbi.DAI.raw.abi,
+        this.ethersInstance.getSigner()
+      );
+      const [daiMockBal] = await daiMock.functions.balanceOf(
+        this.currentAccount
+      );
+
+      const bnb = await this.ethersInstance.getBalance(this.currentAccount);
+
+      this.balances.bnb = ethers.utils.formatEther(bnb);
+      this.balances.dai = ethers.utils.formatEther(daiBal);
+      this.balances.daiMock = ethers.utils.formatEther(daiMockBal);
+    }, 1250);
   }
 
   async shareTo(url) {
@@ -446,7 +585,7 @@ export default class SmartcardDocuments extends Vue {
 
       // const certs: any = await sc.getCerts("0", pin);
       // const publicPem = didManager.base64toPem(certs.publicKey);
-      
+
       const oneTimeWallet = await this.createEphimericalWallet();
       const didEDDSA = oneTimeWallet;
       await didEDDSA.did.authenticate();
@@ -458,7 +597,11 @@ export default class SmartcardDocuments extends Vue {
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
         const arr = await file.arrayBuffer();
-        const resp = await sc.signPades(pin, new Uint8Array(arr));
+        // @ts-ignore
+        const resp = await sc.signPades(
+          pin,
+          ethers.utils.base64.encode(new Uint8Array(arr))
+        );
         const { cid } = await ipfsManager.client.add({
           path: file.name,
           content: Buffer.from(resp.signedDocument),
