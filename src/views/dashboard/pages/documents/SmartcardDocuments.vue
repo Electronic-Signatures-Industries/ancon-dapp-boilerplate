@@ -30,11 +30,6 @@
                     balances.dai
                   }}</v-col
                 >
-                <v-col
-                  ><cryptoicon symbol="dai" size="24" />{{
-                    balances.daiMock
-                  }}</v-col
-                >
               </v-row>
               <v-row>
                 <v-col cols="1" xs="1">
@@ -155,9 +150,26 @@
                 <v-card>
                   <v-card-title class="text-h5"> Transactions </v-card-title>
 
-                  <v-card-text></v-card-text>
+                  <v-card-text>
+                    <v-simple-table dense>
+                      <template v-slot:default>
+                        <thead>
+                          <tr>
+                            <th class="text-left">Tx</th>
+                            <th class="text-left">Event</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="item in transactions" :key="item">
+                            <td>{{ item.transactionHash }}</td>
+                            <td>{{ item.event }}</td>
+                          </tr>
+                        </tbody>
+                      </template>
+                    </v-simple-table>
+                  </v-card-text>
                   <v-card-actions>
-                    <v-btn @click="shareTo" text> Render content </v-btn>
+                    <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
                   </v-card-actions>
                 </v-card>
               </v-col>
@@ -174,9 +186,25 @@
                 <v-card>
                   <v-card-title class="text-h5"> Viewer </v-card-title>
 
-                  <v-card-text></v-card-text>
+                  <v-card-text>
+                    <v-simple-table dense>
+                      <template v-slot:default>
+                        <thead>
+                          <tr>
+                            <th class="text-left">CID</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="item in viewItems" :key="item">
+                            <td>{{ item }}</td>
+                          </tr>
+                        </tbody>
+                      </template>
+                    </v-simple-table>
+                  </v-card-text>
+
                   <v-card-actions>
-                    <v-btn @click="shareTo" text> Render content </v-btn>
+                    <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
                   </v-card-actions>
                 </v-card>
               </v-col>
@@ -337,18 +365,27 @@ export default class SmartcardDocuments extends Vue {
       },
     },
   ];
-  daiMockContract: Contract;
+  viewItems = [];
+  transactions = [];
 
-  async mounted() {}
+  async loadTransactions() {
+    if (this.ethersContract) {
+      const query = this.ethersContract.filters.Transfer(this.currentAccount);
+      this.transactions = [
+        ...(await this.ethersContract.queryFilter(query)),
+        this.transactions,
+      ];
+    }
 
-  async loadHistory(anchoring: any, nft: any) {
-    // const filter = this.contract.getPastEvents("DocumentAnchored", {
-    //   toBlock: "latest",
-    //   fromBlock: 3,
-    //   filter: { user: this.localAddress },
-    // });
-    // const response = await filter;
+    if (this.anchorContract) {
+      const query = this.anchorContract.filters.DocumentAnchored();
+      this.transactions = [
+        ...(await this.anchorContract.queryFilter(query)),
+        this.transactions,
+      ];
+    }
   }
+
   openCid(cid: string) {
     const href = `https://explore.ipld.io/#/explore/${cid}`;
     window.open(
@@ -371,9 +408,9 @@ export default class SmartcardDocuments extends Vue {
     this.currentAccount = (await this.web3Selector.enable())[0];
     this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
 
-    // DAI Mock
+    // DAI
     this.daiContract = new ethers.Contract(
-      xdvnftAbi.DAI.address.bsctestnet,
+      this.DAIAddress,
       xdvnftAbi.DAI.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -383,18 +420,13 @@ export default class SmartcardDocuments extends Vue {
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
-    // DAI Testnet
-    this.daiMockContract = new ethers.Contract(
-      this.DAIAddress,
-      xdvnftAbi.DAI.raw.abi,
-      this.ethersInstance.getSigner()
-    );
     this.anchorContract = new ethers.Contract(
       xdvAbi.networks["97"].address,
       xdvAbi.abi,
       this.ethersInstance.getSigner()
     );
     await this.loadBalances();
+    await this.loadTransactions();
   }
 
   async loadBalances() {
@@ -402,15 +434,11 @@ export default class SmartcardDocuments extends Vue {
       const [daiBal] = await this.daiContract.functions.balanceOf(
         this.currentAccount
       );
-      const [daiMockBal] = await this.daiMockContract.functions.balanceOf(
-        this.currentAccount
-      );
 
       const bnb = await this.ethersInstance.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
       this.balances.dai = ethers.utils.formatEther(daiBal);
-      this.balances.daiMock = ethers.utils.formatEther(daiMockBal);
     }, 1250);
   }
 
@@ -485,23 +513,27 @@ export default class SmartcardDocuments extends Vue {
    */
   async createEphemericWallet() {
     const accountName = "walletcorexdv";
-    const passphrase = hexlify(ethers.utils.randomBytes(1024));
+    const passphrase = "walletcorexdv";
     const wallet = new Wallet({ isWeb: false });
-    await wallet.open(accountName, passphrase);
+    try {
+      await wallet.open(accountName, passphrase);
 
-    const acct = (await wallet.getAccount()) as any;
-    let walletId;
+      const acct = (await wallet.getAccount()) as any;
+      let walletId;
 
-    if (acct.keystores.length === 0) {
-      walletId = await wallet.addWallet();
-    } else {
-      walletId = acct.keystores[0].walletId;
+      if (acct.keystores.length === 0) {
+        walletId = await wallet.addWallet();
+      } else {
+        walletId = acct.keystores[0].walletId;
+      }
+
+      return wallet.createEd25519({
+        passphrase: passphrase,
+        walletId: walletId,
+      });
+    } catch (e) {
+      console.log(e);
     }
-
-    return wallet.createEd25519({
-      passphrase: passphrase,
-      walletId: walletId,
-    });
   }
 
   // Stores documents and NFT
@@ -526,13 +558,18 @@ export default class SmartcardDocuments extends Vue {
     }
 
     this.cidindex = lnk;
+    await this.loadViewer();
   }
+
+  async mounted() {
+    await this.loadTransactions();
+  }
+
   /** Creates document node */
   async createDocumentNode(files?: File[]) {
     if (
       files.length > 0 &&
-      this.pin.length === 0 &&
-      this.typelink.mode === "2"
+      this.pin.length === 0 
     ) {
       this.files = files;
       this.unlockPin = true;
@@ -582,6 +619,7 @@ export default class SmartcardDocuments extends Vue {
         Buffer.from(JSON.stringify({ index: true })),
         {
           alg: "RS256",
+          type: "jwt",
           signedFiles: this.cids,
           certificate: (didRSA as any).certificate,
         }
@@ -599,8 +637,7 @@ export default class SmartcardDocuments extends Vue {
   async createPadesNode(files?: File[]) {
     if (
       files.length > 0 &&
-      this.pin.length === 0 &&
-      this.typelink.mode === "2"
+      this.pin.length === 0
     ) {
       this.files = files;
       this.unlockPin = true;
@@ -655,12 +692,13 @@ export default class SmartcardDocuments extends Vue {
         //   await this.verifyChain(cid.toString()),
         // ];
       }
-
+      // MOVED TO SECRET -----------------------------------
       this.did = didEDDSA.did.id;
       const lnk = await ipfsManager.addSignedObject(
         Buffer.from(JSON.stringify({ index: true })),
         {
           alg: "ED25519",
+          type: "pades",
           publicKey: base64.encode(didEDDSA.publicKey),
           signedFiles: this.cids,
         }
@@ -717,6 +755,7 @@ export default class SmartcardDocuments extends Vue {
         Buffer.from(JSON.stringify({ index: true })),
         {
           alg: "ED25519",
+          type: "simple",
           publicKey: base64.encode(didEDDSA.publicKey),
           signedFiles: this.cids,
         }
@@ -742,11 +781,11 @@ export default class SmartcardDocuments extends Vue {
 
   async mintNft(uri: string) {
     // anchor to nft
-    let gasLimit = await this.daiContract.estimateGas.allowance(
+    let gasLimit = await this.daiContract.estimateGas.approve(
       this.currentAccount,
-      this.anchorContract.address
+      this.ethersContract.address
     );
-    gasLimit = BigNumber.from(gasLimit).add(10000)
+    gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
     const [allowed] = await this.daiContract.functions.allowance(
       this.currentAccount,
       this.ethersContract.address
@@ -758,7 +797,7 @@ export default class SmartcardDocuments extends Vue {
         "1000000000000000000",
         {
           gasPrice: "22000000000",
-          gasLimit,
+          gasLimit ,
         }
       );
 
@@ -768,6 +807,10 @@ export default class SmartcardDocuments extends Vue {
       this.currentAccount,
       uri
     );
+    gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
+
+    debugger
+
     const txmint = await this.ethersContract.functions.mint(
       this.currentAccount,
       uri,
@@ -806,22 +849,29 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
+  async loadViewer() {
+    if (this.ipfs) {
+      const res = await this.ipfs.getObject(this.cidindex);
+      this.viewItems = res.value.signedFiles;
+    }
+  }
+
   async anchor(uri: string) {
     // anchor to nft
-    let gasLimit = await this.daiContract.estimateGas.allowance(
+    let gasLimit = await this.daiContract.estimateGas.approve(
       this.currentAccount,
       this.anchorContract.address
     );
-    gasLimit = BigNumber.from(gasLimit).add(20000)
+    gasLimit = BigNumber.from(gasLimit).add(50000);
 
     const [allowed] = await this.daiContract.functions.allowance(
       this.currentAccount,
       this.anchorContract.address
     );
-    if (!(allowed as BigNumber).eq("1000000000000000000")) {
+    if (!(allowed as BigNumber).eq("2000000000000000000")) {
       const approve = await this.daiContract.functions.approve(
         this.anchorContract.address,
-        "1000000000000000000",
+        "2000000000000000000",
         {
           gasPrice: "22000000000",
           gasLimit: gasLimit,
