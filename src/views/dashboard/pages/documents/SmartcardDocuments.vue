@@ -195,8 +195,23 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr v-for="item in viewItems" :key="item">
-                            <td>{{ item }}</td>
+                          <tr
+                            v-for="item in viewItems.signedFiles"
+                            :key="item.cid"
+                          >
+                            <td>
+                              <v-btn
+                                @click="
+                                  loadCid(
+                                    item.cid,
+                                    viewItems.type,
+                                    item.name,
+                                    item.contentType
+                                  )
+                                "
+                                >View</v-btn
+                              >
+                            </td>
                           </tr>
                         </tbody>
                       </template>
@@ -261,7 +276,13 @@ import {
 import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
-import { fromDagJWS } from "dids/lib/utils";
+import * as reader from "promise-file-reader";
+import {
+  decodeBase64,
+  encodeBase64,
+  encodeBase64Url,
+  fromDagJWS,
+} from "dids/lib/utils";
 import { BigNumber, Contract, ethers } from "ethers";
 import { base64, hexlify } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
@@ -383,6 +404,59 @@ export default class SmartcardDocuments extends Vue {
         ...(await this.anchorContract.queryFilter(query)),
         this.transactions,
       ];
+    }
+  }
+
+  /**
+   * Downloads a File object
+   */
+  async downloadFileFromObject(o: any, name: string, contentType: string) {
+    try {
+      const url = window.URL.createObjectURL(new Blob([o]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+      a.click();
+      a.remove();
+    } catch (e) {
+      throw new Error("No se pudo convertir el archivo");
+    }
+  }
+
+  /**
+   * Loads a cid
+   */
+  async loadCid(cid: string, type: string, name: string, contentType: string) {
+    function concatArrayBuffers(...bufs) {
+      const result = new Uint8Array(
+        bufs.reduce((totalSize, buf) => totalSize + buf.byteLength, 0)
+      );
+      bufs.reduce((offset, buf) => {
+        result.set(buf, offset);
+        return offset + buf.byteLength;
+      }, 0);
+      return result.buffer;
+    }
+    if (type === "simple") {
+      let data = await this.ipfs.get(cid);
+      await this.downloadFileFromObject(data.value.Data, name, contentType);
+    } else if (type === "jwt") {
+      return await this.ipfs.getObject(cid);
+    } else if (type === "pades") {
+      let chunks = [];
+
+      for await (const file of this.ipfs.client.get(cid)) {
+        if (!file.content) continue;
+
+        for await (const chunk of file.content) {
+          chunks.push(chunk);
+        }
+      }
+
+      const c = concatArrayBuffers(...chunks);
+      
+      await this.downloadFileFromObject(c, name, contentType);
     }
   }
 
@@ -559,6 +633,7 @@ export default class SmartcardDocuments extends Vue {
 
     this.cidindex = lnk;
     await this.loadViewer();
+    await this.loadTransactions();
   }
 
   async mounted() {
@@ -567,10 +642,7 @@ export default class SmartcardDocuments extends Vue {
 
   /** Creates document node */
   async createDocumentNode(files?: File[]) {
-    if (
-      files.length > 0 &&
-      this.pin.length === 0 
-    ) {
+    if (files.length > 0 && this.pin.length === 0) {
       this.files = files;
       this.unlockPin = true;
       return;
@@ -635,10 +707,7 @@ export default class SmartcardDocuments extends Vue {
 
   /** Creates pades document node */
   async createPadesNode(files?: File[]) {
-    if (
-      files.length > 0 &&
-      this.pin.length === 0
-    ) {
+    if (files.length > 0 && this.pin.length === 0) {
       this.files = files;
       this.unlockPin = true;
       return;
@@ -673,12 +742,15 @@ export default class SmartcardDocuments extends Vue {
           pin,
           ethers.utils.base64.encode(new Uint8Array(arr))
         );
+        const content = decodeBase64(resp.signedDocument);
         const { cid } = await ipfsManager.client.add({
           path: file.name,
-          content: Buffer.from(resp.signedDocument),
+          content,
         });
         this.cids.push({
           cid: cid.toString(),
+          name: file.name,
+          contentType: file.type,
         });
         this.items = [
           ...this.items,
@@ -706,6 +778,7 @@ export default class SmartcardDocuments extends Vue {
       this.manifest = lnk.toString();
       return lnk.toString();
     } catch (e) {
+      console.log(e);
       this.loading = false;
     }
     this.loading = false;
@@ -736,6 +809,8 @@ export default class SmartcardDocuments extends Vue {
         });
         this.cids.push({
           cid: cid.toString(),
+          name: file.name,
+          contentType: file.type,
         });
         this.items = [
           ...this.items,
@@ -797,7 +872,7 @@ export default class SmartcardDocuments extends Vue {
         "1000000000000000000",
         {
           gasPrice: "22000000000",
-          gasLimit ,
+          gasLimit,
         }
       );
 
@@ -808,8 +883,6 @@ export default class SmartcardDocuments extends Vue {
       uri
     );
     gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-
-    debugger
 
     const txmint = await this.ethersContract.functions.mint(
       this.currentAccount,
@@ -850,9 +923,9 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async loadViewer() {
-    if (this.ipfs) {
+    if (this.ipfs && this.cidindex) {
       const res = await this.ipfs.getObject(this.cidindex);
-      this.viewItems = res.value.signedFiles;
+      this.viewItems = res.value;
     }
   }
 
