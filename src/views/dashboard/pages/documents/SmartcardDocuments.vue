@@ -64,6 +64,7 @@
                   <v-radio-group v-model="typelink.mode" mandatory row>
                     <v-radio label="Onchain timestamp" value="1"></v-radio>
                     <v-radio label="Non fungible token" value="2"></v-radio>
+                    <v-radio label="Only decentralized storage" value="3"></v-radio>
                   </v-radio-group>
                 </v-col>
               </v-row>
@@ -117,21 +118,21 @@
                     Transaction details
                   </v-card-title>
 
-                  <v-card-text v-if="txid.length === 0">
-                    <div>No hay detalle</div>
+                  <v-card-text v-if="cidindex.length === 0">
+                    <div>No transactions</div>
                   </v-card-text>
-                  <v-card-text v-if="txid.length > 0">
+                  <v-card-text v-if="cidindex.length > 0">
                     <div>Tx {{ txid }}</div>
                     <div>IPLD index {{ cidindex }}</div>
 
-                    <div>{{ reportVerify }}</div>
+                    <v-row color="primary"><v-col color="primary">{{ reportVerify }}</v-col>  </v-row>
                   </v-card-text>
 
-                  <v-card-actions v-if="txid.length > 0">
-                    <v-btn @click="shareTo(manifest)" text
+                  <v-card-actions v-if="cidindex.length > 0">
+                    <v-btn @click="shareTo(cidindex)" text
                       ><v-icon right dark> mdi-link </v-icon> Share
                     </v-btn>
-                    <v-btn @click="verifyChain(manifest)" text>
+                    <v-btn @click="verifyChain(cidindex)" text>
                       <v-icon right dark> mdi-certificate </v-icon> Verify
                     </v-btn>
                   </v-card-actions>
@@ -455,7 +456,7 @@ export default class SmartcardDocuments extends Vue {
       }
 
       const c = concatArrayBuffers(...chunks);
-      
+
       await this.downloadFileFromObject(c, name, contentType);
     }
   }
@@ -634,6 +635,7 @@ export default class SmartcardDocuments extends Vue {
     this.cidindex = lnk;
     await this.loadViewer();
     await this.loadTransactions();
+    this.loading = false;
   }
 
   async mounted() {
