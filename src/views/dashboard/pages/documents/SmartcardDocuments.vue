@@ -64,7 +64,10 @@
                   <v-radio-group v-model="typelink.mode" mandatory row>
                     <v-radio label="Onchain timestamp" value="1"></v-radio>
                     <v-radio label="Non fungible token" value="2"></v-radio>
-                    <v-radio label="Only decentralized storage" value="3"></v-radio>
+                    <v-radio
+                      label="Only decentralized storage"
+                      value="3"
+                    ></v-radio>
                   </v-radio-group>
                 </v-col>
               </v-row>
@@ -125,7 +128,55 @@
                     <div>Tx {{ txid }}</div>
                     <div>IPLD index {{ cidindex }}</div>
 
-                    <v-row color="primary"><v-col color="primary">{{ reportVerify }}</v-col>  </v-row>
+                    <v-row
+                      ><v-col>{{ reportVerify }}</v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col>
+                        <v-simple-table dense md="10">
+                          <template v-slot:default>
+                            <thead>
+                          <tr>
+                            <th>CID</th>
+                            <th>Content Type</th>
+                            <th>Name</th>
+                          </tr>
+
+                        </thead>
+                            <tbody>
+                              <tr
+                                v-for="item in viewItems.signedFiles"
+                                :key="item.cid"
+                              >
+                                <td>
+                                  {{ item.cid }}
+                                </td>                              
+                                <td>
+                                  {{ item.contentType }}
+                                </td>
+                                <td>
+                                  {{ item.name }}
+                                </td>
+                                <td>
+                                  <v-btn
+                                    @click="
+                                      loadCid(
+                                        item.cid,
+                                        viewItems.type,
+                                        item.name,
+                                        item.contentType
+                                      )
+                                    "
+                                    ><v-icon right dark> mdi-download </v-icon>
+                                    Download</v-btn
+                                  >
+                                </td>
+                              </tr>
+                            </tbody>
+                          </template>
+                        </v-simple-table>
+                      </v-col>
+                    </v-row>
                   </v-card-text>
 
                   <v-card-actions v-if="cidindex.length > 0">
@@ -169,56 +220,6 @@
                       </template>
                     </v-simple-table>
                   </v-card-text>
-                  <v-card-actions>
-                    <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
-                  </v-card-actions>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card>
-        </v-tab-item>
-        <v-tab-item key="viewer">
-          <v-alert type="success" v-if="txid.length > 0" dense dismissible
-            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
-          >
-          <v-card>
-            <v-row dense>
-              <v-col cols="12">
-                <v-card>
-                  <v-card-title class="text-h5"> Viewer </v-card-title>
-
-                  <v-card-text>
-                    <v-simple-table dense>
-                      <template v-slot:default>
-                        <thead>
-                          <tr>
-                            <th class="text-left">CID</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="item in viewItems.signedFiles"
-                            :key="item.cid"
-                          >
-                            <td>
-                              <v-btn
-                                @click="
-                                  loadCid(
-                                    item.cid,
-                                    viewItems.type,
-                                    item.name,
-                                    item.contentType
-                                  )
-                                "
-                                >View</v-btn
-                              >
-                            </td>
-                          </tr>
-                        </tbody>
-                      </template>
-                    </v-simple-table>
-                  </v-card-text>
-
                   <v-card-actions>
                     <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
                   </v-card-actions>
@@ -378,14 +379,6 @@ export default class SmartcardDocuments extends Vue {
         contentType: null,
       },
     },
-    {
-      key: "viewer",
-      label: "Viewer",
-      settings: {
-        signing: "viewer",
-        contentType: "application/pdf",
-      },
-    },
   ];
   viewItems = [];
   transactions = [];
@@ -439,12 +432,10 @@ export default class SmartcardDocuments extends Vue {
       }, 0);
       return result.buffer;
     }
-    if (type === "simple") {
-      let data = await this.ipfs.get(cid);
-      await this.downloadFileFromObject(data.value.Data, name, contentType);
-    } else if (type === "jwt") {
+
+    if (type === "jwt") {
       return await this.ipfs.getObject(cid);
-    } else if (type === "pades") {
+    } else if (type === "pades" || type === "simple") {
       let chunks = [];
 
       for await (const file of this.ipfs.client.get(cid)) {
