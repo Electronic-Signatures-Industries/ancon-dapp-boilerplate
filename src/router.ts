@@ -39,12 +39,11 @@ export default new Router({
           component: SmartcardDocuments,
         },
         {
-          name: 'Editor',
-          path: 'facturadorbeta',
+          path: '/link/:cid',
+          name: 'smartcard-link',
           // @ts-ignore
-          component: TemplateEditor,
-        },
-
+          component: SmartcardDocuments,
+        },        
       ],
     },
 
