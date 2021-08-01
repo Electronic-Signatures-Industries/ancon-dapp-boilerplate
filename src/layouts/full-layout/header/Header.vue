@@ -104,14 +104,6 @@
       </template>
       <span>Tutorials</span>
     </v-tooltip>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <v-btn dark icon class="m-3" v-on="on" href="/#/facturadorbeta">
-          <v-icon>mdi-xml</v-icon>
-        </v-btn>
-      </template>
-      <span>Prueba gratuita, modelador de factura electronica</span>
-    </v-tooltip>
 
     <!---User -->
     <v-dialog v-model="shareAddressDialog" max-width="500px">

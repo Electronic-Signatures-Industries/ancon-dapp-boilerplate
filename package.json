@@ -69,7 +69,7 @@
     "pouchdb-find": "^7.2.1",
     "promise-file-reader": "^1.0.2",
     "rxjs": "^7.0.0",
-    "share-api-polyfill": "^1.0.11",
+    "share-api-polyfill": "^1.0.21",
     "sockjs-client": "^1.4.0",
     "solido-provider-ethers": "^1.1.1",
     "styled-components": "^5.0.1",

@@ -129,20 +129,61 @@
                     <div>IPLD index {{ cidindex }}</div>
 
                     <v-row
-                      ><v-col>{{ reportVerify }}</v-col>
+                      ><v-col>
+                        <v-simple-table dense md="10">
+                          <template v-slot:default>
+                            <!-- <thead>
+                              <tr>
+                                <th>CID</th>
+                                <th>Content Type</th>
+                                <th>Name</th>
+                              </tr>
+                            </thead> -->
+                            <tbody>
+                              <tr
+                                v-for="item in reportVerify"
+                                :key="item.title"
+                              >
+                                <td>
+                                  {{ item.title }}
+                                </td>
+                                <td>
+                                  {{ item.subtitle }}
+                                </td>
+                                <td>
+                                  {{ item.name }}
+                                </td>
+                                <td>
+                                  <v-btn
+                                    @click="
+                                      loadCid(
+                                        item.cid,
+                                        viewItems.type,
+                                        item.name,
+                                        item.contentType
+                                      )
+                                    "
+                                    ><v-icon right dark> mdi-download </v-icon>
+                                    Download</v-btn
+                                  >
+                                </td>
+                              </tr>
+                            </tbody>
+                          </template>
+                        </v-simple-table>
+                      </v-col>
                     </v-row>
                     <v-row>
                       <v-col>
                         <v-simple-table dense md="10">
                           <template v-slot:default>
                             <thead>
-                          <tr>
-                            <th>CID</th>
-                            <th>Content Type</th>
-                            <th>Name</th>
-                          </tr>
-
-                        </thead>
+                              <tr>
+                                <th>CID</th>
+                                <th>Content Type</th>
+                                <th>Name</th>
+                              </tr>
+                            </thead>
                             <tbody>
                               <tr
                                 v-for="item in viewItems.signedFiles"
@@ -150,7 +191,7 @@
                               >
                                 <td>
                                   {{ item.cid }}
-                                </td>                              
+                                </td>
                                 <td>
                                   {{ item.contentType }}
                                 </td>
@@ -183,7 +224,11 @@
                     <v-btn @click="shareTo(cidindex)" text
                       ><v-icon right dark> mdi-link </v-icon> Share
                     </v-btn>
-                    <v-btn @click="verifyChain(cidindex)" text>
+                    <v-btn
+                      @click="verifyChain(cidindex)"
+                      text
+                      v-if="viewItems.type === 'jwt'"
+                    >
                       <v-icon right dark> mdi-certificate </v-icon> Verify
                     </v-btn>
                   </v-card-actions>
@@ -278,7 +323,8 @@ import {
 import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
-import * as reader from "promise-file-reader";
+import 'share-api-polyfill';
+
 import {
   decodeBase64,
   encodeBase64,
@@ -308,7 +354,7 @@ export default class SmartcardDocuments extends Vue {
   manifest: any = "";
   items: any = [];
   did = "";
-  reportVerify = "";
+  reportVerify = [];
   alertMessage = "";
   fab = false;
   selected = [0];
@@ -508,7 +554,9 @@ export default class SmartcardDocuments extends Vue {
     }, 1250);
   }
 
-  async shareTo(url) {
+  async shareTo(cid) {
+    const url = `${location.href}link/${cid}`;
+
     // @ts-ignore
     navigator.share(
       {
@@ -561,10 +609,11 @@ export default class SmartcardDocuments extends Vue {
         [CAGOB, CAPC2, CARAIZ]
       );
 
+      this.reportVerify = report;
       // @ts-ignore
-      this.reportVerify = report
-        .map((i) => `${i.title}: ${i.subtitle}`)
-        .join("<br />");
+      // this.reportVerify = report
+      //   .map((i) => `${i.title}: ${i.subtitle}`)
+      //   .join("<br />");
     } catch (e) {
       // TODO: log
       console.log(e);
@@ -630,6 +679,19 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
+    if (this.$router.currentRoute.params.cid) {
+      const oneTimeWallet = await this.createEphemericWallet();
+      const didEDDSA = oneTimeWallet;
+      await didEDDSA.did.authenticate();
+
+      const ipfsManager = new IPLDManager(didEDDSA.did);
+      await ipfsManager.start(`https://ipfs.xdv.digital`);
+      this.ipfs = ipfsManager;
+
+      this.cidindex = this.$router.currentRoute.params.cid;
+      await this.loadViewer();
+    }
+
     await this.loadTransactions();
   }
 
