@@ -121,10 +121,10 @@
                     Transaction details
                   </v-card-title>
 
-                  <v-card-text v-if="cidindex.length === 0">
+                  <v-card-text v-if="!!cidindex">
                     <div>No transactions</div>
                   </v-card-text>
-                  <v-card-text v-if="cidindex.length > 0">
+                  <v-card-text v-if="!!cidindex">
                     <div>Tx {{ txid }}</div>
                     <div>IPLD index {{ cidindex }}</div>
 
@@ -220,7 +220,7 @@
                     </v-row>
                   </v-card-text>
 
-                  <v-card-actions v-if="cidindex.length > 0">
+                  <v-card-actions v-if="!!cidindex">
                     <v-btn @click="shareTo(cidindex)" text
                       ><v-icon right dark> mdi-link </v-icon> Share
                     </v-btn>
@@ -678,7 +678,7 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-  async mounted() {
+  async mounted() {    
     if (this.$router.currentRoute.params.cid) {
       const oneTimeWallet = await this.createEphemericWallet();
       const didEDDSA = oneTimeWallet;
@@ -688,7 +688,7 @@ export default class SmartcardDocuments extends Vue {
       await ipfsManager.start(`https://ipfs.xdv.digital`);
       this.ipfs = ipfsManager;
 
-      this.cidindex = this.$router.currentRoute.params.cid;
+      this.cidindex = this.$router.currentRoute.params.cid || '';
       await this.loadViewer();
     }
 
