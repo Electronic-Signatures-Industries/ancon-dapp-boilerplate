@@ -466,7 +466,13 @@ export default class SmartcardDocuments extends Vue {
     }
 
     if (type === "jwt") {
-      return await this.ipfs.getObject(cid);
+      //return await this.ipfs.getObject(cid);
+      const result = await this.ipfs.getObject(cid);
+      const blob = base64.decode(result.value.content);
+
+      await this.downloadFileFromObject(blob.buffer, result.value.name, result.value.contentType);
+      debugger
+
     } else if (type === "pades" || type === "simple") {
       let chunks = [];
 
