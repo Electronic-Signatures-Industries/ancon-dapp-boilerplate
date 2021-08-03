@@ -153,21 +153,7 @@
                                 <td>
                                   {{ item.name }}
                                 </td>
-                                <td>
-                                  <v-btn
-                                    @click="
-                                      loadCid(
-                                        item.cid,
-                                        viewItems.type,
-                                        item.name,
-                                        item.contentType
-                                      )
-                                    "
-                                    ><v-icon right dark> mdi-download </v-icon>
-                                    Download</v-btn
-                                  >
-                                </td>
-                              </tr>
+                             </tr>
                             </tbody>
                           </template>
                         </v-simple-table>
