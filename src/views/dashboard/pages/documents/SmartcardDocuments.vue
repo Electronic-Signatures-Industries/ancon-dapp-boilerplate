@@ -714,6 +714,8 @@ export default class SmartcardDocuments extends Vue {
         } as any);
         this.cids.push({
           cid,
+          name: file.name,
+          contentType: file.type,
         });
         this.items = [
           ...this.items,
