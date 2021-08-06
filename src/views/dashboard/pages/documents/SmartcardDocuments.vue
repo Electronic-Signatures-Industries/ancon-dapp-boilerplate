@@ -782,7 +782,7 @@ export default class SmartcardDocuments extends Vue {
       const ipfsManager = new IPLDManager(didEDDSA.did);
       await ipfsManager.start(`https://ipfs.xdv.digital`);
       this.ipfs = ipfsManager;
-
+      const xml = `<rFE xmlns="http://dgi-fep.mef.gob.pa"><dVerForm>1.00</dVerForm><dId>FE01200000000000029-29-29-5676322018101525982740639300126729580548</dId><gDGen><iAmb>2</iAmb><iTpEmis>01</iTpEmis><dFechaSalida>2022-01-09T00:00:00-05:00</dFechaSalida><iTipoTranVenta>1</iTipoTranVenta><iDoc>01</iDoc><dNroDF>2598274063</dNroDF><dPtoFacDF>930</dPtoFacDF><dFechaEm>2020-10-09T00:00:00-05:00</dFechaEm><iNatOp>01</iNatOp><iTipoOp>2</iTipoOp><iDest>1</iDest><iFormCAFE>3</iFormCAFE><iEntCafe>3</iEntCafe><dEnvFe>1</dEnvFe><iProGen>1</iProGen><gEmis/><gRucEmi><dDV>56</dDV><dRuc>29-29-29</dRuc><dTipoRuc>2</dTipoRuc></gRucEmi><gUbiEm><dCodUbi>1-1-2<dProv>1</dProv><dDistr>1</dDistr><dCorreg>2</dCorreg></dCodUbi><dNombEm></dNombEm><dCoordEm>+8.9892,-79.5201</dCoordEm><dDirecEm>Calle 50</dDirecEm><gUbiEm><dCodUbi>1-1-2</dCodUbi></gUbiEm><dTfnEm>66731138</dTfnEm></gUbiEm><gDatRec/><gRucRec><dDV>56</dDV><dRuc>29-29-29</dRuc><dTipoRuc>2</dTipoRuc></gRucRec><gUbiRec><dCodUbi>13-1-3<dProv>13</dProv><dDistr>1</dDistr><dCorreg>3</dCorreg></dCodUbi><iTipoRec>01</iTipoRec><cPaisRec>PA</cPaisRec><dDirecRec>Calle 50</dDirecRec><dTfnRec>66731138</dTfnRec></gUbiRec><gAutXML><gRucAutXML><dDV>56</dDV><dRuc>29-29-29</dRuc><dTipoRuc>2</dTipoRuc></gRucAutXML></gAutXML><gItem><cCantCodInt>1</cCantCodInt><dDescProd>Servicios profesionales Abril Mayo 2020 relacionado a desarrollo web</dDescProd><dSecItem>1</dSecItem><gPrecios><dPrItem>500</dPrItem><dPrUnit>500</dPrUnit><dValTotItem>500</dValTotItem><gITBMSItem><dTasaITBMS>00</dTasaITBMS><dValITBMS>0</dValITBMS><dInfEmFE>No reembolsable</dInfEmFE><cUnidad>Actividad</cUnidad></gITBMSItem><gItem><cCantCodInt>1</cCantCodInt><dDescProd>Investigacion de algoritmo para firmar una factura electronica</dDescProd><dSecItem>2</dSecItem><gPrecios><dPrItem>500</dPrItem><dPrUnit>500</dPrUnit><dValTotItem>500</dValTotItem><gITBMSItem><dTasaITBMS>00</dTasaITBMS><dValITBMS>0</dValITBMS><dInfEmFE>Probablemente posible</dInfEmFE><dCodCPBScmp>4323</dCodCPBScmp><dCodCPBSabr>80</dCodCPBSabr></gITBMSItem><gTot><iPzPag>2</iPzPag><dNroItems>1.00</dNroItems><dTotITBMS>0.00</dTotITBMS><dTotNeto>1000.00</dTotNeto><dTotRec>0.00</dTotRec><dTotGravado>1000.00</dTotGravado><dVTot>1000.00</dVTot><dVTotItems>1.00</dVTotItems><dVuelto>0.00</dVuelto></gTot></gPrecios></gItem></gPrecios></gItem></gDGen></rFE>`;
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
         const arr = await file.arrayBuffer();
@@ -791,6 +791,12 @@ export default class SmartcardDocuments extends Vue {
           pin,
           ethers.utils.base64.encode(new Uint8Array(arr))
         );
+        // @ts-ignore
+        const resp2 = await sc.signXades(
+          pin,
+          ethers.utils.base64.encode(new Uint8Array(Buffer.from(xml).buffer))
+        );        
+        debugger
         const content = decodeBase64(resp.signedDocument);
         const { cid } = await ipfsManager.client.add({
           path: file.name,
