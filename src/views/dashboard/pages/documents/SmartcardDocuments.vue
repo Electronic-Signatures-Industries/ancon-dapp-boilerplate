@@ -69,6 +69,11 @@
                       value="3"
                     ></v-radio>
                   </v-radio-group>
+                  <v-checkbox
+                    v-model="emulateSmartcard"
+                    label="Emulate Smartcard"
+                    v-if="item.settings.signing == 'pkcsjwt'"
+                  ></v-checkbox>
                 </v-col>
               </v-row>
 
@@ -153,7 +158,7 @@
                                 <td>
                                   {{ item.name }}
                                 </td>
-                             </tr>
+                              </tr>
                             </tbody>
                           </template>
                         </v-simple-table>
@@ -309,7 +314,7 @@ import {
 import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
-import 'share-api-polyfill';
+import "share-api-polyfill";
 
 import {
   decodeBase64,
@@ -414,6 +419,7 @@ export default class SmartcardDocuments extends Vue {
   ];
   viewItems = [];
   transactions = [];
+  emulateSmartcard = false;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -470,9 +476,11 @@ export default class SmartcardDocuments extends Vue {
       const result = await this.ipfs.getObject(cid);
       const blob = base64.decode(result.value.content);
 
-      await this.downloadFileFromObject(blob.buffer, result.value.name, result.value.contentType);
-      debugger
-
+      await this.downloadFileFromObject(
+        blob.buffer,
+        result.value.name,
+        result.value.contentType
+      );
     } else if (type === "pades" || type === "simple") {
       let chunks = [];
 
@@ -670,7 +678,7 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-  async mounted() {    
+  async mounted() {
     if (this.$router.currentRoute.params.cid) {
       const oneTimeWallet = await this.createEphemericWallet();
       const didEDDSA = oneTimeWallet;
@@ -680,7 +688,7 @@ export default class SmartcardDocuments extends Vue {
       await ipfsManager.start(`https://ipfs.xdv.digital`);
       this.ipfs = ipfsManager;
 
-      this.cidindex = this.$router.currentRoute.params.cid || '';
+      this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
     }
 
@@ -702,7 +710,13 @@ export default class SmartcardDocuments extends Vue {
       this.items = [];
       const didManager = new DIDManager();
       const pin = this.pin;
-      const didRSA = await didManager.create3ID_PKCS11(pin);
+      let didRSA;
+      if (this.emulateSmartcard){
+        didRSA = await didManager.create3ID_RSA();
+      }      
+      else{
+        didRSA = await didManager.create3ID_PKCS11(pin);
+      }  
       await didRSA.did.authenticate();
 
       const ipfsManager = new IPLDManager(didRSA.did);
@@ -749,6 +763,7 @@ export default class SmartcardDocuments extends Vue {
       return lnk.toString();
     } catch (e) {
       this.loading = false;
+      alert(e);
     }
     this.loading = false;
     return null;
