@@ -6,104 +6,19 @@
         <img src="../../../assets/xdv.png" width="64" />
       </span>
     </v-toolbar-title>
-    <!---Search part -->
-    <!-- <v-btn dark icon class="mr-1 d-sm-block d-none" @click="searchbox">
-      <v-icon>mdi-magnify</v-icon>
-    </v-btn>
- -->
-    <div v-if="showSearch" class="searchinput primary">
-      <template>
-        <v-text-field
-          placeholder="Search & hit enter"
-          class="mt-3 mb-0"
-          append-icon="mdi-close"
-          @click:append="searchbox"
-        ></v-text-field>
-      </template>
-    </div>
-    <!---/Search part -->
-    <v-spacer />
-    <!---right part -->
-    <!---Notification -->
-    <!-- <v-menu bottom left offset-y origin="top right" transition="scale-transition">
-      <template v-slot:activator="{ on }">
-        <v-btn dark icon v-on="on" class="mr-1">
-          <v-badge color="red" dot>
-            <v-icon>mdi-message</v-icon>
-          </v-badge>
-        </v-btn>
-      </template>
-
-      <v-list>
-        <h4 class="px-5 py-3 pt-2 font-weight-medium title">Notifications</h4>
-        <v-divider></v-divider>
-        <v-list-item v-for="(item, i) in notifications" :key="i" @click="href">
-          <v-list-item-title>
-            <div class="d-flex align-center py-3">
-              <div class>
-                <v-btn class="mr-3" depressed fab small dark :color="item.iconbg">
-                  <v-icon dark>{{ item.icon }}</v-icon>
-                </v-btn>
-              </div>
-              <div>
-                <h4 class="font-weight-medium">{{ item.title }}</h4>
-                <span class="text--secondary caption descpart d-block text-truncate">{{item.desc}}</span>
-                <small class="text--secondary">{{item.time}}</small>
-              </div>
-            </div>
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu> -->
-    <!---Notification -->
-    <!---Messages -->
-    <!-- <v-menu bottom left offset-y origin="top right" transition="scale-transition">
-      <template v-slot:activator="{ on }">
-        <v-btn dark icon v-on="on" class="mr-2">
-          <v-badge color="red" dot>
-            <v-icon>mdi-bell</v-icon>
-          </v-badge>
-        </v-btn>
-      </template>
-
-      <v-list>
-        <h4 class="px-5 pt-2 py-3 font-weight-medium title">Messages</h4>
-        <v-divider></v-divider>
-        <v-list-item v-for="(item, i) in messages" :key="i" @click="href">
-          <v-list-item-title>
-            <div class="d-flex align-center py-3">
-              <div class="mr-3">
-                <v-badge bordered bottom :color="item.avatarstatus" dot offset-x="10" offset-y="10">
-                  <v-avatar>
-                    <img
-                      :src="'https://www.wrappixel.com/demos/admin-templates/materialpro-bootstrap-latest/material-pro/src/assets/images/users/' + item.avatar + '.jpg'"
-                      :alt="item.title"
-                    />
-                  </v-avatar>
-                </v-badge>
-              </div>
-              <div>
-                <h4 class="font-weight-medium">{{ item.title }}</h4>
-                <span class="text--secondary caption descpart d-block text-truncate">{{item.desc}}</span>
-                <small class="text--secondary">{{item.time}}</small>
-              </div>
-            </div>
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu> -->
-    <!---Messages -->
-    <!---User -->
-
-
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <v-btn dark icon class="m-3" v-on="on" href="https://twitter.com/molekilla/status/1416434509944393736?s=20">
-          <v-icon>mdi-cast-education</v-icon>
-        </v-btn>
-      </template>
-      <span>Tutorials</span>
-    </v-tooltip>
+    <v-row justify="space-between">
+      <v-col md="6">
+        
+      </v-col>
+      <v-col md="6" align="right">
+        <v-btn href="https://bafybeic5al5fyuj2hohxo37xnwzyoojpwrhv2vpmd3azwpx22i2hcjaqiu.ipfs.infura-ipfs.io/wallet-1.0.0.jar" text offset="10"
+          > Download signer</v-btn
+        >
+        <v-btn href="https://twitter.com/molekilla/status/1416434509944393736?s=20" text offset="10"
+          > Guides</v-btn
+        >
+      </v-col>
+    </v-row>
 
     <!---User -->
     <v-dialog v-model="shareAddressDialog" max-width="500px">
