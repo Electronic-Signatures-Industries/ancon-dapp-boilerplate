@@ -23758,6 +23758,9 @@
       "version": "0.8.6+commit.11564f7e.Emscripten.clang"
     },
     "networks": {
+      "56": {
+        "address": "0xBD4259Ecaa508140aac3c142deE6Efa8e5eB2f7b"
+      },
       "97": {
         "events": {},
         "links": {},

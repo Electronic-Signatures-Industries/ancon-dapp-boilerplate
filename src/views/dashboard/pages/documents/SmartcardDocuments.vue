@@ -26,7 +26,7 @@
                   }}</v-col
                 >
                 <v-col
-                  ><cryptoicon symbol="dai" size="24" />{{
+                  ><cryptoicon symbol="usdc" size="24" />{{
                     balances.dai
                   }}</v-col
                 >
@@ -369,7 +369,7 @@ export default class SmartcardDocuments extends Vue {
   };
   connected = false;
   cidindex = "";
-  DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+  DAIAddress: string = `0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d`;
   tabIndex = null;
   tabitems = [
     {
@@ -528,12 +528,12 @@ export default class SmartcardDocuments extends Vue {
     );
     // XDVNFT
     this.ethersContract = new ethers.Contract(
-      xdvnftAbi.XDVNFT.address.bsctestnet,
+      xdvnftAbi.XDVNFT.address.bsc,
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
     this.anchorContract = new ethers.Contract(
-      xdvAbi.networks["97"].address,
+      xdvAbi.networks["56"].address,
       xdvAbi.abi,
       this.ethersInstance.getSigner()
     );
