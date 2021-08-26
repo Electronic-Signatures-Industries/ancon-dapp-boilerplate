@@ -324,6 +324,7 @@ import {
 } from "dids/lib/utils";
 import { BigNumber, Contract, ethers } from "ethers";
 import { base64, hexlify } from "ethers/lib/utils";
+import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -679,15 +680,10 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
+    this.ipfs = new AnconManager();
+    await this.ipfs.start();
+
     if (this.$router.currentRoute.params.cid) {
-      const oneTimeWallet = await this.createEphemericWallet();
-      const didEDDSA = oneTimeWallet;
-      await didEDDSA.did.authenticate();
-
-      const ipfsManager = new IPLDManager(didEDDSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
-
       this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
     }
@@ -711,12 +707,11 @@ export default class SmartcardDocuments extends Vue {
       const didManager = new DIDManager();
       const pin = this.pin;
       let didRSA;
-      if (this.emulateSmartcard){
+      if (this.emulateSmartcard) {
         didRSA = await didManager.create3ID_RSA();
-      }      
-      else{
+      } else {
         didRSA = await didManager.create3ID_PKCS11(pin);
-      }  
+      }
       await didRSA.did.authenticate();
 
       const ipfsManager = new IPLDManager(didRSA.did);
@@ -857,20 +852,13 @@ export default class SmartcardDocuments extends Vue {
     try {
       this.cids = [];
       this.items = [];
-      const oneTimeWallet = await this.createEphemericWallet();
-      const didEDDSA = oneTimeWallet;
-      await didEDDSA.did.authenticate();
 
-      const ipfsManager = new IPLDManager(didEDDSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
         const arr = await file.arrayBuffer();
-        const { cid } = await ipfsManager.client.add({
-          path: file.name,
-          content: arr,
-        });
+        const { receipt, wait } = await this.ipfs.addAnconObjectFile(" ", file);
+        const cid = await wait;
+
         this.cids.push({
           cid: cid.toString(),
           name: file.name,
@@ -888,19 +876,18 @@ export default class SmartcardDocuments extends Vue {
         //   await this.verifyChain(cid.toString()),
         // ];
       }
-
-      this.did = didEDDSA.did.id;
-      const lnk = await ipfsManager.addSignedObject(
-        Buffer.from(JSON.stringify({ index: true })),
-        {
-          alg: "ED25519",
-          type: "simple",
-          publicKey: base64.encode(didEDDSA.publicKey),
-          signedFiles: this.cids,
-        }
-      );
-      this.manifest = lnk.toString();
-      return lnk.toString();
+      const {receipt, wait } = await this.ipfs.addAnconObjectMetadata({
+        name: "Test",
+        description: "Description",
+        image: this.cids[0],
+        sources: this.cids,
+        owner: this.currentAccount,
+        parent: undefined,
+        verifiedCredentialRef: undefined,
+        links: undefined,
+      });
+      const cid = await wait;
+      return cid;
     } catch (e) {
       this.loading = false;
     }
