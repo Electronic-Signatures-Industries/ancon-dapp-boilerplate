@@ -9,6 +9,7 @@ import './plugins/chartist';
 import './plugins/vee-validate';
 import './plugins/appconfig';
 import Vuebar from 'vuebar';
+import VueConfirmDialog from 'vue-confirm-dialog'
 
 
 import GAuth from 'vue-google-oauth2'
@@ -16,6 +17,9 @@ import Cryptoicon from 'vue-cryptoicon';
 // For all icons
 import icon from 'vue-cryptoicon/src/icons';
 Cryptoicon.add(icon);
+
+ 
+Vue.use(VueConfirmDialog)
 Vue.use(Cryptoicon);
 
 const gauthOption = {

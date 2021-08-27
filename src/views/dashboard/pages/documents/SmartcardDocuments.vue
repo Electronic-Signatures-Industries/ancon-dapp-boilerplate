@@ -267,6 +267,7 @@
       </v-tabs-items>
     </v-card>
 
+    <vue-confirm-dialog></vue-confirm-dialog>
     <v-dialog v-model="unlockPin" max-width="500px">
       <v-card>
         <v-card-title>
@@ -302,28 +303,11 @@
   </v-container>
 </template>
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
-import moment from "moment";
-import {
-  DIDManager,
-  IPLDManager,
-  SmartCardConnectorPKCS11,
-  Wallet,
-  X509Utils,
-} from "xdv-universal-wallet-core";
-import { CAGOB } from "./cagob.pem";
-import { CARAIZ } from "./caraiz.pem";
-import { CAPC2 } from "./capc2.pem";
+import { Component, Vue } from "vue-property-decorator";
+import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
-import {
-  decodeBase64,
-  encodeBase64,
-  encodeBase64Url,
-  fromDagJWS,
-} from "dids/lib/utils";
-import { BigNumber, Contract, ethers } from "ethers";
-import { base64, hexlify } from "ethers/lib/utils";
+import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
@@ -421,6 +405,7 @@ export default class SmartcardDocuments extends Vue {
   viewItems = [];
   transactions = [];
   emulateSmartcard = false;
+  wallet: Wallet;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -443,7 +428,7 @@ export default class SmartcardDocuments extends Vue {
   /**
    * Downloads a File object
    */
-  async downloadFileFromObject(o: any, name: string, contentType: string) {
+  async downloadFileFromObject(o: any, name: string) {
     try {
       const url = window.URL.createObjectURL(new Blob([o]));
       const a = document.createElement("a");
@@ -460,18 +445,7 @@ export default class SmartcardDocuments extends Vue {
   /**
    * Loads a cid
    */
-  async loadCid(cid: string, type: string, name: string, contentType: string) {
-    function concatArrayBuffers(...bufs) {
-      const result = new Uint8Array(
-        bufs.reduce((totalSize, buf) => totalSize + buf.byteLength, 0)
-      );
-      bufs.reduce((offset, buf) => {
-        result.set(buf, offset);
-        return offset + buf.byteLength;
-      }, 0);
-      return result.buffer;
-    }
-
+  async loadCid(cid: string, type: string) {
     if (type === "jwt") {
       //return await this.ipfs.getObject(cid);
       const result = await this.ancon.getObject(cid);
@@ -501,8 +475,32 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
+    // @ts-ignore
+    this.$confirm({
+      auth: true,
+      message: "Please enter a passphrase",
+      button: {
+        yes: "Yes",
+        no: "Cancel",
+      },
+      /**
+       * Callback Function
+       * @param {Boolean} confirm
+       * @param {String} password
+       */
+      callback: async (confirm, password) => {
+        if (confirm && password) {
+          await this.connect(password)
+        }
+      },
+    });
+  }
+
+  async connect(passphrase: string) {
     this.ancon = new AnconManager();
-    await this.ancon.start();
+
+    // TODO: Ask for passphrase
+    await this.ancon.start(passphrase);
     //this.currentAccount = this.ancon.account;
 
     // @ts-ignore
@@ -580,37 +578,6 @@ export default class SmartcardDocuments extends Vue {
     );
   }
 
-  /**
-   * Creates a wallet
-   * @param accountName Account name
-   * @param passphrase Passphrase
-   * @returns
-   */
-  async createEphemericWallet() {
-    const accountName = "walletcorexdv";
-    const passphrase = "walletcorexdv";
-    const wallet = new Wallet({ isWeb: false });
-    try {
-      await wallet.open(accountName, passphrase);
-
-      const acct = (await wallet.getAccount()) as any;
-      let walletId;
-
-      if (acct.keystores.length === 0) {
-        walletId = await wallet.addWallet();
-      } else {
-        walletId = acct.keystores[0].walletId;
-      }
-
-      return wallet.createEd25519({
-        passphrase: passphrase,
-        walletId: walletId,
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   // Stores documents and NFT
   async xdvify() {
     let lnk;
@@ -652,11 +619,7 @@ export default class SmartcardDocuments extends Vue {
 
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
-        const arr = await file.arrayBuffer();
-        const { receipt, wait } = await this.ancon.addAnconObjectFile(
-          " ",
-          file,
-        );
+        const { wait } = await this.ancon.addAnconObjectFile(" ", file);
         const cid = await wait;
 
         this.cids.push({
@@ -671,12 +634,8 @@ export default class SmartcardDocuments extends Vue {
             cid,
           },
         ];
-        // this.reports = [
-        //   ...this.reports,
-        //   await this.verifyChain(cid.toString()),
-        // ];
       }
-    const { receipt, wait } = await this.ancon.addAnconObjectMetadata({
+      const { wait } = await this.ancon.addAnconObjectMetadata({
         name: "Test",
         description: "Description",
         image: this.cids[0],
@@ -750,29 +709,7 @@ export default class SmartcardDocuments extends Vue {
     const log = await txmint.wait(1);
     //
     this.txid = log.blockHash;
-    //     console.log(
-    //       log.events[3].decode(log.events[3].data, log.events[3].topics)
-    //     );
-    // console.log(
-    //       log.events[2].decode(log.events[2].data, log.events[2].topics)
-    //     );
 
-    // const filter = this.contract.getPastEvents("DocumentAnchored", {
-    //   toBlock: "latest",
-    //   fromBlock: 3,
-    //   filter: { user: this.localAddress },
-    // });
-
-    // const response = await filter;
-    // const blockItem = response.reverse()[0];
-    // const root = await this.ipfs.getObject(
-    //   this.web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
-    // );
-    // const document = root.value;
-    // console.log("ROOT VALUE", root.value);
-    // console.log("document", document);
-    // this.showVideo = true;
-    // this.videoBase64 = root.value.content;
     this.loading = false;
   }
 

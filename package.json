@@ -78,6 +78,7 @@
     "vue": "^2.6.11",
     "vue_pdfjs_viewer": "^0.1.11",
     "vue-class-component": "^7.2.3",
+    "vue-confirm-dialog": "^1.0.2",
     "vue-cryptoicon": "^0.17.2",
     "vue-file-agent": "^1.7.3",
     "vue-google-oauth2": "^1.5.5",

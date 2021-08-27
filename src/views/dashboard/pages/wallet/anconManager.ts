@@ -17,29 +17,20 @@ const multicodec = require("multicodec");
 
 export type DocumentMetadata = any;
 
-const initIpld = async (repo) => {
-  //const repo = new IpfsRepo(ipfsRepoPath)
-  //await repo.init({})
-  //await repo.open()
-  const blockService = new IpfsBlockService(repo);
-  return new Ipld({ blockService: blockService });
-};
-
 export class AnconManager {
   anconClient: AnconClient;
   anconAPI: any;
-  account: any;
+  account: string;
 
-  async start() {
+  async start(passphrase: string) {
     const keplr = await createKeplrWallet();
     this.anconClient = new AnconClient(
       true,
       keplr.config.rest,
       keplr.config.rpc,
-      keplr.offlineSigner
     );
-    this.anconAPI = await this.anconClient.create("", "");
-    this.account = keplr.accounts[0];
+    this.anconAPI = await this.anconClient.create('ancon_manager_accounts', passphrase);
+    this.account = keplr.accounts[0].address;
   }
   /**
    * Converts Blob to Keccak 256 hash
