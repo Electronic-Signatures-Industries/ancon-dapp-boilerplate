@@ -4,12 +4,10 @@ import config from "./anconConfig";
 // You can get this offline signer from `window.getOfflineSigner(chainId:string)` after load event.
 // And it also injects the helper function to `window.keplr`.
 // If `window.getOfflineSigner` or `window.keplr` is null, Keplr extension may be not installed on browser.
-export function createKeplrWallet() {
-  //@ts-ignore
+export async function createKeplrWallet() {
   if (!window.getOfflineSigner || !window.keplr) {
     alert("Please install keplr extension");
   } else {
-    //@ts-ignore
     if (window.keplr.experimentalSuggestChain) {
       try {
         // Keplr v0.6.4 introduces an experimental feature that supports the feature to suggests the chain from a webpage.
@@ -18,8 +16,9 @@ export function createKeplrWallet() {
         // If the user approves, the chain will be added to the user's Keplr extension.
         // If the user rejects it or the suggested chain information doesn't include the required fields, it will throw an error.
         // If the same chain id is already registered, it will resolve and not require the user interactions.
-        //@ts-ignore
+        
         await window.keplr.experimentalSuggestChain(config);
+
       } catch {
         alert("Failed to suggest the chain");
       }
@@ -33,10 +32,10 @@ export function createKeplrWallet() {
   // Also, it will request user to unlock the wallet if the wallet is locked.
   // If you don't request enabling before usage, there is no guarantee that other methods will work.
   //@ts-ignore
-  await window.keplr.enable(config.chainId);
-
+  await keplr.enable(config.chainId);
+  
   //@ts-ignore
-  const offlineSigner = window.getOfflineSigner(config.chainId);
+  const offlineSigner = getOfflineSigner(config.chainId);
 
   // You can get the address/public keys by `getAccounts` method.
   // It can return the array of address/public key.

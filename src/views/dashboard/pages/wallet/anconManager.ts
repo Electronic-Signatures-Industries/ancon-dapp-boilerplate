@@ -28,10 +28,10 @@ const initIpld = async (repo) => {
 export class AnconManager {
   anconClient: AnconClient;
   anconAPI: any;
-  account: string;
+  account: any;
 
   async start() {
-    const keplr = createKeplrWallet();
+    const keplr = await createKeplrWallet();
     this.anconClient = new AnconClient(
       true,
       keplr.config.rest,
@@ -64,6 +64,9 @@ export class AnconManager {
    * @param parent Direct ascendant of the current intellectual property.
    * @param verifiedCredentialRef Is the verified credential for the metadata
    * @param links Sample of references included in the current intellectual property
+   * @param creator
+   * @param did 
+   * @param from
    */
   async addAnconObjectMetadata({
     name,
@@ -74,8 +77,10 @@ export class AnconManager {
     parent,
     verifiedCredentialRef,
     links,
+    creator,
+    did,
+    from,
   }) {
-    let cid;
     const metadata = {
       name: name,
       description: description,
@@ -85,25 +90,12 @@ export class AnconManager {
       parent: parent,
       verifiedCredentialRef: verifiedCredentialRef,
       links: links,
+      creator: creator,
+      did: did,
+      from: from,
     };
 
-    const wait = new Promise(async (resolve, reject) => {
-      const query = `message.action='Metadata'`;
-      this.anconAPI.tendermint.subscribeTx(query).addListener({
-        next: async (log: any) => {
-          // Decode response
-          const res = MsgMetadataResponse.decode(log.result.data);
-
-          // Hack: Protobuf issue
-          const cid = res.cid.substring(10);
-
-          // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
-          resolve(cid);
-        },
-      });
-    });
-
-    const receipt = await this.anconAPI.metadata.add(metadata, {
+    return this.anconClient.executeMetadata(metadata, {
       fee: {
         amount: [
           {
@@ -114,8 +106,6 @@ export class AnconManager {
         gas: "200000",
       },
     });
-
-    return { receipt, wait };
   }
 
   /**
@@ -123,37 +113,20 @@ export class AnconManager {
    * @param
    */
   async addAnconObjectFile(did: string, payload: File) {
-    let cid;
     let result = await this.blobToKeccak256(payload);
 
     const file = {
       path: payload.name,
       did: did,
-      from: this.account,
-      time: payload.lastModified,
-      creator: this.account,
+      from: this.account.address,
+      time: payload.lastModified.toString(),
       mode: "",
       content: base64.encode(result.content),
       contentType: payload.type,
+      creator: this.account.address
     };
-
-    const wait = new Promise(async (resolve, reject) => {
-      const query = `message.action='File'`;
-      this.anconAPI.tendermint.subscribeTx(query).addListener({
-        next: async (log: any) => {
-          // Decode response
-          const res = MsgFileResponse.decode(log.result.data);
-
-          // Hack: Protobuf issue
-          const cid = res.hash.substring(10);
-
-          // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
-          resolve(cid);
-        },
-      });
-    });
-
-    const receipt = await this.anconAPI.file.add(file, {
+    debugger
+    return this.anconClient.executeFile(file, {
       fee: {
         amount: [
           {
@@ -164,8 +137,6 @@ export class AnconManager {
         gas: "200000",
       },
     });
-
-    return { receipt, wait };
   }
 
   /**

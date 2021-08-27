@@ -340,7 +340,7 @@ export default class SmartcardDocuments extends Vue {
   uploadStatus = false;
   typelink = { mode: "2" };
   unlockPin = false;
-  ipfs: any = {};
+  ancon: AnconManager;
   report: unknown = {};
   cids: any = [];
   manifest: any = "";
@@ -474,28 +474,20 @@ export default class SmartcardDocuments extends Vue {
 
     if (type === "jwt") {
       //return await this.ipfs.getObject(cid);
-      const result = await this.ipfs.getObject(cid);
-      const blob = base64.decode(result.value.content);
+      const result = await this.ancon.getObject(cid);
+      const blob = JSON.parse(result.data);
 
-      await this.downloadFileFromObject(
-        blob.buffer,
-        result.value.name,
-        result.value.contentType
-      );
-    } else if (type === "pades" || type === "simple") {
-      let chunks = [];
-
-      for await (const file of this.ipfs.client.get(cid)) {
-        if (!file.content) continue;
-
-        for await (const chunk of file.content) {
-          chunks.push(chunk);
-        }
+      if (blob.content === null) {
+        //TODO: download all sources
+        //TODO: parse json and make every object clickable
+        console.log(blob);
       }
 
-      const c = concatArrayBuffers(...chunks);
-
-      await this.downloadFileFromObject(c, name, contentType);
+      // await this.downloadFileFromObject(
+      //   blob.buffer,
+      //   result.value.name,
+      //   result.value.contentType
+      // );
     }
   }
 
@@ -509,6 +501,10 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
+    this.ancon = new AnconManager();
+    await this.ancon.start();
+    //this.currentAccount = this.ancon.account;
+
     // @ts-ignore
     if (window.BinanceChain) {
       // @ts-ignore
@@ -584,43 +580,6 @@ export default class SmartcardDocuments extends Vue {
     );
   }
 
-  // ==========================================
-  //      Verify chain
-  // ==========================================
-  async verifyChain(cid: string): Promise<any> {
-    try {
-      const res = await (this.ipfs as IPLDManager).get(cid);
-
-      const obj = await this.ipfs?.getObject(cid);
-      const decoded = fromDagJWS(res.value).split(".");
-      const data = `${decoded[0]}.${decoded[1]}`;
-      const sig = `${decoded[2]}`;
-
-      let report = {};
-      if (obj.value.alg === "ED25519") {
-        // const kp = new eddsa('ed25519')
-        // const kk = kp.keyFromPublic((base64.decode(obj.value.public))
-        // const a = kk.verify(data, sig);
-        return;
-      }
-      report = await X509Utils.verifyChain(
-        data,
-        sig,
-        obj.value.documentPubCert,
-        [CAGOB, CAPC2, CARAIZ]
-      );
-
-      this.reportVerify = report;
-      // @ts-ignore
-      // this.reportVerify = report
-      //   .map((i) => `${i.title}: ${i.subtitle}`)
-      //   .join("<br />");
-    } catch (e) {
-      // TODO: log
-      console.log(e);
-    }
-  }
-
   /**
    * Creates a wallet
    * @param accountName Account name
@@ -657,13 +616,7 @@ export default class SmartcardDocuments extends Vue {
     let lnk;
 
     // simple
-    if (this.tabIndex === 0) {
-      lnk = await this.createSimpleDocumentNode(this.files);
-    } else if (this.tabIndex === 1) {
-      lnk = await this.createDocumentNode(this.files);
-    } else if (this.tabIndex === 2) {
-      lnk = await this.createPadesNode(this.files);
-    }
+    lnk = await this.createSimpleDocumentNode(this.files);
 
     if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
@@ -680,168 +633,12 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
-    this.ipfs = new AnconManager();
-    await this.ipfs.start();
-
     if (this.$router.currentRoute.params.cid) {
       this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
     }
 
     await this.loadTransactions();
-  }
-
-  /** Creates document node */
-  async createDocumentNode(files?: File[]) {
-    if (files.length > 0 && this.pin.length === 0) {
-      this.files = files;
-      this.unlockPin = true;
-      return;
-    }
-    this.unlockPin = false;
-    this.canUpload = false;
-    this.loading = true;
-    try {
-      this.cids = [];
-      this.items = [];
-      const didManager = new DIDManager();
-      const pin = this.pin;
-      let didRSA;
-      if (this.emulateSmartcard) {
-        didRSA = await didManager.create3ID_RSA();
-      } else {
-        didRSA = await didManager.create3ID_PKCS11(pin);
-      }
-      await didRSA.did.authenticate();
-
-      const ipfsManager = new IPLDManager(didRSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
-
-      for (let index = 0; index < this.files.length; index++) {
-        const file = this.files[index];
-        const arr = await file.arrayBuffer();
-        const cid = await ipfsManager.addSignedObject(new Uint8Array(arr), {
-          name: file.name,
-          contentType: file.type,
-          lastModified: new Date(file.lastModified),
-          certificate: (didRSA as any).certificate,
-        } as any);
-        this.cids.push({
-          cid,
-          name: file.name,
-          contentType: file.type,
-        });
-        this.items = [
-          ...this.items,
-          {
-            file,
-            cid,
-          },
-        ];
-        // this.reports = [
-        //   ...this.reports,
-        //   await this.verifyChain(cid.toString()),
-        // ];
-      }
-      this.did = didRSA.did.id;
-      const lnk = await ipfsManager.addSignedObject(
-        Buffer.from(JSON.stringify({ index: true })),
-        {
-          alg: "RS256",
-          type: "jwt",
-          signedFiles: this.cids,
-          certificate: (didRSA as any).certificate,
-        }
-      );
-      this.manifest = lnk.toString();
-      return lnk.toString();
-    } catch (e) {
-      this.loading = false;
-      alert(e);
-    }
-    this.loading = false;
-    return null;
-  }
-
-  /** Creates pades document node */
-  async createPadesNode(files?: File[]) {
-    if (files.length > 0 && this.pin.length === 0) {
-      this.files = files;
-      this.unlockPin = true;
-      return;
-    }
-    this.unlockPin = false;
-    this.canUpload = false;
-    this.loading = true;
-    try {
-      this.cids = [];
-      this.items = [];
-
-      const sc = new SmartCardConnectorPKCS11();
-      await sc.connect();
-      const pin = this.pin;
-
-      // const certs: any = await sc.getCerts("0", pin);
-      // const publicPem = didManager.base64toPem(certs.publicKey);
-
-      const oneTimeWallet = await this.createEphemericWallet();
-      const didEDDSA = oneTimeWallet;
-      await didEDDSA.did.authenticate();
-
-      const ipfsManager = new IPLDManager(didEDDSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
-
-      for (let index = 0; index < this.files.length; index++) {
-        const file = this.files[index];
-        const arr = await file.arrayBuffer();
-        // @ts-ignore
-        const resp = await sc.signPades(
-          pin,
-          ethers.utils.base64.encode(new Uint8Array(arr))
-        );
-        const content = decodeBase64(resp.signedDocument);
-        const { cid } = await ipfsManager.client.add({
-          path: file.name,
-          content,
-        });
-        this.cids.push({
-          cid: cid.toString(),
-          name: file.name,
-          contentType: file.type,
-        });
-        this.items = [
-          ...this.items,
-          {
-            file,
-            cid,
-          },
-        ];
-        // this.reports = [
-        //   ...this.reports,
-        //   await this.verifyChain(cid.toString()),
-        // ];
-      }
-      // MOVED TO SECRET -----------------------------------
-      this.did = didEDDSA.did.id;
-      const lnk = await ipfsManager.addSignedObject(
-        Buffer.from(JSON.stringify({ index: true })),
-        {
-          alg: "ED25519",
-          type: "pades",
-          publicKey: base64.encode(didEDDSA.publicKey),
-          signedFiles: this.cids,
-        }
-      );
-      this.manifest = lnk.toString();
-      return lnk.toString();
-    } catch (e) {
-      console.log(e);
-      this.loading = false;
-    }
-    this.loading = false;
-    return null;
   }
 
   /** Creates simple document node */
@@ -856,7 +653,10 @@ export default class SmartcardDocuments extends Vue {
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
         const arr = await file.arrayBuffer();
-        const { receipt, wait } = await this.ipfs.addAnconObjectFile(" ", file);
+        const { receipt, wait } = await this.ancon.addAnconObjectFile(
+          " ",
+          file,
+        );
         const cid = await wait;
 
         this.cids.push({
@@ -876,15 +676,18 @@ export default class SmartcardDocuments extends Vue {
         //   await this.verifyChain(cid.toString()),
         // ];
       }
-      const {receipt, wait } = await this.ipfs.addAnconObjectMetadata({
+    const { receipt, wait } = await this.ancon.addAnconObjectMetadata({
         name: "Test",
         description: "Description",
         image: this.cids[0],
         sources: this.cids,
-        owner: this.currentAccount,
+        owner: this.currentAccount, //binance acc
         parent: undefined,
         verifiedCredentialRef: undefined,
         links: undefined,
+        creator: this.ancon.account, //cosmos acc
+        did: "",
+        from: this.currentAccount, //binance acc
       });
       const cid = await wait;
       return cid;
@@ -974,8 +777,8 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async loadViewer() {
-    if (this.ipfs && this.cidindex) {
-      const res = await this.ipfs.getObject(this.cidindex);
+    if (this.ancon && this.cidindex) {
+      const res = await this.ancon.getObject(this.cidindex);
       this.viewItems = res.value;
     }
   }

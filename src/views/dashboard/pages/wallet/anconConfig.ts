@@ -2,7 +2,7 @@ const config ={
   // Chain-id of the Cosmos SDK chain.
   chainId: "anconprotocol",
 
-  chainName: "Ancon",
+  chainName: "anconprotocol",
 
   rpc: "ws://ancon.dao.pa:26657",
 
@@ -10,9 +10,9 @@ const config ={
 
   stakeCurrency: {
 
-      coinDenom: "ATOM",
+      coinDenom: "stake",
 
-      coinMinimalDenom: "uatom",
+      coinMinimalDenom: "stake",
       
       coinDecimals: 6,
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
@@ -40,9 +40,9 @@ const config ={
   // List of all coin/tokens used in this chain.
   currencies: [{
       // Coin denomination to be displayed to the user.
-      coinDenom: "ATOM",
+      coinDenom: "token",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-      coinMinimalDenom: "uatom",
+      coinMinimalDenom: "token",
       // # of decimal points to convert minimal denomination to user-facing denomination.
       coinDecimals: 6,
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
@@ -52,9 +52,9 @@ const config ={
   // List of coin/tokens used as a fee token in this chain.
   feeCurrencies: [{
       // Coin denomination to be displayed to the user.
-      coinDenom: "ATOM",
+      coinDenom: "token",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-      coinMinimalDenom: "uatom",
+      coinMinimalDenom: "token",
       // # of decimal points to convert minimal denomination to user-facing denomination.
       coinDecimals: 6,
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
