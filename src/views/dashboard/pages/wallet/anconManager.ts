@@ -7,6 +7,7 @@ import { base64, keccak256 } from "ethers/lib/utils";
 import { createKeplrWallet } from "./KeplrWrapper";
 import { AnconClient } from "anconjs";
 import { config } from "vue/types/umd";
+import { Wallet } from "xdv-universal-wallet-core";
 import {
   MsgFileResponse,
   MsgMetadataResponse,
@@ -20,20 +21,60 @@ export type DocumentMetadata = any;
 export class AnconManager {
   anconClient: AnconClient;
   anconAPI: any;
-  account: string;
+  account: any;
+
+  //xdvWallet: Wallet;
 
   async start(passphrase: string) {
+    // let xdvWallet = new Wallet({ isWeb: false });
+    // debugger;
+    // const walletId = xdvWallet.addWallet();
+
+    // await xdvWallet.open("ancon_manager_accounts", passphrase);
+
+    // const acct = await xdvWallet.getAccount("ancon_manager_accounts");
+
+    const wallet = new Wallet({ isWeb: false });
+    try {
+      await wallet.open("ancon_manager_accounts", passphrase);
+      const acct = (await wallet.getAccount()) as any;
+
+      let walletId;
+
+      if (acct.keystores.length === 0) {
+        walletId = await wallet.addWallet();
+      } else {
+        walletId = acct.keystores[0].walletId;
+      }
+
+      this.account = await wallet.createEd25519({
+        passphrase: passphrase,
+        walletId: walletId,
+      });
+      debugger
+
+      return this.account;
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    debugger;
     const keplr = await createKeplrWallet();
     this.anconClient = new AnconClient(
       true,
       keplr.config.rest,
-      keplr.config.rpc,
+      keplr.config.rpc
     );
-    this.anconAPI = await this.anconClient.create('ancon_manager_accounts', passphrase);
+
+    this.anconAPI = await this.anconClient.create(
+      "ancon_manager_accounts",
+      passphrase
+    );
     this.account = keplr.accounts[0].address;
   }
   /**
-   * Converts Blob to Keccak 256 hash
+   * Converts Blob to Keccak 256 hashAA
    * @param payload
    */
   async blobToKeccak256(payload: File): Promise<any> {
@@ -56,7 +97,7 @@ export class AnconManager {
    * @param verifiedCredentialRef Is the verified credential for the metadata
    * @param links Sample of references included in the current intellectual property
    * @param creator
-   * @param did 
+   * @param did
    * @param from
    */
   async addAnconObjectMetadata({
@@ -109,14 +150,14 @@ export class AnconManager {
     const file = {
       path: payload.name,
       did: did,
-      from: this.account.address,
+      from: this.account,
       time: payload.lastModified.toString(),
       mode: "",
       content: base64.encode(result.content),
       contentType: payload.type,
-      creator: this.account.address
+      creator: this.account,
     };
-    debugger
+    debugger;
     return this.anconClient.executeFile(file, {
       fee: {
         amount: [

@@ -513,6 +513,7 @@ export default class SmartcardDocuments extends Vue {
     }
     this.connected = true;
     this.currentAccount = (await this.web3Selector.enable())[0];
+    debugger
     this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
 
     // DAI
@@ -621,7 +622,7 @@ export default class SmartcardDocuments extends Vue {
         const file = this.files[index];
         const { wait } = await this.ancon.addAnconObjectFile(" ", file);
         const cid = await wait;
-
+        debugger
         this.cids.push({
           cid: cid.toString(),
           name: file.name,
@@ -635,6 +636,7 @@ export default class SmartcardDocuments extends Vue {
           },
         ];
       }
+      debugger
       const { wait } = await this.ancon.addAnconObjectMetadata({
         name: "Test",
         description: "Description",
@@ -644,11 +646,12 @@ export default class SmartcardDocuments extends Vue {
         parent: undefined,
         verifiedCredentialRef: undefined,
         links: undefined,
-        creator: this.ancon.account, //cosmos acc
+        creator: this.currentAccount, //binance acccosmos acc
         did: "",
         from: this.currentAccount, //binance acc
       });
       const cid = await wait;
+      debugger
       return cid;
     } catch (e) {
       this.loading = false;
