@@ -620,9 +620,9 @@ export default class SmartcardDocuments extends Vue {
 
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
-        const { wait } = await this.ancon.addAnconObjectFile(" ", file);
-        const cid = await wait;
+        const cid = await this.ancon.addAnconObjectFile(" ", file);
         debugger
+        
         this.cids.push({
           cid: cid.toString(),
           name: file.name,
