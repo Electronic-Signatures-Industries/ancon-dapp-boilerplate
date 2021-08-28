@@ -309,6 +309,7 @@ import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
+import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -490,7 +491,7 @@ export default class SmartcardDocuments extends Vue {
        */
       callback: async (confirm, password) => {
         if (confirm && password) {
-          await this.connect(password)
+          await this.connect(password);
         }
       },
     });
@@ -513,7 +514,7 @@ export default class SmartcardDocuments extends Vue {
     }
     this.connected = true;
     this.currentAccount = (await this.web3Selector.enable())[0];
-    debugger
+
     this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
 
     // DAI
@@ -617,12 +618,15 @@ export default class SmartcardDocuments extends Vue {
     try {
       this.cids = [];
       this.items = [];
+      await this.ancon.did.authenticate();
 
+      // 1) Upload CIDs
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
-        const cid = await this.ancon.addAnconObjectFile(" ", file);
-        debugger
-        
+        const { transaction, cid } = await this.ancon.addFile(
+          this.ancon.did.id,
+          file
+        );
         this.cids.push({
           cid: cid.toString(),
           name: file.name,
@@ -636,25 +640,32 @@ export default class SmartcardDocuments extends Vue {
           },
         ];
       }
-      debugger
-      const { wait } = await this.ancon.addAnconObjectMetadata({
-        name: "Test",
+
+      // 2) Create and store Ancon metadata
+      const { transaction, cid } = await this.ancon.addMetadata({
+        name: "Simple signing",
         description: "Description",
-        image: this.cids[0],
-        sources: this.cids,
+        image: this.cids[0].cid,
+        sources: this.cids.map(i => i.cid),
         owner: this.currentAccount, //binance acc
         parent: undefined,
         verifiedCredentialRef: undefined,
         links: undefined,
-        creator: this.currentAccount, //binance acccosmos acc
-        did: "",
+        creator: this.ancon.account, //binance acccosmos acc
+        did: this.ancon.did.id,
         from: this.currentAccount, //binance acc
       });
-      const cid = await wait;
-      debugger
+
+
       return cid;
     } catch (e) {
       this.loading = false;
+      this.$confirm({
+        message: `Transaction failed with message ${e.message}`,
+        buttons: {
+          yes: "OK",
+        },
+      });
     }
     return null;
   }

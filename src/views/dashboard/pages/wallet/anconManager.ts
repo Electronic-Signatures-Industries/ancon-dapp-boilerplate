@@ -1,20 +1,13 @@
-import IPFS from 'ipfs-core'
-import { DID } from 'dids'
-import { ethers } from 'ethers'
-import moment from 'moment'
-import IPFSClient from 'ipfs-http-client'
 import { base64, keccak256 } from 'ethers/lib/utils'
-import { createKeplrWallet } from './KeplrWrapper'
 import { AnconClient } from 'anconjs'
 import { config } from 'vue/types/umd'
-import { Wallet } from 'xdv-universal-wallet-core'
 import {
   MsgFileResponse,
   MsgMetadataResponse,
+  MsgMetadataTx,
 } from 'anconjs/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx'
-const Ipld = require('ipld')
-const IpfsBlockService = require('ipfs-block-service')
-const multicodec = require('multicodec')
+import { firstValueFrom, Observable, Subject, Subscription } from 'rxjs'
+import * as cosmosConfig from './anconConfig'
 
 export type DocumentMetadata = any
 
@@ -22,33 +15,31 @@ export class AnconManager {
   anconClient: AnconClient
   anconAPI: any
   account: any
+  did: any
 
   //xdvWallet: Wallet;
 
   async start(passphrase: string) {
-    // let xdvWallet = new Wallet({ isWeb: false });
-    // debugger;
-    // const walletId = xdvWallet.addWallet();
-
-    // await xdvWallet.open("ancon_manager_acct", passphrase);
-
-    // const acct = await xdvWallet.getAccount("ancon_manager_acct");
-    const keplr = await createKeplrWallet()
     this.anconClient = new AnconClient(
       true,
-      keplr.config.rest,
-      keplr.config.rpc,
+      cosmosConfig.default.rest,
+      cosmosConfig.default.rpc,
     )
-
-    const wallet = this.anconClient.wallet
 
     this.anconAPI = await this.anconClient.create(
       'ancon_manager_acct',
       passphrase,
       passphrase,
     )
-    this.account = keplr.accounts[0].address
-    debugger
+
+    const wallet = this.anconClient.wallet
+    const acct = (await wallet.getAccount()) as any
+    const eddsa = await wallet.createEd25519({
+      accountName: 'ancon_manager_accct',
+      passphrase,
+      walletId: acct.keystores[0].walletId,
+    })
+    this.did = eddsa.did
     this.account = 'cosmos1ec02plr0mddj7r9x3kgh9phunz34t69twpley6'
   }
   /**
@@ -78,7 +69,7 @@ export class AnconManager {
    * @param did
    * @param from
    */
-  async addAnconObjectMetadata({
+  async addMetadata({
     name,
     description,
     image,
@@ -105,24 +96,59 @@ export class AnconManager {
       from: from,
     }
 
-    return this.anconClient.executeMetadata(metadata, {
-      fee: {
-        amount: [
-          {
-            denom: 'token',
-            amount: '4',
-          },
-        ],
-        gas: '2000000',
-      },
-    })
-  }
+    const sub = new Subject<string>()
+    const query = `message.action='Metadata'`
 
+    const subscription = this.anconClient.tm.subscribeTx(query).subscribe({
+      next: async (log: any) => {
+        try {
+          // Decode response
+          const res = MsgMetadataResponse.decode(log.result.data)
+
+          // Hack: Protobuf issue
+          const cid = res.cid.substring(14)
+          sub.next(cid)
+          sub.complete()
+        } catch (err) {
+          sub.error(err)
+        }
+      },
+    }) as Subscription
+
+    try {
+      const wait = new Promise((resolve, reject) => {
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
+      })
+      const encoded = this.anconClient.msgService.msgMetadata(
+        MsgMetadataTx.fromPartial(metadata),
+      )
+      // hack
+      encoded.value.creator = creator;
+      encoded.value.sources = JSON.stringify(encoded.value.sources)
+      encoded.value.links = JSON.stringify(encoded.value.links)
+      const tx = await this.anconClient.msgService.signAndBroadcast([encoded], {
+        fee: {
+          amount: [
+            {
+              denom: 'token',
+              amount: '1',
+            },
+          ],
+          gas: '5000000',
+        },
+      })
+      const cid = await wait
+      subscription.unsubscribe()
+      return { transaction: tx, cid }
+    } catch (e) {
+      throw e
+    }
+  }
   /**
    * Add Ancon File
    * @param
    */
-  async addAnconObjectFile(did: string, payload: File) {
+  async addFile(did: string, payload: File) {
     let result = await this.blobToKeccak256(payload)
 
     const file = {
@@ -135,22 +161,47 @@ export class AnconManager {
       contentType: payload.type,
       creator: this.account,
     }
-    debugger
-    const encoded = this.anconClient.msgService.msgFile(file)
-    const x = await this.anconClient.msgService.signAndBroadcast([encoded], {
-      fee: {
-        amount: [
-          {
-            denom: 'token',
-            amount: '4',
-          },
-        ],
-        gas: '5000000',
+    const sub = new Subject<string>()
+    const query = `message.action='File'`
+
+    const subscription = this.anconClient.tm.subscribeTx(query).subscribe({
+      next: async (log: any) => {
+        try {
+          // Decode response
+          const res = MsgFileResponse.decode(log.result.data)
+
+          // Hack: Protobuf issue
+          const cid = res.hash.substring(10)
+          sub.next(cid)
+          sub.complete()
+        } catch (err) {
+          sub.error(err)
+        }
       },
-    })
-    debugger
-    return x
-    //    return wait
+    }) as Subscription
+
+    try {
+      const wait = new Promise((resolve, reject) => {
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
+      })
+      const encoded = this.anconClient.msgService.msgFile(file)
+      const tx = await this.anconClient.msgService.signAndBroadcast([encoded], {
+        fee: {
+          amount: [
+            {
+              denom: 'token',
+              amount: '1',
+            },
+          ],
+          gas: '5000000',
+        },
+      })
+      const cid = await wait
+      subscription.unsubscribe()
+      return { transaction: tx, cid }
+    } catch (e) {
+      throw e
+    }
   }
 
   /**
