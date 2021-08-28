@@ -33,7 +33,7 @@
     "@ethersphere/bee-js": "^1.1.1",
     "@stomp/stompjs": "^6.1.0",
     "3id-did-provider": "^0.1.2",
-    "anconjs": "^0.1.1",
+    "anconjs": "^0.1.2",
     "arweave": "^1.10.16",
     "axios": "^0.19.2",
     "bl": "^4.0.2",

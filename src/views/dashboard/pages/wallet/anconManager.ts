@@ -89,7 +89,7 @@ export class AnconManager {
       sources: sources,
       owner: owner,
       parent: parent,
-      verifiedCredentialRef: verifiedCredentialRef,
+      verified_credential_ref: verifiedCredentialRef,
       links: links,
       creator: creator,
       did: did,
@@ -120,7 +120,7 @@ export class AnconManager {
         sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
       })
       const encoded = this.anconClient.msgService.msgMetadata(
-        MsgMetadataTx.fromPartial(metadata),
+        metadata,
       )
       // hack
       encoded.value.creator = creator;

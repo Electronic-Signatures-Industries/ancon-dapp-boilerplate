@@ -64,10 +64,10 @@
                   <v-radio-group v-model="typelink.mode" mandatory row>
                     <v-radio label="Onchain timestamp" value="1"></v-radio>
                     <v-radio label="Non fungible token" value="2"></v-radio>
-                    <v-radio
+                    <!-- <v-radio
                       label="Only decentralized storage"
                       value="3"
-                    ></v-radio>
+                    ></v-radio> -->
                   </v-radio-group>
                   <v-checkbox
                     v-model="emulateSmartcard"
@@ -310,6 +310,7 @@ import "share-api-polyfill";
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
+import { base64 } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -366,22 +367,22 @@ export default class SmartcardDocuments extends Vue {
         contentType: null,
       },
     },
-    {
-      key: "pkcsjwt",
-      label: "Protected JWT",
-      settings: {
-        signing: "pkcsjwt",
-        contentType: null,
-      },
-    },
-    {
-      key: "pades",
-      label: "Qualified PDF",
-      settings: {
-        signing: "pades",
-        contentType: "application/pdf",
-      },
-    },
+    // {
+    //   key: "pkcsjwt",
+    //   label: "Protected JWT",
+    //   settings: {
+    //     signing: "pkcsjwt",
+    //     contentType: null,
+    //   },
+    // },
+    // {
+    //   key: "pades",
+    //   label: "Qualified PDF",
+    //   settings: {
+    //     signing: "pades",
+    //     contentType: "application/pdf",
+    //   },
+//    },
   ];
 
   tabDetailIndex = null;
@@ -447,7 +448,6 @@ export default class SmartcardDocuments extends Vue {
    * Loads a cid
    */
   async loadCid(cid: string, type: string) {
-    if (type === "jwt") {
       //return await this.ipfs.getObject(cid);
       const result = await this.ancon.getObject(cid);
       const blob = JSON.parse(result.data);
@@ -463,7 +463,6 @@ export default class SmartcardDocuments extends Vue {
       //   result.value.name,
       //   result.value.contentType
       // );
-    }
   }
 
   openCid(cid: string) {
@@ -615,6 +614,15 @@ export default class SmartcardDocuments extends Vue {
     this.unlockPin = false;
     this.canUpload = false;
     this.loading = true;
+    const fee = {
+      amount: [
+        {
+          denom: "token",
+          amount: "1",
+        },
+      ],
+      gas: "5000000",
+    };
     try {
       this.cids = [];
       this.items = [];
@@ -623,10 +631,22 @@ export default class SmartcardDocuments extends Vue {
       // 1) Upload CIDs
       for (let index = 0; index < this.files.length; index++) {
         const file = this.files[index];
-        const { transaction, cid } = await this.ancon.addFile(
-          this.ancon.did.id,
-          file
-        );
+        let result = await this.ancon.blobToKeccak256(file);
+        const msg = {
+          path: file.name,
+          did: this.ancon.did.id,
+          from: this.ancon.account,
+          time: file.lastModified.toString(),
+          mode: "",
+          content: base64.encode(result.content),
+          contentType: file.type,
+          creator: this.ancon.account,
+        };
+        const { transaction, cid }: any = await this.ancon.anconClient.addFile({
+          did: this.ancon.did.id,
+          file: msg,
+          fee,
+        });
         this.cids.push({
           cid: cid.toString(),
           name: file.name,
@@ -642,20 +662,23 @@ export default class SmartcardDocuments extends Vue {
       }
 
       // 2) Create and store Ancon metadata
-      const { transaction, cid } = await this.ancon.addMetadata({
-        name: "Simple signing",
-        description: "Description",
-        image: this.cids[0].cid,
-        sources: this.cids.map(i => i.cid),
-        owner: this.currentAccount, //binance acc
-        parent: undefined,
-        verifiedCredentialRef: undefined,
-        links: undefined,
-        creator: this.ancon.account, //binance acccosmos acc
-        did: this.ancon.did.id,
-        from: this.currentAccount, //binance acc
-      });
-
+      const { transaction, cid }: any =
+        await this.ancon.anconClient.executeMetadata(
+          {
+            name: "Simple signing",
+            description: "Description",
+            image: this.cids[0].cid,
+            sources: this.cids.map((i) => i.cid),
+            owner: this.currentAccount, //binance acc
+            parent: undefined,
+            verifiedCredentialRef: undefined,
+            links: undefined,
+            creator: this.ancon.account, //binance acccosmos acc
+            did: this.ancon.did.id,
+            from: this.currentAccount, //binance acc
+            fee
+          },
+        );
 
       return cid;
     } catch (e) {
@@ -730,7 +753,14 @@ export default class SmartcardDocuments extends Vue {
   async loadViewer() {
     if (this.ancon && this.cidindex) {
       const res = await this.ancon.getObject(this.cidindex);
-      this.viewItems = res.value;
+      const nft = JSON.parse(res.data)
+      const result = await this.ancon.getObject(nft.image)
+      this.viewItems = {
+        signedFiles: [{
+          cid: nft.image,
+          ...(JSON.parse(result.data))
+        }]
+      } as any;
     }
   }
 
