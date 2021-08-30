@@ -1,6 +1,6 @@
 import { base64, keccak256 } from 'ethers/lib/utils'
 import { AnconClient } from 'anconjs'
-import { config } from 'vue/types/umd'
+import { config, directive } from 'vue/types/umd'
 import {
   MsgFileResponse,
   MsgMetadataResponse,
@@ -40,7 +40,7 @@ export class AnconManager {
       walletId: acct.keystores[0].walletId,
     })
     this.did = eddsa.did
-    this.account = 'cosmos1ec02plr0mddj7r9x3kgh9phunz34t69twpley6'
+    this.account = this.anconClient.account[0].address
   }
   /**
    * Converts Blob to Keccak 256 hashAA

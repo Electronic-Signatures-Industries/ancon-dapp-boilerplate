@@ -753,12 +753,11 @@ export default class SmartcardDocuments extends Vue {
   async loadViewer() {
     if (this.ancon && this.cidindex) {
       const res = await this.ancon.getObject(this.cidindex);
-      const nft = JSON.parse(res.data)
-      const result = await this.ancon.getObject(nft.image)
+      const result = await this.ancon.getObject(res.image)
       this.viewItems = {
         signedFiles: [{
-          cid: nft.image,
-          ...(JSON.parse(result.data))
+          cid: res.image,
+          ...(result)
         }]
       } as any;
     }
