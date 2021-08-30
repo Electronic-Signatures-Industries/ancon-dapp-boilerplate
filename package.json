@@ -57,7 +57,7 @@
     "ipfs-repo": "^7.0.0",
     "ipld": "^0.28.0",
     "ipld-dag-cbor": "^0.15.3",
-    "jsrsasign": "^8.0.20",
+    "jsrsasign": "^10.2.0",
     "key-did-provider-ed25519": "^1.0.0",
     "latest": "^0.2.0",
     "moment": "^2.26.0",
