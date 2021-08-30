@@ -64,7 +64,7 @@
     "moment-timezone": "^0.5.33",
     "multicodec": "^1.0.4",
     "multiformats": "^3.0.3",
-    "node-forge": "^0.9.1",
+    "node-forge": "^0.10.0",
     "pouchdb": "^7.2.1",
     "pouchdb-find": "^7.2.1",
     "promise-file-reader": "^1.0.2",
