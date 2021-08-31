@@ -8,6 +8,7 @@ import {
 } from 'anconjs/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx'
 import { firstValueFrom, Observable, Subject, Subscription } from 'rxjs'
 import * as cosmosConfig from './anconConfig'
+import { pubkeyToAddress } from '@cosmjs/tendermint-rpc'
 
 export type DocumentMetadata = any
 
@@ -208,8 +209,8 @@ export class AnconManager {
    * Get IPLD object
    * @param cid content id
    */
-  async getObject(cid: string): Promise<any> {
-    let temp = await this.anconAPI.file.get(cid)
+  async getObject(cid: string, path: string = ''): Promise<any> {
+    let temp = await this.anconAPI.file.get(cid, path)
 
     return temp
   }

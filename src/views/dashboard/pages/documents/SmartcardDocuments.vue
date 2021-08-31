@@ -190,7 +190,7 @@
                                   {{ item.name }}
                                 </td>
                                 <td>
-                                  <v-btn
+                                  <v-btn v-show="false"
                                     @click="
                                       loadCid(
                                         item.cid,
@@ -445,18 +445,17 @@ export default class SmartcardDocuments extends Vue {
   }
 
   /**
-   * Loads a cid
+   * Loads v-show="false" a cid
    */
   async loadCid(cid: string, type: string) {
       //return await this.ipfs.getObject(cid);
       const result = await this.ancon.getObject(cid);
-      const blob = JSON.parse(result.data);
 
-      if (blob.content === null) {
-        //TODO: download all sources
-        //TODO: parse json and make every object clickable
-        console.log(blob);
-      }
+      // if (blob.content === null) {
+      //   //TODO: download all sources
+      //   //TODO: parse json and make every object clickable
+      //   console.log(blob);
+      // }
 
       // await this.downloadFileFromObject(
       //   blob.buffer,
@@ -501,7 +500,6 @@ export default class SmartcardDocuments extends Vue {
 
     // TODO: Ask for passphrase
     await this.ancon.start(passphrase);
-    //this.currentAccount = this.ancon.account;
 
     // @ts-ignore
     if (window.BinanceChain) {
@@ -667,7 +665,7 @@ export default class SmartcardDocuments extends Vue {
           {
             name: "Simple signing",
             description: "Description",
-            image: this.cids[0].cid,
+            image: `${this.cids[0].cid}/${this.cids[0].name}`,
             sources: this.cids.map((i) => i.cid),
             owner: this.currentAccount, //binance acc
             parent: undefined,
@@ -753,7 +751,9 @@ export default class SmartcardDocuments extends Vue {
   async loadViewer() {
     if (this.ancon && this.cidindex) {
       const res = await this.ancon.getObject(this.cidindex);
-      const result = await this.ancon.getObject(res.image)
+      
+      const result = await this.ancon.getObject(res.image.split('/')[0], res.image.split('/')[1])
+      
       this.viewItems = {
         signedFiles: [{
           cid: res.image,

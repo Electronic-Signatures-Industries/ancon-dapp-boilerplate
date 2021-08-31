@@ -4,9 +4,9 @@ const config ={
 
   chainName: "anconprotocol",
 
-  rpc: "ws://ancon.dao.pa:26657",
+  rpc: "ws://rpcancon.dao.pa",
 
-  rest: "https://ancon.dao.pa/rest",
+  rest: "https://apiancon.dao.pa",
 
   stakeCurrency: {
 
