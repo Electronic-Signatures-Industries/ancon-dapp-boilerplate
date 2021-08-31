@@ -10,94 +10,112 @@
 - Create NFT Tokens
 - Anchor Documents
 
-## Blockchain
+### Binance Smart Chain Testnet Contract Address
 
-### Binance Smart Chain Mainnet Contract Address
+- **anchoring**: 0xe0b39cCDa6550d4a2f7CFaBEa2bC8f60e3994172
+- **NFT**: 0x07028Cb6c74eE7C8Bb193f8CFC6f4eBA1e121197
 
-- **anchoring**: 0xee99adeb56b01b005ec24884f3f6e770e7e6f926
+## Metadata creation code sample
+### Ancon Client initialize
+```ts
+import { AnconClient } from 'anconjs'
 
-### Fee
-
-- 1 DAI = 1 USD
-
-
-### Blockchain anchoring
-
-
-```typescript
-      const document = await this.contract.methods.addDocument(this.did.id, this.indexes, 'dummy description')
-        .send({ from: this.currentAddress, gasPrice: '22000000000', gas: 400000 });
-
-```
-
-### Read anchored documents
-
-```typescript
-
-  async fetchDocuments() {
-    if(this.currentAddress.length > 0){
-      const filter = this.contract.getPastEvents('DocumentAnchored',{ 
-          toBlock: 'latest',
-          fromBlock: 0,
-          filter: { user: this.currentAddress } },
-      );
-      
-      const response = await filter;
-      console.log('response',response);
-      this.ipfs = new IPFSManager();
-      await this.ipfs.start();  
-      const items = response.map((item) => this.ipfs.getObject(item.returnValues[2]));
-      const forkedItems = forkJoin(items).pipe(debounce(x => x as any)).toPromise();
-      
-      this.items = (await forkedItems);
-      this.items = this.items.map((folder, i) => ({folder: folder.value.documents, id: i}));
-      console.log(this.items);
-    }
-  }
-```
-
-### PKCS#11
-
-```typescript
-
-    
-    // TODO
+//Create new ancon client
+this.anconClient = new AnconClient(
+    true,
+    "ws://rpcancon.dao.pa:26657",
+    "https://apiancon.dao.pa",
+)
+//Create new ancon wallet
+this.anconAPI = await this.anconClient.create(
+    'ancon_manager_acct',
+    passphrase,
+    passphrase,
+)
+//Getting the current address
+this.account = this.anconClient.account[0].address
 
 ```
+### Upload CIDs with Ancon
+```ts
+// Upload CIDs
+import {
+    AnconClient
+} from 'anconjs'
+// Upload CIDs
 
-### PKCS#12
+const file = this.files[index];
+let result = await this.ancon.blobToKeccak256(file);
+const msg = {
+    path: file.name,
 
-```typescript
-    try {
-      // @ts-ignore
-      let data = await this.value.files.arrayBuffer();
+    time: file.lastModified.toString(),
 
-// Get key using get import key
-        const rsaKeys: any = await this.wallet.getImportKey(
-          `key:P12:${this.wallet.id}`
-        );
-        const keys = JSON.parse(rsaKeys.key);
-     
-     // Sign
-        result = CMSSigner.sign(
-          keys.certificate,
-          keys.pvk,
-          Buffer.from(data)
-        );
+    content: base64.encode(result.content),
+    contentType: file.type,
+    creator: this.ancon.account,
+};
+const {
+    transaction,
+    cid
+}: any = await this.ancon.anconClient.addFile({
+    did: this.ancon.did.id,
+    file: msg,
+    fee,
+});
 
-        // store ref
-        this.shareFormat = {
-          content: base64.encode(Buffer.from(data)),
-          pubCert: keys.certificate,
-          signature: result,
-        };
-        this.value.output = SigningOutput.Base64;
- 
-      this.hasSignature = true;
-      this.shareSignature(result);
-    } catch (e) {
-      console.log(e);
-    }
+
+```
+### Upload with IPFS
+```ts
+client = IPFSClient({ url: `https://ipfs.xdv.digital` });
+       
+client = IPFSClient({
+    url: `https://ipfs.xdv.digital`
+});
+
+const {
+    cid
+} = await ipfsManager.client.add({
+    path: file.name,
+    content: base64.encode(result.content),
+});
+```
+### Upload with Web3
+```ts
+import { Web3Storage, getFilesFromPath } from 'web3.storage'
+
+const token = process.env.API_TOKEN
+const client = new Web3Storage({ token })
+
+async function storeFiles () {
+  const files = await getFilesFromPath('/path/to/file')
+  const cid = await client.put(files)
+  console.log(cid)
+}
+
+storeFiles()
+
+```
+        
+### Create and store Ancon metadata
+```ts
+// Create and store Ancon metadata
+const {
+    transaction,
+    cid
+}: any =
+    await this.ancon.anconClient.executeMetadata({
+        name: "Simple signing",
+        description: "Description",
+        image: `https://apiancon.dao.pa/ancon/${cid}/${file.name}`,
+        sources: [cid],
+        owner: this.ancon.account,
+
+        creator: this.ancon.account,
+
+        fee
+    }, );
 ```
 
 ### Support
