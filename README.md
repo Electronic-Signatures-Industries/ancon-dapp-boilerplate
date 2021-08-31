@@ -1,29 +1,14 @@
 # XDV
-## XDV v3.0.0
+## XDV v3.0.0 for Ancon Protocol
 
 
 ## Intro
-**XDV 3.0** is a blockchain ready protocol and API that allows users to sign verifiable documents for legal tech, electronic invoicing or used with DIDs, Verified Credentials and Universal Wallets.
+**XDV 3.0 for Ancon Protocol** is a blockchain ready protocol and API that allows users to sign verifiable documents for legal tech, electronic invoicing or used with DIDs, Verified Credentials and Universal Wallets.
 
 ## Features
 
-- Qualified signatures with smart cards using XDV Signer Java WebSocket bridge
-- Simple signing with DIDs
-- Shareable link
-- Uses IPFS and IPLD and soon support for Swarm Bee
-- Supports DID encryption
-- Works in Linux, MacOS, Windows and Chrome, Firefox, and any Web3 enabled mobile dapp browser.
-- Smart Contracts deployed in Binance Smart Chain
-
-## DApps
-
-- **testnet**: https://testnet.xdv.digital
-- **mainnet**: https://firmas.xdv.digital
-
-
-## Firmador PKCS#11
-
-- **XDV Signer Community Edition**: https://github.com/xdvplatform/com.xdv.client.wallet
+- Create NFT Tokens
+- Anchor Documents
 
 ## Blockchain
 
