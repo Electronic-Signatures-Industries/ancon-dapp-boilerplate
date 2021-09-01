@@ -45,12 +45,10 @@ import {
 // Upload CIDs
 
 const file = this.files[index];
-let result = await this.ancon.blobToKeccak256(file);
+let result = await blobToKeccak256(file);
 const msg = {
     path: file.name,
-
     time: file.lastModified.toString(),
-
     content: base64.encode(result.content),
     contentType: file.type,
     creator: this.ancon.account,
@@ -58,7 +56,7 @@ const msg = {
 const {
     transaction,
     cid
-}: any = await this.ancon.anconClient.addFile({
+}: any = await this.anconClient.addFile({
     did: this.ancon.did.id,
     file: msg,
     fee,
@@ -69,19 +67,17 @@ const {
 ### Upload with IPFS
 ```ts
 client = IPFSClient({ url: `https://ipfs.xdv.digital` });
-       
-client = IPFSClient({
-    url: `https://ipfs.xdv.digital`
-});
 
 const {
     cid
-} = await ipfsManager.client.add({
+} = await client.add({
     path: file.name,
     content: base64.encode(result.content),
 });
 ```
-### Upload with Web3
+
+
+### Upload with Web3.storage
 ```ts
 import { Web3Storage, getFilesFromPath } from 'web3.storage'
 
@@ -105,15 +101,13 @@ const {
     transaction,
     cid
 }: any =
-    await this.ancon.anconClient.executeMetadata({
+    await this.anconClient.executeMetadata({
         name: "Simple signing",
         description: "Description",
-        image: `https://apiancon.dao.pa/ancon/${cid}/${file.name}`,
+        image: `https://gateway/${cid}/${file.name}`,
         sources: [cid],
-        owner: this.ancon.account,
-
-        creator: this.ancon.account,
-
+        owner: this.account,
+        creator: this.account,
         fee
     }, );
 ```
