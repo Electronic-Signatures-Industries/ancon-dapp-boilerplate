@@ -73,9 +73,9 @@
         }     
     }
 }
-#main-sidebar{
+#main-sidebar {
 
-&.v-navigation-drawer--mini-variant .v-list-group--no-action .v-list-group__items, &.v-navigation-drawer--mini-variant .v-list-group--sub-group{
-    display:block;
-}
+    &.v-navigation-drawer--mini-variant .v-list-group--no-action .v-list-group__items, &.v-navigation-drawer--mini-variant .v-list-group--sub-group{
+        display:block;
+    }
 }

@@ -172,7 +172,7 @@ export default {
       {
         colorname: "purple accent-4",
         titletextcolor: "white--text",
-        colorcode: "#AA00FF",
+        colorcode: "#48409A",
         colortext: "purple--text text--accent-4",
         examplecode:
           '<v-btn color="purple accent-4">Button</v-btn>' +

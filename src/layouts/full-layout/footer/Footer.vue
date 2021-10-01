@@ -1,5 +1,5 @@
 <template>
-  <v-footer app class="footerpart" inset>
+  <v-footer app class="footerpart pink" inset dark>
     <v-row justify="space-between">
       <v-col md="6">
         <span

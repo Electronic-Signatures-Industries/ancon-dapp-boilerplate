@@ -1,9 +1,9 @@
 <template>
-  <v-app-bar app dense color="black" dark>
+  <v-app-bar app dense dark class="layout--background-gradient">
     <!---Logo part -->
     <v-toolbar-title class="align-center d-flex">
-      <span class="logo-icon">
-        <img src="../../../assets/xdv.png" width="64" />
+      <span class="logo-icon d-flex">
+        <img src="../../../assets/ancon-logo-white.png" width="125" />
       </span>
     </v-toolbar-title>
     <v-row justify="space-between">

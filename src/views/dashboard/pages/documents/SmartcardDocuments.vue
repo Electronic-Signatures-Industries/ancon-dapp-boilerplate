@@ -7,7 +7,7 @@
     ></v-progress-linear>
 
     <v-card>
-      <v-tabs background-color="pink accent-4" dark v-model="tabIndex">
+      <v-tabs background-color="blue-berry accent-4" dark v-model="tabIndex">
         <v-tab v-for="item in tabitems" :key="item.key">
           {{ item.label }}
         </v-tab>
@@ -20,16 +20,18 @@
                 alertMessage
               }}</v-alert>
               <v-row>
-                <v-col offset-sm="9"
-                  ><cryptoicon symbol="bnb" size="24" />{{
+                <v-col offset-sm="9" class="d-flex align-items-center"
+                  ><cryptoicon symbol="bnb" size="24" class="cripto-icon" />
+                  {{
                     balances.bnb
-                  }}</v-col
-                >
-                <v-col
-                  ><cryptoicon symbol="dai" size="24" />{{
+                  }}
+                </v-col>
+                <v-col class="d-flex align-items-center">
+                  <cryptoicon symbol="dai" size="24" class="cripto-icon" />
+                  {{
                     balances.dai
-                  }}</v-col
-                >
+                  }}
+                </v-col>
               </v-row>
               <v-row>
                 <v-col cols="1" xs="1">
@@ -60,10 +62,11 @@
                 </v-col>
               </v-row>
               <v-row>
-                <v-col cols="12" xs="12">
+                <v-col cols="12" xs="12" class="d-flex">
                   <v-radio-group v-model="typelink.mode" mandatory row>
                     <v-radio label="Onchain timestamp" value="1"></v-radio>
                     <v-radio label="Non fungible token" value="2"></v-radio>
+                    <v-radio label="SWARM" value="3"></v-radio>
                     <!-- <v-radio
                       label="Only decentralized storage"
                       value="3"
@@ -80,7 +83,7 @@
               <v-row>
                 <v-col align="center" xs="12">
                   <v-btn
-                    color="green"
+                    color="pink"
                     v-if="connected === false"
                     @click="web3Connect"
                     dark
@@ -105,7 +108,7 @@
 
     <v-card>
       <v-tabs
-        background-color="deep-purple accent-4"
+        background-color="blue-berry accent-4"
         dark
         v-model="tabDetailIndex"
       >
@@ -309,6 +312,7 @@ import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
+import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
@@ -327,6 +331,7 @@ export default class SmartcardDocuments extends Vue {
   typelink = { mode: "2" };
   unlockPin = false;
   ancon: AnconManager;
+  swarm: SwarmManager;
   report: unknown = {};
   cids: any = [];
   manifest: any = "";
@@ -448,7 +453,11 @@ export default class SmartcardDocuments extends Vue {
    * Loads v-show="false" a cid
    */
   async loadCid(cid: string, type: string) {
+    if (this.typelink.mode === "3") {
       //return await this.ipfs.getObject(cid);
+    } else {
+      // none
+    }
       const result = await this.ancon.getObject(cid);
 
       // if (blob.content === null) {
@@ -474,6 +483,9 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
+    // this.swarm = new SwarmManager();
+    // const hash = await this.swarm.createHashFile(this.files[0]);
+    // console.log(hash)
     // @ts-ignore
     this.$confirm({
       auth: true,
@@ -500,7 +512,6 @@ export default class SmartcardDocuments extends Vue {
 
     // TODO: Ask for passphrase
     await this.ancon.start(passphrase);
-
     // @ts-ignore
     if (window.BinanceChain) {
       // @ts-ignore
@@ -580,7 +591,6 @@ export default class SmartcardDocuments extends Vue {
   // Stores documents and NFT
   async xdvify() {
     let lnk;
-
     // simple
     lnk = await this.createSimpleDocumentNode(this.files);
 
