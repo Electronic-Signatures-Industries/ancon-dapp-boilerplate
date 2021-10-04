@@ -82,7 +82,7 @@
                   <v-btn
                     color="green"
                     v-if="connected === false"
-                    @click="web3Connect"
+                    @click="connect"
                     dark
                   >
                     Connect
@@ -356,7 +356,7 @@ export default class SmartcardDocuments extends Vue {
   };
   connected = false;
   cidindex = "";
-  DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+  DAIAddress: string = `0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA`;
   tabIndex = null;
   tabitems = [
     {
@@ -499,21 +499,14 @@ export default class SmartcardDocuments extends Vue {
     this.ancon = new AnconManager();
 
     // TODO: Ask for passphrase
-    await this.ancon.start(passphrase);
+    //await this.ancon.start(passphrase);
 
-    // @ts-ignore
-    if (window.BinanceChain) {
-      // @ts-ignore
-      await BinanceChain.enable();
-    } else {
-      // @ts-ignore
-      await window.ethereum.enable();
-    }
     this.connected = true;
-    this.currentAccount = (await this.web3Selector.enable())[0];
+    let w3select = window.ethereum;
+    this.currentAccount = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6';
 
-    this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
-
+    this.ethersInstance = new ethers.providers.Web3Provider(w3select);
+    debugger
     // DAI
     this.daiContract = new ethers.Contract(
       this.DAIAddress,
@@ -522,7 +515,7 @@ export default class SmartcardDocuments extends Vue {
     );
     // XDVNFT
     this.ethersContract = new ethers.Contract(
-      xdvnftAbi.XDVNFT.address.bsctestnet,
+      '0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635',
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -531,8 +524,8 @@ export default class SmartcardDocuments extends Vue {
       xdvAbi.abi,
       this.ethersInstance.getSigner()
     );
-    await this.loadBalances();
-    await this.loadTransactions();
+    //await this.loadBalances();
+    //await this.loadTransactions();
   }
 
   async loadBalances() {
@@ -582,7 +575,7 @@ export default class SmartcardDocuments extends Vue {
     let lnk;
 
     // simple
-    lnk = await this.createSimpleDocumentNode(this.files);
+    lnk = 'bafyreicztwstn4ujtsnabjabn3hj7mvbhsgrvefbh37ddnx4w2pvghvsfm'
 
     if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
@@ -691,30 +684,16 @@ export default class SmartcardDocuments extends Vue {
     return null;
   }
 
-  get web3Selector() {
-    // @ts-ignore
-    if (window.BinanceChain) {
-      // @ts-ignore
-      return BinanceChain;
-    } else {
-      // @ts-ignore
-      return window.ethereum;
-    }
-  }
-
   async mintNft(uri: string) {
     // anchor to nft
-    let gasLimit = await this.daiContract.estimateGas.approve(
-      this.currentAccount,
-      this.ethersContract.address
-    );
-    gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-    const [allowed] = await this.daiContract.functions.allowance(
-      this.currentAccount,
-      this.ethersContract.address
-    );
+    let gasLimit = "7000000";
+    //gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
+    // const [allowed] = await this.daiContract.functions.allowance(
+    //   this.currentAccount,
+    //   this.ethersContract.address
+    // );
 
-    if (!(allowed as BigNumber).eq("1000000000000000000")) {
+    //if (!(allowed as BigNumber).eq("1000000000000000000")) {
       const approve = await this.daiContract.functions.approve(
         this.ethersContract.address,
         "1000000000000000000",
@@ -725,7 +704,7 @@ export default class SmartcardDocuments extends Vue {
       );
 
       await approve.wait(1);
-    }
+    //}
     gasLimit = await this.ethersContract.estimateGas.mint(
       this.currentAccount,
       uri
