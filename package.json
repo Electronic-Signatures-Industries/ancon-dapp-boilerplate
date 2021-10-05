@@ -52,7 +52,7 @@
     "ecies-parity": "^0.1.1",
     "elliptic": "^6.5.4",
     "es6-shim": "^0.35.5",
-    "ethers": "^5.0.0",
+    "ethers": "^5.4.7",
     "ethr-did": "^1.1.0",
     "ifesa-dgi-factura-electronica": "^1.0.0",
     "ipfs-core": "^0.3.1",
