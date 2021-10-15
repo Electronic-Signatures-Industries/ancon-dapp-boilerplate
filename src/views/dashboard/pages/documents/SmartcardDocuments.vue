@@ -483,9 +483,9 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
-    // this.swarm = new SwarmManager();
-    // const hash = await this.swarm.createHashFile(this.files[0]);
-    // console.log(hash)
+    this.swarm = new SwarmManager();
+    const hash = await this.swarm.createPostageStamp(this.files[0]);
+    console.log(hash)
     // @ts-ignore
     this.$confirm({
       auth: true,
