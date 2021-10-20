@@ -1,4 +1,5 @@
-const CLIENT_API = 'HTTP://127.0.0.1:7545'; 
+//const CLIENT_API = 'HTTP://127.0.0.1:7545'; 
+const CLIENT_API = 'HTTP://127.0.0.1:8545';
 const WEB_API = 'https://xdvmessaging.auth2factor.com/api/';
 const BLOCKNATIVE_API_KEY = "b039615a-2179-4200-9613-4696907dca57";
 // IMQTCYJCRP3UT4V3T3AJR76X6IG6J2K4XG

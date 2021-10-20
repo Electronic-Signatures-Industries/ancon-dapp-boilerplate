@@ -85,7 +85,7 @@
                   <v-btn
                     color="pink"
                     v-if="connected === false"
-                    @click="web3Connect"
+                    @click="connect"
                     dark
                   >
                     Connect
@@ -315,6 +315,7 @@ import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconMana
 import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
+import Web3, * as web3 from "web3";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -361,7 +362,7 @@ export default class SmartcardDocuments extends Vue {
   };
   connected = false;
   cidindex = "";
-  DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
+  DAIAddress: string = `0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA`;
   tabIndex = null;
   tabitems = [
     {
@@ -413,6 +414,9 @@ export default class SmartcardDocuments extends Vue {
   transactions = [];
   emulateSmartcard = false;
   wallet: Wallet;
+  web3intance: Web3;
+  nftWeb3Contract: any;
+  daiWeb3contract: any;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -509,31 +513,52 @@ export default class SmartcardDocuments extends Vue {
 
   async connect(passphrase: string) {
     this.ancon = new AnconManager();
-
+    this.swarm = new SwarmManager();
+    const hash = await this.swarm.createPostageStamp(this.files[0]);
+    console.log(hash)
     // TODO: Ask for passphrase
-    await this.ancon.start(passphrase);
-    // @ts-ignore
-    if (window.BinanceChain) {
-      // @ts-ignore
-      await BinanceChain.enable();
-    } else {
-      // @ts-ignore
-      await window.ethereum.enable();
-    }
+    // await this.ancon.start(passphrase);
+    // // @ts-ignore
+    // if (window.BinanceChain) {
+    //   // @ts-ignore
+    //   await BinanceChain.enable();
+    // } else {
+    //   // @ts-ignore
+    //   await window.ethereum.enable();
+    // }
     this.connected = true;
-    this.currentAccount = (await this.web3Selector.enable())[0];
+    // this.currentAccount = (await this.web3Selector.enable())[0];
 
-    this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
+    // this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
+    this.web3intance = new Web3("http://localhost:8545/");
+    this.web3intance.eth.accounts.wallet.add("f3e81d148eb3ff285bbec91cce16f6809e75e5cfccc1a2140432ea1dba8d2e9c")
 
+    // @ts-ignore
+    let w3select = window.ethereum;
+    this.currentAccount = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6';
+    this.web3intance.defaultAccount = this.currentAccount
+
+    this.ethersInstance = new ethers.providers.Web3Provider(this.web3intance.givenProvider);
+    //this.ethersInstance = new ethers.providers.Web3Provider(w3select);
+    
+    debugger
+
+    
     // DAI
+    this.daiWeb3contract = new this.web3intance.eth.Contract(
+      xdvnftAbi.DAI.raw.abi, "0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA")
+
     this.daiContract = new ethers.Contract(
       this.DAIAddress,
       xdvnftAbi.DAI.raw.abi,
       this.ethersInstance.getSigner()
     );
     // XDVNFT
+    this.nftWeb3Contract = new this.web3intance.eth.Contract(
+      xdvnftAbi.XDVNFT.raw.abi, "0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635" )
+
     this.ethersContract = new ethers.Contract(
-      xdvnftAbi.XDVNFT.address.bsctestnet,
+      '0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635',
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -542,8 +567,8 @@ export default class SmartcardDocuments extends Vue {
       xdvAbi.abi,
       this.ethersInstance.getSigner()
     );
-    await this.loadBalances();
-    await this.loadTransactions();
+    // await this.loadBalances();
+    // await this.loadTransactions();
   }
 
   async loadBalances() {
@@ -592,7 +617,8 @@ export default class SmartcardDocuments extends Vue {
   async xdvify() {
     let lnk;
     // simple
-    lnk = await this.createSimpleDocumentNode(this.files);
+    //lnk = await this.createSimpleDocumentNode(this.files);
+    lnk = 'bafyreicztwstn4ujtsnabjabn3hj7mvbhsgrvefbh37ddnx4w2pvghvsfm'
 
     if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
@@ -701,59 +727,71 @@ export default class SmartcardDocuments extends Vue {
     return null;
   }
 
-  get web3Selector() {
-    // @ts-ignore
-    if (window.BinanceChain) {
-      // @ts-ignore
-      return BinanceChain;
-    } else {
-      // @ts-ignore
-      return window.ethereum;
-    }
-  }
+  // get web3Selector() {
+  //   // @ts-ignore
+  //   if (window.BinanceChain) {
+  //     // @ts-ignore
+  //     return BinanceChain;
+  //   } else {
+  //     // @ts-ignore
+  //     return window.ethereum;
+  //   }
+  // }
 
   async mintNft(uri: string) {
     // anchor to nft
-    let gasLimit = await this.daiContract.estimateGas.approve(
-      this.currentAccount,
-      this.ethersContract.address
-    );
-    gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-    const [allowed] = await this.daiContract.functions.allowance(
-      this.currentAccount,
-      this.ethersContract.address
-    );
+    let gasLimit = "70000";
+    //let gasLimit = await this.daiContract.estimateGas.approve(
+    //   this.currentAccount,
+    //   this.ethersContract.address
+    // );
+    // gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
+    // const [allowed] = await this.daiContract.functions.allowance(
+    //   this.currentAccount,
+    //   this.ethersContract.address
+    // );
 
-    if (!(allowed as BigNumber).eq("1000000000000000000")) {
-      const approve = await this.daiContract.functions.approve(
-        this.ethersContract.address,
-        "1000000000000000000",
+    //if (!(allowed as BigNumber).eq("1000000000000000000")) {
+    const approve = await this.daiWeb3contract.methods.approve(
+      this.ethersContract.address,
+      "1000000000000000000").send(
         {
           gasPrice: "22000000000",
-          gasLimit,
+          gas: gasLimit,
+          from: this.currentAccount
         }
       );
 
-      await approve.wait(1);
-    }
-    gasLimit = await this.ethersContract.estimateGas.mint(
-      this.currentAccount,
+      //await approve.wait(1);
+    debugger
+    const mintnft = await this.nftWeb3Contract.methods.mint(
+      this.currentAccount, 
       uri
-    );
-    gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-
-    const txmint = await this.ethersContract.functions.mint(
-      this.currentAccount,
-      uri,
+    ).send(
       {
-        gasPrice: "22000000000",
-        gasLimit,
-      }
+          gasPrice: "22000000000",
+          gas: gasLimit,
+          from: this.currentAccount
+        }
     );
+    // gasLimit = await this.ethersContract.estimateGas.mint(
+    //   this.currentAccount,
+    //   uri
+    // );
+    // gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
 
-    const log = await txmint.wait(1);
+    // const txmint = await this.ethersContract.functions.mint(
+    //   this.currentAccount,
+    //   uri,
+    //   {
+    //     gasPrice: "22000000000",
+    //     gasLimit,
+    //   }
+    // );
+
+    // const log = await txmint.wait(1);
     //
-    this.txid = log.blockHash;
+    //this.txid = log.blockHash;
 
     this.loading = false;
   }
