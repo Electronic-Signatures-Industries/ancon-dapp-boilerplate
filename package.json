@@ -29,8 +29,11 @@
   "dependencies": {
     "@ceramicnetwork/key-did-resolver": "^0.2.2",
     "@chenfengyuan/vue-qrcode": "^1.0.2",
-    "@cosmjs/cosmwasm-launchpad": "^0.25.6",
-    "@cosmjs/tendermint-rpc": "^0.25.6",
+    "@confio/ics23": "^0.6.5",
+    "@cosmjs/launchpad": "^0.26.1",
+    "@cosmjs/proto-signing": "^0.26.1",
+    "@cosmjs/stargate": "^0.26.1",
+    "@cosmjs/tendermint-rpc": "^0.26.1",
     "@ethersphere/bee-js": "^1.2.1",
     "@stomp/stompjs": "^6.1.0",
     "3id-did-provider": "^0.1.2",

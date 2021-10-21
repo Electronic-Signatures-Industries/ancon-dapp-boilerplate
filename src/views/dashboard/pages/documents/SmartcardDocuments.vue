@@ -312,6 +312,7 @@ import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
+import { AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
@@ -417,6 +418,7 @@ export default class SmartcardDocuments extends Vue {
   web3intance: Web3;
   nftWeb3Contract: any;
   daiWeb3contract: any;
+  anconWeb3client: any;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -514,6 +516,16 @@ export default class SmartcardDocuments extends Vue {
   async connect(passphrase: string) {
     this.ancon = new AnconManager();
     this.swarm = new SwarmManager();
+    //@ts-ignore
+    let web3 = await window.ethereum.enable();
+    this.anconWeb3client = new AnconWeb3Client(true,
+      'http://localhost:1317',
+      'ws://localhost:26657',
+      'http://localhost:8545',
+      '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
+      'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
+      web3,
+    );
     const hash = await this.swarm.createPostageStamp(this.files[0]);
     console.log(hash)
     // TODO: Ask for passphrase
@@ -527,14 +539,16 @@ export default class SmartcardDocuments extends Vue {
     //   await window.ethereum.enable();
     // }
     this.connected = true;
-    // this.currentAccount = (await this.web3Selector.enable())[0];
 
-    // this.ethersInstance = new ethers.providers.Web3Provider(this.web3Selector);
-    this.web3intance = new Web3("http://localhost:8545/");
-    this.web3intance.eth.accounts.wallet.add("f3e81d148eb3ff285bbec91cce16f6809e75e5cfccc1a2140432ea1dba8d2e9c")
+    // User creates new wallet / optional
+    const ancon = await this.anconWeb3client.create(
+      'walletcore',
+      'abc123456789',
+      'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
+    )
 
     // @ts-ignore
-    let w3select = window.ethereum;
+    //let w3select = window.ethereum;
     this.currentAccount = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6';
     this.web3intance.defaultAccount = this.currentAccount
 
