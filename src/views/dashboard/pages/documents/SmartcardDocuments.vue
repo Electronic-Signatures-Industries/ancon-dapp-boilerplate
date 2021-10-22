@@ -541,7 +541,7 @@ export default class SmartcardDocuments extends Vue {
 
     const account = accounts[0];
     this.connected = true;
-    let web3 = await this.getProvider().enable();
+    let web3 = this.getProvider();
 
     this.web3instance = new Web3(web3);
     this.ethersInstance = new ethers.providers.Web3Provider(web3);
@@ -596,11 +596,11 @@ export default class SmartcardDocuments extends Vue {
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
       //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
-      "0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816"
+      "0x77C51E844495899727dB63221af46220b0b13B37"
     );
 
     this.ethersContract = new ethers.Contract(
-      "0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816",
+      "0x77C51E844495899727dB63221af46220b0b13B37",
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -665,7 +665,9 @@ export default class SmartcardDocuments extends Vue {
     if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
     } else if (lnk && this.typelink.mode === "2") {
-      this.result = await this.mintNft(lnk);
+      const res = await this.createMetadata();
+      this.result = await this.mintNft(res);
+      await this.initiateCrossNFTOwnership(res);
     } else {
       // none
     }
@@ -676,8 +678,7 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
-  async initiateCrossNFTOwnership() {
-    const res = await this.createMetadata();
+  async initiateCrossNFTOwnership(res) {
     const proof = await this.updateMetadata(res);
     // await this.relayMessage(proof);
     // await this.initiateCrossNFTOwnership();
