@@ -320,6 +320,7 @@ import {
   MsgMetadataResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
+import Onboard from "bnc-onboard";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -422,6 +423,8 @@ export default class SmartcardDocuments extends Vue {
   nftWeb3Contract: any;
   daiWeb3contract: any;
   anconWeb3client: any;
+  onboard = null;
+  chainId: number;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -515,8 +518,9 @@ export default class SmartcardDocuments extends Vue {
       },
     });
   }
-
+  
   getProvider = () => {
+    
     if ("ethereum" in window) {
       //@ts-ignore
       const provider = window.ethereum;
@@ -540,10 +544,19 @@ export default class SmartcardDocuments extends Vue {
     });
 
     const account = accounts[0];
-    this.connected = true;
+    
     let web3 = this.getProvider();
 
     this.web3instance = new Web3(web3);
+    this.chainId = await this.web3instance.eth.getChainId();
+
+    if(this.chainId !=9000){ 
+      alert("Ancon Network chainId must be 9000, please change it")
+      return 
+    }
+
+    this.connected = true;
+
     this.ethersInstance = new ethers.providers.Web3Provider(web3);
 
     this.anconWeb3client = new AnconWeb3Client(
@@ -552,7 +565,7 @@ export default class SmartcardDocuments extends Vue {
       "ws://ancon.did.pa:26657",
       //'0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
       //'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
-      web3,
+      this.web3instance,
       //@ts-ignore
       window.mathExtension
     );
@@ -685,6 +698,37 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
+    // this.onboard = Onboard({
+    //   dappId: "4182319a-e36b-463f-93ce-d79ee3ab53e4", // [String] The API key created by step one above
+    //   networkId: 97, // [Integer] The Ethereum network ID your Dapp uses.
+    //   subscriptions: {
+    //     wallet: async (wallet) => {
+    //       //const account = await wallet.provider.enable();
+    //       //this.currentAddress = account[0];
+    //       //this.web3 = new Web3(wallet.provider);
+    //       //this.web3.eth.defaultAccount = account[0];
+    //     },
+    //   },
+    //   walletSelect: {
+    //     wallets: [
+    //       {
+    //         walletName: "metamask",
+    //         appUrl:
+    //           "https://chrome.google.com/webstore/detail/binance-chain-wallet/fhbohimaelbohpjbbldcngcnapndodjp",
+    //         rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
+    //         //preferred: true,
+    //       },
+    //       // {
+    //       //   walletName: "walletConnect",
+    //       //   rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
+    //       // },
+    //     ],
+    //   },
+    // });
+
+    // await this.onboard.walletSelect();
+    // await this.onboard.walletCheck();
+
     if (this.$router.currentRoute.params.cid) {
       this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
@@ -778,7 +822,7 @@ export default class SmartcardDocuments extends Vue {
       from: "",
     });
 
-    const evmChainId = this.web3.network.chainId;
+    const evmChainId = this.chainId;
     // Create Metadata Message request
     // Add Cosmos uatom
     await this.anconWeb3client.signAndBroadcast(evmChainId, "msgMetadata", msg);
@@ -802,7 +846,7 @@ export default class SmartcardDocuments extends Vue {
     // Add Cosmos uatom
     const msgUpdateMetadataReceipt =
       await this.anconWeb3client.signAndBroadcast(
-        this.web3.network.chainId,
+        this.chainId,
         "msgUpdateMetadataOwnership",
         msgupd
       );
