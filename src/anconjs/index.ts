@@ -87,11 +87,11 @@ export class AnconWeb3Client {
   // }
 
   async signAndBroadcast(
-    chainId: string,
+  //  chainId: string,
     evmChainId: number,
     methodName: string,
     msg: any,
-    fee: any
+//    fee: any
   ) {
     // const accounts = await this.signer.getAccounts()
     const defaultAccount = this.web3Provider.defaultAccount;

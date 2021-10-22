@@ -314,6 +314,12 @@ import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmMana
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
+import { TxEvent } from "@cosmjs/tendermint-rpc";
+import {
+  MsgMetadata,
+  MsgMetadataResponse,
+  MsgUpdateMetadataOwnership,
+} from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -412,7 +418,7 @@ export default class SmartcardDocuments extends Vue {
   transactions = [];
   emulateSmartcard = false;
   wallet: Wallet;
-  web3intance: Web3;
+  web3instance: Web3;
   nftWeb3Contract: any;
   daiWeb3contract: any;
   anconWeb3client: any;
@@ -522,7 +528,6 @@ export default class SmartcardDocuments extends Vue {
   };
 
   async connect(passphrase: string) {
-    this.ancon = new AnconManager();
     this.swarm = new SwarmManager();
 
     const isMathWalletInstalled =
@@ -538,7 +543,7 @@ export default class SmartcardDocuments extends Vue {
     this.connected = true;
     let web3 = await this.getProvider().enable();
 
-    this.web3intance = new Web3(web3);
+    this.web3instance = new Web3(web3);
     this.ethersInstance = new ethers.providers.Web3Provider(web3);
 
     this.anconWeb3client = new AnconWeb3Client(
@@ -566,17 +571,17 @@ export default class SmartcardDocuments extends Vue {
     // @ts-ignore
     //let w3select = window.ethereum;
     this.currentAccount = "0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6";
-    this.web3intance.defaultAccount = this.currentAccount;
+    this.web3instance.defaultAccount = this.currentAccount;
 
     this.ethersInstance = new ethers.providers.Web3Provider(
-      this.web3intance.givenProvider
+      this.web3instance.givenProvider
     );
     //this.ethersInstance = new ethers.providers.Web3Provider(w3select);
 
     debugger;
 
     // DAI
-    this.daiWeb3contract = new this.web3intance.eth.Contract(
+    this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
       //"0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA"
       "0x59b0e313070138127dc91F9F357Ba989FE5D57F8"
@@ -588,7 +593,7 @@ export default class SmartcardDocuments extends Vue {
       this.ethersInstance.getSigner()
     );
     // XDVNFT
-    this.nftWeb3Contract = new this.web3intance.eth.Contract(
+    this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
       //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
       "0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816"
@@ -671,6 +676,13 @@ export default class SmartcardDocuments extends Vue {
     this.loading = false;
   }
 
+  async initiateCrossNFTOwnership() {
+    const res = await this.createMetadata();
+    const proof = await this.updateMetadata(res);
+    // await this.relayMessage(proof);
+    // await this.initiateCrossNFTOwnership();
+  }
+
   async mounted() {
     if (this.$router.currentRoute.params.cid) {
       this.cidindex = this.$router.currentRoute.params.cid || "";
@@ -680,9 +692,128 @@ export default class SmartcardDocuments extends Vue {
     await this.loadTransactions();
   }
 
-  createMetadata() {}
+  /** Subscribes to events
+   *
+   */
+  subscribeToMetadataEvents(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const query = `message.action='Metadata'`;
+      this.anconWeb3client.tm.subscribeTx(query).addListener({
+        next: async (log: TxEvent) => {
+          // Decode response
+          const res = MsgMetadataResponse.decode(log.result.data);
+          console.log(res);
+          // Hack: Protobuf issue
+          const cid = res.cid.split(";")[1];
+          console.log(cid);
 
-  updateMetadata() {}
+          // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
+          const content =
+            await this.anconWeb3client.queryClient.queryReadWithPath(
+              cid,
+              "/",
+              {}
+            );
+
+          console.log(content.data);
+          resolve({ value: content.data, cid });
+        },
+      });
+    });
+  }
+
+  /** Subscribes to events */
+  subscribeToUpdateMetadataEvents() {
+    return new Promise((resolve, reject) => {
+      const query = `message.action='UpdateMetadataOwnership'`;
+      this.anconWeb3client.tm.subscribeTx(query).addListener({
+        next: async (log: TxEvent) => {
+          // Decode response
+          const res = MsgUpdateMetadataOwnership.decode(log.result.data);
+          console.log(res);
+          // Hack: Protobuf issue
+          const cid = res.hash.split(";")[1];
+          console.log(cid);
+
+          // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
+          const content =
+            await this.anconWeb3client.queryClient.queryReadWithPath(
+              cid,
+              "/",
+              {}
+            );
+
+          console.log(content.data);
+
+          let key = cid;
+          const path = "";
+          const requestProof = await fetch(
+            `http://localhost:1317/ancon/proof/${key}${path}`
+          );
+          const proof = await requestProof.json();
+
+          const root = proof.root;
+          const exp = proof.proof;
+
+          console.log(root, exp);
+        },
+      });
+    });
+  }
+
+  /** Creates onchain metadata */
+  async createMetadata(): Promise<any> {
+    const msg = MsgMetadata.fromPartial({
+      creator: (await this.anconWeb3client.getAccountIdentity).account,
+      name: "tendermint",
+      image: "http://localhost:1317",
+      additionalSources: [
+        "bafyreia66w67tvsr5yiqagmxnklg3xdlxwroj2ho5sdzj45iydatgbbxci",
+      ],
+      links: ["bafyreia66w67tvsr5yiqagmxnklg3xdlxwroj2ho5sdzj45iydatgbbxci"],
+      owner: "did:key:z8mWaJHXieAVxxLagBpdaNWFEBKVWmMiE",
+      description: "tendermint",
+      did: "",
+      from: "",
+    });
+
+    const evmChainId = this.web3.network.chainId;
+    // Create Metadata Message request
+    // Add Cosmos uatom
+    await this.anconWeb3client.signAndBroadcast(evmChainId, "msgMetadata", msg);
+
+    const { cid } = await this.subscribeToMetadataEvents();
+    return cid;
+  }
+
+  /** Updates metadata ownership*/
+  async updateMetadata(metadataCid: string) {
+    const msgupd = MsgUpdateMetadataOwnership.fromPartial({
+      hash: metadataCid,
+      previousOwner: `did:ethr:ancon:${this.web3instance.defaultAccount}`,
+      newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
+      currentChainId: "9000", // config / settings
+      recipientChainId: "3", // config / settings
+      sender: (await this.anconWeb3client.getAccountIdentity).account,
+    });
+
+    // Change Metadata Message request
+    // Add Cosmos uatom
+    const msgUpdateMetadataReceipt =
+      await this.anconWeb3client.signAndBroadcast(
+        this.web3.network.chainId,
+        "msgUpdateMetadataOwnership",
+        msgupd
+      );
+
+    const result = await this.subscribeToUpdateMetadataEvents();
+  }
+
+  /** Relays message to chain b, returns bool or revert*/
+  async relayMessage() {}
+
+  /** Executes nft ownership claim on chain b */
+  async executeNftOwnershipClaim() {}
 
   /** Creates simple document node */
   async createSimpleDocumentNode(files?: File[]) {
