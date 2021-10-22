@@ -363,7 +363,7 @@ export default class SmartcardDocuments extends Vue {
   };
   connected = false;
   cidindex = "";
-  DAIAddress: string = `0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA`;
+  DAIAddress: string = `0x59b0e313070138127dc91F9F357Ba989FE5D57F8`;
   tabIndex = null;
   tabitems = [
     {
@@ -513,39 +513,58 @@ export default class SmartcardDocuments extends Vue {
     });
   }
 
+  getProvider = () => {
+    if ("ethereum" in window) {
+      //@ts-ignore
+      const provider = window.ethereum;
+      if (provider.isMathWallet) {
+        return provider;
+      }
+    }
+    window.open("https://mathwallet.org/", "_blank");
+  };
+
   async connect(passphrase: string) {
+    
     this.ancon = new AnconManager();
     this.swarm = new SwarmManager();
+
     //@ts-ignore
-    let web3 = await window.ethereum.enable();
-    this.anconWeb3client = new AnconWeb3Client(true,
+    const isMathWalletInstalled = window.ethereum && window.ethereum.isMathWallet;
+
+    // await this.ancon.start(passphrase);
+    const accounts = await this.getProvider().request({
+      method: "eth_requestAccounts",
+      });
+
+    const account = accounts[0];
+    this.connected = true;
+    let web3 = await this.getProvider().enable()
+    
+    this.web3intance = new Web3(web3);
+    this.ethersInstance = new ethers.providers.Web3Provider(web3);
+
+    this.anconWeb3client = new AnconWeb3Client(
+      true,
       'http://localhost:1317',
       'ws://localhost:26657',
-      'http://localhost:8545',
-      '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
-      'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
+      //'0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
+      //'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
       web3,
+      //@ts-ignore
+      window.mathExtension
     );
     const hash = await this.swarm.createPostageStamp(this.files[0]);
     console.log(hash)
-    // TODO: Ask for passphrase
-    // await this.ancon.start(passphrase);
-    // // @ts-ignore
-    // if (window.BinanceChain) {
-    //   // @ts-ignore
-    //   await BinanceChain.enable();
-    // } else {
-    //   // @ts-ignore
-    //   await window.ethereum.enable();
-    // }
+
     this.connected = true;
 
     // User creates new wallet / optional
-    const ancon = await this.anconWeb3client.create(
-      'walletcore',
-      'abc123456789',
-      'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
-    )
+    // const ancon = await this.anconWeb3client.create(
+    //   'walletcore',
+    //   'abc123456789',
+    //   'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
+    // )
 
     // @ts-ignore
     //let w3select = window.ethereum;
@@ -560,7 +579,10 @@ export default class SmartcardDocuments extends Vue {
     
     // DAI
     this.daiWeb3contract = new this.web3intance.eth.Contract(
-      xdvnftAbi.DAI.raw.abi, "0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA")
+      xdvnftAbi.DAI.raw.abi, 
+      //"0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA"
+      "0x59b0e313070138127dc91F9F357Ba989FE5D57F8"
+    )
 
     this.daiContract = new ethers.Contract(
       this.DAIAddress,
@@ -569,10 +591,13 @@ export default class SmartcardDocuments extends Vue {
     );
     // XDVNFT
     this.nftWeb3Contract = new this.web3intance.eth.Contract(
-      xdvnftAbi.XDVNFT.raw.abi, "0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635" )
+      xdvnftAbi.XDVNFT.raw.abi, 
+      //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635" 
+      '0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816'
+    )
 
     this.ethersContract = new ethers.Contract(
-      '0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635',
+      '0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816',
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -655,6 +680,14 @@ export default class SmartcardDocuments extends Vue {
     }
 
     await this.loadTransactions();
+  }
+
+  createMetadata(){
+    
+  }
+
+  updateMetadata(){
+    
   }
 
   /** Creates simple document node */

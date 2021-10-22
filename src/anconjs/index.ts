@@ -1,18 +1,14 @@
-import { stringToPath } from '@cosmjs/crypto'
 import {
-  DirectSecp256k1HdWallet, OfflineSigner,
   Registry
 } from '@cosmjs/proto-signing'
 import { SigningStargateClient } from '@cosmjs/stargate'
 import { Tendermint34Client } from '@cosmjs/tendermint-rpc'
-import { TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx'
 import { ethers } from 'ethers'
 import fetch from 'node-fetch'
 import { Subject, Subscription } from 'rxjs'
-import { KeystoreDbModel, Wallet } from 'xdv-universal-wallet-core'
+import { Wallet } from 'xdv-universal-wallet-core'
 import {
-  queryClient,
-  registry, txClient
+  queryClient, txClient
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
 import {
   MsgFile,
@@ -20,6 +16,18 @@ import {
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx'
 
 global['fetch'] = require('node-fetch')
+
+export interface MathWalletSigner{
+  getIdentity(prefix: any): MathIdentityResponse;
+  forgetIdentity(): any;
+  requestSignature(transaction: any, network: any): any;
+  requestArbitrarySignature(account: any, message: any, title: string, onOff: boolean): any;
+}
+
+export interface MathIdentityResponse{
+  account: string;
+  blockchain: string;
+}
 
 export class AnconWeb3Client {
   wallet: Wallet
@@ -33,6 +41,7 @@ export class AnconWeb3Client {
   rpc: ethers.providers.JsonRpcProvider
   queryClient: any
   registry: Registry
+  mathWalletNetwork: any
   /**
    * Register Msg imports
    */
@@ -40,96 +49,37 @@ export class AnconWeb3Client {
     isWeb: boolean,
     private apiUrl: string,
     private rpcUrl: string,
-    private ethereumUrl: string,
-    private defaultEthAddress: string,
-    private defaultCosmosAddress: string,
     private web3Provider: any,
-    private signer?: OfflineSigner,
+    private mathProvider: MathWalletSigner,
   ) {
     this.wallet = new Wallet({ isWeb })
+    this.mathWalletNetwork = {
+      blockchain: "ethm"
+    };
   }
 
-  /**
-   * Creates a wallet account
-   * @param accountName Account name
-   * @param passphrase Passphrase
-   */
-  /**
-   * Creates a wallet
-   * @param accountName Account name
-   * @param passphrase Passphrase
-   * @returns
-   */
-  async createWallet(accountName: string, passphrase: string) {
-    await this.wallet.open(accountName, passphrase)
-
-    const acct = (await this.wallet.getAccount()) as any
-    let walletId: string
-
-    if (acct.keystores.length === 0) {
-      walletId = await this.wallet.addWallet()
-    } else {
-      walletId = acct.keystores[0].walletId
-    }
-
-    const wallet = await this.wallet.createES256K({
-      passphrase: passphrase,
-      walletId: walletId,
-    })
-
-    return wallet as any
+  getAccountIdentity(){
+    return this.mathProvider.getIdentity(this.mathWalletNetwork)
   }
 
-  /**
-   * Imports an existing seed phrase
-   * @param accountName Account name
-   * @param passphrase Passphrase
-   * @param mnemonic Seed phrase
-   * @returns
-   */
-  async importWallet(
-    accountName: string,
-    passphrase: string,
-    mnemonic: string,
-  ) {
-    await this.wallet.open(accountName, passphrase)
+  // async sign(
+  //   accountNumber: any,
+  //   address: string,
+  //   chainId: string,
+  //   sequence,
+  //   fee: any,
+  //   encoded,
+  // ) {
+  //   console.log(address, fee, accountNumber, sequence,chainId)
+    
+  //   const raw = await this.connectedSigner.sign(address, [encoded], fee, '', {
+  //     accountNumber,
+  //     sequence,
+  //     chainId,
+  //   })
 
-    const acct = (await this.wallet.getAccount()) as any
-
-    if (acct.keystores.length > 0) {
-      // already imported
-      return this.wallet
-    }
-
-    const walletId = await this.wallet.addWallet({
-      mnemonic,
-    })
-
-    const wallet = await this.wallet.createES256K({
-      passphrase: passphrase,
-      walletId: walletId,
-    })
-
-    return wallet as any
-  }
-
-  async sign(
-    accountNumber: any,
-    address: string,
-    chainId: string,
-    sequence,
-    fee: any,
-    encoded,
-  ) {
-    console.log(address, fee, accountNumber, sequence,chainId)
-    const raw = await this.connectedSigner.sign(address, [encoded], fee, '', {
-      accountNumber,
-      sequence,
-      chainId,
-    })
-
-    return TxRaw.encode(raw).finish()
-  }
+  //   return TxRaw.encode(raw).finish()
+  // }
 
   async signAndBroadcast(
     chainId: string,
@@ -137,10 +87,9 @@ export class AnconWeb3Client {
     methodName: string,
     msg: any,
     fee: any,
-    defaultAccount: string,
   ) {
-    const accounts = await this.signer.getAccounts()
-
+    // const accounts = await this.signer.getAccounts()
+    const defaultAccount = this.web3Provider.defaultAccount;
     //const keyringAccount = { ...accounts[defaultAccountIndex] }
     const cosmosAccount = await this.getEthAccountInfo(defaultAccount)
 
@@ -151,13 +100,11 @@ export class AnconWeb3Client {
     const addr = cosmosAccount.address
     const sequence = cosmosAccount.sequence
 
-    const txsignedhex = await this.sign(
-      acct,
-      addr,
-      chainId,
-      sequence,
-      fee,
+    const txsignedhex = await this.mathProvider.requestArbitrarySignature(
+      cosmosAccount,
       encoded,
+      "Signing Cosmos Tx",
+      false
     )
 
     // Set it to Data in a ethereum tx / SendTxArgs
@@ -173,51 +120,18 @@ export class AnconWeb3Client {
     return res
   }
 
-  async create(accountName: string, passphrase: string, mnemonic?: string) {
-    let signer = this.signer as DirectSecp256k1HdWallet
-    if (!this.signer) {
-      const resp = await this.wallet.open(accountName, passphrase)
-      const acct = (await this.wallet.getAccount(accountName)) as any
-      let walletId = ''
-      if (acct.keystores.length === 0) {
-        walletId = await this.wallet.addWallet({
-          mnemonic,
-        })
-      } else {
-        walletId = acct.keystores[0].walletId
-      }
-
-      const keystore = await acct.keystores.find(
-        (k: KeystoreDbModel) => k.walletId === walletId,
-      )
-      this.rpc = new ethers.providers.Web3Provider(this.web3Provider)
-      // this.ethersclient = new ethers.Wallet()
-      this.ethersclient.connect(this.rpc)
-      this.signer = signer = await DirectSecp256k1HdWallet.fromMnemonic(
-        keystore.mnemonic,
-        {
-          prefix: 'ethm',
-          hdPaths: [stringToPath(`m/44'/60'/0'/0`)],
-        },
-      )
-    }
+  async connect() {
 
     this.tm = await Tendermint34Client.connect(this.rpcUrl)
     this.queryClient = await queryClient({
       addr: this.apiUrl,
     })
-    this.connectedSigner = await SigningStargateClient.connectWithSigner(
-      `ws://localhost:26657`,
-      signer,
-      {
-        registry,
-        prefix: 'ethm',
-      },
-    )
-    this.registry = registry
-    const msgCli = await txClient(signer, {
+    
+    //@ts-ignore
+    const msgCli = await txClient({ }, {
       addr: this.rpcUrl,
     })
+
     this.msgService = msgCli
 
     return this
