@@ -548,8 +548,8 @@ export default class SmartcardDocuments extends Vue {
 
     this.anconWeb3client = new AnconWeb3Client(
       true,
-      "http://localhost:1317",
-      "ws://localhost:26657",
+      "http://ancon.did.pa:1317",
+      "ws://ancon.did.pa:26657",
       //'0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
       //'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
       web3,
@@ -749,7 +749,7 @@ export default class SmartcardDocuments extends Vue {
           let key = cid;
           const path = "";
           const requestProof = await fetch(
-            `http://localhost:1317/ancon/proof/${key}${path}`
+            `http://ancon.did.pa:1317/ancon/proof/${key}${path}`
           );
           const proof = await requestProof.json();
 
@@ -767,7 +767,7 @@ export default class SmartcardDocuments extends Vue {
     const msg = MsgMetadata.fromPartial({
       creator: (await this.anconWeb3client.getAccountIdentity).account,
       name: "tendermint",
-      image: "http://localhost:1317",
+      image: "http://ancon.did.pa:1317",
       additionalSources: [
         "bafyreia66w67tvsr5yiqagmxnklg3xdlxwroj2ho5sdzj45iydatgbbxci",
       ],
