@@ -1,22 +1,22 @@
-import { base64, keccak256 } from 'ethers/lib/utils'
-import { AnconClient } from 'anconjs'
-import { config, directive } from 'vue/types/umd'
+import { base64, keccak256 } from "ethers/lib/utils";
+import { AnconClient } from "anconjs";
+import { config, directive } from "vue/types/umd";
 import {
   MsgFileResponse,
   MsgMetadataResponse,
   MsgMetadataTx,
-} from 'anconjs/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx'
-import { firstValueFrom, Observable, Subject, Subscription } from 'rxjs'
-import * as cosmosConfig from './anconConfig'
-import { pubkeyToAddress } from '@cosmjs/tendermint-rpc'
+} from "anconjs/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
+import { firstValueFrom, Observable, Subject, Subscription } from "rxjs";
+import * as cosmosConfig from "./anconConfig";
+import { pubkeyToAddress } from "@cosmjs/tendermint-rpc";
 
-export type DocumentMetadata = any
+export type DocumentMetadata = any;
 
 export class AnconManager {
-  anconClient: AnconClient
-  anconAPI: any
-  account: any
-  did: any
+  anconClient: AnconClient;
+  anconAPI: any;
+  account: any;
+  did: any;
 
   //xdvWallet: Wallet;
 
@@ -24,36 +24,36 @@ export class AnconManager {
     this.anconClient = new AnconClient(
       true,
       cosmosConfig.default.rest,
-      cosmosConfig.default.rpc,
-    )
+      cosmosConfig.default.rpc
+    );
 
     this.anconAPI = await this.anconClient.create(
-      'ancon_manager_acct',
+      "ancon_manager_acct",
       passphrase,
-      passphrase,
-    )
+      passphrase
+    );
 
-    const wallet = this.anconClient.wallet
-    const acct = (await wallet.getAccount()) as any
+    const wallet = this.anconClient.wallet;
+    const acct = (await wallet.getAccount()) as any;
     const eddsa = await wallet.createEd25519({
-      accountName: 'ancon_manager_accct',
+      accountName: "ancon_manager_accct",
       passphrase,
       walletId: acct.keystores[0].walletId,
-    })
-    this.did = eddsa.did
-    this.account = this.anconClient.account[0].address
+    });
+    this.did = eddsa.did;
+    this.account = this.anconClient.account[0].address;
   }
   /**
    * Converts Blob to Keccak 256 hashAA
    * @param payload
    */
   async blobToKeccak256(payload: File): Promise<any> {
-    let ab = await payload.arrayBuffer()
-    let buf = new Uint8Array(ab)
-    let hash = keccak256(buf)
-    let content = Buffer.from(await payload.arrayBuffer())
+    let ab = await payload.arrayBuffer();
+    let buf = new Uint8Array(ab);
+    let hash = keccak256(buf);
+    let content = Buffer.from(await payload.arrayBuffer());
 
-    return { hash, content }
+    return { hash, content };
   }
 
   /**
@@ -95,54 +95,52 @@ export class AnconManager {
       creator: creator,
       did: did,
       from: from,
-    }
+    };
 
-    const sub = new Subject<string>()
-    const query = `message.action='Metadata'`
+    const sub = new Subject<string>();
+    const query = `message.action='Metadata'`;
 
     const subscription = this.anconClient.tm.subscribeTx(query).subscribe({
       next: async (log: any) => {
         try {
           // Decode response
-          const res = MsgMetadataResponse.decode(log.result.data)
+          const res = MsgMetadataResponse.decode(log.result.data);
 
           // Hack: Protobuf issue
-          const cid = res.cid.substring(14)
-          sub.next(cid)
-          sub.complete()
+          const cid = res.cid.substring(14);
+          sub.next(cid);
+          sub.complete();
         } catch (err) {
-          sub.error(err)
+          sub.error(err);
         }
       },
-    }) as Subscription
+    }) as Subscription;
 
     try {
       const wait = new Promise((resolve, reject) => {
-        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
-      })
-      const encoded = this.anconClient.msgService.msgMetadata(
-        metadata,
-      )
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) });
+      });
+      const encoded = this.anconClient.msgService.msgMetadata(metadata);
       // hack
       encoded.value.creator = creator;
-      encoded.value.sources = JSON.stringify(encoded.value.sources)
-      encoded.value.links = JSON.stringify(encoded.value.links)
+      encoded.value.sources = JSON.stringify(encoded.value.sources);
+      encoded.value.links = JSON.stringify(encoded.value.links);
       const tx = await this.anconClient.msgService.signAndBroadcast([encoded], {
         fee: {
           amount: [
             {
-              denom: 'token',
-              amount: '1',
+              denom: "token",
+              amount: "1",
             },
           ],
-          gas: '5000000',
+          gas: "5000000",
         },
-      })
-      const cid = await wait
-      subscription.unsubscribe()
-      return { transaction: tx, cid }
+      });
+      const cid = await wait;
+      subscription.unsubscribe();
+      return { transaction: tx, cid };
     } catch (e) {
-      throw e
+      throw e;
     }
   }
   /**
@@ -150,58 +148,58 @@ export class AnconManager {
    * @param
    */
   async addFile(did: string, payload: File) {
-    let result = await this.blobToKeccak256(payload)
+    let result = await this.blobToKeccak256(payload);
 
     const file = {
       path: payload.name,
       did: did,
       from: this.account,
       time: payload.lastModified.toString(),
-      mode: '',
+      mode: "",
       content: base64.encode(result.content),
       contentType: payload.type,
       creator: this.account,
-    }
-    const sub = new Subject<string>()
-    const query = `message.action='File'`
+    };
+    const sub = new Subject<string>();
+    const query = `message.action='File'`;
 
     const subscription = this.anconClient.tm.subscribeTx(query).subscribe({
       next: async (log: any) => {
         try {
           // Decode response
-          const res = MsgFileResponse.decode(log.result.data)
+          const res = MsgFileResponse.decode(log.result.data);
 
           // Hack: Protobuf issue
-          const cid = res.hash.substring(10)
-          sub.next(cid)
-          sub.complete()
+          const cid = res.hash.substring(10);
+          sub.next(cid);
+          sub.complete();
         } catch (err) {
-          sub.error(err)
+          sub.error(err);
         }
       },
-    }) as Subscription
+    }) as Subscription;
 
     try {
       const wait = new Promise((resolve, reject) => {
-        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
-      })
-      const encoded = this.anconClient.msgService.msgFile(file)
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) });
+      });
+      const encoded = this.anconClient.msgService.msgFile(file);
       const tx = await this.anconClient.msgService.signAndBroadcast([encoded], {
         fee: {
           amount: [
             {
-              denom: 'token',
-              amount: '1',
+              denom: "token",
+              amount: "1",
             },
           ],
-          gas: '5000000',
+          gas: "5000000",
         },
-      })
-      const cid = await wait
-      subscription.unsubscribe()
-      return { transaction: tx, cid }
+      });
+      const cid = await wait;
+      subscription.unsubscribe();
+      return { transaction: tx, cid };
     } catch (e) {
-      throw e
+      throw e;
     }
   }
 
@@ -209,9 +207,9 @@ export class AnconManager {
    * Get IPLD object
    * @param cid content id
    */
-  async getObject(cid: string, path: string = ''): Promise<any> {
-    let temp = await this.anconAPI.file.get(cid, path)
+  async getObject(cid: string, path: string = ""): Promise<any> {
+    let temp = await this.anconAPI.file.get(cid, path);
 
-    return temp
+    return temp;
   }
 }

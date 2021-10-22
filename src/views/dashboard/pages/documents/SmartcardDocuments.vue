@@ -22,15 +22,11 @@
               <v-row>
                 <v-col offset-sm="9" class="d-flex align-items-center"
                   ><cryptoicon symbol="bnb" size="24" class="cripto-icon" />
-                  {{
-                    balances.bnb
-                  }}
+                  {{ balances.bnb }}
                 </v-col>
                 <v-col class="d-flex align-items-center">
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
-                  {{
-                    balances.dai
-                  }}
+                  {{ balances.dai }}
                 </v-col>
               </v-row>
               <v-row>
@@ -193,7 +189,8 @@
                                   {{ item.name }}
                                 </td>
                                 <td>
-                                  <v-btn v-show="false"
+                                  <v-btn
+                                    v-show="false"
                                     @click="
                                       loadCid(
                                         item.cid,
@@ -313,7 +310,7 @@ import "share-api-polyfill";
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { AnconWeb3Client } from "../../../../anconjs";
-import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
+import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
@@ -389,7 +386,7 @@ export default class SmartcardDocuments extends Vue {
     //     signing: "pades",
     //     contentType: "application/pdf",
     //   },
-//    },
+    //    },
   ];
 
   tabDetailIndex = null;
@@ -464,19 +461,19 @@ export default class SmartcardDocuments extends Vue {
     } else {
       // none
     }
-      const result = await this.ancon.getObject(cid);
+    const result = await this.ancon.getObject(cid);
 
-      // if (blob.content === null) {
-      //   //TODO: download all sources
-      //   //TODO: parse json and make every object clickable
-      //   console.log(blob);
-      // }
+    // if (blob.content === null) {
+    //   //TODO: download all sources
+    //   //TODO: parse json and make every object clickable
+    //   console.log(blob);
+    // }
 
-      // await this.downloadFileFromObject(
-      //   blob.buffer,
-      //   result.value.name,
-      //   result.value.contentType
-      // );
+    // await this.downloadFileFromObject(
+    //   blob.buffer,
+    //   result.value.name,
+    //   result.value.contentType
+    // );
   }
 
   openCid(cid: string) {
@@ -491,7 +488,7 @@ export default class SmartcardDocuments extends Vue {
   async web3Connect() {
     this.swarm = new SwarmManager();
     const hash = await this.swarm.createPostageStamp(this.files[0]);
-    console.log(hash)
+    console.log(hash);
     // @ts-ignore
     this.$confirm({
       auth: true,
@@ -525,29 +522,29 @@ export default class SmartcardDocuments extends Vue {
   };
 
   async connect(passphrase: string) {
-    
     this.ancon = new AnconManager();
     this.swarm = new SwarmManager();
 
-    //@ts-ignore
-    const isMathWalletInstalled = window.ethereum && window.ethereum.isMathWallet;
+    const isMathWalletInstalled =
+      //@ts-ignore
+      window.ethereum && window.ethereum.isMathWallet;
 
     // await this.ancon.start(passphrase);
     const accounts = await this.getProvider().request({
       method: "eth_requestAccounts",
-      });
+    });
 
     const account = accounts[0];
     this.connected = true;
-    let web3 = await this.getProvider().enable()
-    
+    let web3 = await this.getProvider().enable();
+
     this.web3intance = new Web3(web3);
     this.ethersInstance = new ethers.providers.Web3Provider(web3);
 
     this.anconWeb3client = new AnconWeb3Client(
       true,
-      'http://localhost:1317',
-      'ws://localhost:26657',
+      "http://localhost:1317",
+      "ws://localhost:26657",
       //'0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
       //'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
       web3,
@@ -555,7 +552,7 @@ export default class SmartcardDocuments extends Vue {
       window.mathExtension
     );
     const hash = await this.swarm.createPostageStamp(this.files[0]);
-    console.log(hash)
+    console.log(hash);
 
     this.connected = true;
 
@@ -568,21 +565,22 @@ export default class SmartcardDocuments extends Vue {
 
     // @ts-ignore
     //let w3select = window.ethereum;
-    this.currentAccount = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6';
-    this.web3intance.defaultAccount = this.currentAccount
+    this.currentAccount = "0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6";
+    this.web3intance.defaultAccount = this.currentAccount;
 
-    this.ethersInstance = new ethers.providers.Web3Provider(this.web3intance.givenProvider);
+    this.ethersInstance = new ethers.providers.Web3Provider(
+      this.web3intance.givenProvider
+    );
     //this.ethersInstance = new ethers.providers.Web3Provider(w3select);
-    
-    debugger
 
-    
+    debugger;
+
     // DAI
     this.daiWeb3contract = new this.web3intance.eth.Contract(
-      xdvnftAbi.DAI.raw.abi, 
+      xdvnftAbi.DAI.raw.abi,
       //"0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA"
       "0x59b0e313070138127dc91F9F357Ba989FE5D57F8"
-    )
+    );
 
     this.daiContract = new ethers.Contract(
       this.DAIAddress,
@@ -591,13 +589,13 @@ export default class SmartcardDocuments extends Vue {
     );
     // XDVNFT
     this.nftWeb3Contract = new this.web3intance.eth.Contract(
-      xdvnftAbi.XDVNFT.raw.abi, 
-      //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635" 
-      '0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816'
-    )
+      xdvnftAbi.XDVNFT.raw.abi,
+      //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
+      "0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816"
+    );
 
     this.ethersContract = new ethers.Contract(
-      '0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816',
+      "0x83CD796AC0E12b1e95Ce1A4e00D4A3797224c816",
       xdvnftAbi.XDVNFT.raw.abi,
       this.ethersInstance.getSigner()
     );
@@ -657,7 +655,7 @@ export default class SmartcardDocuments extends Vue {
     let lnk;
     // simple
     //lnk = await this.createSimpleDocumentNode(this.files);
-    lnk = 'bafyreicztwstn4ujtsnabjabn3hj7mvbhsgrvefbh37ddnx4w2pvghvsfm'
+    lnk = "bafyreicztwstn4ujtsnabjabn3hj7mvbhsgrvefbh37ddnx4w2pvghvsfm";
 
     if (lnk && this.typelink.mode === "1") {
       this.result = await this.anchor(lnk);
@@ -682,13 +680,9 @@ export default class SmartcardDocuments extends Vue {
     await this.loadTransactions();
   }
 
-  createMetadata(){
-    
-  }
+  createMetadata() {}
 
-  updateMetadata(){
-    
-  }
+  updateMetadata() {}
 
   /** Creates simple document node */
   async createSimpleDocumentNode(files?: File[]) {
@@ -744,22 +738,20 @@ export default class SmartcardDocuments extends Vue {
 
       // 2) Create and store Ancon metadata
       const { transaction, cid }: any =
-        await this.ancon.anconClient.executeMetadata(
-          {
-            name: "Simple signing",
-            description: "Description",
-            image: `${this.cids[0].cid}/${this.cids[0].name}`,
-            sources: this.cids.map((i) => i.cid),
-            owner: this.currentAccount, //binance acc
-            parent: undefined,
-            verifiedCredentialRef: undefined,
-            links: undefined,
-            creator: this.ancon.account, //binance acccosmos acc
-            did: this.ancon.did.id,
-            from: this.currentAccount, //binance acc
-            fee
-          },
-        );
+        await this.ancon.anconClient.executeMetadata({
+          name: "Simple signing",
+          description: "Description",
+          image: `${this.cids[0].cid}/${this.cids[0].name}`,
+          sources: this.cids.map((i) => i.cid),
+          owner: this.currentAccount, //binance acc
+          parent: undefined,
+          verifiedCredentialRef: undefined,
+          links: undefined,
+          creator: this.ancon.account, //binance acccosmos acc
+          did: this.ancon.did.id,
+          from: this.currentAccount, //binance acc
+          fee,
+        });
 
       return cid;
     } catch (e) {
@@ -799,28 +791,23 @@ export default class SmartcardDocuments extends Vue {
     // );
 
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
-    const approve = await this.daiWeb3contract.methods.approve(
-      this.ethersContract.address,
-      "1000000000000000000").send(
-        {
-          gasPrice: "22000000000",
-          gas: gasLimit,
-          from: this.currentAccount
-        }
-      );
+    const approve = await this.daiWeb3contract.methods
+      .approve(this.ethersContract.address, "1000000000000000000")
+      .send({
+        gasPrice: "22000000000",
+        gas: gasLimit,
+        from: this.currentAccount,
+      });
 
-      //await approve.wait(1);
-    debugger
-    const mintnft = await this.nftWeb3Contract.methods.mint(
-      this.currentAccount, 
-      uri
-    ).send(
-      {
-          gasPrice: "22000000000",
-          gas: gasLimit,
-          from: this.currentAccount
-        }
-    );
+    //await approve.wait(1);
+    debugger;
+    const mintnft = await this.nftWeb3Contract.methods
+      .mint(this.currentAccount, uri)
+      .send({
+        gasPrice: "22000000000",
+        gas: gasLimit,
+        from: this.currentAccount,
+      });
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
     //   uri
@@ -846,14 +833,19 @@ export default class SmartcardDocuments extends Vue {
   async loadViewer() {
     if (this.ancon && this.cidindex) {
       const res = await this.ancon.getObject(this.cidindex);
-      
-      const result = await this.ancon.getObject(res.image.split('/')[0], res.image.split('/')[1])
-      
+
+      const result = await this.ancon.getObject(
+        res.image.split("/")[0],
+        res.image.split("/")[1]
+      );
+
       this.viewItems = {
-        signedFiles: [{
-          cid: res.image,
-          ...(result)
-        }]
+        signedFiles: [
+          {
+            cid: res.image,
+            ...result,
+          },
+        ],
       } as any;
     }
   }

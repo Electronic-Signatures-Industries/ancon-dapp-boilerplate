@@ -1,47 +1,52 @@
+import { Registry } from "@cosmjs/proto-signing";
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+import { ethers } from "ethers";
+import fetch from "node-fetch";
+import { Subject, Subscription } from "rxjs";
+import { Wallet } from "xdv-universal-wallet-core";
 import {
-  Registry
-} from '@cosmjs/proto-signing'
-import { SigningStargateClient } from '@cosmjs/stargate'
-import { Tendermint34Client } from '@cosmjs/tendermint-rpc'
-import { ethers } from 'ethers'
-import fetch from 'node-fetch'
-import { Subject, Subscription } from 'rxjs'
-import { Wallet } from 'xdv-universal-wallet-core'
-import {
-  queryClient, txClient
-} from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
+  queryClient,
+  txClient,
+} from "./store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
   MsgFile,
-  MsgFileResponse, MsgMetadataResponse
-} from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx'
+  MsgFileResponse,
+  MsgMetadataResponse,
+} from "./store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
 
-global['fetch'] = require('node-fetch')
+global["fetch"] = require("node-fetch");
 
-export interface MathWalletSigner{
+export interface MathWalletSigner {
   getIdentity(prefix: any): MathIdentityResponse;
   forgetIdentity(): any;
   requestSignature(transaction: any, network: any): any;
-  requestArbitrarySignature(account: any, message: any, title: string, onOff: boolean): any;
+  requestArbitrarySignature(
+    account: any,
+    message: any,
+    title: string,
+    onOff: boolean
+  ): any;
 }
 
-export interface MathIdentityResponse{
+export interface MathIdentityResponse {
   account: string;
   blockchain: string;
 }
 
 export class AnconWeb3Client {
-  wallet: Wallet
-  tm: Tendermint34Client
+  wallet: Wallet;
+  tm: Tendermint34Client;
 
-  msgService: any
-  account: any
-  offlineSigner: SigningStargateClient
-  ethersclient: ethers.Wallet
-  connectedSigner: SigningStargateClient
-  rpc: ethers.providers.JsonRpcProvider
-  queryClient: any
-  registry: Registry
-  mathWalletNetwork: any
+  msgService: any;
+  account: any;
+  offlineSigner: SigningStargateClient;
+  ethersclient: ethers.Wallet;
+  connectedSigner: SigningStargateClient;
+  rpc: ethers.providers.JsonRpcProvider;
+  queryClient: any;
+  registry: Registry;
+  mathWalletNetwork: any;
   /**
    * Register Msg imports
    */
@@ -50,16 +55,16 @@ export class AnconWeb3Client {
     private apiUrl: string,
     private rpcUrl: string,
     private web3Provider: any,
-    private mathProvider: MathWalletSigner,
+    private mathProvider: MathWalletSigner
   ) {
-    this.wallet = new Wallet({ isWeb })
+    this.wallet = new Wallet({ isWeb });
     this.mathWalletNetwork = {
-      blockchain: "ethm"
+      blockchain: "ethm",
     };
   }
 
-  getAccountIdentity(){
-    return this.mathProvider.getIdentity(this.mathWalletNetwork)
+  getAccountIdentity() {
+    return this.mathProvider.getIdentity(this.mathWalletNetwork);
   }
 
   // async sign(
@@ -71,7 +76,7 @@ export class AnconWeb3Client {
   //   encoded,
   // ) {
   //   console.log(address, fee, accountNumber, sequence,chainId)
-    
+
   //   const raw = await this.connectedSigner.sign(address, [encoded], fee, '', {
   //     accountNumber,
   //     sequence,
@@ -86,55 +91,57 @@ export class AnconWeb3Client {
     evmChainId: number,
     methodName: string,
     msg: any,
-    fee: any,
+    fee: any
   ) {
     // const accounts = await this.signer.getAccounts()
     const defaultAccount = this.web3Provider.defaultAccount;
     //const keyringAccount = { ...accounts[defaultAccountIndex] }
-    const cosmosAccount = await this.getEthAccountInfo(defaultAccount)
+    const cosmosAccount = await this.getEthAccountInfo(defaultAccount);
 
-    const encoded = this.msgService[methodName](msg)
+    const encoded = this.msgService[methodName](msg);
 
     // curl -X GET "http://localhost:1317/ethermint/evm/v1/cosmos_account/32A21C1BB6E7C20F547E930B53DAC57F42CD25F6" -H  "accept: application/json"
-    const acct = cosmosAccount.account_number
-    const addr = cosmosAccount.address
-    const sequence = cosmosAccount.sequence
+    const acct = cosmosAccount.account_number;
+    const addr = cosmosAccount.address;
+    const sequence = cosmosAccount.sequence;
 
     const txsignedhex = await this.mathProvider.requestArbitrarySignature(
       cosmosAccount,
       encoded,
       "Signing Cosmos Tx",
       false
-    )
+    );
 
     // Set it to Data in a ethereum tx / SendTxArgs
     const tx = {
       data: txsignedhex,
       value: 0,
       chainId: evmChainId,
-    }
+    };
 
-    const raw = await this.ethersclient.signTransaction({ ...tx })
-    const res = await this.rpc.send('ancon_sendRawTransaction', [raw])
+    const raw = await this.ethersclient.signTransaction({ ...tx });
+    const res = await this.rpc.send("ancon_sendRawTransaction", [raw]);
 
-    return res
+    return res;
   }
 
   async connect() {
-
-    this.tm = await Tendermint34Client.connect(this.rpcUrl)
+    this.tm = await Tendermint34Client.connect(this.rpcUrl);
     this.queryClient = await queryClient({
       addr: this.apiUrl,
-    })
-    
+    });
+
     //@ts-ignore
-    const msgCli = await txClient({ }, {
-      addr: this.rpcUrl,
-    })
+    const msgCli = await txClient(
+      {},
+      {
+        addr: this.rpcUrl,
+      }
+    );
 
-    this.msgService = msgCli
+    this.msgService = msgCli;
 
-    return this
+    return this;
   }
 
   /**
@@ -177,45 +184,45 @@ export class AnconWeb3Client {
       creator: creator,
       did: did,
       from: from,
-    }
+    };
 
-    const sub = new Subject<string>()
-    const query = `message.action='Metadata'`
+    const sub = new Subject<string>();
+    const query = `message.action='Metadata'`;
 
     const subscription = this.tm.subscribeTx(query).subscribe({
       next: async (log: any) => {
         try {
           // Decode response
-          const res = MsgMetadataResponse.decode(log.result.data)
+          const res = MsgMetadataResponse.decode(log.result.data);
 
           // Hack: Protobuf issue
-          const cid = res.cid.substring(14)
-          sub.next(cid)
-          sub.complete()
+          const cid = res.cid.substring(14);
+          sub.next(cid);
+          sub.complete();
         } catch (err) {
-          sub.error(err)
+          sub.error(err);
         }
       },
-    }) as Subscription
+    }) as Subscription;
 
     try {
       const wait = new Promise((resolve, reject) => {
-        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
-      })
-      const encoded = this.msgService.msgMetadata(metadata)
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) });
+      });
+      const encoded = this.msgService.msgMetadata(metadata);
       // hack
-      encoded.value.creator = creator
-      encoded.value.sources = JSON.stringify(encoded.value.sources)
-      encoded.value.links = JSON.stringify(encoded.value.links)
+      encoded.value.creator = creator;
+      encoded.value.sources = JSON.stringify(encoded.value.sources);
+      encoded.value.links = JSON.stringify(encoded.value.links);
       const tx = await this.msgService.signAndBroadcast([encoded], {
         fee,
-      })
-      const cid = await wait
-      return { transaction: tx, cid }
+      });
+      const cid = await wait;
+      return { transaction: tx, cid };
     } catch (e) {
-      throw e
+      throw e;
     } finally {
-      subscription.unsubscribe()
+      subscription.unsubscribe();
     }
   }
   /**
@@ -223,51 +230,51 @@ export class AnconWeb3Client {
    * @param
    */
   async addFile({ did, file, fee }) {
-    const sub = new Subject<string>()
-    ;(file as MsgFile).did = did
-    const query = `message.action='File'`
+    const sub = new Subject<string>();
+    (file as MsgFile).did = did;
+    const query = `message.action='File'`;
 
     const subscription = this.tm.subscribeTx(query).subscribe({
       next: async (log: any) => {
         try {
           // Decode response
-          const res = MsgFileResponse.decode(log.result.data)
+          const res = MsgFileResponse.decode(log.result.data);
 
           // Hack: Protobuf issue
-          const cid = res.hash.substring(10)
-          sub.next(cid)
-          sub.complete()
+          const cid = res.hash.substring(10);
+          sub.next(cid);
+          sub.complete();
         } catch (err) {
-          sub.error(err)
+          sub.error(err);
         }
       },
-    }) as Subscription
+    }) as Subscription;
 
     try {
       const wait = new Promise((resolve, reject) => {
-        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) })
-      })
-      const encoded = this.msgService.msgFile(file)
+        sub.subscribe({ next: (i) => resolve(i), error: (e) => reject(e) });
+      });
+      const encoded = this.msgService.msgFile(file);
       const tx = await this.msgService.signAndBroadcast([encoded], {
         fee,
-      })
-      const cid = await wait
-      return { transaction: tx, cid }
+      });
+      const cid = await wait;
+      return { transaction: tx, cid };
     } catch (e) {
-      throw e
+      throw e;
     } finally {
-      subscription.unsubscribe()
+      subscription.unsubscribe();
     }
   }
 
   async getEthAccountInfo(defaultEthAddress: string): Promise<any> {
     const res = await (
       await fetch(
-        this.apiUrl + `/ethermint/evm/v1/cosmos_account/` + defaultEthAddress,
+        this.apiUrl + `/ethermint/evm/v1/cosmos_account/` + defaultEthAddress
       )
-    ).json()
-    console.log('RES JSON ', res)
+    ).json();
+    console.log("RES JSON ", res);
     //const temp = res[0]
-    return { ...res, address: res.cosmos_address }
+    return { ...res, address: res.cosmos_address };
   }
 }
