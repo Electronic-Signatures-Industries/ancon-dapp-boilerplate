@@ -19,24 +19,22 @@
               <v-alert :type="alertType" v-if="alertMessage">{{
                 alertMessage
               }}</v-alert>
+
               <v-row>
-                <v-col offset-sm="9" class="d-flex align-items-center"
-                  ><cryptoicon symbol="bnb" size="24" class="cripto-icon" />
+                <v-col xs="2" sm="2" offset-sm="2">
+                  <cryptoicon symbol="atom" size="24" class="cripto-icon" />
                   {{ balances.bnb }}
                 </v-col>
-                <v-col class="d-flex align-items-center">
+                <v-col xs="2" sm="2">
+                  <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
+                  {{ balances.bnb }}
+                </v-col>
+                <v-col xs="4" sm="4">
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
                   {{ balances.dai }}
                 </v-col>
               </v-row>
               <v-row>
-                <v-col cols="1" xs="1">
-                  <v-progress-circular
-                    indeterminate
-                    v-if="loading"
-                    color="primary"
-                  ></v-progress-circular>
-                </v-col>
                 <v-col xs="6" sm="6" offset-sm="2">
                   <v-file-input
                     multiple
@@ -58,21 +56,21 @@
                 </v-col>
               </v-row>
               <v-row>
-                <v-col cols="12" xs="12" class="d-flex">
-                  <v-radio-group v-model="typelink.mode" mandatory row>
-                    <v-radio label="Onchain timestamp" value="1"></v-radio>
-                    <v-radio label="Non fungible token" value="2"></v-radio>
-                    <v-radio label="SWARM" value="3"></v-radio>
-                    <!-- <v-radio
-                      label="Only decentralized storage"
-                      value="3"
-                    ></v-radio> -->
-                  </v-radio-group>
-                  <v-checkbox
-                    v-model="emulateSmartcard"
-                    label="Emulate Smartcard"
-                    v-if="item.settings.signing == 'pkcsjwt'"
-                  ></v-checkbox>
+                <v-col xs="6" sm="6" offset-sm="2">
+                  <v-text-field
+                    label="Name"
+                    required
+                    v-model="name"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col xs="6" sm="6" offset-sm="2">
+                  <v-text-field
+                    required
+                    label="Description"
+                    v-model="description"
+                  ></v-text-field>
                 </v-col>
               </v-row>
 
@@ -81,7 +79,7 @@
                   <v-btn
                     color="pink"
                     v-if="connected === false"
-                    @click="connect"
+                    @click="web3Connect"
                     dark
                   >
                     Connect
@@ -307,20 +305,20 @@ import { Component, Vue } from "vue-property-decorator";
 import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
-import { ExternallyOwnedAccount, BigNumber, ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
-import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
 import { TxEvent } from "@cosmjs/tendermint-rpc";
+import { Web3Storage } from "web3.storage/dist/bundle.esm.min.js";
+
 import {
   MsgMetadata,
   MsgMetadataResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
-import Onboard from "bnc-onboard";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -372,20 +370,28 @@ export default class SmartcardDocuments extends Vue {
   tabitems = [
     {
       key: "simple",
-      label: "Simple",
+      label: "NFT with Onchain Metadata",
       settings: {
         signing: "simple",
         contentType: null,
       },
     },
-    // {
-    //   key: "pkcsjwt",
-    //   label: "Protected JWT",
-    //   settings: {
-    //     signing: "pkcsjwt",
-    //     contentType: null,
-    //   },
-    // },
+    {
+      key: "crosschain1",
+      label: "NFT Cross Chain (new recipient token id, unique owner)",
+      settings: {
+        signing: "xchain_1",
+        contentType: null,
+      },
+    },
+    {
+      key: "crosschain2",
+      label: "NFT Cross Chain (new recipient token id, co-owners)",
+      settings: {
+        signing: "xchain_2",
+        contentType: null,
+      },
+    },
     // {
     //   key: "pades",
     //   label: "Qualified PDF",
@@ -415,6 +421,8 @@ export default class SmartcardDocuments extends Vue {
       },
     },
   ];
+  name = "My New Fancy NFT";
+  description = "Powered by Ancon Protocol";
   viewItems = [];
   transactions = [];
   emulateSmartcard = false;
@@ -422,9 +430,13 @@ export default class SmartcardDocuments extends Vue {
   web3instance: Web3;
   nftWeb3Contract: any;
   daiWeb3contract: any;
-  anconWeb3client: any;
+  anconWeb3client: AnconWeb3Client;
   onboard = null;
   chainId: number;
+  web3storageAPIKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDE0ZDM0NDExYTYyQkJjMjBEMzkzZDNjN2RhQUE4YzZEMGRmNDY2NjAiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2MzUwMTU4NTUyNTIsIm5hbWUiOiJBbmNvbiJ9.TiAmVFS000shN0L9cV3q2SWsJhVW0uxM0ZCEbzTe9QI";
+  nftAPIKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDlFNWJFMjI2YUU4NzhFZkJGZGU1NzhDM0VkMmY2NDhGMjEzMDBmOGMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTAxNTU4Mzg2OSwibmFtZSI6ImFuY29uIn0.3VIRmGQ3IIfwk4X30NPDSfX8SN3YdFGnPqsYDc-7jlY";
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -495,13 +507,10 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
-    this.swarm = new SwarmManager();
-    const hash = await this.swarm.createPostageStamp(this.files[0]);
-    console.log(hash);
     // @ts-ignore
     this.$confirm({
       auth: true,
-      message: "Please enter a passphrase",
+      message: "Please enter a 24 seed passphrase",
       button: {
         yes: "Yes",
         no: "Cancel",
@@ -519,54 +528,18 @@ export default class SmartcardDocuments extends Vue {
     });
   }
 
-  getProvider = () => {
-    return window.ethereum;
-    // if ("ethereum" in window) {
-    //   //@ts-ignore
-    //   const provider = window.ethereum;
-    //   if (provider.isMathWallet) {
-    //     return provider;
-    //   }
-    // }
-    // window.open("https://mathwallet.org/", "_blank");
-  };
-
   async connect(passphrase: string) {
-    // await this.ancon.start(passphrase);
-    const accounts = await this.getProvider().request({
-      method: "eth_requestAccounts",
-    });
-
-    const account = accounts[0];
-
-    let web3 = this.getProvider();
-
-    this.web3instance = new Web3(web3);
-    this.chainId = await this.web3instance.eth.getChainId();
-
-    if (this.chainId != 9000) {
-      alert("Ancon Network chainId must be 9000, please change it");
-      return;
-    }
-
-    this.connected = true;
-
-    this.ethersInstance = new ethers.providers.Web3Provider(web3);
+    // Only use metamask provider to get access to node !
 
     this.anconWeb3client = new AnconWeb3Client(
-      this.web3instance,
+      passphrase,
+      new ethers.providers.JsonRpcProvider("http://ancon.did.pa:8545")
     );
-    debugger;
+
     await this.anconWeb3client.connect();
-    // @ts-ignore
-    //let w3select = window.ethereum;
-    this.currentAccount = "0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6";
-    this.web3instance.defaultAccount = this.currentAccount;
-
-    this.ethersInstance = new ethers.providers.Web3Provider(
-      this.web3instance.givenProvider
-    );
-
+    this.connected = true;
+    this.currentAccount = await this.anconWeb3client.getSigner().getAddress();
+    this.web3instance = new Web3("http://ancon.did.pa:8545");
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
@@ -577,7 +550,7 @@ export default class SmartcardDocuments extends Vue {
     this.daiContract = new ethers.Contract(
       this.DAIAddress,
       xdvnftAbi.DAI.raw.abi,
-      this.ethersInstance.getSigner()
+      this.anconWeb3client.getSigner()
     );
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
@@ -589,12 +562,12 @@ export default class SmartcardDocuments extends Vue {
     this.ethersContract = new ethers.Contract(
       "0x77C51E844495899727dB63221af46220b0b13B37",
       xdvnftAbi.XDVNFT.raw.abi,
-      this.ethersInstance.getSigner()
+      this.anconWeb3client.getSigner()
     );
     this.anchorContract = new ethers.Contract(
       xdvAbi.networks["97"].address,
       xdvAbi.abi,
-      this.ethersInstance.getSigner()
+      this.anconWeb3client.getSigner()
     );
     // await this.loadBalances();
     // await this.loadTransactions();
@@ -646,18 +619,17 @@ export default class SmartcardDocuments extends Vue {
   async xdvify() {
     let lnk;
     // simple
-    //lnk = await this.createSimpleDocumentNode(this.files);
-    lnk = "bafyreicztwstn4ujtsnabjabn3hj7mvbhsgrvefbh37ddnx4w2pvghvsfm";
+    const storage = new Web3Storage({
+      token: this.web3storageAPIKey,
+    });
 
-    if (lnk && this.typelink.mode === "1") {
-      this.result = await this.anchor(lnk);
-    } else if (lnk && this.typelink.mode === "2") {
-      const res = await this.createMetadata();
-      this.result = await this.mintNft(res);
-      await this.initiateCrossNFTOwnership(res);
-    } else {
-      // none
-    }
+    // 1. Upload files
+    const cid = await storage.put(this.files, { wrapWithDirectory: true });
+
+    // 2. Create Metadata
+    const res = await this.createMetadata(cid, this.name, this.description);
+    this.result = await this.mintNft(res);
+    //  await this.initiateCrossNFTOwnership(res);
 
     this.cidindex = lnk;
     await this.loadViewer();
@@ -672,37 +644,6 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
-    // this.onboard = Onboard({
-    //   dappId: "4182319a-e36b-463f-93ce-d79ee3ab53e4", // [String] The API key created by step one above
-    //   networkId: 97, // [Integer] The Ethereum network ID your Dapp uses.
-    //   subscriptions: {
-    //     wallet: async (wallet) => {
-    //       //const account = await wallet.provider.enable();
-    //       //this.currentAddress = account[0];
-    //       //this.web3 = new Web3(wallet.provider);
-    //       //this.web3.eth.defaultAccount = account[0];
-    //     },
-    //   },
-    //   walletSelect: {
-    //     wallets: [
-    //       {
-    //         walletName: "metamask",
-    //         appUrl:
-    //           "https://chrome.google.com/webstore/detail/binance-chain-wallet/fhbohimaelbohpjbbldcngcnapndodjp",
-    //         rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
-    //         //preferred: true,
-    //       },
-    //       // {
-    //       //   walletName: "walletConnect",
-    //       //   rpcUrl: "https://data-seed-prebsc-1-s2.binance.org:8545/",
-    //       // },
-    //     ],
-    //   },
-    // });
-
-    // await this.onboard.walletSelect();
-    // await this.onboard.walletCheck();
-
     if (this.$router.currentRoute.params.cid) {
       this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
@@ -781,25 +722,82 @@ export default class SmartcardDocuments extends Vue {
   }
 
   /** Creates onchain metadata */
-  async createMetadata(): Promise<any> {
+  async createMetadata(root, description, name): Promise<any> {
     const msg = MsgMetadata.fromPartial({
-      creator: (await this.anconWeb3client.getAccountIdentity()).address,
-      name: "tendermint",
-      image: "http://ancon.did.pa:1317",
-      additionalSources: [
-        "bafyreia66w67tvsr5yiqagmxnklg3xdlxwroj2ho5sdzj45iydatgbbxci",
-      ],
-      links: ["bafyreia66w67tvsr5yiqagmxnklg3xdlxwroj2ho5sdzj45iydatgbbxci"],
-      owner: "did:key:z8mWaJHXieAVxxLagBpdaNWFEBKVWmMiE",
-      description: "tendermint",
+      creator:'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',/// (await this.anconWeb3client.getAccountIdentity()).address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ether:9000:${this.currentAccount}`,
+      description,
       did: "",
       from: "",
     });
 
-    const evmChainId = this.chainId;
+    const evmChainId = 9000;
     // Create Metadata Message request
     // Add Cosmos uatom
-    await this.anconWeb3client.signAndBroadcast(evmChainId, "msgMetadata", msg);
+    await this.anconWeb3client.signAndBroadcast(
+      evmChainId,
+      "msgMetadata",
+      msg,
+      (signDoc, tx) => {
+        if (!!signDoc ) {
+          return new Promise((resolve, reject) => {
+            // @ts-ignore
+            this.$confirm({
+              auth: false,
+              message:
+                "Are you sure you want to sign this transaction (Create Metadata)?",
+              button: {
+                yes: "Yes",
+                no: "Cancel",
+              },
+              /**
+               * Callback Function
+               * @param {Boolean} confirm
+               * @param {String} password
+               */
+              callback: async (confirm, password) => {
+                if (confirm) {
+                  return resolve(true);
+                }
+
+                return reject("User rejected");
+              },
+            });
+          });
+        } else if (tx) {
+          return new Promise((resolve, reject) => {
+            // @ts-ignore
+            this.$confirm({
+              auth: false,
+              message:
+                "Are you sure you want to sign this transaction (Ethereum Metadata Tx)?",
+              button: {
+                yes: "Yes",
+                no: "Cancel",
+              },
+              /**
+               * Callback Function
+               * @param {Boolean} confirm
+               * @param {String} password
+               */
+              callback: async (confirm, password) => {
+                if (confirm) {
+                  return resolve(true);
+                }
+
+                return reject("User rejected");
+              },
+            });
+          });
+        }
+
+        return Promise.reject("User timeout");
+      }
+    );
 
     const { cid } = await this.subscribeToMetadataEvents();
     return cid;

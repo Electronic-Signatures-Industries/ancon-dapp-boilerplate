@@ -2,11 +2,12 @@ import { createKeplrWallet } from '@/views/dashboard/pages/wallet/KeplrWrapper'
 import { fromBase64 } from '@cosmjs/encoding'
 import { encodeSecp256k1Pubkey } from '@cosmjs/amino'
 import { Int53 } from '@cosmjs/math'
-import { stringToPath } from '@cosmjs/crypto'
+import { sha256, Secp256k1, stringToPath, pathToString } from '@cosmjs/crypto'
 import {
   DirectSecp256k1HdWallet,
   encodePubkey,
   makeAuthInfoBytes,
+  makeSignBytes,
   makeSignDoc,
   Registry,
 } from '@cosmjs/proto-signing'
@@ -21,28 +22,12 @@ import {
   queryClient,
   registry,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
+import { arrayify } from '@ethersproject/bytes'
+import { encodeSecp256k1Signature } from '@cosmjs/launchpad'
 
 global['fetch'] = require('node-fetch')
 
-export interface MathWalletSigner {
-  getIdentity(prefix: any): MathIdentityResponse
-  forgetIdentity(): any
-  requestSignature(transaction: any, network: any): any
-  requestArbitrarySignature(
-    account: any,
-    message: any,
-    title: string,
-    onOff: boolean,
-  ): any
-}
-
-export interface MathIdentityResponse {
-  account: string
-  blockchain: string
-}
-
 export class AnconWeb3Client {
-  wallet: Wallet
   tm: Tendermint34Client
 
   msgService: any
@@ -52,23 +37,43 @@ export class AnconWeb3Client {
   rpc: ethers.providers.JsonRpcProvider
   queryClient: any
   registry: Registry
-  mathWalletNetwork: any
+
   apiUrl: string
   rpcUrl: string
   offlineSigner: any
   cosmosChainId: any
   /**
-   * Register Msg imports
+   * New client from mnemonic
    */
-  constructor(private web3Provider: any) {}
-
-  getAccountIdentity() {
-    const defaultAccount = this.web3Provider.defaultAccount
-    return this.getEthAccountInfo(`0x37A232EB07A4FA8CA88FA6020F89773F6CA020A1`)
+  constructor(
+    private mnemonic: string,
+    private provider: ethers.providers.JsonRpcProvider,
+  ) {
+    this.ethersclient = ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0`)
+    this.ethersclient.connect(this.provider)
+    return this
   }
 
-  async signAndBroadcast(evmChainId: number, methodName: string, msg: any) {
-    const defaultAccount =  `0x37A232EB07A4FA8CA88FA6020F89773F6CA020A1`//  this.web3Provider.defaultAccount
+  /**
+   * Gets Cosmos Account data
+   * @returns
+   */
+  getAccountIdentity() {
+    const defaultAccount = this.ethersclient.address
+    return this.getEthAccountInfo(defaultAccount)
+  }
+
+  getSigner(): ethers.Signer {
+    return this.ethersclient as ethers.Signer
+  }
+
+  async signAndBroadcast(
+    evmChainId: number,
+    methodName: string,
+    msg: any,
+    callback: any,
+  ) {
+    const defaultAccount = '0x37A232EB07A4FA8CA88FA6020F89773F6CA020A1'// this.ethersclient.address
     const cosmosAccount = await this.getEthAccountInfo(defaultAccount)
 
     const encoded = encoder[methodName](msg)
@@ -85,18 +90,53 @@ export class AnconWeb3Client {
       ],
       gas: '200000',
     }
-    // Create Metadata Message request
-    const txsignedhex = await this.connectedSigner.sign(
-      addr,
-      [encoded],
-      fee,
-      '',
-      {
-        accountNumber: acct,
-        sequence,
-        chainId: this.cosmosChainId,
-      },
+
+    const pk = await Secp256k1.makeKeypair(
+      arrayify(this.ethersclient.privateKey),
     )
+    // Create Metadata Message request
+    const pubkey = encodePubkey(
+      encodeSecp256k1Pubkey(Secp256k1.compressPubkey(pk.pubkey)),
+    )
+    const txBodyEncodeObject = {
+      typeUrl: '/cosmos.tx.v1beta1.TxBody',
+      value: {
+        messages: [encoded],
+        memo: '',
+      },
+    }
+    const txBodyBytes = registry.encode(txBodyEncodeObject)
+    const gasLimit = Int53.fromString(fee.gas).toNumber()
+    const authInfoBytes = makeAuthInfoBytes(
+      [{ pubkey, sequence }],
+      fee.amount,
+      gasLimit,
+    )
+
+    const signDoc = makeSignDoc(
+      txBodyBytes,
+      authInfoBytes,
+      this.cosmosChainId,
+      acct,
+    )
+
+    await callback({ signDoc })
+    const signBytes = makeSignBytes(signDoc)
+
+    const hashedMessage = sha256(signBytes)
+
+    const sig = await Secp256k1.createSignature(hashedMessage, pk.privkey)
+    const signatureBytes = new Uint8Array([...sig.r(32), ...sig.s(32)])
+    const stdSignature = encodeSecp256k1Signature(
+      Secp256k1.compressPubkey(pk.pubkey),
+      signatureBytes,
+    )
+
+    const txsignedhex = TxRaw.fromPartial({
+      bodyBytes: signDoc.bodyBytes,
+      authInfoBytes: signDoc.authInfoBytes,
+      signatures: [fromBase64(stdSignature.signature)],
+    })
     // Set it to Data in a ethereum tx / SendTxArgs
     const tx = {
       data: TxRaw.encode(txsignedhex).finish(),
@@ -104,43 +144,39 @@ export class AnconWeb3Client {
       chainId: evmChainId,
     }
 
+    await callback({ signDoc: null, tx, txsignedhex })
     const raw = await this.ethersclient.signTransaction({ ...tx })
-    const res = await this.rpc.send('ancon_sendRawTransaction', [raw])
+
+    const res = await this.provider.send('ancon_sendRawTransaction', [raw])
 
     return res
   }
 
   async connect() {
-    const client = await createKeplrWallet()
-    this.offlineSigner = await DirectSecp256k1HdWallet.fromMnemonic(
-      'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
+    const hd = stringToPath(`m/44'/60'/0'/0`)
+    const { config } = await createKeplrWallet()
+    const signer = (this.offlineSigner = await DirectSecp256k1HdWallet.fromMnemonic(
+      this.mnemonic,
       {
         prefix: 'ethm',
-        hdPaths: [stringToPath(`m/44'/60'/0'/0`)],
+        hdPaths: [hd],
       },
-    )
-    this.cosmosChainId = client.config.chainId
-    this.rpcUrl = client.config.rpc
-    this.apiUrl = client.config.rest
+    ))
+
+    const a = pathToString(hd)
+
+    this.cosmosChainId = config.chainId
+    this.rpcUrl = config.rpc
+    this.apiUrl = config.rest
     this.tm = await Tendermint34Client.connect(this.rpcUrl)
     this.queryClient = await queryClient({
       addr: this.apiUrl,
     })
 
-    this.rpc = new ethers.providers.JsonRpcProvider('http://ancon.did.pa:8545')
-    this.ethersclient = ethers.Wallet.fromMnemonic(
-      'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
-      `m/44'/60'/0'/0`,
-    )
-    this.ethersclient.connect(this.rpc)
-    this.connectedSigner = await SigningStargateClient.connectWithSigner(
-      client.config.rpc,
-      this.offlineSigner,
-      {
-        registry,
-        prefix: 'ethm',
-      },
-    )
+    this.connectedSigner = await SigningStargateClient.offline(signer, {
+      registry,
+      prefix: 'ethm',
+    })
     return this
   }
 
