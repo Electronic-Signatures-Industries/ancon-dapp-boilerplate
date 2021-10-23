@@ -34,14 +34,16 @@ export async function createKeplrWallet() {
   // Also, it will request user to unlock the wallet if the wallet is locked.
   // If you don't request enabling before usage, there is no guarantee that other methods will work.
   //@ts-ignore
-  
+  await keplr.enable(config.chainId);
   //@ts-ignore
+  const offlineSigner = getOfflineSignerAuto(config.chainId);
 
   // You can get the address/public keys by `getAccounts` method.
   // It can return the array of address/public key.
   // But, currently, Keplr extension manages only one address/public key pair.
   // XXX: This line is needed to set the sender address for SigningCosmosClient.
   //@ts-ignore
+  const accounts = await offlineSigner.getAccounts();
 
-  return ({config,  })
+  return ({config, accounts, offlineSigner})
 }

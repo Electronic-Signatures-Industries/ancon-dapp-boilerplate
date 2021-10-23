@@ -307,7 +307,7 @@ import { Component, Vue } from "vue-property-decorator";
 import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
-import { BigNumber, ethers } from "ethers";
+import { ExternallyOwnedAccount, BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
@@ -518,41 +518,35 @@ export default class SmartcardDocuments extends Vue {
       },
     });
   }
-  
+
   getProvider = () => {
-    
-    if ("ethereum" in window) {
-      //@ts-ignore
-      const provider = window.ethereum;
-      if (provider.isMathWallet) {
-        return provider;
-      }
-    }
-    window.open("https://mathwallet.org/", "_blank");
+    return window.ethereum;
+    // if ("ethereum" in window) {
+    //   //@ts-ignore
+    //   const provider = window.ethereum;
+    //   if (provider.isMathWallet) {
+    //     return provider;
+    //   }
+    // }
+    // window.open("https://mathwallet.org/", "_blank");
   };
 
   async connect(passphrase: string) {
-    this.swarm = new SwarmManager();
-
-    const isMathWalletInstalled =
-      //@ts-ignore
-      window.ethereum && window.ethereum.isMathWallet;
-
     // await this.ancon.start(passphrase);
     const accounts = await this.getProvider().request({
       method: "eth_requestAccounts",
     });
 
     const account = accounts[0];
-    
+
     let web3 = this.getProvider();
 
     this.web3instance = new Web3(web3);
     this.chainId = await this.web3instance.eth.getChainId();
 
-    if(this.chainId !=9000){ 
-      alert("Ancon Network chainId must be 9000, please change it")
-      return 
+    if (this.chainId != 9000) {
+      alert("Ancon Network chainId must be 9000, please change it");
+      return;
     }
 
     this.connected = true;
@@ -560,27 +554,10 @@ export default class SmartcardDocuments extends Vue {
     this.ethersInstance = new ethers.providers.Web3Provider(web3);
 
     this.anconWeb3client = new AnconWeb3Client(
-      true,
-      "http://ancon.did.pa:1317",
-      "ws://ancon.did.pa:26657",
-      //'0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6', //Eth
-      //'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',//Cosmos eth
       this.web3instance,
-      //@ts-ignore
-      window.mathExtension
     );
-    const hash = await this.swarm.createPostageStamp(this.files[0]);
-    console.log(hash);
-
-    this.connected = true;
-
-    // User creates new wallet / optional
-    // const ancon = await this.anconWeb3client.create(
-    //   'walletcore',
-    //   'abc123456789',
-    //   'lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain',
-    // )
-
+    debugger;
+    await this.anconWeb3client.connect();
     // @ts-ignore
     //let w3select = window.ethereum;
     this.currentAccount = "0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6";
@@ -589,9 +566,6 @@ export default class SmartcardDocuments extends Vue {
     this.ethersInstance = new ethers.providers.Web3Provider(
       this.web3instance.givenProvider
     );
-    //this.ethersInstance = new ethers.providers.Web3Provider(w3select);
-
-    debugger;
 
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
@@ -809,7 +783,7 @@ export default class SmartcardDocuments extends Vue {
   /** Creates onchain metadata */
   async createMetadata(): Promise<any> {
     const msg = MsgMetadata.fromPartial({
-      creator: (await this.anconWeb3client.getAccountIdentity).account,
+      creator: (await this.anconWeb3client.getAccountIdentity()).address,
       name: "tendermint",
       image: "http://ancon.did.pa:1317",
       additionalSources: [
@@ -839,7 +813,7 @@ export default class SmartcardDocuments extends Vue {
       newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
-      sender: (await this.anconWeb3client.getAccountIdentity).account,
+      sender: (await this.anconWeb3client.getAccountIdentity()).address,
     });
 
     // Change Metadata Message request
