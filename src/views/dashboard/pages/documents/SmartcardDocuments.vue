@@ -934,9 +934,14 @@ export default class SmartcardDocuments extends Vue {
 
     debugger;
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
-    const approve = await this.daiWeb3contract.methods
+    const approveTx = await this.daiWeb3contract.methods
       .approve(this.ethersContract.address, "1000000000000000000")
-      .send({
+      .toAbi()
+
+    // signs
+
+    const res = await (this.anconWeb3client.provider as ethers.providers.JsonRpcProvider)
+    .send('eth_sendTransaction', raw, {
         gasPrice: "22000000000",
         gas: gasLimit,
         
