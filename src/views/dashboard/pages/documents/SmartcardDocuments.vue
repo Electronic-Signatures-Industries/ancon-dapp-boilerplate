@@ -3,7 +3,7 @@
     <v-progress-linear
       indeterminate
       v-if="loading"
-      color="indigo"
+      color="pink"
     ></v-progress-linear>
 
     <v-card>
@@ -307,7 +307,7 @@ import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
-import { AnconWeb3Client } from "../../../../anconjs";
+import { AnconWeb3Client, AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
@@ -531,15 +531,21 @@ export default class SmartcardDocuments extends Vue {
   async connect(passphrase: string) {
     // Only use metamask provider to get access to node !
 
-    this.anconWeb3client = new AnconWeb3Client(
-      passphrase,
-      new ethers.providers.JsonRpcProvider("http://ancon.did.pa:8545")
+    const provider = new ethers.providers.JsonRpcProvider(
+      "http://ancon.did.pa:8545"
     );
+    const temp = ethers.Wallet.fromMnemonic(
+      passphrase,
+      AnconWeb3Client.HD_PATH
+    );
+    const wallet = new ethers.Wallet(temp.privateKey, provider);
+    this.anconWeb3client = new AnconWeb3Client(wallet);
 
     await this.anconWeb3client.connect();
     this.connected = true;
-    this.currentAccount = await this.anconWeb3client.getSigner().getAddress();
+    this.currentAccount = this.anconWeb3client.getEthAccountIdentity();
     this.web3instance = new Web3("http://ancon.did.pa:8545");
+    this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
@@ -547,27 +553,11 @@ export default class SmartcardDocuments extends Vue {
       "0x59b0e313070138127dc91F9F357Ba989FE5D57F8"
     );
 
-    this.daiContract = new ethers.Contract(
-      this.DAIAddress,
-      xdvnftAbi.DAI.raw.abi,
-      this.anconWeb3client.getSigner()
-    );
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
       //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
       "0x77C51E844495899727dB63221af46220b0b13B37"
-    );
-
-    this.ethersContract = new ethers.Contract(
-      "0x77C51E844495899727dB63221af46220b0b13B37",
-      xdvnftAbi.XDVNFT.raw.abi,
-      this.anconWeb3client.getSigner()
-    );
-    this.anchorContract = new ethers.Contract(
-      xdvAbi.networks["97"].address,
-      xdvAbi.abi,
-      this.anconWeb3client.getSigner()
     );
     // await this.loadBalances();
     // await this.loadTransactions();
@@ -623,18 +613,16 @@ export default class SmartcardDocuments extends Vue {
       token: this.web3storageAPIKey,
     });
 
-    // 1. Upload files
+    this.loading = true;
+
+    // 1. Upload files - web3.storage
     const cid = await storage.put(this.files, { wrapWithDirectory: true });
 
     // 2. Create Metadata
-    const res = await this.createMetadata(cid, this.name, this.description);
-    this.result = await this.mintNft(res);
-    //  await this.initiateCrossNFTOwnership(res);
+    await this.createMetadata(cid, this.name, this.description);
 
-    this.cidindex = lnk;
-    await this.loadViewer();
-    await this.loadTransactions();
-    this.loading = false;
+    // 3. Mint  NFT
+    debugger;
   }
 
   async initiateCrossNFTOwnership(res) {
@@ -655,38 +643,49 @@ export default class SmartcardDocuments extends Vue {
   /** Subscribes to events
    *
    */
-  subscribeToMetadataEvents(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const query = `message.action='Metadata'`;
-      this.anconWeb3client.tm.subscribeTx(query).addListener({
-        next: async (log: TxEvent) => {
-          // Decode response
-          const res = MsgMetadataResponse.decode(log.result.data);
-          console.log(res);
-          // Hack: Protobuf issue
-          const cid = res.cid.split(";")[1];
-          console.log(cid);
+  subscribeToMetadataEvents() {
+    const query = `message.action='Metadata'`;
+    const c = this.anconWeb3client.tm.subscribeTx(query);
+    const listener = {
+      next: async (log: TxEvent) => {
+        debugger;
+        // Decode response
+        const res = MsgMetadataResponse.decode(log.result.data);
+        console.log(res);
+        // Hack: Protobuf issue
+        const cid = res.cid.split(";")[1];
+        console.log(cid);
 
-          // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
-          const content =
-            await this.anconWeb3client.queryClient.queryReadWithPath(
-              cid,
-              "/",
-              {}
-            );
+        // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
+        const content =
+          await this.anconWeb3client.queryClient.queryReadWithPath(
+            cid,
+            "/",
+            {}
+          );
 
-          console.log(content.data);
-          resolve({ value: content.data, cid });
-        },
-      });
-    });
+        console.log(content.data);
+
+        this.result = await this.mintNft(cid);
+        //  await this.initiateCrossNFTOwnership(res);
+
+        this.cidindex = cid;
+        await this.loadViewer();
+        // await this.loadTransactions();
+        this.loading = false;
+        c.removeListener(listener);
+      },
+    };
+    c.addListener(listener);
   }
 
   /** Subscribes to events */
   subscribeToUpdateMetadataEvents() {
     return new Promise((resolve, reject) => {
       const query = `message.action='UpdateMetadataOwnership'`;
-      this.anconWeb3client.tm.subscribeTx(query).addListener({
+      const c = this.anconWeb3client.tm.subscribeTx(query);
+
+      c.addListener({
         next: async (log: TxEvent) => {
           // Decode response
           const res = MsgUpdateMetadataOwnership.decode(log.result.data);
@@ -724,7 +723,7 @@ export default class SmartcardDocuments extends Vue {
   /** Creates onchain metadata */
   async createMetadata(root, description, name): Promise<any> {
     const msg = MsgMetadata.fromPartial({
-      creator:'ethm1x73r96c85nage2y05cpqlzth8ak2qg9p0vqc4d',/// (await this.anconWeb3client.getAccountIdentity()).address,
+      creator: (await this.anconWeb3client.getAccountIdentity()).address,
       name,
       image: root,
       additionalSources: [],
@@ -743,13 +742,12 @@ export default class SmartcardDocuments extends Vue {
       "msgMetadata",
       msg,
       (signDoc, tx) => {
-        if (!!signDoc ) {
+        if (!!signDoc) {
           return new Promise((resolve, reject) => {
             // @ts-ignore
             this.$confirm({
               auth: false,
-              message:
-                "Are you sure you want to sign this transaction (Create Metadata)?",
+              message: "Are you sure you want to sign this transaction?",
               button: {
                 yes: "Yes",
                 no: "Cancel",
@@ -773,8 +771,7 @@ export default class SmartcardDocuments extends Vue {
             // @ts-ignore
             this.$confirm({
               auth: false,
-              message:
-                "Are you sure you want to sign this transaction (Ethereum Metadata Tx)?",
+              message: "Are you sure you want to sign this transaction?",
               button: {
                 yes: "Yes",
                 no: "Cancel",
@@ -798,9 +795,6 @@ export default class SmartcardDocuments extends Vue {
         return Promise.reject("User timeout");
       }
     );
-
-    const { cid } = await this.subscribeToMetadataEvents();
-    return cid;
   }
 
   /** Updates metadata ownership*/
@@ -938,24 +932,26 @@ export default class SmartcardDocuments extends Vue {
     //   this.ethersContract.address
     // );
 
+    debugger;
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
     const approve = await this.daiWeb3contract.methods
       .approve(this.ethersContract.address, "1000000000000000000")
       .send({
         gasPrice: "22000000000",
         gas: gasLimit,
-        from: this.currentAccount,
+        
       });
-
-    //await approve.wait(1);
+    debugger;
+    // TODO: wait 5 s
     debugger;
     const mintnft = await this.nftWeb3Contract.methods
       .mint(this.currentAccount, uri)
       .send({
         gasPrice: "22000000000",
         gas: gasLimit,
-        from: this.currentAccount,
+        
       });
+    debugger;
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
     //   uri
@@ -980,18 +976,18 @@ export default class SmartcardDocuments extends Vue {
 
   async loadViewer() {
     if (this.ancon && this.cidindex) {
-      const res = await this.ancon.getObject(this.cidindex);
-
-      const result = await this.ancon.getObject(
-        res.image.split("/")[0],
-        res.image.split("/")[1]
+      const path = "/";
+      const body = await fetch(
+        `http://ancon.did.pa:1317/ancon/${this.cidindex}${path}`
       );
+
+      const res = await body.json();
 
       this.viewItems = {
         signedFiles: [
           {
             cid: res.image,
-            ...result,
+            ...res,
           },
         ],
       } as any;
