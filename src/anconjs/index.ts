@@ -183,7 +183,22 @@ export class AnconWeb3Client {
 
     return res
   }
+  async signAndBroadcastEvm(data, evmChainId, options, callback) {
+    // Signs Ethereum TxData
+    const tx = {
+      data,
+      value: 0,
+      chainId: evmChainId,
+      ...options,
+    }
 
+    await callback({ signDoc: null, tx })
+
+    const raw = await this.ethersclient.signTransaction({ ...tx })
+    const res = await this.provider.send('evm_sendTransaction', [raw])
+
+    return res
+  }
   async connect() {
     const { config } = await createKeplrWallet()
     this.cosmosChainId = config.chainId

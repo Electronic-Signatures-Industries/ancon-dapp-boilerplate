@@ -532,7 +532,7 @@ export default class SmartcardDocuments extends Vue {
     // Only use metamask provider to get access to node !
 
     const provider = new ethers.providers.JsonRpcProvider(
-      "http://ancon.did.pa:8545"
+      "https://ancon.did.pa/evm"
     );
     const temp = ethers.Wallet.fromMnemonic(
       passphrase,
@@ -544,21 +544,22 @@ export default class SmartcardDocuments extends Vue {
     await this.anconWeb3client.connect();
     this.connected = true;
     this.currentAccount = this.anconWeb3client.getEthAccountIdentity();
-    this.web3instance = new Web3("http://ancon.did.pa:8545");
+    this.web3instance = new Web3("https://ancon.did.pa/evm");
     this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
       //"0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA"
-      "0x59b0e313070138127dc91F9F357Ba989FE5D57F8"
+      "0xDF21F97c4bE43BDa7379D0Bab92C0b5788feE343"
     );
 
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
       //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
-      "0x77C51E844495899727dB63221af46220b0b13B37"
+      "0x1f8492d8411712C24DdF511a6447A3B81Ac79eEe"
     );
+    this.subscribeToMetadataEvents();
     // await this.loadBalances();
     // await this.loadTransactions();
   }
@@ -741,60 +742,61 @@ export default class SmartcardDocuments extends Vue {
       evmChainId,
       "msgMetadata",
       msg,
-      (signDoc, tx) => {
-        if (!!signDoc) {
-          return new Promise((resolve, reject) => {
-            // @ts-ignore
-            this.$confirm({
-              auth: false,
-              message: "Are you sure you want to sign this transaction?",
-              button: {
-                yes: "Yes",
-                no: "Cancel",
-              },
-              /**
-               * Callback Function
-               * @param {Boolean} confirm
-               * @param {String} password
-               */
-              callback: async (confirm, password) => {
-                if (confirm) {
-                  return resolve(true);
-                }
-
-                return reject("User rejected");
-              },
-            });
-          });
-        } else if (tx) {
-          return new Promise((resolve, reject) => {
-            // @ts-ignore
-            this.$confirm({
-              auth: false,
-              message: "Are you sure you want to sign this transaction?",
-              button: {
-                yes: "Yes",
-                no: "Cancel",
-              },
-              /**
-               * Callback Function
-               * @param {Boolean} confirm
-               * @param {String} password
-               */
-              callback: async (confirm, password) => {
-                if (confirm) {
-                  return resolve(true);
-                }
-
-                return reject("User rejected");
-              },
-            });
-          });
-        }
-
-        return Promise.reject("User timeout");
-      }
+      this.cb
     );
+  }
+  cb(signDoc, tx) {
+    if (!!signDoc) {
+      return new Promise((resolve, reject) => {
+        // @ts-ignore
+        this.$confirm({
+          auth: false,
+          message: "Are you sure you want to sign this transaction?",
+          button: {
+            yes: "Yes",
+            no: "Cancel",
+          },
+          /**
+           * Callback Function
+           * @param {Boolean} confirm
+           * @param {String} password
+           */
+          callback: async (confirm, password) => {
+            if (confirm) {
+              return resolve(true);
+            }
+
+            return reject("User rejected");
+          },
+        });
+      });
+    } else if (tx) {
+      return new Promise((resolve, reject) => {
+        // @ts-ignore
+        this.$confirm({
+          auth: false,
+          message: "Are you sure you want to sign this transaction?",
+          button: {
+            yes: "Yes",
+            no: "Cancel",
+          },
+          /**
+           * Callback Function
+           * @param {Boolean} confirm
+           * @param {String} password
+           */
+          callback: async (confirm, password) => {
+            if (confirm) {
+              return resolve(true);
+            }
+
+            return reject("User rejected");
+          },
+        });
+      });
+    }
+
+    return Promise.reject("User timeout");
   }
 
   /** Updates metadata ownership*/
@@ -814,7 +816,8 @@ export default class SmartcardDocuments extends Vue {
       await this.anconWeb3client.signAndBroadcast(
         this.chainId,
         "msgUpdateMetadataOwnership",
-        msgupd
+        msgupd,
+        this.cb
       );
 
     const result = await this.subscribeToUpdateMetadataEvents();
@@ -921,7 +924,7 @@ export default class SmartcardDocuments extends Vue {
 
   async mintNft(uri: string) {
     // anchor to nft
-    let gasLimit = "70000";
+    let gasLimit = ("70000");
     //let gasLimit = await this.daiContract.estimateGas.approve(
     //   this.currentAccount,
     //   this.ethersContract.address
@@ -935,27 +938,36 @@ export default class SmartcardDocuments extends Vue {
     debugger;
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
     const approveTx = await this.daiWeb3contract.methods
-      .approve(this.ethersContract.address, "1000000000000000000")
-      .toAbi()
+      .approve(this.nftWeb3Contract._address, "1000000000000000000")
+      .encodeABI();
 
     // signs
 
-    const res = await (this.anconWeb3client.provider as ethers.providers.JsonRpcProvider)
-    .send('eth_sendTransaction', raw, {
+    const res = await this.anconWeb3client.signAndBroadcastEvm(
+      approveTx,
+      9000,
+      {
         gasPrice: "22000000000",
-        gas: gasLimit,
-        
-      });
+      gasLimit,
+      },
+      this.cb
+    );
     debugger;
     // TODO: wait 5 s
     debugger;
     const mintnft = await this.nftWeb3Contract.methods
       .mint(this.currentAccount, uri)
-      .send({
+      .encodeABI();
+
+    const minted = await this.anconWeb3client.signAndBroadcastEvm(
+      mintnft,
+      9000,
+      {
         gasPrice: "22000000000",
-        gas: gasLimit,
-        
-      });
+      gasLimit,
+      },
+      this.cb
+    );
     debugger;
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
