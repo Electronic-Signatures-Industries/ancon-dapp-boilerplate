@@ -305,7 +305,7 @@ import { Component, Vue } from "vue-property-decorator";
 import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
-import { BigNumber, ethers } from "ethers";
+import { BigNumber, ethers, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { AnconWeb3Client, AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
@@ -531,21 +531,22 @@ export default class SmartcardDocuments extends Vue {
   async connect(passphrase: string) {
     // Only use metamask provider to get access to node !
 
-    const provider = new ethers.providers.JsonRpcProvider(
-      "https://ancon.did.pa/evm"
-    );
-    const temp = ethers.Wallet.fromMnemonic(
-      passphrase,
-      AnconWeb3Client.HD_PATH
-    );
-    const wallet = new ethers.Wallet(temp.privateKey, provider);
-    this.anconWeb3client = new AnconWeb3Client(wallet);
+    // const provider = new ethers.providers.JsonRpcProvider(
+    //   "http://127.0.0.1:8545"
+    // );
+    // const temp = ethers.Wallet.fromMnemonic(
+    //   passphrase,
+    //   AnconWeb3Client.HD_PATH
+    // );
+    this.web3instance = new Web3(window.ethereum)
+    const provider = new ethers.providers.Web3Provider(this.web3instance.currentProvider)
+    this.anconWeb3client = new AnconWeb3Client(provider);
 
     await this.anconWeb3client.connect();
     this.connected = true;
     this.currentAccount = this.anconWeb3client.getEthAccountIdentity();
-    this.web3instance = new Web3("https://ancon.did.pa/evm");
-    this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
+//    this.web3instance = new Web3("http://127.0.0.1:8545");
+//    this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
@@ -706,7 +707,7 @@ export default class SmartcardDocuments extends Vue {
           let key = cid;
           const path = "";
           const requestProof = await fetch(
-            `http://ancon.did.pa:1317/ancon/proof/${key}${path}`
+            `http://127.0.0.1:1317/ancon/proof/${key}${path}`
           );
           const proof = await requestProof.json();
 
@@ -969,7 +970,7 @@ export default class SmartcardDocuments extends Vue {
     if (this.ancon && this.cidindex) {
       const path = "/";
       const body = await fetch(
-        `http://ancon.did.pa:1317/ancon/${this.cidindex}${path}`
+        `http://127.0.0.1:1317/ancon/${this.cidindex}${path}`
       );
 
       const res = await body.json();

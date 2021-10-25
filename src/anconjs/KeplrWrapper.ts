@@ -36,7 +36,7 @@ export async function createKeplrWallet() {
   //@ts-ignore
   await keplr.enable(config.chainId);
   //@ts-ignore
-  const offlineSigner = getOfflineSignerAuto(config.chainId);
+  const offlineSigner = await getOfflineSignerAuto(config.chainId);
 
   // You can get the address/public keys by `getAccounts` method.
   // It can return the array of address/public key.
