@@ -25,7 +25,7 @@ import {
   Tendermint34Client,
 } from '@cosmjs/tendermint-rpc'
 import { TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx'
-import { ethers } from 'ethers'
+import { ethers, Transaction } from 'ethers'
 import fetch from 'node-fetch'
 import { Wallet } from 'xdv-universal-wallet-core'
 import {
@@ -33,9 +33,10 @@ import {
   queryClient,
   registry,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
-import { arrayify } from '@ethersproject/bytes'
+import { arrayify, hexValue } from '@ethersproject/bytes'
 import { encodeSecp256k1Signature } from '@cosmjs/launchpad'
 import Web3 from 'web3'
+import { hexlify } from 'ethers/lib/utils'
 
 global['fetch'] = require('node-fetch')
 
@@ -147,10 +148,10 @@ export class AnconWeb3Client {
       acct,
     )
 
-    await callback({ signDoc })
     const signBytes = makeSignBytes(signDoc)
 
     const hashedMessage = sha256(signBytes)
+    await callback({ sig: hexValue(hashedMessage) })
 
     const sig = await Secp256k1.createSignature(hashedMessage, pk.privkey)
     const signatureBytes = new Uint8Array([
@@ -176,7 +177,7 @@ export class AnconWeb3Client {
       chainId: evmChainId,
     }
 
-    await callback({ signDoc: null, tx, txsignedhex })
+    await callback({ sig: hexValue(tx.data) })
 
     const raw = await this.ethersclient.signTransaction({ ...tx })
     const res = await this.provider.send('ancon_sendRawTransaction', [raw])
@@ -184,18 +185,22 @@ export class AnconWeb3Client {
     return res
   }
   async signAndBroadcastEvm(data, evmChainId, options, callback) {
+    const nonce = await this.ethersclient.getTransactionCount()
+  
+  
     // Signs Ethereum TxData
     const tx = {
       data,
       value: 0,
+      nonce,
       chainId: evmChainId,
       ...options,
-    }
-
-    await callback({ signDoc: null, tx })
+    } as Transaction
+ 
+    await callback({ sig: tx.data })
 
     const raw = await this.ethersclient.signTransaction({ ...tx })
-    const res = await this.provider.send('evm_sendTransaction', [raw])
+    const res = await this.provider.send('eth_sendRawTransaction', [raw])
 
     return res
   }

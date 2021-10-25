@@ -623,7 +623,6 @@ export default class SmartcardDocuments extends Vue {
     await this.createMetadata(cid, this.name, this.description);
 
     // 3. Mint  NFT
-    debugger;
   }
 
   async initiateCrossNFTOwnership(res) {
@@ -649,7 +648,6 @@ export default class SmartcardDocuments extends Vue {
     const c = this.anconWeb3client.tm.subscribeTx(query);
     const listener = {
       next: async (log: TxEvent) => {
-        debugger;
         // Decode response
         const res = MsgMetadataResponse.decode(log.result.data);
         console.log(res);
@@ -745,58 +743,33 @@ export default class SmartcardDocuments extends Vue {
       this.cb
     );
   }
-  cb(signDoc, tx) {
-    if (!!signDoc) {
-      return new Promise((resolve, reject) => {
-        // @ts-ignore
-        this.$confirm({
-          auth: false,
-          message: "Are you sure you want to sign this transaction?",
-          button: {
-            yes: "Yes",
-            no: "Cancel",
-          },
-          /**
-           * Callback Function
-           * @param {Boolean} confirm
-           * @param {String} password
-           */
-          callback: async (confirm, password) => {
-            if (confirm) {
-              return resolve(true);
-            }
+  cb({ sig, tx }) {
+    return new Promise((resolve, reject) => {
+      // @ts-ignore
+      this.$confirm({
+        auth: false,
+        message: `Are you sure you want to sign this transaction?  ${sig.substring(
+          0,
+          15
+        )}...`,
+        button: {
+          yes: "Yes",
+          no: "Cancel",
+        },
+        /**
+         * Callback Function
+         * @param {Boolean} confirm
+         * @param {String} password
+         */
+        callback: async (confirm, password) => {
+          if (confirm) {
+            return resolve(true);
+          }
 
-            return reject("User rejected");
-          },
-        });
+          return reject("User rejected");
+        },
       });
-    } else if (tx) {
-      return new Promise((resolve, reject) => {
-        // @ts-ignore
-        this.$confirm({
-          auth: false,
-          message: "Are you sure you want to sign this transaction?",
-          button: {
-            yes: "Yes",
-            no: "Cancel",
-          },
-          /**
-           * Callback Function
-           * @param {Boolean} confirm
-           * @param {String} password
-           */
-          callback: async (confirm, password) => {
-            if (confirm) {
-              return resolve(true);
-            }
-
-            return reject("User rejected");
-          },
-        });
-      });
-    }
-
-    return Promise.reject("User timeout");
+    });
   }
 
   /** Updates metadata ownership*/
@@ -924,7 +897,9 @@ export default class SmartcardDocuments extends Vue {
 
   async mintNft(uri: string) {
     // anchor to nft
-    let gasLimit = ("70000");
+    let gasPrice = ethers.BigNumber.from(22000000000);
+
+    let gasLimit = ethers.BigNumber.from(70000);
     //let gasLimit = await this.daiContract.estimateGas.approve(
     //   this.currentAccount,
     //   this.ethersContract.address
@@ -935,7 +910,6 @@ export default class SmartcardDocuments extends Vue {
     //   this.ethersContract.address
     // );
 
-    debugger;
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
     const approveTx = await this.daiWeb3contract.methods
       .approve(this.nftWeb3Contract._address, "1000000000000000000")
@@ -947,14 +921,14 @@ export default class SmartcardDocuments extends Vue {
       approveTx,
       9000,
       {
-        gasPrice: "22000000000",
-      gasLimit,
+        gasPrice,
+        gasLimit,
       },
       this.cb
     );
-    debugger;
+
     // TODO: wait 5 s
-    debugger;
+
     const mintnft = await this.nftWeb3Contract.methods
       .mint(this.currentAccount, uri)
       .encodeABI();
@@ -963,12 +937,12 @@ export default class SmartcardDocuments extends Vue {
       mintnft,
       9000,
       {
-        gasPrice: "22000000000",
-      gasLimit,
+        gasPrice,
+        gasLimit,
       },
       this.cb
     );
-    debugger;
+
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
     //   uri
@@ -979,7 +953,7 @@ export default class SmartcardDocuments extends Vue {
     //   this.currentAccount,
     //   uri,
     //   {
-    //     gasPrice: "22000000000",
+    //     gasPrice,
     //     gasLimit,
     //   }
     // );
