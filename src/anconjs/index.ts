@@ -80,35 +80,16 @@ export class AnconWeb3Client {
   provider: ethers.providers.Web3Provider
   cosmosAccount: any
   ethAccount: string
+  pubkey: Uint8Array
+  web3defaultAccount: string
   /**
    * New client from mnemonic
    */
-  constructor(wallet: ethers.providers.Web3Provider) {
+  constructor(wallet: ethers.providers.Web3Provider, _web3defaultAccount: string) {
     this.provider = wallet
+    this.web3defaultAccount = _web3defaultAccount
+    
     return this
-  }
-
-  /**
-   * Gets Cosmos Account data
-   * @returns
-   */
-  getAccountIdentity() {
-    const pub = Secp256k1.compressPubkey(
-      arrayify(Web3.utils.hexToBytes(this.ethersclient.publicKey)),
-    )
-    const defaultAccount = ethers.utils.hexlify(
-      pubkeyToRawAddress('secp256k1', pub),
-    )
-    return this.getEthAccountInfo(defaultAccount)
-  }
-
-  /**
-   * Gets Ethereum address
-   * @returns
-   */
-  getEthAccountIdentity() {
-    return this.ethAccount
-    //   return ethers.utils.hexlify(pubkeyToRawAddress('secp256k1', pub))
   }
 
   /**
@@ -137,7 +118,7 @@ export class AnconWeb3Client {
       gas: '200000',
     }
     const pubkey = encodePubkey(
-      encodeSecp256k1Pubkey(this.cosmosAccount.pubkey),
+      encodeSecp256k1Pubkey(this.pubkey),
     )
     const txBodyEncodeObject = {
       typeUrl: '/cosmos.tx.v1beta1.TxBody',
@@ -159,10 +140,20 @@ export class AnconWeb3Client {
       'anconprotocol_9000-1',
       this.cosmosAccount.accountNumber,
     )
+
+    // const txsignedhex = await this.offlineSigner.sign(this.cosmosAccount.address, [encoded], fee, '', {
+    //   accountNumber: this.cosmosAccount.account_number,
+    //   sequence: this.cosmosAccount.sequence,
+    //   chainId: 'anconprotocol_9000-1',
+    // })
+      
+
     const { signature, signed } = await this.offlineSigner.signDirect(
       this.cosmosAccount.address,
       signDoc,
     )
+
+    const sender = new ethers.providers.JsonRpcProvider('https://ancon.did.pa/evm')
     const txsignedhex = TxRaw.fromPartial({
       bodyBytes: signed.bodyBytes,
       authInfoBytes: signed.authInfoBytes,
@@ -178,10 +169,13 @@ export class AnconWeb3Client {
 
     await callback({ sig: hexValue(tx.data) })
 
-    const raw = await this.provider
-      .getSigner()
+    let raw = await this.provider
+      .getSigner(this.web3defaultAccount)
       .signMessage(keccak256(serialize(tx)))
-    const res = await this.provider.send('ancon_sendRawTransaction', [raw])
+
+    raw = serialize(tx,raw)
+    
+    const res = await sender.send('ancon_sendRawTransaction', [raw])
 
     return res
   }
@@ -199,10 +193,19 @@ export class AnconWeb3Client {
 
     await callback({ sig: tx.data })
 
-    const raw = await this.provider
-      .getSigner()
+    // const raw = await this.provider
+    //   .getSigner(this.ethAccount)
+    //   .signMessage(keccak256(serialize(tx)))
+    // const res = await this.provider.send('eth_sendRawTransaction', [raw])
+    const sender = new ethers.providers.JsonRpcProvider('https://ancon.did.pa/evm')
+    
+    let raw = await this.provider
+      .getSigner(this.web3defaultAccount)
       .signMessage(keccak256(serialize(tx)))
-    const res = await this.provider.send('eth_sendRawTransaction', [raw])
+
+    raw = serialize(tx,raw)
+    
+    const res = await sender.send('ancon_sendRawTransaction', [raw])
 
     return res
   }
@@ -219,7 +222,9 @@ export class AnconWeb3Client {
     )
 
     this.ethAccount = ethermintToEth(accounts[0].address)
-    this.queryClient = q
+    this.queryClient = await queryClient({
+      addr: this.apiUrl
+    })
     // query = setupAuthExtension(this.queryClient)
     const anyAccount = await q.auth.account(accounts[0].address)
     this.cosmosAccount = accountFromAny(anyAccount)
@@ -230,6 +235,10 @@ export class AnconWeb3Client {
     )
 
     debugger
+    //@ts-ignore
+    this.offlineSigner = this.connectedSigner.signer
+
+    this.pubkey = accounts[0].pubkey
     return this
   }
 

@@ -79,7 +79,7 @@
                   <v-btn
                     color="pink"
                     v-if="connected === false"
-                    @click="web3Connect"
+                    @click="connect"
                     dark
                   >
                     Connect
@@ -305,9 +305,9 @@ import { Component, Vue } from "vue-property-decorator";
 import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
-import { BigNumber, ethers, ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
-import { AnconWeb3Client, AnconWeb3Client } from "../../../../anconjs";
+import { AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
@@ -538,13 +538,17 @@ export default class SmartcardDocuments extends Vue {
     //   passphrase,
     //   AnconWeb3Client.HD_PATH
     // );
+    //@ts-ignore
+    const accounts = await window.ethereum.enable()
+
     this.web3instance = new Web3(window.ethereum)
+    //@ts-ignore
     const provider = new ethers.providers.Web3Provider(this.web3instance.currentProvider)
-    this.anconWeb3client = new AnconWeb3Client(provider);
+    this.anconWeb3client = new AnconWeb3Client(provider, accounts[0]);
 
     await this.anconWeb3client.connect();
     this.connected = true;
-    this.currentAccount = this.anconWeb3client.getEthAccountIdentity();
+    this.currentAccount = this.anconWeb3client.ethAccount;
 //    this.web3instance = new Web3("http://127.0.0.1:8545");
 //    this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
     // DAI
@@ -723,7 +727,7 @@ export default class SmartcardDocuments extends Vue {
   /** Creates onchain metadata */
   async createMetadata(root, description, name): Promise<any> {
     const msg = MsgMetadata.fromPartial({
-      creator: (await this.anconWeb3client.getAccountIdentity()).address,
+      creator: (this.anconWeb3client.cosmosAccount).address,
       name,
       image: root,
       additionalSources: [],
@@ -781,7 +785,7 @@ export default class SmartcardDocuments extends Vue {
       newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
-      sender: (await this.anconWeb3client.getAccountIdentity()).address,
+      sender: (this.anconWeb3client.cosmosAccount).address,
     });
 
     // Change Metadata Message request
@@ -875,6 +879,7 @@ export default class SmartcardDocuments extends Vue {
       return cid;
     } catch (e) {
       this.loading = false;
+      //@ts-ignore
       this.$confirm({
         message: `Transaction failed with message ${e.message}`,
         buttons: {
@@ -912,37 +917,26 @@ export default class SmartcardDocuments extends Vue {
     // );
 
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
+      
+    const hardCodedAdrr = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6'
+
     const approveTx = await this.daiWeb3contract.methods
       .approve(this.nftWeb3Contract._address, "1000000000000000000")
-      .encodeABI();
-
-    // signs
-
-    const res = await this.anconWeb3client.signAndBroadcastEvm(
-      approveTx,
-      9000,
-      {
-        gasPrice,
-        gasLimit,
-      },
-      this.cb
-    );
+      .send({
+        gasPrice: gasPrice,
+        gas: gasLimit,
+        from: hardCodedAdrr
+      })
 
     // TODO: wait 5 s
 
     const mintnft = await this.nftWeb3Contract.methods
       .mint(this.currentAccount, uri)
-      .encodeABI();
-
-    const minted = await this.anconWeb3client.signAndBroadcastEvm(
-      mintnft,
-      9000,
-      {
-        gasPrice,
-        gasLimit,
-      },
-      this.cb
-    );
+      .send({
+        gasPrice: gasPrice,
+        gas: gasLimit,
+        from: hardCodedAdrr
+      })
 
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
