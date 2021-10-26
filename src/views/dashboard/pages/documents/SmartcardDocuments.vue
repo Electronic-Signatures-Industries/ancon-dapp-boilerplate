@@ -21,26 +21,34 @@
               }}</v-alert>
 
               <v-row>
-                <v-col xs="2" sm="2" offset-sm="2">
+                <v-col xs="8" sm="8" offset-sm="2">
+                  <v-row
+                    ><v-chip class="ma-2" color="#48409A" pill close outlined>
+                      <v-icon left> mdi-wallet </v-icon>
+                      {{ walletLabel }}
+                    </v-chip>
+                  </v-row>
+                  <v-row>
+                    <v-chip class="ma-2" color="#48409A" pill close outlined>
+                      <v-icon left> mdi-wallet </v-icon>
+                      {{ walletCosmosLabel }}
+                    </v-chip>
+                  </v-row>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col xs="3" sm="3" offset-sm="2">
                   <cryptoicon symbol="atom" size="24" class="cripto-icon" />
                   {{ balances.bnb }}
                 </v-col>
-                <v-col xs="2" sm="2">
+                <v-col xs="3" sm="3">
                   <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
                   {{ balances.bnb }}
                 </v-col>
-                <v-col xs="4" sm="4">
+                <v-col xs="3" sm="3">
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
                   {{ balances.dai }}
                 </v-col>
-                <v-chip class="ma-2" color="#48409A" pill close outlined>
-                  <v-icon left> mdi-wallet </v-icon>
-                  {{walletLabel}}
-                </v-chip>
-                <v-chip class="ma-2" color="#48409A" pill close outlined>
-                  <v-icon left> mdi-wallet </v-icon>
-                  0x01A
-                </v-chip>
               </v-row>
               <v-row>
                 <v-col xs="6" sm="6" offset-sm="2">
@@ -449,6 +457,7 @@ export default class SmartcardDocuments extends Vue {
   nftAPIKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDlFNWJFMjI2YUU4NzhFZkJGZGU1NzhDM0VkMmY2NDhGMjEzMDBmOGMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTAxNTU4Mzg2OSwibmFtZSI6ImFuY29uIn0.3VIRmGQ3IIfwk4X30NPDSfX8SN3YdFGnPqsYDc-7jlY";
   walletLabel = "Not conected";
+  walletCosmosLabel = "Not conected";
   async loadTransactions() {
     if (this.ethersContract) {
       const query = this.ethersContract.filters.Transfer(this.currentAccount);
@@ -554,8 +563,8 @@ export default class SmartcardDocuments extends Vue {
       accounts[0] as string
     );
     //debugger
-    
-    this.walletLabel = this.anconWeb3client.web3defaultAccount
+
+    this.walletLabel = this.anconWeb3client.web3defaultAccount;
 
     this.currentAccount = accounts[0];
     // DAI
@@ -575,6 +584,9 @@ export default class SmartcardDocuments extends Vue {
     try {
       await this.anconWeb3client.connect();
       this.connected = true;
+
+      this.walletCosmosLabel = this.anconWeb3client.cosmosAccount.address;
+      debugger;
 
       this.subscribeToMetadataEvents();
       await this.loadBalances();
