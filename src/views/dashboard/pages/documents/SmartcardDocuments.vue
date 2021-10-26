@@ -33,6 +33,14 @@
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
                   {{ balances.dai }}
                 </v-col>
+                <v-chip class="ma-2" color="#48409A" pill close outlined>
+                  <v-icon left> mdi-wallet </v-icon>
+                  {{walletLabel}}
+                </v-chip>
+                <v-chip class="ma-2" color="#48409A" pill close outlined>
+                  <v-icon left> mdi-wallet </v-icon>
+                  0x01A
+                </v-chip>
               </v-row>
               <v-row>
                 <v-col xs="6" sm="6" offset-sm="2">
@@ -53,7 +61,9 @@
                     label="PDF Documents"
                     v-model="files"
                   ></v-file-input>
-                  <v-alert type="alert" dense v-if="cidindex">Image URI: {{cidindex}}</v-alert>
+                  <v-alert type="alert" dense v-if="cidindex"
+                    >Image URI: {{ cidindex }}</v-alert
+                  >
                 </v-col>
               </v-row>
               <v-row>
@@ -76,7 +86,7 @@
               </v-row>
 
               <v-row>
-                <v-col  xs="6" offset="2">
+                <v-col xs="6" offset="2">
                   <v-btn
                     color="pink"
                     v-if="connected === false"
@@ -438,7 +448,7 @@ export default class SmartcardDocuments extends Vue {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDE0ZDM0NDExYTYyQkJjMjBEMzkzZDNjN2RhQUE4YzZEMGRmNDY2NjAiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2MzUwMTU4NTUyNTIsIm5hbWUiOiJBbmNvbiJ9.TiAmVFS000shN0L9cV3q2SWsJhVW0uxM0ZCEbzTe9QI";
   nftAPIKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDlFNWJFMjI2YUU4NzhFZkJGZGU1NzhDM0VkMmY2NDhGMjEzMDBmOGMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTAxNTU4Mzg2OSwibmFtZSI6ImFuY29uIn0.3VIRmGQ3IIfwk4X30NPDSfX8SN3YdFGnPqsYDc-7jlY";
-
+  walletLabel = "Not conected";
   async loadTransactions() {
     if (this.ethersContract) {
       const query = this.ethersContract.filters.Transfer(this.currentAccount);
@@ -543,6 +553,9 @@ export default class SmartcardDocuments extends Vue {
       provider,
       accounts[0] as string
     );
+    //debugger
+    
+    this.walletLabel = this.anconWeb3client.web3defaultAccount
 
     this.currentAccount = accounts[0];
     // DAI
