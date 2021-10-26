@@ -53,6 +53,7 @@
                     label="PDF Documents"
                     v-model="files"
                   ></v-file-input>
+                  <v-alert type="alert" dense v-if="cidindex">Image URI: {{cidindex}}</v-alert>
                 </v-col>
               </v-row>
               <v-row>
@@ -75,7 +76,7 @@
               </v-row>
 
               <v-row>
-                <v-col align="center" xs="12">
+                <v-col  xs="6" offset="2">
                   <v-btn
                     color="pink"
                     v-if="connected === false"
@@ -90,7 +91,7 @@
                     @click="xdvify"
                     color="primary"
                   >
-                    Sign
+                    Create metadata and mint
                   </v-btn>
                 </v-col>
               </v-row>
@@ -128,7 +129,7 @@
                   </v-card-text>
                   <v-card-text v-if="!!cidindex">
                     <div>Tx {{ txid }}</div>
-                    <div>IPLD index {{ cidindex }}</div>
+                    <div>Ancon cid {{ cidindex }}</div>
 
                     <v-row
                       ><v-col>
@@ -376,22 +377,22 @@ export default class SmartcardDocuments extends Vue {
         contentType: null,
       },
     },
-    {
-      key: "crosschain1",
-      label: "NFT Cross Chain (new recipient token id, unique owner)",
-      settings: {
-        signing: "xchain_1",
-        contentType: null,
-      },
-    },
-    {
-      key: "crosschain2",
-      label: "NFT Cross Chain (new recipient token id, co-owners)",
-      settings: {
-        signing: "xchain_2",
-        contentType: null,
-      },
-    },
+    // {
+    //   key: "crosschain1",
+    //   label: "NFT Cross Chain (new recipient token id, unique owner)",
+    //   settings: {
+    //     signing: "xchain_1",
+    //     contentType: null,
+    //   },
+    // },
+    // {
+    //   key: "crosschain2",
+    //   label: "NFT Cross Chain (new recipient token id, co-owners)",
+    //   settings: {
+    //     signing: "xchain_2",
+    //     contentType: null,
+    //   },
+    // },
     // {
     //   key: "pades",
     //   label: "Qualified PDF",
@@ -529,28 +530,21 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async connect(passphrase: string) {
-    // Only use metamask provider to get access to node !
-
-    // const provider = new ethers.providers.JsonRpcProvider(
-    //   "http://127.0.0.1:8545"
-    // );
-    // const temp = ethers.Wallet.fromMnemonic(
-    //   passphrase,
-    //   AnconWeb3Client.HD_PATH
-    // );
     //@ts-ignore
-    const accounts = await window.ethereum.enable()
+    const accounts = await window.ethereum.enable();
 
-    this.web3instance = new Web3(window.ethereum)
+    this.web3instance = new Web3(window.ethereum);
     //@ts-ignore
-    const provider = new ethers.providers.Web3Provider(this.web3instance.currentProvider)
-    this.anconWeb3client = new AnconWeb3Client(provider, accounts[0]);
+    const provider = new ethers.providers.Web3Provider(
+      this.web3instance.currentProvider
+    );
+    this.anconWeb3client = new AnconWeb3Client(
+      "https://ancon.did.pa/evm",
+      provider,
+      accounts[0] as string
+    );
 
-    await this.anconWeb3client.connect();
-    this.connected = true;
-    this.currentAccount = this.anconWeb3client.ethAccount;
-//    this.web3instance = new Web3("http://127.0.0.1:8545");
-//    this.web3instance.eth.accounts.wallet.add(wallet.privateKey);
+    this.currentAccount = accounts[0];
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
@@ -564,18 +558,26 @@ export default class SmartcardDocuments extends Vue {
       //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
       "0x1f8492d8411712C24DdF511a6447A3B81Ac79eEe"
     );
-    this.subscribeToMetadataEvents();
-    // await this.loadBalances();
-    // await this.loadTransactions();
+
+    try {
+      await this.anconWeb3client.connect();
+      this.connected = true;
+
+      this.subscribeToMetadataEvents();
+      await this.loadBalances();
+      await this.loadTransactions();
+    } catch (e) {
+      alert(e.message);
+    }
   }
 
   async loadBalances() {
     setInterval(async () => {
-      const [daiBal] = await this.daiContract.functions.balanceOf(
+      const [daiBal] = await this.daiWeb3contract.methods.balanceOf(
         this.currentAccount
       );
 
-      const bnb = await this.ethersInstance.getBalance(this.currentAccount);
+      const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
       this.balances.dai = ethers.utils.formatEther(daiBal);
@@ -675,7 +677,7 @@ export default class SmartcardDocuments extends Vue {
 
         this.cidindex = cid;
         await this.loadViewer();
-        // await this.loadTransactions();
+        await this.loadTransactions();
         this.loading = false;
         c.removeListener(listener);
       },
@@ -711,7 +713,7 @@ export default class SmartcardDocuments extends Vue {
           let key = cid;
           const path = "";
           const requestProof = await fetch(
-            `http://127.0.0.1:1317/ancon/proof/${key}${path}`
+            `http://ancon.did.pa:1317/ancon/proof/${key}${path}`
           );
           const proof = await requestProof.json();
 
@@ -727,7 +729,7 @@ export default class SmartcardDocuments extends Vue {
   /** Creates onchain metadata */
   async createMetadata(root, description, name): Promise<any> {
     const msg = MsgMetadata.fromPartial({
-      creator: (this.anconWeb3client.cosmosAccount).address,
+      creator: this.anconWeb3client.cosmosAccount.address,
       name,
       image: root,
       additionalSources: [],
@@ -785,7 +787,7 @@ export default class SmartcardDocuments extends Vue {
       newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
-      sender: (this.anconWeb3client.cosmosAccount).address,
+      sender: this.anconWeb3client.cosmosAccount.address,
     });
 
     // Change Metadata Message request
@@ -807,100 +809,6 @@ export default class SmartcardDocuments extends Vue {
   /** Executes nft ownership claim on chain b */
   async executeNftOwnershipClaim() {}
 
-  /** Creates simple document node */
-  async createSimpleDocumentNode(files?: File[]) {
-    this.unlockPin = false;
-    this.canUpload = false;
-    this.loading = true;
-    const fee = {
-      amount: [
-        {
-          denom: "token",
-          amount: "1",
-        },
-      ],
-      gas: "5000000",
-    };
-    try {
-      this.cids = [];
-      this.items = [];
-      await this.ancon.did.authenticate();
-
-      // 1) Upload CIDs
-      for (let index = 0; index < this.files.length; index++) {
-        const file = this.files[index];
-        let result = await this.ancon.blobToKeccak256(file);
-        const msg = {
-          path: file.name,
-          did: this.ancon.did.id,
-          from: this.ancon.account,
-          time: file.lastModified.toString(),
-          mode: "",
-          content: base64.encode(result.content),
-          contentType: file.type,
-          creator: this.ancon.account,
-        };
-        const { transaction, cid }: any = await this.ancon.anconClient.addFile({
-          did: this.ancon.did.id,
-          file: msg,
-          fee,
-        });
-        this.cids.push({
-          cid: cid.toString(),
-          name: file.name,
-          contentType: file.type,
-        });
-        this.items = [
-          ...this.items,
-          {
-            file,
-            cid,
-          },
-        ];
-      }
-
-      // 2) Create and store Ancon metadata
-      const { transaction, cid }: any =
-        await this.ancon.anconClient.executeMetadata({
-          name: "Simple signing",
-          description: "Description",
-          image: `${this.cids[0].cid}/${this.cids[0].name}`,
-          sources: this.cids.map((i) => i.cid),
-          owner: this.currentAccount, //binance acc
-          parent: undefined,
-          verifiedCredentialRef: undefined,
-          links: undefined,
-          creator: this.ancon.account, //binance acccosmos acc
-          did: this.ancon.did.id,
-          from: this.currentAccount, //binance acc
-          fee,
-        });
-
-      return cid;
-    } catch (e) {
-      this.loading = false;
-      //@ts-ignore
-      this.$confirm({
-        message: `Transaction failed with message ${e.message}`,
-        buttons: {
-          yes: "OK",
-        },
-      });
-    }
-    return null;
-  }
-
-  // get web3Selector() {
-  //   // @ts-ignore
-  //   if (window.BinanceChain) {
-  //     // @ts-ignore
-  //     return BinanceChain;
-  //   } else {
-  //     // @ts-ignore
-  //     return window.ethereum;
-  //   }
-  // }
-
   async mintNft(uri: string) {
     // anchor to nft
     let gasPrice = ethers.BigNumber.from(22000000000);
@@ -911,22 +819,20 @@ export default class SmartcardDocuments extends Vue {
     //   this.ethersContract.address
     // );
     // gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-    // const [allowed] = await this.daiContract.functions.allowance(
+    // const [allowed] = await this.daiContract.methods.allowance(
     //   this.currentAccount,
     //   this.ethersContract.address
     // );
 
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
-      
-    const hardCodedAdrr = '0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6'
 
     const approveTx = await this.daiWeb3contract.methods
       .approve(this.nftWeb3Contract._address, "1000000000000000000")
       .send({
         gasPrice: gasPrice,
         gas: gasLimit,
-        from: hardCodedAdrr
-      })
+        from: this.currentAccount,
+      });
 
     // TODO: wait 5 s
 
@@ -935,8 +841,8 @@ export default class SmartcardDocuments extends Vue {
       .send({
         gasPrice: gasPrice,
         gas: gasLimit,
-        from: hardCodedAdrr
-      })
+        from: this.currentAccount,
+      });
 
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
@@ -944,7 +850,7 @@ export default class SmartcardDocuments extends Vue {
     // );
     // gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
 
-    // const txmint = await this.ethersContract.functions.mint(
+    // const txmint = await this.ethersContract.methods.mint(
     //   this.currentAccount,
     //   uri,
     //   {
@@ -964,7 +870,7 @@ export default class SmartcardDocuments extends Vue {
     if (this.ancon && this.cidindex) {
       const path = "/";
       const body = await fetch(
-        `http://127.0.0.1:1317/ancon/${this.cidindex}${path}`
+        `http://ancon.did.pa:1317/ancon/${this.cidindex}${path}`
       );
 
       const res = await body.json();
@@ -980,53 +886,6 @@ export default class SmartcardDocuments extends Vue {
     }
   }
 
-  async anchor(uri: string) {
-    // anchor to nft
-    let gasLimit = await this.daiContract.estimateGas.approve(
-      this.currentAccount,
-      this.anchorContract.address
-    );
-    gasLimit = BigNumber.from(gasLimit).add(50000);
-
-    const [allowed] = await this.daiContract.functions.allowance(
-      this.currentAccount,
-      this.anchorContract.address
-    );
-    if (!(allowed as BigNumber).eq("2000000000000000000")) {
-      const approve = await this.daiContract.functions.approve(
-        this.anchorContract.address,
-        "2000000000000000000",
-        {
-          gasPrice: "22000000000",
-          gasLimit: gasLimit,
-        }
-      );
-
-      await approve.wait(1);
-    }
-
-    gasLimit = await this.anchorContract.estimateGas.addDocument(
-      `did:ethr:${this.currentAccount}`,
-      uri,
-      "anchoring",
-      [this.currentAccount]
-    );
-
-    const document = await this.anchorContract.functions.addDocument(
-      `did:ethr:${this.currentAccount}`,
-      uri,
-      "anchoring",
-      [this.currentAccount],
-      {
-        gasPrice: "22000000000",
-        gasLimit,
-      }
-    );
-
-    const log = await document.wait(1);
-    this.txid = log.blockHash;
-    this.loading = false;
-  }
   async printPdf() {}
 }
 </script>

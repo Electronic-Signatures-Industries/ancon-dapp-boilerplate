@@ -45,7 +45,7 @@ import {
   queryClient,
   registry,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
-import { arrayify, hexValue } from '@ethersproject/bytes'
+import { arrayify, hexValue, splitSignature } from '@ethersproject/bytes'
 import {
   encodeSecp256k1Signature,
   MintExtension,
@@ -82,13 +82,19 @@ export class AnconWeb3Client {
   ethAccount: string
   pubkey: Uint8Array
   web3defaultAccount: string
+  sender: ethers.providers.JsonRpcProvider
   /**
    * New client from mnemonic
    */
-  constructor(wallet: ethers.providers.Web3Provider, _web3defaultAccount: string) {
+  constructor(
+    url: string,
+    wallet: ethers.providers.Web3Provider,
+    _web3defaultAccount: string,
+  ) {
     this.provider = wallet
     this.web3defaultAccount = _web3defaultAccount
-    
+    this.sender = new ethers.providers.JsonRpcProvider(url)
+
     return this
   }
 
@@ -100,12 +106,7 @@ export class AnconWeb3Client {
    * @param callback UI purposes
    * @returns
    */
-  async signAndBroadcast(
-    evmChainId: number,
-    methodName: string,
-    msg: any,
-    callback: any,
-  ) {
+  async signAndBroadcast(evmChainId: number, methodName: string, msg: any) {
     const encoded = encoder[methodName](msg)
 
     const fee = {
@@ -117,9 +118,7 @@ export class AnconWeb3Client {
       ],
       gas: '200000',
     }
-    const pubkey = encodePubkey(
-      encodeSecp256k1Pubkey(this.pubkey),
-    )
+    const pubkey = encodePubkey(encodeSecp256k1Pubkey(this.pubkey))
     const txBodyEncodeObject = {
       typeUrl: '/cosmos.tx.v1beta1.TxBody',
       value: {
@@ -146,14 +145,19 @@ export class AnconWeb3Client {
     //   sequence: this.cosmosAccount.sequence,
     //   chainId: 'anconprotocol_9000-1',
     // })
-      
+
+    // const hashedMessage = sha256(makeSignBytes(signDoc))
+    // //    const signature = await
+    // let s = await this.provider
+    //   .getSigner(this.web3defaultAccount)
+    //   .signMessage(hashedMessage)
+    // const signature = splitSignature(s)
 
     const { signature, signed } = await this.offlineSigner.signDirect(
       this.cosmosAccount.address,
       signDoc,
     )
 
-    const sender = new ethers.providers.JsonRpcProvider('https://ancon.did.pa/evm')
     const txsignedhex = TxRaw.fromPartial({
       bodyBytes: signed.bodyBytes,
       authInfoBytes: signed.authInfoBytes,
@@ -167,19 +171,17 @@ export class AnconWeb3Client {
       chainId: evmChainId,
     }
 
-    await callback({ sig: hexValue(tx.data) })
-
     let raw = await this.provider
       .getSigner(this.web3defaultAccount)
       .signMessage(keccak256(serialize(tx)))
 
-    raw = serialize(tx,raw)
-    
-    const res = await sender.send('ancon_sendRawTransaction', [raw])
+    raw = serialize(tx, raw)
+
+    const res = await this.sender.send('ancon_sendRawTransaction', [raw])
 
     return res
   }
-  async signAndBroadcastEvm(data, evmChainId, options, callback) {
+  async signAndBroadcastEvm(data, evmChainId, options) {
     const nonce = await this.ethersclient.getTransactionCount()
 
     // Signs Ethereum TxData
@@ -191,21 +193,13 @@ export class AnconWeb3Client {
       ...options,
     } as Transaction
 
-    await callback({ sig: tx.data })
-
-    // const raw = await this.provider
-    //   .getSigner(this.ethAccount)
-    //   .signMessage(keccak256(serialize(tx)))
-    // const res = await this.provider.send('eth_sendRawTransaction', [raw])
-    const sender = new ethers.providers.JsonRpcProvider('https://ancon.did.pa/evm')
-    
     let raw = await this.provider
       .getSigner(this.web3defaultAccount)
       .signMessage(keccak256(serialize(tx)))
 
-    raw = serialize(tx,raw)
-    
-    const res = await sender.send('ancon_sendRawTransaction', [raw])
+    raw = serialize(tx, raw)
+
+    const res = await this.sender.send('ancon_sendRawTransaction', [raw])
 
     return res
   }
@@ -223,9 +217,8 @@ export class AnconWeb3Client {
 
     this.ethAccount = ethermintToEth(accounts[0].address)
     this.queryClient = await queryClient({
-      addr: this.apiUrl
+      addr: this.apiUrl,
     })
-    // query = setupAuthExtension(this.queryClient)
     const anyAccount = await q.auth.account(accounts[0].address)
     this.cosmosAccount = accountFromAny(anyAccount)
     this.connectedSigner = await SigningStargateClient.connectWithSigner(
@@ -234,10 +227,13 @@ export class AnconWeb3Client {
       { registry, prefix: 'ethm' },
     )
 
-    debugger
     //@ts-ignore
     this.offlineSigner = this.connectedSigner.signer
 
+
+
+    const hash = await ethers.utils.keccak256(this.web3defaultAccount);
+    
     this.pubkey = accounts[0].pubkey
     return this
   }
