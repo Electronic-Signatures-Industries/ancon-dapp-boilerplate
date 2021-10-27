@@ -1,26 +1,68 @@
 <template>
   <v-container>
-    <v-progress-linear
-      indeterminate
-      v-if="loading"
-      color="pink"
-    ></v-progress-linear>
-
-    <v-card>
-      <v-tabs background-color="blue-berry accent-4" dark v-model="tabIndex">
-        <v-tab v-for="item in tabitems" :key="item.key">
-          {{ item.label }}
-        </v-tab>
-      </v-tabs>
-      <v-tabs-items v-model="tabIndex">
-        <v-tab-item v-for="item in tabitems" :key="item.key">
-          <v-card flat>
-            <v-card-text>
-              <v-alert :type="alertType" v-if="alertMessage">{{
-                alertMessage
-              }}</v-alert>
-
+    <v-col>
+      <v-card>
+        <v-list-item three-line>
+          <v-list-item-title class="text-h5 mb-1">
+            Wallet Info
+          </v-list-item-title>
+        </v-list-item>
+        <v-card-text>
+          <v-row>
+            <v-col xs="8" sm="8" offset-sm="2">
               <v-row>
+                <v-list-item-subtitle>Ethereum address</v-list-item-subtitle>
+                <v-chip class="ma-2" color="#48409A" pill close outlined>
+                  <v-icon left> mdi-wallet </v-icon>
+                  {{ walletLabel }}
+                </v-chip>
+              </v-row>
+              <v-row>
+                <v-list-item-subtitle>Cosmos EVM address</v-list-item-subtitle>
+                <v-chip class="ma-2" color="#48409A" pill close outlined>
+                  <v-icon left> mdi-wallet </v-icon>
+                  {{ walletCosmosLabel }}
+                </v-chip>
+              </v-row>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col xs="3" sm="3" offset-sm="2">
+              <cryptoicon symbol="atom" size="24" class="cripto-icon" />
+              {{ balances.bnb }}
+            </v-col>
+            <v-col xs="3" sm="3">
+              <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
+              {{ balances.bnb }}
+            </v-col>
+            <v-col xs="3" sm="3">
+              <cryptoicon symbol="dai" size="24" class="cripto-icon" />
+              {{ balances.dai }}
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+      <v-progress-linear
+        indeterminate
+        v-if="loading"
+        color="pink"
+      ></v-progress-linear>
+
+      <v-card>
+        <v-tabs background-color="blue-berry accent-4" dark v-model="tabIndex">
+          <v-tab v-for="item in tabitems" :key="item.key">
+            {{ item.label }}
+          </v-tab>
+        </v-tabs>
+        <v-tabs-items v-model="tabIndex">
+          <v-tab-item v-for="item in tabitems" :key="item.key">
+            <v-card flat>
+              <v-card-text>
+                <v-alert :type="alertType" v-if="alertMessage">{{
+                  alertMessage
+                }}</v-alert>
+
+                <!-- <v-row>
                 <v-col xs="8" sm="8" offset-sm="2">
                   <v-row
                     ><v-chip class="ma-2" color="#48409A" pill close outlined>
@@ -35,8 +77,8 @@
                     </v-chip>
                   </v-row>
                 </v-col>
-              </v-row>
-              <v-row>
+              </v-row> -->
+                <!-- <v-row>
                 <v-col xs="3" sm="3" offset-sm="2">
                   <cryptoicon symbol="atom" size="24" class="cripto-icon" />
                   {{ balances.bnb }}
@@ -49,274 +91,277 @@
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
                   {{ balances.dai }}
                 </v-col>
-              </v-row>
-              <v-row>
-                <v-col xs="6" sm="6" offset-sm="2">
-                  <v-file-input
-                    multiple
-                    v-if="item.settings.signing !== 'pades'"
-                    show-size
-                    chips
-                    label="Files"
-                    v-model="files"
-                  ></v-file-input>
-                  <v-file-input
-                    multiple
-                    v-if="item.settings.signing === 'pades'"
-                    show-size
-                    chips
-                    :accept="item.settings.signing.contentType"
-                    label="PDF Documents"
-                    v-model="files"
-                  ></v-file-input>
-                  <v-alert type="alert" dense v-if="cidindex"
-                    >Image URI: {{ cidindex }}</v-alert
-                  >
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col xs="6" sm="6" offset-sm="2">
-                  <v-text-field
-                    label="Name"
-                    required
-                    v-model="name"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col xs="6" sm="6" offset-sm="2">
-                  <v-text-field
-                    required
-                    label="Description"
-                    v-model="description"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
+              </v-row> -->
+                <v-row>
+                  <v-col xs="6" sm="6" offset-sm="2">
+                    <v-file-input
+                      multiple
+                      v-if="item.settings.signing !== 'transfer'"
+                      show-size
+                      chips
+                      label="Files"
+                      v-model="files"
+                    ></v-file-input>
+                    <v-file-input
+                      multiple
+                      v-if="item.settings.signing === 'transfer'"
+                      show-size
+                      chips
+                      :accept="item.settings.signing.contentType"
+                      label="PDF Documents"
+                      v-model="files"
+                    ></v-file-input>
+                    <v-alert type="alert" dense v-if="cidindex"
+                      >Image URI: {{ cidindex }}</v-alert
+                    >
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col xs="6" sm="6" offset-sm="2">
+                    <v-text-field
+                      label="Name"
+                      required
+                      v-model="name"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col xs="6" sm="6" offset-sm="2">
+                    <v-text-field
+                      required
+                      label="Description"
+                      v-model="description"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
 
-              <v-row>
-                <v-col xs="6" offset="2">
-                  <v-btn
-                    color="pink"
-                    v-if="connected === false"
-                    @click="connect"
-                    dark
-                  >
-                    Connect
-                  </v-btn>
-                  <v-btn
-                    :disabled="files.length === 0"
-                    v-if="connected"
-                    @click="xdvify"
-                    color="primary"
-                  >
-                    Create metadata and mint
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-card>
+                <v-row>
+                  <v-col xs="6" offset="2">
+                    <v-btn
+                      color="pink"
+                      v-if="connected === false"
+                      @click="connect"
+                      dark
+                    >
+                      Connect
+                    </v-btn>
+                    <v-btn
+                      :disabled="files.length === 0"
+                      v-if="connected"
+                      @click="xdvify"
+                      color="primary"
+                    >
+                      Create metadata and mint
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+        </v-tabs-items>
+      </v-card>
 
-    <v-card>
-      <v-tabs
-        background-color="blue-berry accent-4"
-        dark
-        v-model="tabDetailIndex"
-      >
-        <v-tab v-for="item in tabDetailItems" :key="item.key">
-          {{ item.label }}
-        </v-tab>
-      </v-tabs>
-      <v-tabs-items v-model="tabDetailIndex">
-        <v-tab-item key="details">
-          <v-alert type="success" v-if="txid.length > 0" dense dismissible
-            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
-          >
-          <v-card>
-            <v-row dense>
-              <v-col cols="12">
-                <v-card>
-                  <v-card-title class="text-h5">
-                    Transaction details
-                  </v-card-title>
+      <v-card>
+        <v-tabs
+          background-color="blue-berry accent-4"
+          dark
+          v-model="tabDetailIndex"
+        >
+          <v-tab v-for="item in tabDetailItems" :key="item.key">
+            {{ item.label }}
+          </v-tab>
+        </v-tabs>
+        <v-tabs-items v-model="tabDetailIndex">
+          <v-tab-item key="details">
+            <v-alert type="success" v-if="txid.length > 0" dense dismissible
+              >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+            >
+            <v-card>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-card>
+                    <v-card-title class="text-h5">
+                      Transaction details
+                    </v-card-title>
 
-                  <v-card-text v-if="!!cidindex">
-                    <div>No transactions</div>
-                  </v-card-text>
-                  <v-card-text v-if="!!cidindex">
-                    <div>Tx {{ txid }}</div>
-                    <div>Ancon cid {{ cidindex }}</div>
+                    <v-card-text v-if="!!cidindex">
+                      <div>No transactions</div>
+                    </v-card-text>
+                    <v-card-text v-if="!!cidindex">
+                      <div>Tx {{ txid }}</div>
+                      <div>Ancon cid {{ cidindex }}</div>
 
-                    <v-row
-                      ><v-col>
-                        <v-simple-table dense md="10">
-                          <template v-slot:default>
-                            <!-- <thead>
+                      <v-row
+                        ><v-col>
+                          <v-simple-table dense md="10">
+                            <template v-slot:default>
+                              <!-- <thead>
                               <tr>
                                 <th>CID</th>
                                 <th>Content Type</th>
                                 <th>Name</th>
                               </tr>
                             </thead> -->
-                            <tbody>
-                              <tr
-                                v-for="item in reportVerify"
-                                :key="item.title"
-                              >
-                                <td>
-                                  {{ item.title }}
-                                </td>
-                                <td>
-                                  {{ item.subtitle }}
-                                </td>
-                                <td>
-                                  {{ item.name }}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </template>
-                        </v-simple-table>
-                      </v-col>
-                    </v-row>
-                    <v-row>
-                      <v-col>
-                        <v-simple-table dense md="10">
-                          <template v-slot:default>
-                            <thead>
-                              <tr>
-                                <th>CID</th>
-                                <th>Content Type</th>
-                                <th>Name</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr
-                                v-for="item in viewItems.signedFiles"
-                                :key="item.cid"
-                              >
-                                <td>
-                                  {{ item.cid }}
-                                </td>
-                                <td>
-                                  {{ item.contentType }}
-                                </td>
-                                <td>
-                                  {{ item.name }}
-                                </td>
-                                <td>
-                                  <v-btn
-                                    v-show="false"
-                                    @click="
-                                      loadCid(
-                                        item.cid,
-                                        viewItems.type,
-                                        item.name,
-                                        item.contentType
-                                      )
-                                    "
-                                    ><v-icon right dark> mdi-download </v-icon>
-                                    Download</v-btn
-                                  >
-                                </td>
-                              </tr>
-                            </tbody>
-                          </template>
-                        </v-simple-table>
-                      </v-col>
-                    </v-row>
-                  </v-card-text>
+                              <tbody>
+                                <tr
+                                  v-for="item in reportVerify"
+                                  :key="item.title"
+                                >
+                                  <td>
+                                    {{ item.title }}
+                                  </td>
+                                  <td>
+                                    {{ item.subtitle }}
+                                  </td>
+                                  <td>
+                                    {{ item.name }}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </template>
+                          </v-simple-table>
+                        </v-col>
+                      </v-row>
+                      <v-row>
+                        <v-col>
+                          <v-simple-table dense md="10">
+                            <template v-slot:default>
+                              <thead>
+                                <tr>
+                                  <th>CID</th>
+                                  <th>Content Type</th>
+                                  <th>Name</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr
+                                  v-for="item in viewItems.signedFiles"
+                                  :key="item.cid"
+                                >
+                                  <td>
+                                    {{ item.cid }}
+                                  </td>
+                                  <td>
+                                    {{ item.contentType }}
+                                  </td>
+                                  <td>
+                                    {{ item.name }}
+                                  </td>
+                                  <td>
+                                    <v-btn
+                                      v-show="false"
+                                      @click="
+                                        loadCid(
+                                          item.cid,
+                                          viewItems.type,
+                                          item.name,
+                                          item.contentType
+                                        )
+                                      "
+                                      ><v-icon right dark>
+                                        mdi-download
+                                      </v-icon>
+                                      Download</v-btn
+                                    >
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </template>
+                          </v-simple-table>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
 
-                  <v-card-actions v-if="!!cidindex">
-                    <v-btn @click="shareTo(cidindex)" text
-                      ><v-icon right dark> mdi-link </v-icon> Share
-                    </v-btn>
-                    <v-btn
-                      @click="verifyChain(cidindex)"
-                      text
-                      v-if="viewItems.type === 'jwt'"
-                    >
-                      <v-icon right dark> mdi-certificate </v-icon> Verify
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card>
-        </v-tab-item>
-        <v-tab-item key="transactions">
-          <v-alert type="success" v-if="txid.length > 0" dense dismissible
-            >{{ cids.length }} file(s) has been signed and uploaded</v-alert
-          >
-          <v-card>
-            <v-row dense>
-              <v-col cols="12">
-                <v-card>
-                  <v-card-title class="text-h5"> Transactions </v-card-title>
+                    <v-card-actions v-if="!!cidindex">
+                      <v-btn @click="shareTo(cidindex)" text
+                        ><v-icon right dark> mdi-link </v-icon> Share
+                      </v-btn>
+                      <v-btn
+                        @click="verifyChain(cidindex)"
+                        text
+                        v-if="viewItems.type === 'jwt'"
+                      >
+                        <v-icon right dark> mdi-certificate </v-icon> Verify
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-card>
+          </v-tab-item>
+          <v-tab-item key="transactions">
+            <v-alert type="success" v-if="txid.length > 0" dense dismissible
+              >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+            >
+            <v-card>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-card>
+                    <v-card-title class="text-h5"> Transactions </v-card-title>
 
-                  <v-card-text>
-                    <v-simple-table dense>
-                      <template v-slot:default>
-                        <thead>
-                          <tr>
-                            <th class="text-left">Tx</th>
-                            <th class="text-left">Event</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="item in transactions" :key="item">
-                            <td>{{ item.transactionHash }}</td>
-                            <td>{{ item.event }}</td>
-                          </tr>
-                        </tbody>
-                      </template>
-                    </v-simple-table>
-                  </v-card-text>
-                  <v-card-actions>
-                    <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
-                  </v-card-actions>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-card>
-
-    <vue-confirm-dialog></vue-confirm-dialog>
-    <v-dialog v-model="unlockPin" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Enter PIN for hardware module</span>
-        </v-card-title>
-
-        <v-card-text>
-          <v-form autocomplete="off">
-            <v-row>
-              <v-col cols="12" md="12">
-                <v-text-field
-                  required
-                  v-model="pin"
-                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  :type="showPassword ? 'text' : 'password'"
-                  class="input-group--focused"
-                  @click:append="showPassword = !showPassword"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-form>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="unlockPin = false"
-            >Cancel</v-btn
-          >
-          <v-btn color="blue darken-1" text @click="xdvify">OK</v-btn>
-        </v-card-actions>
+                    <v-card-text>
+                      <v-simple-table dense>
+                        <template v-slot:default>
+                          <thead>
+                            <tr>
+                              <th class="text-left">Tx</th>
+                              <th class="text-left">Event</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="item in transactions" :key="item">
+                              <td>{{ item.transactionHash }}</td>
+                              <td>{{ item.event }}</td>
+                            </tr>
+                          </tbody>
+                        </template>
+                      </v-simple-table>
+                    </v-card-text>
+                    <v-card-actions>
+                      <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-card>
+          </v-tab-item>
+        </v-tabs-items>
       </v-card>
-    </v-dialog>
+
+      <vue-confirm-dialog></vue-confirm-dialog>
+      <v-dialog v-model="unlockPin" max-width="500px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Enter PIN for hardware module</span>
+          </v-card-title>
+
+          <v-card-text>
+            <v-form autocomplete="off">
+              <v-row>
+                <v-col cols="12" md="12">
+                  <v-text-field
+                    required
+                    v-model="pin"
+                    :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    :type="showPassword ? 'text' : 'password'"
+                    class="input-group--focused"
+                    @click:append="showPassword = !showPassword"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="unlockPin = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="blue darken-1" text @click="xdvify">OK</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-col>
   </v-container>
 </template>
 <script lang="ts">
@@ -388,10 +433,26 @@ export default class SmartcardDocuments extends Vue {
   tabIndex = null;
   tabitems = [
     {
-      key: "simple",
-      label: "NFT with Onchain Metadata",
+      key: "mint",
+      label: "Mint NFT",
       settings: {
         signing: "simple",
+        contentType: null,
+      },
+    },
+    {
+      key: "owner-transfer",
+      label: "Transfer NFT Ownership",
+      settings: {
+        signing: "transfer",
+        contentType: null,
+      },
+    },
+    {
+      key: "crosschain-swap",
+      label: "Crosschain Swap",
+      settings: {
+        signing: "swap",
         contentType: null,
       },
     },
@@ -586,7 +647,7 @@ export default class SmartcardDocuments extends Vue {
       this.connected = true;
 
       this.walletCosmosLabel = this.anconWeb3client.cosmosAccount.address;
-      debugger;
+      //debugger;
 
       this.subscribeToMetadataEvents();
       await this.loadBalances();
