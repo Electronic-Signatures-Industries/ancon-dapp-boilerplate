@@ -14,14 +14,14 @@
                 <v-list-item-subtitle>Ethereum address</v-list-item-subtitle>
                 <v-chip class="ma-2" color="#48409A" pill close outlined>
                   <v-icon left> mdi-wallet </v-icon>
-                  {{ walletLabel }}
+                  {{ walletEthAdressDisplay }}
                 </v-chip>
               </v-row>
               <v-row>
                 <v-list-item-subtitle>Cosmos EVM address</v-list-item-subtitle>
                 <v-chip class="ma-2" color="#48409A" pill close outlined>
                   <v-icon left> mdi-wallet </v-icon>
-                  {{ walletCosmosLabel }}
+                  {{ walletCosmosAddressDisplay }}
                 </v-chip>
               </v-row>
             </v-col>
@@ -62,36 +62,6 @@
                   alertMessage
                 }}</v-alert>
 
-                <!-- <v-row>
-                <v-col xs="8" sm="8" offset-sm="2">
-                  <v-row
-                    ><v-chip class="ma-2" color="#48409A" pill close outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletLabel }}
-                    </v-chip>
-                  </v-row>
-                  <v-row>
-                    <v-chip class="ma-2" color="#48409A" pill close outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletCosmosLabel }}
-                    </v-chip>
-                  </v-row>
-                </v-col>
-              </v-row> -->
-                <!-- <v-row>
-                <v-col xs="3" sm="3" offset-sm="2">
-                  <cryptoicon symbol="atom" size="24" class="cripto-icon" />
-                  {{ balances.bnb }}
-                </v-col>
-                <v-col xs="3" sm="3">
-                  <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
-                  {{ balances.bnb }}
-                </v-col>
-                <v-col xs="3" sm="3">
-                  <cryptoicon symbol="dai" size="24" class="cripto-icon" />
-                  {{ balances.dai }}
-                </v-col>
-              </v-row> -->
                 <v-row>
                   <v-col xs="6" sm="6" offset-sm="2">
                     <v-file-input
@@ -366,7 +336,6 @@
 </template>
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { Wallet } from "xdv-universal-wallet-core";
 import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
@@ -506,7 +475,7 @@ export default class SmartcardDocuments extends Vue {
   viewItems = [];
   transactions = [];
   emulateSmartcard = false;
-  wallet: Wallet;
+  //wallet: Wallet;
   web3instance: Web3;
   nftWeb3Contract: any;
   daiWeb3contract: any;
@@ -517,8 +486,11 @@ export default class SmartcardDocuments extends Vue {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDE0ZDM0NDExYTYyQkJjMjBEMzkzZDNjN2RhQUE4YzZEMGRmNDY2NjAiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2MzUwMTU4NTUyNTIsIm5hbWUiOiJBbmNvbiJ9.TiAmVFS000shN0L9cV3q2SWsJhVW0uxM0ZCEbzTe9QI";
   nftAPIKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDlFNWJFMjI2YUU4NzhFZkJGZGU1NzhDM0VkMmY2NDhGMjEzMDBmOGMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTAxNTU4Mzg2OSwibmFtZSI6ImFuY29uIn0.3VIRmGQ3IIfwk4X30NPDSfX8SN3YdFGnPqsYDc-7jlY";
-  walletLabel = "Not conected";
-  walletCosmosLabel = "Not conected";
+  walletEthAdress = "";
+  walletEthAdressDisplay = "Not connected";
+  walletCosmosAddress = "";
+  walletCosmosAddressDisplay = "Not connected";
+
   async loadTransactions() {
     if (this.ethersContract) {
       const query = this.ethersContract.filters.Transfer(this.currentAccount);
@@ -625,7 +597,25 @@ export default class SmartcardDocuments extends Vue {
     );
     //debugger
 
-    this.walletLabel = this.anconWeb3client.web3defaultAccount;
+    this.walletEthAdress = this.anconWeb3client.web3defaultAccount;
+
+    this.walletEthAdressDisplay = "";
+
+    //Getting first 7 chars & concat into displayed string
+    for (let i = 0; i < 7; i++) {
+      this.walletEthAdressDisplay += this.walletEthAdress[i];
+    }
+
+    this.walletEthAdressDisplay += "...";
+
+    //Getting last 6 chars & concat into displayed string
+    for (
+      let i = this.walletEthAdress.length - 6;
+      i < this.walletEthAdress.length;
+      i++
+    ) {
+      this.walletEthAdressDisplay += this.walletEthAdress[i];
+    }
 
     this.currentAccount = accounts[0];
     // DAI
@@ -646,7 +636,25 @@ export default class SmartcardDocuments extends Vue {
       await this.anconWeb3client.connect();
       this.connected = true;
 
-      this.walletCosmosLabel = this.anconWeb3client.cosmosAccount.address;
+      this.walletCosmosAddress = this.anconWeb3client.cosmosAccount.address;
+
+      this.walletCosmosAddressDisplay = "";
+
+      //Getting first 7 chars & concat into displayed string
+      for (let i = 0; i < 7; i++) {
+        this.walletCosmosAddressDisplay += this.walletCosmosAddress[i];
+      }
+
+      this.walletCosmosAddressDisplay += "...";
+
+      //Getting last 6 chars & concat into displayed string
+      for (
+        let i = this.walletEthAdress.length - 6;
+        i < this.walletEthAdress.length;
+        i++
+      ) {
+        this.walletCosmosAddressDisplay += this.walletCosmosAddress[i];
+      }
       //debugger;
 
       this.subscribeToMetadataEvents();
@@ -709,9 +717,10 @@ export default class SmartcardDocuments extends Vue {
 
     this.loading = true;
 
+    debugger
     // 1. Upload files - web3.storage
     const cid = await storage.put(this.files, { wrapWithDirectory: true });
-
+    debugger
     // 2. Create Metadata
     await this.createMetadata(cid, this.name, this.description);
 
@@ -813,7 +822,10 @@ export default class SmartcardDocuments extends Vue {
   }
 
   /** Creates onchain metadata */
-  async createMetadata(root, description, name): Promise<any> {
+  async createMetadata(root, name, description): Promise<any> {
+    debugger;
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
     const msg = MsgMetadata.fromPartial({
       creator: this.anconWeb3client.cosmosAccount.address,
       name,
