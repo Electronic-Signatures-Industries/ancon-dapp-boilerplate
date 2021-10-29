@@ -31,7 +31,7 @@
             </v-list>
             <v-divider></v-divider>
             <v-list nav dense>
-              <v-list-item-group v-model="selectedItem" color="primary">
+              <v-list-item-group v-model="sideBarItems.selectedItem" color="primary">
                 <v-list-item v-for="(item, i) in sideBarItems.items" :key="i">
                   <v-list-item-icon>
                     <v-icon v-text="item.icon"></v-icon>
@@ -53,24 +53,6 @@
             </v-list-item-title>
           </v-list-item>
           <v-card-text>
-            <!-- <v-row>
-            <v-col xs="8" sm="8" offset-sm="2">
-              <v-row>
-                <v-list-item-subtitle>Ethereum address</v-list-item-subtitle>
-                <v-chip class="ma-2" color="#48409A" pill close outlined>
-                  <v-icon left> mdi-wallet </v-icon>
-                  {{ walletEthAdressDisplay }}
-                </v-chip>
-              </v-row>
-              <v-row>
-                <v-list-item-subtitle>Cosmos EVM address</v-list-item-subtitle>
-                <v-chip class="ma-2" color="#48409A" pill close outlined>
-                  <v-icon left> mdi-wallet </v-icon>
-                  {{ walletCosmosAddressDisplay }}
-                </v-chip>
-              </v-row>
-            </v-col>
-          </v-row> -->
             <v-row>
               <v-col xs="3" sm="3" offset-sm="2">
                 <cryptoicon symbol="atom" size="24" class="cripto-icon" />
