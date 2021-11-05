@@ -9,6 +9,17 @@
  * ---------------------------------------------------------------
  */
 
+export interface AnconprotocolAguaclaraPacketData {
+  creator?: string;
+  tokenAddress?: string;
+  tokenId?: string;
+  didRecipient?: string;
+  toMetadata?: string;
+  hash?: string;
+  currentChainId?: string;
+  recipientChainId?: string;
+}
+
 export interface AnconprotocolBaseNFT {
   id?: string;
   name?: string;
@@ -112,6 +123,18 @@ export interface AnconprotocolMsgRevokeDidResponse {
   id?: string;
 }
 
+export interface AnconprotocolMsgRoyaltyInfoResponse {
+  receiver?: string;
+
+  /** @format uint64 */
+  royaltyFeePercentage?: string;
+  metadataRef?: string;
+}
+
+export interface AnconprotocolMsgSendMetadataOwnershipResponse {
+  cid?: string;
+}
+
 /**
  * MsgTransferDenomResponse defines the Msg/TransferDenom response type.
  */
@@ -125,7 +148,8 @@ export type AnconprotocolMsgTransferNFTResponse = object;
 export type AnconprotocolMsgUpdateDidResponse = object;
 
 export interface AnconprotocolMsgUpdateMetadataOwnershipResponse {
-  cid?: string;
+  metadataRef?: string;
+  packetRef?: string;
 }
 
 export interface AnconprotocolOwner {
@@ -167,13 +191,9 @@ export interface AnconprotocolQueryDenomsResponse {
   pagination?: V1Beta1PageResponse;
 }
 
-export type AnconprotocolQueryDidWebResponse = object;
-
 export type AnconprotocolQueryGetAttributesResponse = object;
 
 export type AnconprotocolQueryGetDelegateResponse = object;
-
-export type AnconprotocolQueryGetDidResponse = object;
 
 export type AnconprotocolQueryIdentifyOwnerResponse = object;
 
@@ -647,7 +667,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @request GET:/ancon/didregistry/{name}
    */
   queryGetDidKey = (name: string, params: RequestParams = {}) =>
-    this.request<AnconprotocolQueryGetDidResponse, RpcStatus>({
+    this.request<AnconprotocolQueryResourceResponse, RpcStatus>({
       path: `/ancon/didregistry/${name}`,
       method: "GET",
       format: "json",
@@ -840,7 +860,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @request GET:/user/{name}/did.json
    */
   queryResolveDidWeb = (name: string, params: RequestParams = {}) =>
-    this.request<AnconprotocolQueryDidWebResponse, RpcStatus>({
+    this.request<AnconprotocolQueryResourceResponse, RpcStatus>({
       path: `/user/${name}/did.json`,
       method: "GET",
       format: "json",

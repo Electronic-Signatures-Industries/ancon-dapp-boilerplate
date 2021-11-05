@@ -32,7 +32,6 @@ export class AnconManager {
       passphrase,
       passphrase
     );
-
     const wallet = this.anconClient.wallet;
     const acct = (await wallet.getAccount()) as any;
     const eddsa = await wallet.createEd25519({

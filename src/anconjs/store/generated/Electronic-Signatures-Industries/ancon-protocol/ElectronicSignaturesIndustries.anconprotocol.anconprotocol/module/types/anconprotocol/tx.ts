@@ -15,10 +15,13 @@ export interface MsgUpdateMetadataOwnership {
   /** optional */
   recipientChainId: string
   sender: string
+  tokenAddress: string
+  tokenId: string
 }
 
 export interface MsgUpdateMetadataOwnershipResponse {
-  cid: string
+  metadataRef: string
+  packetRef: string
 }
 
 export interface MsgRegisterRelay {
@@ -186,6 +189,7 @@ export interface MsgMintTrustedResourceResponse {
 /** MsgRoyaltyInfo */
 export interface MsgRoyaltyInfo {
   creator: string
+  id: string
   receiver: string
   royaltyFeePercentage: number
   metadataRef: string
@@ -405,7 +409,36 @@ export interface MsgFileResponse {
   hash: string
 }
 
-const baseMsgUpdateMetadataOwnership: object = { hash: '', previousOwner: '', newOwner: '', currentChainId: '', recipientChainId: '', sender: '' }
+export interface MsgSendMetadataOwnership {
+  creator: string
+  data: AguaclaraPacketData | undefined
+}
+
+export interface MsgSendMetadataOwnershipResponse {
+  cid: string
+}
+
+export interface AguaclaraPacketData {
+  creator: string
+  tokenAddress: string
+  tokenId: string
+  didRecipient: string
+  toMetadata: string
+  hash: string
+  currentChainId: string
+  recipientChainId: string
+}
+
+const baseMsgUpdateMetadataOwnership: object = {
+  hash: '',
+  previousOwner: '',
+  newOwner: '',
+  currentChainId: '',
+  recipientChainId: '',
+  sender: '',
+  tokenAddress: '',
+  tokenId: ''
+}
 
 export const MsgUpdateMetadataOwnership = {
   encode(message: MsgUpdateMetadataOwnership, writer: Writer = Writer.create()): Writer {
@@ -426,6 +459,12 @@ export const MsgUpdateMetadataOwnership = {
     }
     if (message.sender !== '') {
       writer.uint32(50).string(message.sender)
+    }
+    if (message.tokenAddress !== '') {
+      writer.uint32(58).string(message.tokenAddress)
+    }
+    if (message.tokenId !== '') {
+      writer.uint32(66).string(message.tokenId)
     }
     return writer
   },
@@ -454,6 +493,12 @@ export const MsgUpdateMetadataOwnership = {
           break
         case 6:
           message.sender = reader.string()
+          break
+        case 7:
+          message.tokenAddress = reader.string()
+          break
+        case 8:
+          message.tokenId = reader.string()
           break
         default:
           reader.skipType(tag & 7)
@@ -495,6 +540,16 @@ export const MsgUpdateMetadataOwnership = {
     } else {
       message.sender = ''
     }
+    if (object.tokenAddress !== undefined && object.tokenAddress !== null) {
+      message.tokenAddress = String(object.tokenAddress)
+    } else {
+      message.tokenAddress = ''
+    }
+    if (object.tokenId !== undefined && object.tokenId !== null) {
+      message.tokenId = String(object.tokenId)
+    } else {
+      message.tokenId = ''
+    }
     return message
   },
 
@@ -506,6 +561,8 @@ export const MsgUpdateMetadataOwnership = {
     message.currentChainId !== undefined && (obj.currentChainId = message.currentChainId)
     message.recipientChainId !== undefined && (obj.recipientChainId = message.recipientChainId)
     message.sender !== undefined && (obj.sender = message.sender)
+    message.tokenAddress !== undefined && (obj.tokenAddress = message.tokenAddress)
+    message.tokenId !== undefined && (obj.tokenId = message.tokenId)
     return obj
   },
 
@@ -541,16 +598,29 @@ export const MsgUpdateMetadataOwnership = {
     } else {
       message.sender = ''
     }
+    if (object.tokenAddress !== undefined && object.tokenAddress !== null) {
+      message.tokenAddress = object.tokenAddress
+    } else {
+      message.tokenAddress = ''
+    }
+    if (object.tokenId !== undefined && object.tokenId !== null) {
+      message.tokenId = object.tokenId
+    } else {
+      message.tokenId = ''
+    }
     return message
   }
 }
 
-const baseMsgUpdateMetadataOwnershipResponse: object = { cid: '' }
+const baseMsgUpdateMetadataOwnershipResponse: object = { metadataRef: '', packetRef: '' }
 
 export const MsgUpdateMetadataOwnershipResponse = {
   encode(message: MsgUpdateMetadataOwnershipResponse, writer: Writer = Writer.create()): Writer {
-    if (message.cid !== '') {
-      writer.uint32(10).string(message.cid)
+    if (message.metadataRef !== '') {
+      writer.uint32(10).string(message.metadataRef)
+    }
+    if (message.packetRef !== '') {
+      writer.uint32(18).string(message.packetRef)
     }
     return writer
   },
@@ -563,7 +633,10 @@ export const MsgUpdateMetadataOwnershipResponse = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          message.cid = reader.string()
+          message.metadataRef = reader.string()
+          break
+        case 2:
+          message.packetRef = reader.string()
           break
         default:
           reader.skipType(tag & 7)
@@ -575,26 +648,37 @@ export const MsgUpdateMetadataOwnershipResponse = {
 
   fromJSON(object: any): MsgUpdateMetadataOwnershipResponse {
     const message = { ...baseMsgUpdateMetadataOwnershipResponse } as MsgUpdateMetadataOwnershipResponse
-    if (object.cid !== undefined && object.cid !== null) {
-      message.cid = String(object.cid)
+    if (object.metadataRef !== undefined && object.metadataRef !== null) {
+      message.metadataRef = String(object.metadataRef)
     } else {
-      message.cid = ''
+      message.metadataRef = ''
+    }
+    if (object.packetRef !== undefined && object.packetRef !== null) {
+      message.packetRef = String(object.packetRef)
+    } else {
+      message.packetRef = ''
     }
     return message
   },
 
   toJSON(message: MsgUpdateMetadataOwnershipResponse): unknown {
     const obj: any = {}
-    message.cid !== undefined && (obj.cid = message.cid)
+    message.metadataRef !== undefined && (obj.metadataRef = message.metadataRef)
+    message.packetRef !== undefined && (obj.packetRef = message.packetRef)
     return obj
   },
 
   fromPartial(object: DeepPartial<MsgUpdateMetadataOwnershipResponse>): MsgUpdateMetadataOwnershipResponse {
     const message = { ...baseMsgUpdateMetadataOwnershipResponse } as MsgUpdateMetadataOwnershipResponse
-    if (object.cid !== undefined && object.cid !== null) {
-      message.cid = object.cid
+    if (object.metadataRef !== undefined && object.metadataRef !== null) {
+      message.metadataRef = object.metadataRef
     } else {
-      message.cid = ''
+      message.metadataRef = ''
+    }
+    if (object.packetRef !== undefined && object.packetRef !== null) {
+      message.packetRef = object.packetRef
+    } else {
+      message.packetRef = ''
     }
     return message
   }
@@ -2725,24 +2809,27 @@ export const MsgMintTrustedResourceResponse = {
   }
 }
 
-const baseMsgRoyaltyInfo: object = { creator: '', receiver: '', royaltyFeePercentage: 0, metadataRef: '', denomId: '' }
+const baseMsgRoyaltyInfo: object = { creator: '', id: '', receiver: '', royaltyFeePercentage: 0, metadataRef: '', denomId: '' }
 
 export const MsgRoyaltyInfo = {
   encode(message: MsgRoyaltyInfo, writer: Writer = Writer.create()): Writer {
     if (message.creator !== '') {
       writer.uint32(10).string(message.creator)
     }
+    if (message.id !== '') {
+      writer.uint32(18).string(message.id)
+    }
     if (message.receiver !== '') {
-      writer.uint32(18).string(message.receiver)
+      writer.uint32(26).string(message.receiver)
     }
     if (message.royaltyFeePercentage !== 0) {
-      writer.uint32(24).uint64(message.royaltyFeePercentage)
+      writer.uint32(32).uint64(message.royaltyFeePercentage)
     }
     if (message.metadataRef !== '') {
-      writer.uint32(34).string(message.metadataRef)
+      writer.uint32(42).string(message.metadataRef)
     }
     if (message.denomId !== '') {
-      writer.uint32(42).string(message.denomId)
+      writer.uint32(50).string(message.denomId)
     }
     return writer
   },
@@ -2758,15 +2845,18 @@ export const MsgRoyaltyInfo = {
           message.creator = reader.string()
           break
         case 2:
-          message.receiver = reader.string()
+          message.id = reader.string()
           break
         case 3:
-          message.royaltyFeePercentage = longToNumber(reader.uint64() as Long)
+          message.receiver = reader.string()
           break
         case 4:
-          message.metadataRef = reader.string()
+          message.royaltyFeePercentage = longToNumber(reader.uint64() as Long)
           break
         case 5:
+          message.metadataRef = reader.string()
+          break
+        case 6:
           message.denomId = reader.string()
           break
         default:
@@ -2783,6 +2873,11 @@ export const MsgRoyaltyInfo = {
       message.creator = String(object.creator)
     } else {
       message.creator = ''
+    }
+    if (object.id !== undefined && object.id !== null) {
+      message.id = String(object.id)
+    } else {
+      message.id = ''
     }
     if (object.receiver !== undefined && object.receiver !== null) {
       message.receiver = String(object.receiver)
@@ -2810,6 +2905,7 @@ export const MsgRoyaltyInfo = {
   toJSON(message: MsgRoyaltyInfo): unknown {
     const obj: any = {}
     message.creator !== undefined && (obj.creator = message.creator)
+    message.id !== undefined && (obj.id = message.id)
     message.receiver !== undefined && (obj.receiver = message.receiver)
     message.royaltyFeePercentage !== undefined && (obj.royaltyFeePercentage = message.royaltyFeePercentage)
     message.metadataRef !== undefined && (obj.metadataRef = message.metadataRef)
@@ -2823,6 +2919,11 @@ export const MsgRoyaltyInfo = {
       message.creator = object.creator
     } else {
       message.creator = ''
+    }
+    if (object.id !== undefined && object.id !== null) {
+      message.id = object.id
+    } else {
+      message.id = ''
     }
     if (object.receiver !== undefined && object.receiver !== null) {
       message.receiver = object.receiver
@@ -5787,19 +5888,329 @@ export const MsgFileResponse = {
   }
 }
 
+const baseMsgSendMetadataOwnership: object = { creator: '' }
+
+export const MsgSendMetadataOwnership = {
+  encode(message: MsgSendMetadataOwnership, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== '') {
+      writer.uint32(10).string(message.creator)
+    }
+    if (message.data !== undefined) {
+      AguaclaraPacketData.encode(message.data, writer.uint32(18).fork()).ldelim()
+    }
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnership {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseMsgSendMetadataOwnership } as MsgSendMetadataOwnership
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string()
+          break
+        case 2:
+          message.data = AguaclaraPacketData.decode(reader, reader.uint32())
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): MsgSendMetadataOwnership {
+    const message = { ...baseMsgSendMetadataOwnership } as MsgSendMetadataOwnership
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator)
+    } else {
+      message.creator = ''
+    }
+    if (object.data !== undefined && object.data !== null) {
+      message.data = AguaclaraPacketData.fromJSON(object.data)
+    } else {
+      message.data = undefined
+    }
+    return message
+  },
+
+  toJSON(message: MsgSendMetadataOwnership): unknown {
+    const obj: any = {}
+    message.creator !== undefined && (obj.creator = message.creator)
+    message.data !== undefined && (obj.data = message.data ? AguaclaraPacketData.toJSON(message.data) : undefined)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<MsgSendMetadataOwnership>): MsgSendMetadataOwnership {
+    const message = { ...baseMsgSendMetadataOwnership } as MsgSendMetadataOwnership
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator
+    } else {
+      message.creator = ''
+    }
+    if (object.data !== undefined && object.data !== null) {
+      message.data = AguaclaraPacketData.fromPartial(object.data)
+    } else {
+      message.data = undefined
+    }
+    return message
+  }
+}
+
+const baseMsgSendMetadataOwnershipResponse: object = { cid: '' }
+
+export const MsgSendMetadataOwnershipResponse = {
+  encode(message: MsgSendMetadataOwnershipResponse, writer: Writer = Writer.create()): Writer {
+    if (message.cid !== '') {
+      writer.uint32(10).string(message.cid)
+    }
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnershipResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseMsgSendMetadataOwnershipResponse } as MsgSendMetadataOwnershipResponse
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.cid = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): MsgSendMetadataOwnershipResponse {
+    const message = { ...baseMsgSendMetadataOwnershipResponse } as MsgSendMetadataOwnershipResponse
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = String(object.cid)
+    } else {
+      message.cid = ''
+    }
+    return message
+  },
+
+  toJSON(message: MsgSendMetadataOwnershipResponse): unknown {
+    const obj: any = {}
+    message.cid !== undefined && (obj.cid = message.cid)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<MsgSendMetadataOwnershipResponse>): MsgSendMetadataOwnershipResponse {
+    const message = { ...baseMsgSendMetadataOwnershipResponse } as MsgSendMetadataOwnershipResponse
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = object.cid
+    } else {
+      message.cid = ''
+    }
+    return message
+  }
+}
+
+const baseAguaclaraPacketData: object = {
+  creator: '',
+  tokenAddress: '',
+  tokenId: '',
+  didRecipient: '',
+  toMetadata: '',
+  hash: '',
+  currentChainId: '',
+  recipientChainId: ''
+}
+
+export const AguaclaraPacketData = {
+  encode(message: AguaclaraPacketData, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== '') {
+      writer.uint32(10).string(message.creator)
+    }
+    if (message.tokenAddress !== '') {
+      writer.uint32(18).string(message.tokenAddress)
+    }
+    if (message.tokenId !== '') {
+      writer.uint32(26).string(message.tokenId)
+    }
+    if (message.didRecipient !== '') {
+      writer.uint32(34).string(message.didRecipient)
+    }
+    if (message.toMetadata !== '') {
+      writer.uint32(42).string(message.toMetadata)
+    }
+    if (message.hash !== '') {
+      writer.uint32(50).string(message.hash)
+    }
+    if (message.currentChainId !== '') {
+      writer.uint32(58).string(message.currentChainId)
+    }
+    if (message.recipientChainId !== '') {
+      writer.uint32(66).string(message.recipientChainId)
+    }
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): AguaclaraPacketData {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseAguaclaraPacketData } as AguaclaraPacketData
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string()
+          break
+        case 2:
+          message.tokenAddress = reader.string()
+          break
+        case 3:
+          message.tokenId = reader.string()
+          break
+        case 4:
+          message.didRecipient = reader.string()
+          break
+        case 5:
+          message.toMetadata = reader.string()
+          break
+        case 6:
+          message.hash = reader.string()
+          break
+        case 7:
+          message.currentChainId = reader.string()
+          break
+        case 8:
+          message.recipientChainId = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): AguaclaraPacketData {
+    const message = { ...baseAguaclaraPacketData } as AguaclaraPacketData
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator)
+    } else {
+      message.creator = ''
+    }
+    if (object.tokenAddress !== undefined && object.tokenAddress !== null) {
+      message.tokenAddress = String(object.tokenAddress)
+    } else {
+      message.tokenAddress = ''
+    }
+    if (object.tokenId !== undefined && object.tokenId !== null) {
+      message.tokenId = String(object.tokenId)
+    } else {
+      message.tokenId = ''
+    }
+    if (object.didRecipient !== undefined && object.didRecipient !== null) {
+      message.didRecipient = String(object.didRecipient)
+    } else {
+      message.didRecipient = ''
+    }
+    if (object.toMetadata !== undefined && object.toMetadata !== null) {
+      message.toMetadata = String(object.toMetadata)
+    } else {
+      message.toMetadata = ''
+    }
+    if (object.hash !== undefined && object.hash !== null) {
+      message.hash = String(object.hash)
+    } else {
+      message.hash = ''
+    }
+    if (object.currentChainId !== undefined && object.currentChainId !== null) {
+      message.currentChainId = String(object.currentChainId)
+    } else {
+      message.currentChainId = ''
+    }
+    if (object.recipientChainId !== undefined && object.recipientChainId !== null) {
+      message.recipientChainId = String(object.recipientChainId)
+    } else {
+      message.recipientChainId = ''
+    }
+    return message
+  },
+
+  toJSON(message: AguaclaraPacketData): unknown {
+    const obj: any = {}
+    message.creator !== undefined && (obj.creator = message.creator)
+    message.tokenAddress !== undefined && (obj.tokenAddress = message.tokenAddress)
+    message.tokenId !== undefined && (obj.tokenId = message.tokenId)
+    message.didRecipient !== undefined && (obj.didRecipient = message.didRecipient)
+    message.toMetadata !== undefined && (obj.toMetadata = message.toMetadata)
+    message.hash !== undefined && (obj.hash = message.hash)
+    message.currentChainId !== undefined && (obj.currentChainId = message.currentChainId)
+    message.recipientChainId !== undefined && (obj.recipientChainId = message.recipientChainId)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<AguaclaraPacketData>): AguaclaraPacketData {
+    const message = { ...baseAguaclaraPacketData } as AguaclaraPacketData
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator
+    } else {
+      message.creator = ''
+    }
+    if (object.tokenAddress !== undefined && object.tokenAddress !== null) {
+      message.tokenAddress = object.tokenAddress
+    } else {
+      message.tokenAddress = ''
+    }
+    if (object.tokenId !== undefined && object.tokenId !== null) {
+      message.tokenId = object.tokenId
+    } else {
+      message.tokenId = ''
+    }
+    if (object.didRecipient !== undefined && object.didRecipient !== null) {
+      message.didRecipient = object.didRecipient
+    } else {
+      message.didRecipient = ''
+    }
+    if (object.toMetadata !== undefined && object.toMetadata !== null) {
+      message.toMetadata = object.toMetadata
+    } else {
+      message.toMetadata = ''
+    }
+    if (object.hash !== undefined && object.hash !== null) {
+      message.hash = object.hash
+    } else {
+      message.hash = ''
+    }
+    if (object.currentChainId !== undefined && object.currentChainId !== null) {
+      message.currentChainId = object.currentChainId
+    } else {
+      message.currentChainId = ''
+    }
+    if (object.recipientChainId !== undefined && object.recipientChainId !== null) {
+      message.recipientChainId = object.recipientChainId
+    } else {
+      message.recipientChainId = ''
+    }
+    return message
+  }
+}
+
 /** Msg defines the Msg service. */
 export interface Msg {
+  /** Send cross chain message */
+  SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse>
   /** CreateDid */
   CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse>
   /** UpdateDid */
   UpdateDid(request: MsgUpdateDid): Promise<MsgUpdateDidResponse>
   /** RevokeDid */
   RevokeDid(request: MsgRevokeDid): Promise<MsgRevokeDidResponse>
-  /**
-   * RoyaltyInfo defines a metadata CID royalty info
-   *  rpc RoyaltyInfo(MsgRoyaltyInfo) returns (MsgRoyaltyInfoResponse);
-   * ChangeOwer TODO
-   */
+  /** RoyaltyInfo defines a metadata CID royalty info */
+  RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse>
+  /** ChangeOwer TODO */
   ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse>
   /**
    * rpc ValidDelegate(MsgValidDelegate) returns (MsgValidDelegateResponse);
@@ -5839,6 +6250,12 @@ export class MsgClientImpl implements Msg {
   constructor(rpc: Rpc) {
     this.rpc = rpc
   }
+  SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse> {
+    const data = MsgSendMetadataOwnership.encode(request).finish()
+    const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'SendMetadataOwnership', data)
+    return promise.then((data) => MsgSendMetadataOwnershipResponse.decode(new Reader(data)))
+  }
+
   CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse> {
     const data = MsgCreateDid.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'CreateDid', data)
@@ -5855,6 +6272,12 @@ export class MsgClientImpl implements Msg {
     const data = MsgRevokeDid.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'RevokeDid', data)
     return promise.then((data) => MsgRevokeDidResponse.decode(new Reader(data)))
+  }
+
+  RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse> {
+    const data = MsgRoyaltyInfo.encode(request).finish()
+    const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'RoyaltyInfo', data)
+    return promise.then((data) => MsgRoyaltyInfoResponse.decode(new Reader(data)))
   }
 
   ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse> {

@@ -1,4 +1,5 @@
 // THIS FILE IS GENERATED AUTOMATICALLY. DO NOT MODIFY.
+import ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAguaclara from './Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.aguaclara';
 import ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAnconprotocol from './Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol';
 import CosmosCosmosSdkCosmosAuthzV1Beta1 from './cosmos/cosmos-sdk/cosmos.authz.v1beta1';
 import CosmosCosmosSdkCosmosBankV1Beta1 from './cosmos/cosmos-sdk/cosmos.bank.v1beta1';
@@ -13,6 +14,7 @@ import CosmosCosmosSdkCosmosVestingV1Beta1 from './cosmos/cosmos-sdk/cosmos.vest
 import CosmosIbcGoIbcApplicationsTransferV1 from './cosmos/ibc-go/ibc.applications.transfer.v1';
 import TharsisEthermintEthermintEvmV1 from './tharsis/ethermint/ethermint.evm.v1';
 export default {
+    ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAguaclara: load(ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAguaclara, 'ElectronicSignaturesIndustries.anconprotocol.aguaclara'),
     ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAnconprotocol: load(ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAnconprotocol, 'ElectronicSignaturesIndustries.anconprotocol.anconprotocol'),
     CosmosCosmosSdkCosmosAuthzV1Beta1: load(CosmosCosmosSdkCosmosAuthzV1Beta1, 'cosmos.authz.v1beta1'),
     CosmosCosmosSdkCosmosBankV1Beta1: load(CosmosCosmosSdkCosmosBankV1Beta1, 'cosmos.bank.v1beta1'),

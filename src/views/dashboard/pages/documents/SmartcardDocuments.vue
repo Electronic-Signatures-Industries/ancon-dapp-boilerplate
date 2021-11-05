@@ -31,7 +31,10 @@
             </v-list>
             <v-divider></v-divider>
             <v-list nav dense>
-              <v-list-item-group v-model="sideBarItems.selectedItem" color="primary">
+              <v-list-item-group
+                v-model="sideBarItems.selectedItem"
+                color="primary"
+              >
                 <v-list-item v-for="(item, i) in sideBarItems.items" :key="i">
                   <v-list-item-icon>
                     <v-icon v-text="item.icon"></v-icon>
@@ -388,6 +391,8 @@ import {
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
+import { Web3Provider } from "@ethersproject/providers";
+import { AnconWeb3Provider } from "cosmjs-web3provider/anconProvider";
 
 @Component({
   components: {},
@@ -513,7 +518,7 @@ export default class SmartcardDocuments extends Vue {
   web3instance: Web3;
   nftWeb3Contract: any;
   daiWeb3contract: any;
-  anconWeb3client: AnconWeb3Client;
+  anconWeb3client: AnconWeb3Provider;
   onboard = null;
   chainId: number;
   web3storageAPIKey =
@@ -632,9 +637,18 @@ export default class SmartcardDocuments extends Vue {
     const provider = new ethers.providers.Web3Provider(
       this.web3instance.currentProvider
     );
-    this.anconWeb3client = new AnconWeb3Client(
+    // this.anconWeb3client = new AnconWeb3Client(
+    //   "https://ancon.did.pa/evm",
+    //   provider,
+    //   accounts[0] as string
+    // );
+
+    this.anconWeb3client = new AnconWeb3Provider(
       "https://ancon.did.pa/evm",
-      provider,
+      "ancon",
+      "anconprotocol_9000-1",
+      9000,
+      new ethers.providers.Web3Provider(window.ethereum),
       accounts[0] as string
     );
     //debugger
@@ -675,7 +689,8 @@ export default class SmartcardDocuments extends Vue {
     );
 
     try {
-      await this.anconWeb3client.connect();
+      //await this.anconWeb3client.connect();
+      await this.anconWeb3client.connectProvider();
       this.connected = true;
 
       this.walletCosmosAddress = this.anconWeb3client.cosmosAccount.address;
@@ -928,6 +943,8 @@ export default class SmartcardDocuments extends Vue {
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
       sender: this.anconWeb3client.cosmosAccount.address,
+
+      //tokenaddress: ,
     });
 
     // Change Metadata Message request

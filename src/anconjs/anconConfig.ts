@@ -30,19 +30,19 @@ const config ={
   },
   
   bech32Config: {
-      bech32PrefixAccAddr: "ethm",
-      bech32PrefixAccPub: "ethmpub",
-      bech32PrefixValAddr: "ethmvaloper",
-      bech32PrefixValPub: "ethmvaloperpub",
-      bech32PrefixConsAddr: "ethmvalcons",
-      bech32PrefixConsPub: "ethmvalconspub"
+      bech32PrefixAccAddr: "ancon",
+      bech32PrefixAccPub: "anconpub",
+      bech32PrefixValAddr: "anconvaloper",
+      bech32PrefixValPub: "anconvaloperpub",
+      bech32PrefixConsAddr: "anconvalcons",
+      bech32PrefixConsPub: "anconvalconspub"
   },
   // List of all coin/tokens used in this chain.
   currencies: [{
       // Coin denomination to be displayed to the user.
-      coinDenom: "photon",
+      coinDenom: "ancon",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-      coinMinimalDenom: "aphoton",
+      coinMinimalDenom: "aancon",
       // # of decimal points to convert minimal denomination to user-facing denomination.
       coinDecimals: 18,
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
@@ -52,9 +52,9 @@ const config ={
   // List of coin/tokens used as a fee token in this chain.
   feeCurrencies: [{
       // Coin denomination to be displayed to the user.
-      coinDenom: "photon",
+      coinDenom: "ancon",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-      coinMinimalDenom: "aphoton",
+      coinMinimalDenom: "aancon",
       // # of decimal points to convert minimal denomination to user-facing denomination.
       coinDecimals: 18,
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.

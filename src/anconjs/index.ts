@@ -41,7 +41,6 @@ import { ethers, Transaction } from 'ethers'
 import fetch from 'node-fetch'
 import { Wallet } from 'xdv-universal-wallet-core'
 import {
-  encoder,
   queryClient,
   registry,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
@@ -106,8 +105,8 @@ export class AnconWeb3Client {
    * @param callback UI purposes
    * @returns
    */
-  async signAndBroadcast(evmChainId: number, methodName: string, msg: any) {
-    const encoded = encoder[methodName](msg)
+  async signAndBroadcast(evmChainId: number, msg: any) {
+    const encoded = this.connectedSigner.registry.encode(msg)
 
     const fee = {
       amount: [
@@ -224,7 +223,7 @@ export class AnconWeb3Client {
     this.connectedSigner = await SigningStargateClient.connectWithSigner(
       this.rpcUrl,
       offlineSigner,
-      { registry, prefix: 'ethm' },
+      { registry, prefix: 'ancon' },
     )
 
     //@ts-ignore

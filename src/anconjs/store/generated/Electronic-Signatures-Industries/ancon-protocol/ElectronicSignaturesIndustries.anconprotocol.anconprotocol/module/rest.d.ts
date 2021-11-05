@@ -1,3 +1,13 @@
+export interface AnconprotocolAguaclaraPacketData {
+    creator?: string;
+    tokenAddress?: string;
+    tokenId?: string;
+    didRecipient?: string;
+    toMetadata?: string;
+    hash?: string;
+    currentChainId?: string;
+    recipientChainId?: string;
+}
 export interface AnconprotocolBaseNFT {
     id?: string;
     name?: string;
@@ -81,6 +91,15 @@ export interface AnconprotocolMsgRevokeDidResponse {
     /** @format uint64 */
     id?: string;
 }
+export interface AnconprotocolMsgRoyaltyInfoResponse {
+    receiver?: string;
+    /** @format uint64 */
+    royaltyFeePercentage?: string;
+    metadataRef?: string;
+}
+export interface AnconprotocolMsgSendMetadataOwnershipResponse {
+    cid?: string;
+}
 /**
  * MsgTransferDenomResponse defines the Msg/TransferDenom response type.
  */
@@ -91,7 +110,8 @@ export declare type AnconprotocolMsgTransferDenomResponse = object;
 export declare type AnconprotocolMsgTransferNFTResponse = object;
 export declare type AnconprotocolMsgUpdateDidResponse = object;
 export interface AnconprotocolMsgUpdateMetadataOwnershipResponse {
-    cid?: string;
+    metadataRef?: string;
+    packetRef?: string;
 }
 export interface AnconprotocolOwner {
     address?: string;
@@ -126,10 +146,8 @@ export interface AnconprotocolQueryDenomsResponse {
      */
     pagination?: V1Beta1PageResponse;
 }
-export declare type AnconprotocolQueryDidWebResponse = object;
 export declare type AnconprotocolQueryGetAttributesResponse = object;
 export declare type AnconprotocolQueryGetDelegateResponse = object;
-export declare type AnconprotocolQueryGetDidResponse = object;
 export declare type AnconprotocolQueryIdentifyOwnerResponse = object;
 export interface AnconprotocolQueryNFTResponse {
     nft?: AnconprotocolBaseNFT;
@@ -425,7 +443,7 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
      * @name QueryGetDidKey
      * @request GET:/ancon/didregistry/{name}
      */
-    queryGetDidKey: (name: string, params?: RequestParams) => Promise<HttpResponse<object, RpcStatus>>;
+    queryGetDidKey: (name: string, params?: RequestParams) => Promise<HttpResponse<AnconprotocolQueryResourceResponse, RpcStatus>>;
     /**
      * No description
      *
@@ -536,6 +554,6 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
      * @name QueryResolveDidWeb
      * @request GET:/user/{name}/did.json
      */
-    queryResolveDidWeb: (name: string, params?: RequestParams) => Promise<HttpResponse<object, RpcStatus>>;
+    queryResolveDidWeb: (name: string, params?: RequestParams) => Promise<HttpResponse<AnconprotocolQueryResourceResponse, RpcStatus>>;
 }
 export {};

@@ -1,26 +1,9 @@
 import { Writer, Reader } from 'protobufjs/minimal';
 export declare const protobufPackage = "ElectronicSignaturesIndustries.anconprotocol.anconprotocol";
-/** BaseNFT defines a non-fungible token */
-export interface Voucher {
-    /** details */
-    tokenName: string;
-    tokenSymbol: string;
-    uri: string;
-    owner: string;
-    didRecipient: string;
-    price: number;
-    /** sig(details) */
-    r: string;
-    s: string;
-    v: number;
-}
 export interface DIDOwner {
     identity: string;
     owner: string;
-    /** internal use eg. did:ancon:{hex-bech32} */
-    didAncon: string;
-    didKey: string;
-    didWeb: string;
+    cid: string;
     didWebDeactivated: boolean;
     vanityName: string;
 }
@@ -46,13 +29,6 @@ export interface Attribute {
     name: Uint8Array;
     value: Uint8Array;
 }
-export declare const Voucher: {
-    encode(message: Voucher, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): Voucher;
-    fromJSON(object: any): Voucher;
-    toJSON(message: Voucher): unknown;
-    fromPartial(object: DeepPartial<Voucher>): Voucher;
-};
 export declare const DIDOwner: {
     encode(message: DIDOwner, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): DIDOwner;

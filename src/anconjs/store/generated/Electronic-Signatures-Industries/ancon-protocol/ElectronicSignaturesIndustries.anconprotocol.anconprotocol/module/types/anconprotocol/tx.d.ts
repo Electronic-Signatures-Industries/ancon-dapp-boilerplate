@@ -11,9 +11,12 @@ export interface MsgUpdateMetadataOwnership {
     /** optional */
     recipientChainId: string;
     sender: string;
+    tokenAddress: string;
+    tokenId: string;
 }
 export interface MsgUpdateMetadataOwnershipResponse {
-    cid: string;
+    metadataRef: string;
+    packetRef: string;
 }
 export interface MsgRegisterRelay {
     sender: string;
@@ -161,6 +164,7 @@ export interface MsgMintTrustedResourceResponse {
 /** MsgRoyaltyInfo */
 export interface MsgRoyaltyInfo {
     creator: string;
+    id: string;
     receiver: string;
     royaltyFeePercentage: number;
     metadataRef: string;
@@ -353,6 +357,23 @@ export interface MsgFile {
 }
 export interface MsgFileResponse {
     hash: string;
+}
+export interface MsgSendMetadataOwnership {
+    creator: string;
+    data: AguaclaraPacketData | undefined;
+}
+export interface MsgSendMetadataOwnershipResponse {
+    cid: string;
+}
+export interface AguaclaraPacketData {
+    creator: string;
+    tokenAddress: string;
+    tokenId: string;
+    didRecipient: string;
+    toMetadata: string;
+    hash: string;
+    currentChainId: string;
+    recipientChainId: string;
 }
 export declare const MsgUpdateMetadataOwnership: {
     encode(message: MsgUpdateMetadataOwnership, writer?: Writer): Writer;
@@ -739,19 +760,40 @@ export declare const MsgFileResponse: {
     toJSON(message: MsgFileResponse): unknown;
     fromPartial(object: DeepPartial<MsgFileResponse>): MsgFileResponse;
 };
+export declare const MsgSendMetadataOwnership: {
+    encode(message: MsgSendMetadataOwnership, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnership;
+    fromJSON(object: any): MsgSendMetadataOwnership;
+    toJSON(message: MsgSendMetadataOwnership): unknown;
+    fromPartial(object: DeepPartial<MsgSendMetadataOwnership>): MsgSendMetadataOwnership;
+};
+export declare const MsgSendMetadataOwnershipResponse: {
+    encode(message: MsgSendMetadataOwnershipResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnershipResponse;
+    fromJSON(object: any): MsgSendMetadataOwnershipResponse;
+    toJSON(message: MsgSendMetadataOwnershipResponse): unknown;
+    fromPartial(object: DeepPartial<MsgSendMetadataOwnershipResponse>): MsgSendMetadataOwnershipResponse;
+};
+export declare const AguaclaraPacketData: {
+    encode(message: AguaclaraPacketData, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): AguaclaraPacketData;
+    fromJSON(object: any): AguaclaraPacketData;
+    toJSON(message: AguaclaraPacketData): unknown;
+    fromPartial(object: DeepPartial<AguaclaraPacketData>): AguaclaraPacketData;
+};
 /** Msg defines the Msg service. */
 export interface Msg {
+    /** Send cross chain message */
+    SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse>;
     /** CreateDid */
     CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse>;
     /** UpdateDid */
     UpdateDid(request: MsgUpdateDid): Promise<MsgUpdateDidResponse>;
     /** RevokeDid */
     RevokeDid(request: MsgRevokeDid): Promise<MsgRevokeDidResponse>;
-    /**
-     * RoyaltyInfo defines a metadata CID royalty info
-     *  rpc RoyaltyInfo(MsgRoyaltyInfo) returns (MsgRoyaltyInfoResponse);
-     * ChangeOwer TODO
-     */
+    /** RoyaltyInfo defines a metadata CID royalty info */
+    RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse>;
+    /** ChangeOwer TODO */
     ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse>;
     /**
      * rpc ValidDelegate(MsgValidDelegate) returns (MsgValidDelegateResponse);
@@ -788,9 +830,11 @@ export interface Msg {
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
     constructor(rpc: Rpc);
+    SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse>;
     CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse>;
     UpdateDid(request: MsgUpdateDid): Promise<MsgUpdateDidResponse>;
     RevokeDid(request: MsgRevokeDid): Promise<MsgRevokeDidResponse>;
+    RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse>;
     ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse>;
     RevokeDelegate(request: MsgRevokeDelegate): Promise<MsgRevokeDelegateResponse>;
     GrantDelegate(request: MsgGrantDelegate): Promise<MsgGrantDelegateResponse>;

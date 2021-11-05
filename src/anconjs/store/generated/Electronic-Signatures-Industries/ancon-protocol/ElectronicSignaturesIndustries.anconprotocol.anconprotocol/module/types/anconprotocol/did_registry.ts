@@ -4,28 +4,10 @@ import { util, configure, Writer, Reader } from 'protobufjs/minimal'
 
 export const protobufPackage = 'ElectronicSignaturesIndustries.anconprotocol.anconprotocol'
 
-/** BaseNFT defines a non-fungible token */
-export interface Voucher {
-  /** details */
-  tokenName: string
-  tokenSymbol: string
-  uri: string
-  owner: string
-  didRecipient: string
-  price: number
-  /** sig(details) */
-  r: string
-  s: string
-  v: number
-}
-
 export interface DIDOwner {
   identity: string
   owner: string
-  /** internal use eg. did:ancon:{hex-bech32} */
-  didAncon: string
-  didKey: string
-  didWeb: string
+  cid: string
   didWebDeactivated: boolean
   vanityName: string
 }
@@ -56,198 +38,7 @@ export interface Attribute {
   value: Uint8Array
 }
 
-const baseVoucher: object = { tokenName: '', tokenSymbol: '', uri: '', owner: '', didRecipient: '', price: 0, r: '', s: '', v: 0 }
-
-export const Voucher = {
-  encode(message: Voucher, writer: Writer = Writer.create()): Writer {
-    if (message.tokenName !== '') {
-      writer.uint32(10).string(message.tokenName)
-    }
-    if (message.tokenSymbol !== '') {
-      writer.uint32(18).string(message.tokenSymbol)
-    }
-    if (message.uri !== '') {
-      writer.uint32(26).string(message.uri)
-    }
-    if (message.owner !== '') {
-      writer.uint32(34).string(message.owner)
-    }
-    if (message.didRecipient !== '') {
-      writer.uint32(42).string(message.didRecipient)
-    }
-    if (message.price !== 0) {
-      writer.uint32(48).uint64(message.price)
-    }
-    if (message.r !== '') {
-      writer.uint32(58).string(message.r)
-    }
-    if (message.s !== '') {
-      writer.uint32(66).string(message.s)
-    }
-    if (message.v !== 0) {
-      writer.uint32(72).uint64(message.v)
-    }
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): Voucher {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseVoucher } as Voucher
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        case 1:
-          message.tokenName = reader.string()
-          break
-        case 2:
-          message.tokenSymbol = reader.string()
-          break
-        case 3:
-          message.uri = reader.string()
-          break
-        case 4:
-          message.owner = reader.string()
-          break
-        case 5:
-          message.didRecipient = reader.string()
-          break
-        case 6:
-          message.price = longToNumber(reader.uint64() as Long)
-          break
-        case 7:
-          message.r = reader.string()
-          break
-        case 8:
-          message.s = reader.string()
-          break
-        case 9:
-          message.v = longToNumber(reader.uint64() as Long)
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(object: any): Voucher {
-    const message = { ...baseVoucher } as Voucher
-    if (object.tokenName !== undefined && object.tokenName !== null) {
-      message.tokenName = String(object.tokenName)
-    } else {
-      message.tokenName = ''
-    }
-    if (object.tokenSymbol !== undefined && object.tokenSymbol !== null) {
-      message.tokenSymbol = String(object.tokenSymbol)
-    } else {
-      message.tokenSymbol = ''
-    }
-    if (object.uri !== undefined && object.uri !== null) {
-      message.uri = String(object.uri)
-    } else {
-      message.uri = ''
-    }
-    if (object.owner !== undefined && object.owner !== null) {
-      message.owner = String(object.owner)
-    } else {
-      message.owner = ''
-    }
-    if (object.didRecipient !== undefined && object.didRecipient !== null) {
-      message.didRecipient = String(object.didRecipient)
-    } else {
-      message.didRecipient = ''
-    }
-    if (object.price !== undefined && object.price !== null) {
-      message.price = Number(object.price)
-    } else {
-      message.price = 0
-    }
-    if (object.r !== undefined && object.r !== null) {
-      message.r = String(object.r)
-    } else {
-      message.r = ''
-    }
-    if (object.s !== undefined && object.s !== null) {
-      message.s = String(object.s)
-    } else {
-      message.s = ''
-    }
-    if (object.v !== undefined && object.v !== null) {
-      message.v = Number(object.v)
-    } else {
-      message.v = 0
-    }
-    return message
-  },
-
-  toJSON(message: Voucher): unknown {
-    const obj: any = {}
-    message.tokenName !== undefined && (obj.tokenName = message.tokenName)
-    message.tokenSymbol !== undefined && (obj.tokenSymbol = message.tokenSymbol)
-    message.uri !== undefined && (obj.uri = message.uri)
-    message.owner !== undefined && (obj.owner = message.owner)
-    message.didRecipient !== undefined && (obj.didRecipient = message.didRecipient)
-    message.price !== undefined && (obj.price = message.price)
-    message.r !== undefined && (obj.r = message.r)
-    message.s !== undefined && (obj.s = message.s)
-    message.v !== undefined && (obj.v = message.v)
-    return obj
-  },
-
-  fromPartial(object: DeepPartial<Voucher>): Voucher {
-    const message = { ...baseVoucher } as Voucher
-    if (object.tokenName !== undefined && object.tokenName !== null) {
-      message.tokenName = object.tokenName
-    } else {
-      message.tokenName = ''
-    }
-    if (object.tokenSymbol !== undefined && object.tokenSymbol !== null) {
-      message.tokenSymbol = object.tokenSymbol
-    } else {
-      message.tokenSymbol = ''
-    }
-    if (object.uri !== undefined && object.uri !== null) {
-      message.uri = object.uri
-    } else {
-      message.uri = ''
-    }
-    if (object.owner !== undefined && object.owner !== null) {
-      message.owner = object.owner
-    } else {
-      message.owner = ''
-    }
-    if (object.didRecipient !== undefined && object.didRecipient !== null) {
-      message.didRecipient = object.didRecipient
-    } else {
-      message.didRecipient = ''
-    }
-    if (object.price !== undefined && object.price !== null) {
-      message.price = object.price
-    } else {
-      message.price = 0
-    }
-    if (object.r !== undefined && object.r !== null) {
-      message.r = object.r
-    } else {
-      message.r = ''
-    }
-    if (object.s !== undefined && object.s !== null) {
-      message.s = object.s
-    } else {
-      message.s = ''
-    }
-    if (object.v !== undefined && object.v !== null) {
-      message.v = object.v
-    } else {
-      message.v = 0
-    }
-    return message
-  }
-}
-
-const baseDIDOwner: object = { identity: '', owner: '', didAncon: '', didKey: '', didWeb: '', didWebDeactivated: false, vanityName: '' }
+const baseDIDOwner: object = { identity: '', owner: '', cid: '', didWebDeactivated: false, vanityName: '' }
 
 export const DIDOwner = {
   encode(message: DIDOwner, writer: Writer = Writer.create()): Writer {
@@ -257,20 +48,14 @@ export const DIDOwner = {
     if (message.owner !== '') {
       writer.uint32(18).string(message.owner)
     }
-    if (message.didAncon !== '') {
-      writer.uint32(26).string(message.didAncon)
-    }
-    if (message.didKey !== '') {
-      writer.uint32(34).string(message.didKey)
-    }
-    if (message.didWeb !== '') {
-      writer.uint32(42).string(message.didWeb)
+    if (message.cid !== '') {
+      writer.uint32(26).string(message.cid)
     }
     if (message.didWebDeactivated === true) {
-      writer.uint32(48).bool(message.didWebDeactivated)
+      writer.uint32(32).bool(message.didWebDeactivated)
     }
     if (message.vanityName !== '') {
-      writer.uint32(58).string(message.vanityName)
+      writer.uint32(42).string(message.vanityName)
     }
     return writer
   },
@@ -289,18 +74,12 @@ export const DIDOwner = {
           message.owner = reader.string()
           break
         case 3:
-          message.didAncon = reader.string()
+          message.cid = reader.string()
           break
         case 4:
-          message.didKey = reader.string()
-          break
-        case 5:
-          message.didWeb = reader.string()
-          break
-        case 6:
           message.didWebDeactivated = reader.bool()
           break
-        case 7:
+        case 5:
           message.vanityName = reader.string()
           break
         default:
@@ -323,20 +102,10 @@ export const DIDOwner = {
     } else {
       message.owner = ''
     }
-    if (object.didAncon !== undefined && object.didAncon !== null) {
-      message.didAncon = String(object.didAncon)
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = String(object.cid)
     } else {
-      message.didAncon = ''
-    }
-    if (object.didKey !== undefined && object.didKey !== null) {
-      message.didKey = String(object.didKey)
-    } else {
-      message.didKey = ''
-    }
-    if (object.didWeb !== undefined && object.didWeb !== null) {
-      message.didWeb = String(object.didWeb)
-    } else {
-      message.didWeb = ''
+      message.cid = ''
     }
     if (object.didWebDeactivated !== undefined && object.didWebDeactivated !== null) {
       message.didWebDeactivated = Boolean(object.didWebDeactivated)
@@ -355,9 +124,7 @@ export const DIDOwner = {
     const obj: any = {}
     message.identity !== undefined && (obj.identity = message.identity)
     message.owner !== undefined && (obj.owner = message.owner)
-    message.didAncon !== undefined && (obj.didAncon = message.didAncon)
-    message.didKey !== undefined && (obj.didKey = message.didKey)
-    message.didWeb !== undefined && (obj.didWeb = message.didWeb)
+    message.cid !== undefined && (obj.cid = message.cid)
     message.didWebDeactivated !== undefined && (obj.didWebDeactivated = message.didWebDeactivated)
     message.vanityName !== undefined && (obj.vanityName = message.vanityName)
     return obj
@@ -375,20 +142,10 @@ export const DIDOwner = {
     } else {
       message.owner = ''
     }
-    if (object.didAncon !== undefined && object.didAncon !== null) {
-      message.didAncon = object.didAncon
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = object.cid
     } else {
-      message.didAncon = ''
-    }
-    if (object.didKey !== undefined && object.didKey !== null) {
-      message.didKey = object.didKey
-    } else {
-      message.didKey = ''
-    }
-    if (object.didWeb !== undefined && object.didWeb !== null) {
-      message.didWeb = object.didWeb
-    } else {
-      message.didWeb = ''
+      message.cid = ''
     }
     if (object.didWebDeactivated !== undefined && object.didWebDeactivated !== null) {
       message.didWebDeactivated = object.didWebDeactivated

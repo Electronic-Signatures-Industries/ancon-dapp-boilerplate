@@ -55,38 +55,6 @@ export const QueryDidWebRequest = {
         return message;
     }
 };
-const baseQueryDidWebResponse = {};
-export const QueryDidWebResponse = {
-    encode(_, writer = Writer.create()) {
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryDidWebResponse };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(_) {
-        const message = { ...baseQueryDidWebResponse };
-        return message;
-    },
-    toJSON(_) {
-        const obj = {};
-        return obj;
-    },
-    fromPartial(_) {
-        const message = { ...baseQueryDidWebResponse };
-        return message;
-    }
-};
 const baseQueryProofMetadataRequest = { cid: '', path: '' };
 export const QueryProofMetadataRequest = {
     encode(message, writer = Writer.create()) {
@@ -275,38 +243,6 @@ export const QueryGetDidRequest = {
         else {
             message.name = '';
         }
-        return message;
-    }
-};
-const baseQueryGetDidResponse = {};
-export const QueryGetDidResponse = {
-    encode(_, writer = Writer.create()) {
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryGetDidResponse };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(_) {
-        const message = { ...baseQueryGetDidResponse };
-        return message;
-    },
-    toJSON(_) {
-        const obj = {};
-        return obj;
-    },
-    fromPartial(_) {
-        const message = { ...baseQueryGetDidResponse };
         return message;
     }
 };
@@ -1734,12 +1670,12 @@ export class QueryClientImpl {
     ResolveDidWeb(request) {
         const data = QueryDidWebRequest.encode(request).finish();
         const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ResolveDidWeb', data);
-        return promise.then((data) => QueryDidWebResponse.decode(new Reader(data)));
+        return promise.then((data) => QueryResourceResponse.decode(new Reader(data)));
     }
     GetDidKey(request) {
         const data = QueryGetDidRequest.encode(request).finish();
         const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'GetDidKey', data);
-        return promise.then((data) => QueryGetDidResponse.decode(new Reader(data)));
+        return promise.then((data) => QueryResourceResponse.decode(new Reader(data)));
     }
 }
 var globalThis = (() => {

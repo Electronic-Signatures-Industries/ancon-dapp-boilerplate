@@ -10,8 +10,6 @@ export interface QueryDidWebRequest {
   name: string
 }
 
-export interface QueryDidWebResponse {}
-
 export interface QueryProofMetadataRequest {
   cid: string
   path: string
@@ -25,8 +23,6 @@ export interface QueryProofResponse {
 export interface QueryGetDidRequest {
   name: string
 }
-
-export interface QueryGetDidResponse {}
 
 export interface QueryReadDidKeyRequest {
   name: string
@@ -192,44 +188,6 @@ export const QueryDidWebRequest = {
     } else {
       message.name = ''
     }
-    return message
-  }
-}
-
-const baseQueryDidWebResponse: object = {}
-
-export const QueryDidWebResponse = {
-  encode(_: QueryDidWebResponse, writer: Writer = Writer.create()): Writer {
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryDidWebResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(_: any): QueryDidWebResponse {
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
-    return message
-  },
-
-  toJSON(_: QueryDidWebResponse): unknown {
-    const obj: any = {}
-    return obj
-  },
-
-  fromPartial(_: DeepPartial<QueryDidWebResponse>): QueryDidWebResponse {
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
     return message
   }
 }
@@ -429,44 +387,6 @@ export const QueryGetDidRequest = {
     } else {
       message.name = ''
     }
-    return message
-  }
-}
-
-const baseQueryGetDidResponse: object = {}
-
-export const QueryGetDidResponse = {
-  encode(_: QueryGetDidResponse, writer: Writer = Writer.create()): Writer {
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryGetDidResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(_: any): QueryGetDidResponse {
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
-    return message
-  },
-
-  toJSON(_: QueryGetDidResponse): unknown {
-    const obj: any = {}
-    return obj
-  },
-
-  fromPartial(_: DeepPartial<QueryGetDidResponse>): QueryGetDidResponse {
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
     return message
   }
 }
@@ -1947,8 +1867,8 @@ export interface Query {
   Denoms(request: QueryDenomsRequest): Promise<QueryDenomsResponse>
   /** NFT queries the NFT for the given denom and token ID */
   GetNft(request: QueryNFTRequest): Promise<QueryNFTResponse>
-  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse>
-  GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse>
+  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse>
+  GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse>
 }
 
 export class QueryClientImpl implements Query {
@@ -2028,16 +1948,16 @@ export class QueryClientImpl implements Query {
     return promise.then((data) => QueryNFTResponse.decode(new Reader(data)))
   }
 
-  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse> {
+  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse> {
     const data = QueryDidWebRequest.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ResolveDidWeb', data)
-    return promise.then((data) => QueryDidWebResponse.decode(new Reader(data)))
+    return promise.then((data) => QueryResourceResponse.decode(new Reader(data)))
   }
 
-  GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse> {
+  GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse> {
     const data = QueryGetDidRequest.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'GetDidKey', data)
-    return promise.then((data) => QueryGetDidResponse.decode(new Reader(data)))
+    return promise.then((data) => QueryResourceResponse.decode(new Reader(data)))
   }
 }
 

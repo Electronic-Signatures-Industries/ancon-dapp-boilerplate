@@ -5,8 +5,6 @@ export declare const protobufPackage = "ElectronicSignaturesIndustries.anconprot
 export interface QueryDidWebRequest {
     name: string;
 }
-export interface QueryDidWebResponse {
-}
 export interface QueryProofMetadataRequest {
     cid: string;
     path: string;
@@ -17,8 +15,6 @@ export interface QueryProofResponse {
 }
 export interface QueryGetDidRequest {
     name: string;
-}
-export interface QueryGetDidResponse {
 }
 export interface QueryReadDidKeyRequest {
     name: string;
@@ -121,13 +117,6 @@ export declare const QueryDidWebRequest: {
     toJSON(message: QueryDidWebRequest): unknown;
     fromPartial(object: DeepPartial<QueryDidWebRequest>): QueryDidWebRequest;
 };
-export declare const QueryDidWebResponse: {
-    encode(_: QueryDidWebResponse, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): QueryDidWebResponse;
-    fromJSON(_: any): QueryDidWebResponse;
-    toJSON(_: QueryDidWebResponse): unknown;
-    fromPartial(_: DeepPartial<QueryDidWebResponse>): QueryDidWebResponse;
-};
 export declare const QueryProofMetadataRequest: {
     encode(message: QueryProofMetadataRequest, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): QueryProofMetadataRequest;
@@ -148,13 +137,6 @@ export declare const QueryGetDidRequest: {
     fromJSON(object: any): QueryGetDidRequest;
     toJSON(message: QueryGetDidRequest): unknown;
     fromPartial(object: DeepPartial<QueryGetDidRequest>): QueryGetDidRequest;
-};
-export declare const QueryGetDidResponse: {
-    encode(_: QueryGetDidResponse, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): QueryGetDidResponse;
-    fromJSON(_: any): QueryGetDidResponse;
-    toJSON(_: QueryGetDidResponse): unknown;
-    fromPartial(_: DeepPartial<QueryGetDidResponse>): QueryGetDidResponse;
 };
 export declare const QueryReadDidKeyRequest: {
     encode(message: QueryReadDidKeyRequest, writer?: Writer): Writer;
@@ -357,8 +339,8 @@ export interface Query {
     Denoms(request: QueryDenomsRequest): Promise<QueryDenomsResponse>;
     /** NFT queries the NFT for the given denom and token ID */
     GetNft(request: QueryNFTRequest): Promise<QueryNFTResponse>;
-    ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse>;
-    GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse>;
+    ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse>;
+    GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse>;
 }
 export declare class QueryClientImpl implements Query {
     private readonly rpc;
@@ -375,8 +357,8 @@ export declare class QueryClientImpl implements Query {
     Denom(request: QueryDenomRequest): Promise<QueryDenomResponse>;
     Denoms(request: QueryDenomsRequest): Promise<QueryDenomsResponse>;
     GetNft(request: QueryNFTRequest): Promise<QueryNFTResponse>;
-    ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse>;
-    GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse>;
+    ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse>;
+    GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
