@@ -1,12 +1,12 @@
 const config ={
-  // Chain-id of the ethm SDK chain.
-  chainId: "anconprotocol_9000-1",
+  // Chain-id of the ancon SDK chain.
+  chainId: "evmos_9000-1",
 
-  chainName: "anconprotocol",
+  chainName: "evmos",
 
-  rpc: "wss://ancon.did.pa:26657",
+  rpc: "ws://localhost:26657",
 
-  rest: "https://ancon.did.pa:1318",
+  rest: "http://localhost:1317",
 
   stakeCurrency: {
 
@@ -30,12 +30,12 @@ const config ={
   },
   
   bech32Config: {
-      bech32PrefixAccAddr: "ethm",
-      bech32PrefixAccPub: "ethmpub",
-      bech32PrefixValAddr: "ethmvaloper",
-      bech32PrefixValPub: "ethmvaloperpub",
-      bech32PrefixConsAddr: "ethmvalcons",
-      bech32PrefixConsPub: "ethmvalconspub"
+      bech32PrefixAccAddr: "evmos",
+      bech32PrefixAccPub: "evmospub",
+      bech32PrefixValAddr: "evmosvaloper",
+      bech32PrefixValPub: "evmosvaloperpub",
+      bech32PrefixConsAddr: "evmosvalcons",
+      bech32PrefixConsPub: "evmosvalconspub"
   },
   // List of all coin/tokens used in this chain.
   currencies: [{
@@ -64,7 +64,7 @@ const config ={
   // (Optional) The number of the coin type.
   // This field is only used to fetch the address from ENS.
   // Ideally, it is recommended to be the same with BIP44 path's coin type.
-  // However, some early chains may choose to use the ethm Hub BIP44 path of '118'.
+  // However, some early chains may choose to use the photon Hub BIP44 path of '118'.
   // So, this is separated to support such chains.
   coinType: 60,
   // (Optional) This is used to set the fee of the transaction.

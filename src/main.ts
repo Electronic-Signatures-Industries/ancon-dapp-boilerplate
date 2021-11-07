@@ -1,3 +1,5 @@
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 import App from './App.vue';
 import router from './router';
 import store from './store';
@@ -10,6 +12,13 @@ import './plugins/vee-validate';
 import './plugins/appconfig';
 import Vuebar from 'vuebar';
 import VueConfirmDialog from 'vue-confirm-dialog'
+import { Window as KeplrWindow } from "@keplr-wallet/types";
+
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
+  interface Window extends KeplrWindow {}
+}
 
 
 import GAuth from 'vue-google-oauth2'

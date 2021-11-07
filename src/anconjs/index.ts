@@ -1,20 +1,10 @@
-import {
-  ethToEthermint,
-  ethermintToEth,
-} from '@hanchon/ethermint-address-converter'
+import { ethToEvmos } from '@hanchon/ethermint-address-converter'
 import { createKeplrWallet } from './KeplrWrapper'
-import { fromBase64 } from '@cosmjs/encoding'
-import { encodeSecp256k1Pubkey } from '@cosmjs/amino'
+import { fromBase64, toBase64 } from '@cosmjs/encoding'
+import { encodeSecp256k1Pubkey, encodeSecp256k1Signature } from '@cosmjs/amino'
 import { Int53 } from '@cosmjs/math'
+import { ExtendedSecp256k1Signature, Secp256k1 } from '@cosmjs/crypto'
 import {
-  ExtendedSecp256k1Signature,
-  sha256,
-  Secp256k1,
-  stringToPath,
-  pathToString,
-} from '@cosmjs/crypto'
-import {
-  DirectSecp256k1HdWallet,
   encodePubkey,
   makeAuthInfoBytes,
   makeSignBytes,
@@ -22,43 +12,46 @@ import {
   Registry,
 } from '@cosmjs/proto-signing'
 import {
-  AuthExtension,
-  BankExtension,
   QueryClient,
   setupAuthExtension,
   setupBankExtension,
   SigningStargateClient,
-  StargateClient,
 } from '@cosmjs/stargate'
 import {
   pubkeyToAddress,
   pubkeyToRawAddress,
-  rawSecp256k1PubkeyToRawAddress,
   Tendermint34Client,
 } from '@cosmjs/tendermint-rpc'
 import { TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx'
 import { ethers, Transaction } from 'ethers'
 import fetch from 'node-fetch'
-import { Wallet } from 'xdv-universal-wallet-core'
+import {
+  hashPersonalMessage,
+  ecrecover,
+  ecsign,
+  intToBuffer,
+  intToHex,
+  toRpcSig,
+  toCompactSig,
+  fromRpcSig,
+  pubToAddress,
+} from 'ethereumjs-util'
 import {
   encoder,
   queryClient,
   registry,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
-import { arrayify, hexValue, splitSignature } from '@ethersproject/bytes'
 import {
-  encodeSecp256k1Signature,
-  MintExtension,
-  setupMintExtension,
-} from '@cosmjs/launchpad'
+  arrayify,
+  hexlify,
+  joinSignature,
+  splitSignature,
+} from '@ethersproject/bytes'
+import { keccak256, sha256 } from 'ethers/lib/utils'
+import { computeAddress, serialize } from '@ethersproject/transactions'
 import Web3 from 'web3'
-import { hexlify, keccak256 } from 'ethers/lib/utils'
-import { MsgEthereumTxResponse } from './store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/tx'
-import { EthCallRequest } from './store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/query'
-import ethermintEvmV1 from './store/generated/tharsis/ethermint/ethermint.evm.v1'
-import { EthAccount } from './ethAccount'
-import { accountFromAny } from './accounts'
-import { serialize } from '@ethersproject/transactions'
+import key from 'ipfs-core/src/components/key'
+import { BroadcastMode, makeStdTx, StdTx } from '@cosmjs/launchpad'
 
 global['fetch'] = require('node-fetch')
 
@@ -81,7 +74,6 @@ export class AnconWeb3Client {
   cosmosAccount: any
   ethAccount: string
   pubkey: Uint8Array
-  web3defaultAccount: string
   sender: ethers.providers.JsonRpcProvider
   /**
    * New client from mnemonic
@@ -89,13 +81,24 @@ export class AnconWeb3Client {
   constructor(
     url: string,
     wallet: ethers.providers.Web3Provider,
-    _web3defaultAccount: string,
+    web3defaultAccount: string,
   ) {
     this.provider = wallet
-    this.web3defaultAccount = _web3defaultAccount
+    this.ethAccount = web3defaultAccount
     this.sender = new ethers.providers.JsonRpcProvider(url)
 
     return this
+  }
+
+  async getPublicKey() {
+    const key = await window.keplr.getKey(this.cosmosChainId)
+    console.log(
+      pubkeyToAddress('secp256k1', key.pubKey),
+      hexlify(key.address),
+      key.bech32Address,
+    )
+
+    return key.pubKey
   }
 
   /**
@@ -118,7 +121,11 @@ export class AnconWeb3Client {
       ],
       gas: '200000',
     }
-    const pubkey = encodePubkey(encodeSecp256k1Pubkey(this.pubkey))
+    const { account } = await this.getEthAccountInfo(this.ethAccount)
+
+    const pubkey = this.cosmosAccount.account.base_account.pub_key
+
+
     const txBodyEncodeObject = {
       typeUrl: '/cosmos.tx.v1beta1.TxBody',
       value: {
@@ -129,82 +136,44 @@ export class AnconWeb3Client {
     const txBodyBytes = registry.encode(txBodyEncodeObject)
     const gasLimit = Int53.fromString(fee.gas).toNumber()
     const authInfoBytes = makeAuthInfoBytes(
-      [{ pubkey, sequence: this.cosmosAccount.sequence }],
+      [
+        {
+          pubkey,
+          sequence: account.base_account.sequence,
+        },
+      ],
       fee.amount,
       gasLimit,
+      1,
     )
     const signDoc = makeSignDoc(
       txBodyBytes,
       authInfoBytes,
-      'anconprotocol_9000-1',
-      this.cosmosAccount.accountNumber,
+      this.cosmosChainId,
+      account.base_account.account_number,
     )
 
-    // const txsignedhex = await this.offlineSigner.sign(this.cosmosAccount.address, [encoded], fee, '', {
-    //   accountNumber: this.cosmosAccount.account_number,
-    //   sequence: this.cosmosAccount.sequence,
-    //   chainId: 'anconprotocol_9000-1',
-    // })
-
-    // const hashedMessage = sha256(makeSignBytes(signDoc))
-    // //    const signature = await
-    // let s = await this.provider
-    //   .getSigner(this.web3defaultAccount)
-    //   .signMessage(hashedMessage)
-    // const signature = splitSignature(s)
-
-    const { signature, signed } = await this.offlineSigner.signDirect(
+    const s = await window.keplr.signDirect(
+      this.cosmosChainId,
       this.cosmosAccount.address,
       signDoc,
     )
-
     const txsignedhex = TxRaw.fromPartial({
-      bodyBytes: signed.bodyBytes,
-      authInfoBytes: signed.authInfoBytes,
-      signatures: [fromBase64(signature.signature)],
+      bodyBytes: s.signed.bodyBytes,
+      authInfoBytes: s.signed.authInfoBytes,
+      signatures: [fromBase64(s.signature.signature)],
     })
 
-    // Signs Ethereum TxData
-    const tx = {
-      data: TxRaw.encode(txsignedhex).finish(),
-      value: 0,
-      chainId: evmChainId,
-    }
-
-    let raw = await this.provider
-      .getSigner(this.web3defaultAccount)
-      .signMessage(keccak256(serialize(tx)))
-
-    raw = serialize(tx, raw)
-
-    const res = await this.sender.send('ancon_sendRawTransaction', [raw])
-
-    return res
+    return window.keplr.sendTx(
+      this.cosmosChainId,
+      TxRaw.encode(txsignedhex).finish(),
+      BroadcastMode.Sync,
+    )
   }
-  async signAndBroadcastEvm(data, evmChainId, options) {
-    const nonce = await this.ethersclient.getTransactionCount()
 
-    // Signs Ethereum TxData
-    const tx = {
-      data,
-      value: 0,
-      nonce,
-      chainId: evmChainId,
-      ...options,
-    } as Transaction
-
-    let raw = await this.provider
-      .getSigner(this.web3defaultAccount)
-      .signMessage(keccak256(serialize(tx)))
-
-    raw = serialize(tx, raw)
-
-    const res = await this.sender.send('ancon_sendRawTransaction', [raw])
-
-    return res
-  }
   async connect() {
-    const { config, accounts, offlineSigner } = await createKeplrWallet()
+    const { config, } = await createKeplrWallet()
+
     this.cosmosChainId = config.chainId
     this.rpcUrl = config.rpc
     this.apiUrl = config.rest
@@ -215,26 +184,16 @@ export class AnconWeb3Client {
       setupBankExtension,
     )
 
-    this.ethAccount = ethermintToEth(accounts[0].address)
     this.queryClient = await queryClient({
       addr: this.apiUrl,
     })
-    const anyAccount = await q.auth.account(accounts[0].address)
-    this.cosmosAccount = accountFromAny(anyAccount)
-    this.connectedSigner = await SigningStargateClient.connectWithSigner(
-      this.rpcUrl,
-      offlineSigner,
-      { registry, prefix: 'ethm' },
-    )
 
-    //@ts-ignore
-    this.offlineSigner = this.connectedSigner.signer
-
-
-
-    const hash = await ethers.utils.keccak256(this.web3defaultAccount);
-    
-    this.pubkey = accounts[0].pubkey
+    const k = await window.keplr.getKey(this.cosmosChainId)
+    this.ethAccount = hexlify(k.address)
+    this.cosmosAccount = await this.getAccountInfo(k.bech32Address)
+    this.cosmosAccount.account.base_account.pub_key = encodePubkey(
+      encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
+    ) as any
     return this
   }
 
@@ -244,7 +203,22 @@ export class AnconWeb3Client {
         this.apiUrl + `/ethermint/evm/v1/cosmos_account/` + defaultEthAddress,
       )
     ).json()
+    const res2 = await (
+      await fetch(
+        this.apiUrl + `/cosmos/auth/v1beta1/accounts/` + res.cosmos_address,
+      )
+    ).json()
+    return { ...res2 }
+  }
 
-    return { ...res, address: res.cosmos_address }
+  async getAccountInfo(cosmosAddress: string): Promise<any> {
+    const res2 = await (
+      await fetch(
+        this.apiUrl + `/cosmos/auth/v1beta1/accounts/` + cosmosAddress,
+      )
+    ).json()
+
+    
+    return { ...res2, address: res2.account.base_account.address }
   }
 }

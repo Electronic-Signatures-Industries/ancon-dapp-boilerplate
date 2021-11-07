@@ -31,7 +31,10 @@
             </v-list>
             <v-divider></v-divider>
             <v-list nav dense>
-              <v-list-item-group v-model="sideBarItems.selectedItem" color="primary">
+              <v-list-item-group
+                v-model="sideBarItems.selectedItem"
+                color="primary"
+              >
                 <v-list-item v-for="(item, i) in sideBarItems.items" :key="i">
                   <v-list-item-icon>
                     <v-icon v-text="item.icon"></v-icon>
@@ -626,38 +629,26 @@ export default class SmartcardDocuments extends Vue {
   async connect(passphrase: string) {
     //@ts-ignore
     const accounts = await window.ethereum.enable();
-
     this.web3instance = new Web3(window.ethereum);
     //@ts-ignore
     const provider = new ethers.providers.Web3Provider(
       this.web3instance.currentProvider
     );
     this.anconWeb3client = new AnconWeb3Client(
-      "https://ancon.did.pa/evm",
+      "http://localhost:8545",
       provider,
       accounts[0] as string
     );
-    //debugger
+    await this.anconWeb3client.connect();
 
-    this.walletEthAdress = this.anconWeb3client.web3defaultAccount;
+    this.walletEthAdress = this.anconWeb3client.ethAccount;
 
-    this.walletEthAdressDisplay = "";
-
-    //Getting first 7 chars & concat into displayed string
-    for (let i = 0; i < 7; i++) {
-      this.walletEthAdressDisplay += this.walletEthAdress[i];
-    }
-
-    this.walletEthAdressDisplay += "...";
-
-    //Getting last 6 chars & concat into displayed string
-    for (
-      let i = this.walletEthAdress.length - 6;
-      i < this.walletEthAdress.length;
-      i++
-    ) {
-      this.walletEthAdressDisplay += this.walletEthAdress[i];
-    }
+    this.walletEthAdressDisplay = `
+      ${this.walletEthAdress.substring(0, 7)}...
+      ${this.walletEthAdress.substring(
+        this.walletEthAdress.length - 7,
+        this.walletEthAdress.length
+      )}`;
 
     this.currentAccount = accounts[0];
     // DAI
@@ -675,29 +666,16 @@ export default class SmartcardDocuments extends Vue {
     );
 
     try {
-      await this.anconWeb3client.connect();
       this.connected = true;
 
       this.walletCosmosAddress = this.anconWeb3client.cosmosAccount.address;
 
-      this.walletCosmosAddressDisplay = "";
-
-      //Getting first 7 chars & concat into displayed string
-      for (let i = 0; i < 7; i++) {
-        this.walletCosmosAddressDisplay += this.walletCosmosAddress[i];
-      }
-
-      this.walletCosmosAddressDisplay += "...";
-
-      //Getting last 6 chars & concat into displayed string
-      for (
-        let i = this.walletEthAdress.length - 6;
-        i < this.walletEthAdress.length;
-        i++
-      ) {
-        this.walletCosmosAddressDisplay += this.walletCosmosAddress[i];
-      }
-      //debugger;
+      this.walletCosmosAddressDisplay = `
+      ${this.walletCosmosAddress.substring(0, 7)}...
+      ${this.walletCosmosAddress.substring(
+        this.walletCosmosAddress.length - 7,
+        this.walletCosmosAddress.length
+      )}`;
 
       this.subscribeToMetadataEvents();
       await this.loadBalances();
@@ -716,7 +694,7 @@ export default class SmartcardDocuments extends Vue {
       const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      this.balances.dai = ethers.utils.formatEther(daiBal);
+      //   this.balances.dai = ethers.utils.formatEther(daiBal);
     }, 1250);
   }
 
@@ -759,13 +737,11 @@ export default class SmartcardDocuments extends Vue {
 
     this.loading = true;
 
-    debugger;
     // 1. Upload files - web3.storage
     const cid = await storage.put(this.files, { wrapWithDirectory: true });
-    debugger;
     // 2. Create Metadata
-    await this.createMetadata(cid, this.name, this.description);
-
+    const tx = await this.createMetadata(cid, this.name, this.description);
+debugger
     // 3. Mint  NFT
   }
 
@@ -850,7 +826,7 @@ export default class SmartcardDocuments extends Vue {
           let key = cid;
           const path = "";
           const requestProof = await fetch(
-            `http://ancon.did.pa:1317/ancon/proof/${key}${path}`
+            `http://localhost:1317/ancon/proof/${key}${path}`
           );
           const proof = await requestProof.json();
 
@@ -865,7 +841,6 @@ export default class SmartcardDocuments extends Vue {
 
   /** Creates onchain metadata */
   async createMetadata(root, name, description): Promise<any> {
-    debugger;
     //did:example:123?service=agent&relativeRef=/credentials#degree
     //did:ethr:9000:tokenaddress?service=erc721&tokenid
     const msg = MsgMetadata.fromPartial({
@@ -883,11 +858,10 @@ export default class SmartcardDocuments extends Vue {
     const evmChainId = 9000;
     // Create Metadata Message request
     // Add Cosmos uatom
-    await this.anconWeb3client.signAndBroadcast(
+    return this.anconWeb3client.signAndBroadcast(
       evmChainId,
       "msgMetadata",
       msg,
-      this.cb
     );
   }
   cb({ sig, tx }) {
@@ -937,7 +911,6 @@ export default class SmartcardDocuments extends Vue {
         this.chainId,
         "msgUpdateMetadataOwnership",
         msgupd,
-        this.cb
       );
 
     const result = await this.subscribeToUpdateMetadataEvents();
@@ -1010,7 +983,7 @@ export default class SmartcardDocuments extends Vue {
     if (this.ancon && this.cidindex) {
       const path = "/";
       const body = await fetch(
-        `http://ancon.did.pa:1317/ancon/${this.cidindex}${path}`
+        `http://localhost:1317/ancon/${this.cidindex}${path}`
       );
 
       const res = await body.json();
