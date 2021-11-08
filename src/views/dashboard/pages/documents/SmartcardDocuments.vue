@@ -539,22 +539,8 @@ export default class SmartcardDocuments extends Vue {
       { text: "Crosschain", icon: "mdi-transit-connection-horizontal" },
     ],
   };
-  daiWeb3contract: {
-    methods: {
-      [x: string]: (...values: any[]) => {
-        send: (opts: any, fee: any) => Promise<Uint8Array>;
-      };
-    }[];
-    address: string;
-  };
-  nftWeb3Contract: {
-    methods: {
-      [x: string]: (...values: any[]) => {
-        send: (opts: any, fee: any) => Promise<Uint8Array>;
-      };
-    }[];
-    address: string;
-  };
+  daiWeb3contract: any;
+  nftWeb3Contract: any;
 
   async loadTransactions() {
     if (this.ethersContract) {
@@ -960,7 +946,7 @@ export default class SmartcardDocuments extends Vue {
 
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
 
-    const approveTx = await this.daiWeb3contract.methods["approve"](
+    const approveTx = await this.daiWeb3contract.methods["approve(address,uint256)"](
       this.nftWeb3Contract.address,
       "1000000000000000000"
     ).send({
@@ -970,13 +956,13 @@ export default class SmartcardDocuments extends Vue {
 
     // TODO: wait 5 s
 
-    const mintnft = await this.nftWeb3Contract.methods
-      // @ts-ignore
-      .mint(this.currentAccount, uri)
-      .send({
-        gasPrice: gasPrice,
-        gas: gasLimit,
-      });
+    const mintnft = await this.nftWeb3Contract.methods["mint(address,string)"](
+      this.currentAccount,
+      uri
+    ).send({
+      gasPrice: gasPrice,
+      gas: gasLimit,
+    });
 
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
