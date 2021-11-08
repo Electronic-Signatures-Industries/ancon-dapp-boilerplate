@@ -682,7 +682,8 @@ export default class SmartcardDocuments extends Vue {
       )}`;
 
       this.subscribeToMetadataEvents();
-      await this.loadBalances();
+      this.subscribeToUpdateMetadataEvents();
+      // await this.loadBalances();
       await this.loadTransactions();
     } catch (e) {
       alert(e.message);
@@ -745,14 +746,40 @@ export default class SmartcardDocuments extends Vue {
     const cid = await storage.put(this.files, { wrapWithDirectory: true });
     // 2. Create Metadata
     const tx = await this.createMetadata(cid, this.name, this.description);
-    debugger;
-    // 3. Mint  NFT
+  }
+  // Update Ownership
+  async updateOwnership() {
+    let lnk;
+
+    this.loading = true;
+
+    // 1. Update
+    // TODO: Add Additional UI props
+    await this.updateMetadata(lnk);
   }
 
+  // Initiate Ownership
   async initiateCrossNFTOwnership(res) {
-    const proof = await this.updateMetadata(res);
-    // await this.relayMessage(proof);
-    // await this.initiateCrossNFTOwnership();
+    // 1. Call getProof (Cosmos)
+    // a. proof req `ancon%s`
+    // b. proof req `packet%s` traverse('toMetadata', root)
+    // 2. Exec function sendMetadataOwnership(
+    // // -- existence proof
+    // uint256[] memory leafOpUint,
+    // bytes memory prefix,
+    // bytes[][] memory existenceProofInnerOp,
+    // uint256 existenceProofInnerOpHash,
+    // bytes memory existenceProofKey,
+    // bytes memory existenceProofValue,
+    // bytes memory key,
+    // bytes memory value,
+    // // -- ics23 packet
+    // // bytes memory packet, (abiDecoder de ethers)
+    // string memory metadata,
+    // uint256 tokenId,
+    // address tokenAddress,
+    // address to
+    // 3. MetadataOwnershipChanged event
   }
 
   async mounted() {
@@ -871,56 +898,29 @@ export default class SmartcardDocuments extends Vue {
     };
     return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
-  cb({ sig, tx }) {
-    return new Promise((resolve, reject) => {
-      // @ts-ignore
-      this.$confirm({
-        auth: false,
-        message: `Are you sure you want to sign this transaction?  ${sig.substring(
-          0,
-          15
-        )}...`,
-        button: {
-          yes: "Yes",
-          no: "Cancel",
-        },
-        /**
-         * Callback Function
-         * @param {Boolean} confirm
-         * @param {String} password
-         */
-        callback: async (confirm, password) => {
-          if (confirm) {
-            return resolve(true);
-          }
-
-          return reject("User rejected");
-        },
-      });
-    });
-  }
 
   /** Updates metadata ownership*/
   async updateMetadata(metadataCid: string) {
     const msgupd = MsgUpdateMetadataOwnership.fromPartial({
       hash: metadataCid,
-      previousOwner: `did:ethr:ancon:${this.web3instance.defaultAccount}`,
+      previousOwner: `did:ethr:ancon:${this.anconWeb3client.ethAccount}`,
       newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
       sender: this.anconWeb3client.cosmosAccount.address,
     });
+    const encoded = encoder.msgUpdateMetadataOwnership(msgupd);
 
-    // Change Metadata Message request
-    // Add Cosmos uatom
-    const msgUpdateMetadataReceipt =
-      await this.anconWeb3client.signAndBroadcast(
-        this.chainId,
-        "msgUpdateMetadataOwnership",
-        msgupd
-      );
-
-    const result = await this.subscribeToUpdateMetadataEvents();
+    const fee = {
+      amount: [
+        {
+          denom: "aphoton",
+          amount: "4",
+        },
+      ],
+      gas: "200000",
+    };
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
 
   /** Relays message to chain b, returns bool or revert*/
@@ -934,35 +934,37 @@ export default class SmartcardDocuments extends Vue {
     let gasPrice = ethers.BigNumber.from(22000000000);
 
     let gasLimit = ethers.BigNumber.from(70000);
-    //let gasLimit = await this.daiContract.estimateGas.approve(
-    //   this.currentAccount,
-    //   this.ethersContract.address
-    // );
-    // gasLimit = BigNumber.from(gasLimit).add(50000).toBigInt().toString(10);
-    // const [allowed] = await this.daiContract.methods.allowance(
-    //   this.currentAccount,
-    //   this.ethersContract.address
-    // );
-
-    //if (!(allowed as BigNumber).eq("1000000000000000000")) {
-
-    const approveTx = await this.daiWeb3contract.methods["approve(address,uint256)"](
-      this.nftWeb3Contract.address,
-      "1000000000000000000"
-    ).send({
-      gasPrice: gasPrice,
-      gas: gasLimit,
-    });
+    const fee = {
+      amount: [
+        {
+          denom: "aphoton",
+          amount: "4",
+        },
+      ],
+      gas: "200000",
+    };
+    const approveTx = await this.daiWeb3contract.methods[
+      "approve(address,uint256)"
+    ](this.nftWeb3Contract.address, "1000000000000000000").send(
+      {
+        gasPrice: gasPrice,
+        gas: gasLimit,
+      },
+      fee
+    );
 
     // TODO: wait 5 s
 
     const mintnft = await this.nftWeb3Contract.methods["mint(address,string)"](
       this.currentAccount,
       uri
-    ).send({
-      gasPrice: gasPrice,
-      gas: gasLimit,
-    });
+    ).send(
+      {
+        gasPrice: gasPrice,
+        gas: gasLimit,
+      },
+      fee
+    );
 
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,
