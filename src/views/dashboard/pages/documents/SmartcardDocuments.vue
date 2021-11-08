@@ -379,7 +379,7 @@ import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { AnconWeb3Client } from "../../../../anconjs";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
-import { base64 } from "ethers/lib/utils";
+import { arrayify, base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
 import { TxEvent } from "@cosmjs/tendermint-rpc";
 import { Web3Storage } from "web3.storage/dist/bundle.esm.min.js";
@@ -389,6 +389,12 @@ import {
   MsgMetadataResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
+import { encoder } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
+import {
+  LegacyTx,
+  MsgEthereumTx,
+  MsgEthereumTxResponse,
+} from "@/anconjs/store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/tx";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -514,8 +520,6 @@ export default class SmartcardDocuments extends Vue {
   emulateSmartcard = false;
   //wallet: Wallet;
   web3instance: Web3;
-  nftWeb3Contract: any;
-  daiWeb3contract: any;
   anconWeb3client: AnconWeb3Client;
   onboard = null;
   chainId: number;
@@ -534,6 +538,22 @@ export default class SmartcardDocuments extends Vue {
       { text: "Transfer", icon: "mdi-bank-transfer" },
       { text: "Crosschain", icon: "mdi-transit-connection-horizontal" },
     ],
+  };
+  daiWeb3contract: {
+    methods: {
+      [x: string]: (...values: any[]) => {
+        send: (opts: any, fee: any) => Promise<Uint8Array>;
+      };
+    }[];
+    address: string;
+  };
+  nftWeb3Contract: {
+    methods: {
+      [x: string]: (...values: any[]) => {
+        send: (opts: any, fee: any) => Promise<Uint8Array>;
+      };
+    }[];
+    address: string;
   };
 
   async loadTransactions() {
@@ -652,17 +672,15 @@ export default class SmartcardDocuments extends Vue {
 
     this.currentAccount = accounts[0];
     // DAI
-    this.daiWeb3contract = new this.web3instance.eth.Contract(
+    this.daiWeb3contract = this.anconWeb3client.addContract(
       xdvnftAbi.DAI.raw.abi,
-      //"0x00FBe0ce907a1ff5EF386F4e0368697aF5885bDA"
-      "0xDF21F97c4bE43BDa7379D0Bab92C0b5788feE343"
+      "0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46"
     );
 
     // XDVNFT
-    this.nftWeb3Contract = new this.web3instance.eth.Contract(
+    this.nftWeb3Contract = this.anconWeb3client.addContract(
       xdvnftAbi.XDVNFT.raw.abi,
-      //"0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635"
-      "0x1f8492d8411712C24DdF511a6447A3B81Ac79eEe"
+      "0x50c8bC4391aCb0AF26282b0fA86Bce99Ba010FD4"
     );
 
     try {
@@ -741,7 +759,7 @@ export default class SmartcardDocuments extends Vue {
     const cid = await storage.put(this.files, { wrapWithDirectory: true });
     // 2. Create Metadata
     const tx = await this.createMetadata(cid, this.name, this.description);
-debugger
+    debugger;
     // 3. Mint  NFT
   }
 
@@ -854,15 +872,18 @@ debugger
       did: "",
       from: "",
     });
+    const encoded = encoder.msgMetadata(msg);
 
-    const evmChainId = 9000;
-    // Create Metadata Message request
-    // Add Cosmos uatom
-    return this.anconWeb3client.signAndBroadcast(
-      evmChainId,
-      "msgMetadata",
-      msg,
-    );
+    const fee = {
+      amount: [
+        {
+          denom: "aphoton",
+          amount: "4",
+        },
+      ],
+      gas: "200000",
+    };
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
   cb({ sig, tx }) {
     return new Promise((resolve, reject) => {
@@ -910,7 +931,7 @@ debugger
       await this.anconWeb3client.signAndBroadcast(
         this.chainId,
         "msgUpdateMetadataOwnership",
-        msgupd,
+        msgupd
       );
 
     const result = await this.subscribeToUpdateMetadataEvents();
@@ -939,22 +960,22 @@ debugger
 
     //if (!(allowed as BigNumber).eq("1000000000000000000")) {
 
-    const approveTx = await this.daiWeb3contract.methods
-      .approve(this.nftWeb3Contract._address, "1000000000000000000")
-      .send({
-        gasPrice: gasPrice,
-        gas: gasLimit,
-        from: this.currentAccount,
-      });
+    const approveTx = await this.daiWeb3contract.methods["approve"](
+      this.nftWeb3Contract.address,
+      "1000000000000000000"
+    ).send({
+      gasPrice: gasPrice,
+      gas: gasLimit,
+    });
 
     // TODO: wait 5 s
 
     const mintnft = await this.nftWeb3Contract.methods
+      // @ts-ignore
       .mint(this.currentAccount, uri)
       .send({
         gasPrice: gasPrice,
         gas: gasLimit,
-        from: this.currentAccount,
       });
 
     // gasLimit = await this.ethersContract.estimateGas.mint(

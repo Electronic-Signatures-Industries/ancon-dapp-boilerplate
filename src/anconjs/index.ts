@@ -47,11 +47,13 @@ import {
   joinSignature,
   splitSignature,
 } from '@ethersproject/bytes'
-import { keccak256, sha256 } from 'ethers/lib/utils'
+import { Interface, keccak256, sha256 } from 'ethers/lib/utils'
 import { computeAddress, serialize } from '@ethersproject/transactions'
 import Web3 from 'web3'
 import key from 'ipfs-core/src/components/key'
 import { BroadcastMode, makeStdTx, StdTx } from '@cosmjs/launchpad'
+import { LegacyTx } from './store/generated/tharsis/ethermint/ethermint.evm.v1'
+import { MsgEthereumTx } from './store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/tx'
 
 global['fetch'] = require('node-fetch')
 
@@ -101,6 +103,52 @@ export class AnconWeb3Client {
     return key.pubKey
   }
 
+  addContract(
+    abi: any,
+    address: string,
+  ): {
+    methods: {
+      [x: string]: (
+        ...values: any[]
+      ) => { send: (opts: any, fee: any) => Promise<Uint8Array> }
+    }[]
+    address: string
+  } {
+    const contract = new Interface(abi)
+    const m = Object.entries(contract.functions).map((v) => {
+      return {
+        [v[0]]: (...values) => {
+          const hex = contract.encodeFunctionData(v[1], values)
+
+          return {
+            send: async (opts, fee: any) => {
+              const tx = MsgEthereumTx.fromPartial({
+                data: {
+                  value: LegacyTx.encode(
+                    LegacyTx.fromPartial({
+                      ...opts,
+                      from: this.ethAccount,
+                      to: address,
+                      data: arrayify(hex),
+                    }),
+                  ).finish(),
+                },
+              })
+
+              const transaction = {
+                typeUrl: '/ethermint.evm.v1.MsgEthereumTx',
+                value: MsgEthereumTx.encode(tx).finish(),
+              }
+
+              return this.signAndBroadcast(transaction, fee)
+            },
+          }
+        },
+      }
+    })
+    return { methods: m, address }
+  }
+
   /**
    * Sign and broadcast dual chain (EVM / Cosmos), used only for Cosmos Msgs
    * @param evmChainId EVM Chain id
@@ -109,22 +157,10 @@ export class AnconWeb3Client {
    * @param callback UI purposes
    * @returns
    */
-  async signAndBroadcast(evmChainId: number, methodName: string, msg: any) {
-    const encoded = encoder[methodName](msg)
-
-    const fee = {
-      amount: [
-        {
-          denom: 'aphoton',
-          amount: '4',
-        },
-      ],
-      gas: '200000',
-    }
+  async signAndBroadcast(encoded: any, fee: any) {
     const { account } = await this.getEthAccountInfo(this.ethAccount)
 
     const pubkey = this.cosmosAccount.account.base_account.pub_key
-
 
     const txBodyEncodeObject = {
       typeUrl: '/cosmos.tx.v1beta1.TxBody',
@@ -172,7 +208,7 @@ export class AnconWeb3Client {
   }
 
   async connect() {
-    const { config, } = await createKeplrWallet()
+    const { config } = await createKeplrWallet()
 
     this.cosmosChainId = config.chainId
     this.rpcUrl = config.rpc
@@ -218,7 +254,6 @@ export class AnconWeb3Client {
       )
     ).json()
 
-    
     return { ...res2, address: res2.account.base_account.address }
   }
 }
