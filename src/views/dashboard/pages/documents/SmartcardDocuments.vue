@@ -658,13 +658,13 @@ export default class SmartcardDocuments extends Vue {
 
     this.currentAccount = accounts[0];
     // DAI
-    this.daiWeb3contract = this.anconWeb3client.addContract(
+    this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
       "0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46"
     );
 
     // XDVNFT
-    this.nftWeb3Contract = this.anconWeb3client.addContract(
+    this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
       "0x50c8bC4391aCb0AF26282b0fA86Bce99Ba010FD4"
     );
@@ -934,37 +934,23 @@ export default class SmartcardDocuments extends Vue {
     let gasPrice = ethers.BigNumber.from(22000000000);
 
     let gasLimit = ethers.BigNumber.from(70000);
-    const fee = {
-      amount: [
-        {
-          denom: "aphoton",
-          amount: "4",
-        },
-      ],
-      gas: "200000",
-    };
-    const approveTx = await this.daiWeb3contract.methods[
-      "approve(address,uint256)"
-    ](this.nftWeb3Contract.address, "1000000000000000000").send(
-      {
+    const approveTx = await this.daiWeb3contract.methods
+      .approve(this.nftWeb3Contract._address, "1000000000000000000")
+      .send({
         gasPrice: gasPrice,
         gas: gasLimit,
-      },
-      fee
-    );
+        from: this.currentAccount,
+      });
 
     // TODO: wait 5 s
 
-    const mintnft = await this.nftWeb3Contract.methods["mint(address,string)"](
-      this.currentAccount,
-      uri
-    ).send(
-      {
+    const mintnft = await this.nftWeb3Contract.methods
+      .mint(this.currentAccount, uri)
+      .send({
         gasPrice: gasPrice,
         gas: gasLimit,
-      },
-      fee
-    );
+        from: this.currentAccount,
+      });
 
     // gasLimit = await this.ethersContract.estimateGas.mint(
     //   this.currentAccount,

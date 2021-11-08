@@ -7,7 +7,11 @@ import {
   encodeSecp256k1Signature,
 } from '@cosmjs/amino'
 import { Int53 } from '@cosmjs/math'
-import { ExtendedSecp256k1Signature,Secp256k1Signature, Secp256k1 } from '@cosmjs/crypto'
+import {
+  ExtendedSecp256k1Signature,
+  Secp256k1Signature,
+  Secp256k1,
+} from '@cosmjs/crypto'
 import {
   EncodeObject,
   encodePubkey,
@@ -132,6 +136,7 @@ export class AnconWeb3Client {
                   from: this.ethAccount,
                   to: address,
                   data: arrayify(hex),
+                  chainId: 9000,
                 }),
               }
               const sig = await this.signEVM(legtx, fee)
@@ -143,14 +148,13 @@ export class AnconWeb3Client {
                       ...opts,
                       r: sig.r,
                       s: sig.s,
-
-                      v: 9000*2+35,
-                      //                      v: arrayify(sig.v),
+                      v: sig.v,
                       gas: '200000',
                       gasPrice: '200000',
                       from: this.ethAccount,
                       to: address,
                       data: arrayify(hex),
+                      chainId: 9000,
                     }),
                   ).finish(),
                 },
@@ -237,6 +241,8 @@ export class AnconWeb3Client {
       BroadcastMode.Sync,
     )
   }
+
+
   async signEVM(encoded: any, fee: any) {
     const { account } = await this.getEthAccountInfo(this.ethAccount)
 
@@ -269,16 +275,37 @@ export class AnconWeb3Client {
       account.base_account.account_number,
     )
 
-    const s = await window.keplr.signDirect(
+    const res = await window.keplr.signDirect(
       this.cosmosChainId,
       this.cosmosAccount.address,
       signDoc,
     )
 
-    const sig = Secp256k1Signature.fromFixedLength(decodeSignature(s.signature).signature)
-
-    return sig.data
+    const chainId = 9000;
+    const {data} = Secp256k1Signature.fromFixedLength(fromBase64(res.signature.signature));
+    const r = data.r
+    const s = data.s
+    const recovery = 0
+    if (!chainId || typeof chainId === 'number') {
+      // return legacy type ECDSASignature (deprecated in favor of ECDSASignatureBuffer to handle large chainIds)
+      if (chainId && !Number.isSafeInteger(chainId)) {
+        throw new Error(
+          'The provided number is greater than MAX_SAFE_INTEGER (please use an alternative input type)'
+        )
+      }
+      const v = chainId ? recovery + (chainId * 2 + 35) : recovery + 27
+      return { r, s, v }
+    }
+  
+    const chainIdBN = Web3.utils.toBN(chainId)
+    const v = chainIdBN
+      .muln(2)
+      .addn(35)
+      .addn(recovery)
+      .toArrayLike(Buffer)
+    return { r, s, v }
   }
+
   async connect() {
     const { config } = await createKeplrWallet()
 
