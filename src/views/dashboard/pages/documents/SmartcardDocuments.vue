@@ -660,13 +660,13 @@ export default class SmartcardDocuments extends Vue {
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
-      "0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46"
+      "0x65c33Cf8d06FA391e79ee1126EFDeB3F1A372403"
     );
 
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
-      "0x50c8bC4391aCb0AF26282b0fA86Bce99Ba010FD4"
+      "0x52721d527aBeFd2475C4d40E212947962114056d"
     );
 
     try {
@@ -683,7 +683,7 @@ export default class SmartcardDocuments extends Vue {
 
       this.subscribeToMetadataEvents();
       this.subscribeToUpdateMetadataEvents();
-      // await this.loadBalances();
+      await this.loadBalances();
       await this.loadTransactions();
     } catch (e) {
       alert(e.message);
@@ -699,7 +699,7 @@ export default class SmartcardDocuments extends Vue {
       const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      //   this.balances.dai = ethers.utils.formatEther(daiBal);
+      this.balances.dai = ethers.utils.formatEther(daiBal);
     }, 1250);
   }
 
@@ -929,7 +929,7 @@ export default class SmartcardDocuments extends Vue {
   /** Executes nft ownership claim on chain b */
   async executeNftOwnershipClaim() {}
 
-  async mintNft(uri: string) {
+  async     mintNft(uri: string) {
     // anchor to nft
     let gasPrice = ethers.BigNumber.from(22000000000);
 
