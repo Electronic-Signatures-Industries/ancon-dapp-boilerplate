@@ -389,7 +389,10 @@ import {
   MsgMetadataResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
-import { encoder } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
+import {
+  encoder,
+  txClient,
+} from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
   LegacyTx,
   MsgEthereumTx,
@@ -637,17 +640,15 @@ export default class SmartcardDocuments extends Vue {
     const accounts = await window.ethereum.enable();
     this.web3instance = new Web3(window.ethereum);
     //@ts-ignore
-    const provider = new ethers.providers.Web3Provider(
-      this.web3instance.currentProvider
-    );
-    this.anconWeb3client = new AnconWeb3Client(
-      "http://localhost:8545",
-      provider,
-      accounts[0] as string
-    );
-    await this.anconWeb3client.connect();
+    this.anconWeb3client = new AnconWeb3Client();
+    await this.anconWeb3client.connect([
+      {
+        name: "ancon",
+        client: txClient,
+      },
+    ]);
 
-    this.walletEthAdress = this.anconWeb3client.ethAccount;
+    this.walletEthAdress = accounts[0];
 
     this.walletEthAdressDisplay = `
       ${this.walletEthAdress.substring(0, 7)}...
@@ -699,7 +700,7 @@ export default class SmartcardDocuments extends Vue {
       const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      this.balances.dai = ethers.utils.formatEther(daiBal);
+      // this.balances.dai = ethers.utils.formatEther(daiBal);
     }, 1250);
   }
 
@@ -817,7 +818,6 @@ export default class SmartcardDocuments extends Vue {
         console.log(content.data);
 
         this.result = await this.mintNft(cid);
-        //  await this.initiateCrossNFTOwnership(res);
 
         this.cidindex = cid;
         await this.loadViewer();
@@ -880,47 +880,50 @@ export default class SmartcardDocuments extends Vue {
       image: root,
       additionalSources: [],
       links: [],
-      owner: `did:ether:9000:${this.currentAccount}`,
+      owner: `did:ethr:${this.currentAccount}`,
       description,
       did: "",
       from: "",
     });
-    const encoded = encoder.msgMetadata(msg);
 
     const fee = {
       amount: [
         {
-          denom: "aphoton",
+          denom: "uatom",
           amount: "4",
         },
       ],
       gas: "200000",
     };
-    return this.anconWeb3client.signAndBroadcast(encoded, fee);
-  }
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.msgService.ancon.signAndBroadcast(encoded, fee, '');
+
+}
 
   /** Updates metadata ownership*/
   async updateMetadata(metadataCid: string) {
     const msgupd = MsgUpdateMetadataOwnership.fromPartial({
       hash: metadataCid,
-      previousOwner: `did:ethr:ancon:${this.anconWeb3client.ethAccount}`,
+      previousOwner: `did:ethr:${this.currentAccount}`,
       newOwner: "did:ethr:0xeeC58E89996496640c8b5898A7e0218E9b6E90cB",
       currentChainId: "9000", // config / settings
       recipientChainId: "3", // config / settings
       sender: this.anconWeb3client.cosmosAccount.address,
     });
-    const encoded = encoder.msgUpdateMetadataOwnership(msgupd);
-
-    const fee = {
+       const fee = {
       amount: [
         {
-          denom: "aphoton",
+          denom: "uatom",
           amount: "4",
         },
       ],
       gas: "200000",
     };
-    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgUpdateMetadataOwnership(msgupd);
+    return this.anconWeb3client.msgService.ancon.signAndBroadcast(encoded, fee, '');
+
   }
 
   /** Relays message to chain b, returns bool or revert*/
@@ -929,7 +932,7 @@ export default class SmartcardDocuments extends Vue {
   /** Executes nft ownership claim on chain b */
   async executeNftOwnershipClaim() {}
 
-  async     mintNft(uri: string) {
+  async mintNft(uri: string) {
     // anchor to nft
     let gasPrice = ethers.BigNumber.from(22000000000);
 

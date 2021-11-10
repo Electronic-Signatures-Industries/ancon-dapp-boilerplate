@@ -70,17 +70,16 @@ import {
   ExtensionOptionsEthereumTx,
   MsgEthereumTx,
 } from './store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/tx'
+import config from './anconConfig'
+import { txClient } from 'anconjs/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
 
 global['fetch'] = require('node-fetch')
 
 export class AnconWeb3Client {
   tm: Tendermint34Client
-  public static HD_PATH = "m/44'/60'/0'/0/0"
-  msgService: any
+  msgService: {[k: string]: {[v: string]: (...args) => any}}
   account: any
-  ethersclient: ethers.Wallet
   connectedSigner: SigningStargateClient
-  rpc: ethers.providers.JsonRpcProvider
   queryClient: any
   registry: Registry
 
@@ -88,23 +87,12 @@ export class AnconWeb3Client {
   rpcUrl: string
   offlineSigner: any
   cosmosChainId: any
-  provider: ethers.providers.Web3Provider
   cosmosAccount: any
-  ethAccount: string
   pubkey: Uint8Array
-  sender: ethers.providers.JsonRpcProvider
   /**
    * New client from mnemonic
    */
-  constructor(
-    url: string,
-    wallet: ethers.providers.Web3Provider,
-    web3defaultAccount: string,
-  ) {
-    this.provider = wallet
-    this.ethAccount = web3defaultAccount
-    this.sender = new ethers.providers.JsonRpcProvider(url)
-
+  constructor() {
     return this
   }
 
@@ -119,81 +107,14 @@ export class AnconWeb3Client {
     return key.pubKey
   }
 
-  addContract(abi: any, address: string): { methods: {}; address: string } {
-    const contract = new Interface(abi)
-    const m = Object.entries(contract.functions).map((v) => {
-      return {
-        [v[0]]: (...values) => {
-          const hex = contract.encodeFunctionData(v[1], values)
-          return {
-            send: async (opts, fee: any) => {
-              const legtx = {
-                typeUrl: '/ethermint.evm.v1.LegacyTx',
-                value: LegacyTx.fromPartial({
-                  ...opts,
-                  gas: '200000',
-                  gasPrice: '200000',
-                  from: this.ethAccount,
-                  to: address,
-                  data: arrayify(hex),
-                  chainId: 9000,
-                }),
-              }
-              const sig = await this.signEVM(legtx, fee)
-              const tx = MsgEthereumTx.fromPartial({
-                data: {
-                  typeUrl: '/ethermint.evm.v1.LegacyTx',
-                  value: LegacyTx.encode(
-                    LegacyTx.fromPartial({
-                      ...opts,
-                      r: sig.r,
-                      s: sig.s,
-                      v: sig.v,
-                      gas: '200000',
-                      gasPrice: '200000',
-                      from: this.ethAccount,
-                      to: address,
-                      data: arrayify(hex),
-                      chainId: 9000,
-                    }),
-                  ).finish(),
-                },
-              })
-
-              const transaction = {
-                typeUrl: '/ethermint.evm.v1.MsgEthereumTx',
-                value: tx,
-              }
-
-              return this.signAndBroadcast(transaction, fee)
-            },
-          }
-        },
-      }
-    })
-    let methods = {}
-    const values = m.values()
-    let item = values.next()
-    while (!item.done) {
-      // item.value as {[k: string]: any}
-
-      methods = { ...methods, getters: {}, ...item.value }
-      item = values.next()
-    }
-
-    return { methods: methods, address }
-  }
-
   /**
-   * Sign and broadcast dual chain (EVM / Cosmos), used only for Cosmos Msgs
-   * @param evmChainId EVM Chain id
-   * @param methodName Msg name
-   * @param msg Message to encode
-   * @param callback UI purposes
+   * Sign and broadcast
+   * @param encoded Message to encode
+   * @param fee UI purposes
    * @returns
    */
   async signAndBroadcast(encoded: any, fee: any) {
-    const { account } = await this.getEthAccountInfo(this.ethAccount)
+    const { account } = this.cosmosAccount
 
     const pubkey = this.cosmosAccount.account.base_account.pub_key
 
@@ -242,110 +163,36 @@ export class AnconWeb3Client {
     )
   }
 
-
-  async signEVM(encoded: any, fee: any) {
-    const { account } = await this.getEthAccountInfo(this.ethAccount)
-
-    const pubkey = this.cosmosAccount.account.base_account.pub_key
-
-    const txBodyEncodeObject = {
-      typeUrl: '/cosmos.tx.v1beta1.TxBody',
-      value: {
-        messages: [encoded],
-        memo: '',
-      },
-    } as EncodeObject
-    const txBodyBytes = registry.encode(txBodyEncodeObject)
-    const gasLimit = Int53.fromString(fee.gas).toNumber()
-    const authInfoBytes = makeAuthInfoBytes(
-      [
-        {
-          pubkey,
-          sequence: account.base_account.sequence,
-        },
-      ],
-      fee.amount,
-      gasLimit,
-      1,
-    )
-    const signDoc = makeSignDoc(
-      txBodyBytes,
-      authInfoBytes,
-      this.cosmosChainId,
-      account.base_account.account_number,
-    )
-
-    const res = await window.keplr.signDirect(
-      this.cosmosChainId,
-      this.cosmosAccount.address,
-      signDoc,
-    )
-
-    const chainId = 9000;
-    const {data} = Secp256k1Signature.fromFixedLength(fromBase64(res.signature.signature));
-    const r = data.r
-    const s = data.s
-    const recovery = 0
-    if (!chainId || typeof chainId === 'number') {
-      // return legacy type ECDSASignature (deprecated in favor of ECDSASignatureBuffer to handle large chainIds)
-      if (chainId && !Number.isSafeInteger(chainId)) {
-        throw new Error(
-          'The provided number is greater than MAX_SAFE_INTEGER (please use an alternative input type)'
-        )
-      }
-      const v = chainId ? recovery + (chainId * 2 + 35) : recovery + 27
-      return { r, s, v }
-    }
-  
-    const chainIdBN = Web3.utils.toBN(chainId)
-    const v = chainIdBN
-      .muln(2)
-      .addn(35)
-      .addn(recovery)
-      .toArrayLike(Buffer)
-    return { r, s, v }
-  }
-
-  async connect() {
-    const { config } = await createKeplrWallet()
-
+  async connect(msgclients: Array<{name: string, client: any}>) {
     this.cosmosChainId = config.chainId
     this.rpcUrl = config.rpc
     this.apiUrl = config.rest
     this.tm = await Tendermint34Client.connect(this.rpcUrl)
-    const q = QueryClient.withExtensions(
-      this.tm,
-      setupAuthExtension,
-      setupBankExtension,
-    )
+    // const q = QueryClient.withExtensions(
+    //   this.tm,
+    //   setupAuthExtension,
+    //   setupBankExtension,
+    // )
 
     this.queryClient = await queryClient({
       addr: this.apiUrl,
     })
 
+    this.msgService = {}
+
+    const signer = window.keplr.getOfflineSigner(this.cosmosChainId)
+    for (const txcli of msgclients) {
+      this.msgService[txcli.name] = txcli.client(signer, {
+        addr: this.rpcUrl,
+      })
+    }
+
     const k = await window.keplr.getKey(this.cosmosChainId)
-    this.ethAccount = hexlify(k.address)
     this.cosmosAccount = await this.getAccountInfo(k.bech32Address)
     this.cosmosAccount.account.base_account.pub_key = encodePubkey(
       encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
     ) as any
-    registry.register('/ethermint.evm.v1.MsgEthereumTx', MsgEthereumTx)
-    registry.register('/ethermint.evm.v1.LegacyTx', LegacyTx)
     return this
-  }
-
-  async getEthAccountInfo(defaultEthAddress: string): Promise<any> {
-    const res = await (
-      await fetch(
-        this.apiUrl + `/ethermint/evm/v1/cosmos_account/` + defaultEthAddress,
-      )
-    ).json()
-    const res2 = await (
-      await fetch(
-        this.apiUrl + `/cosmos/auth/v1beta1/accounts/` + res.cosmos_address,
-      )
-    ).json()
-    return { ...res2 }
   }
 
   async getAccountInfo(cosmosAddress: string): Promise<any> {
