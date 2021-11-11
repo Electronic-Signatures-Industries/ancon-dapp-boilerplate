@@ -444,7 +444,8 @@ export default class SmartcardDocuments extends Vue {
   };
   connected = false;
   cidindex = "";
-  DAIAddress: string = `0x59b0e313070138127dc91F9F357Ba989FE5D57F8`;
+  DAIAddress: string = `0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635`;
+  XDVNFTAddress: string = `0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46`
   tabIndex = null;
   tabitems = [
     {
@@ -661,13 +662,13 @@ export default class SmartcardDocuments extends Vue {
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
-      "0x41cA17BEA13B345dAd16cC7150940e545340A965"
+      this.DAIAddress
     );
 
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
-      "0xd0F3010Ed3f5b21a037cF42742a0AB62F19e7c3A"
+      this.XDVNFTAddress
     );
 
     try {
@@ -936,7 +937,7 @@ export default class SmartcardDocuments extends Vue {
     // anchor to nft
     let gasPrice = ethers.BigNumber.from(22000000000);
 
-    let gasLimit = ethers.BigNumber.from(70000);
+    let gasLimit = ethers.BigNumber.from(210000);
     const approveTx = await this.daiWeb3contract.methods
       .approve(this.nftWeb3Contract._address, "1000000000000000000")
       .send({
