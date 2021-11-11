@@ -1,11 +1,6 @@
 <template>
   <v-container>
-    <v-progress-linear
-      indeterminate
-      v-if="loading"
-      color="indigo"
-    ></v-progress-linear>
-    <v-dialog
+     <v-dialog
       v-model="isHash"
       hide-overlay
       persistent
@@ -49,98 +44,6 @@
           </v-card>
         </template>
       </v-dialog>
-    <v-card>
-      <v-tabs background-color="blue-berry accent-4" dark v-model="tabIndex">
-        <v-tab v-for="item in tabitems" :key="item.key">
-          {{ item.label }}
-        </v-tab>
-      </v-tabs>
-      <v-tabs-items v-model="tabIndex">
-        <v-tab-item v-for="item in tabitems" :key="item.key">
-          <v-card flat>
-            <v-card-text>
-              <v-alert :type="alertType" v-if="alertMessage">{{
-                alertMessage
-              }}</v-alert>
-              <v-row>
-                <v-col offset-sm="9" class="d-flex align-items-center"
-                  ><cryptoicon symbol="bnb" size="24" class="cripto-icon" />
-                  {{
-                    balances.bnb
-                  }}
-                </v-col>
-                <v-col class="d-flex align-items-center">
-                  <cryptoicon symbol="dai" size="24" class="cripto-icon" />
-                  {{
-                    balances.dai
-                  }}
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="1" xs="1">
-                  <v-progress-circular
-                    indeterminate
-                    v-if="loading"
-                    color="primary"
-                  ></v-progress-circular>
-                </v-col>
-                <v-col xs="6" sm="6" offset-sm="2">
-                  <v-file-input
-                    multiple
-                    v-if="item.settings.signing !== 'pades'"
-                    show-size
-                    chips
-                    label="Files"
-                    v-model="files"
-                  ></v-file-input>
-                  <v-file-input
-                    multiple
-                    v-if="item.settings.signing === 'pades'"
-                    show-size
-                    chips
-                    :accept="item.settings.signing.contentType"
-                    label="PDF Documents"
-                    v-model="files"
-                  ></v-file-input>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="12" xs="12" class="d-flex">
-                  <v-radio-group v-model="typelink.mode" mandatory row>
-                    <v-radio label="Onchain timestamp" value="1"></v-radio>
-                    <v-radio label="Non fungible token" value="2"></v-radio>
-                    <v-radio label="SWARM" value="3"></v-radio>
-                    <!-- <v-radio
-                      label="Only decentralized storage"
-                      value="3"
-                    ></v-radio> -->
-                  </v-radio-group>
-                  <v-checkbox
-                    v-model="emulateSmartcard"
-                    label="Emulate Smartcard"
-                    v-if="item.settings.signing == 'pkcsjwt'"
-                  ></v-checkbox>
-                </v-col>
-              </v-row>
-
-              <v-row>
-                <v-col align="center" xs="12">
-                  <v-btn
-                    color="pink"
-                    v-if="connected === false"
-                    @click="web3Connect"
-                    dark
-                  >
-                    Connect
-                  </v-btn>
-                  <v-btn
-                    :disabled="files.length === 0"
-                    v-if="connected"
-                    @click="xdvify"
-                    color="primary"
-                  >
-                    Sign
-                  </v-btn>
     <v-row>
       <v-col xs="4" sm="4">
         <v-card width="256" min-height="800" tile>
@@ -518,9 +421,8 @@ import "share-api-polyfill";
 
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
-import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
-import { async, firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { AnconWeb3Client } from "../../../../anconjs";
+import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
 import { TxEvent } from "@cosmjs/tendermint-rpc";
@@ -755,17 +657,12 @@ export default class SmartcardDocuments extends Vue {
     if (this.typelink.mode !== "3") {
        // @ts-ignore
       this.$confirm({
-       auth: true,
+        auth: true,
         message: "Please enter a 24 seed passphrase",
         button: {
           yes: "Yes",
           no: "Cancel",
         },
-       /**
-       * Callback Function
-       * @param {Boolean} confirm
-       * @param {String} password
-       */
         /**
          * Callback Function
          * @param {Boolean} confirm
@@ -783,15 +680,15 @@ export default class SmartcardDocuments extends Vue {
       this.isHash = true;
       hashObse.subscribe(hash => {
         const getHashSwarm = async () => {
-          if(hash) {
-            const intervalHashId = localStorage.getItem('intervalHashId');
-             clearInterval(parseInt(intervalHashId));
-             this.hash = hash;
-             await this.swarm.getFile(hash);
-             this.isHash = false;
-             this.isUpload = true;
-             localStorage.removeItem('intervalHashId')
-          }
+            if(hash) {
+              const intervalHashId = localStorage.getItem('intervalHashId');
+               clearInterval(parseInt(intervalHashId));
+               this.hash = hash;
+               await this.swarm.getFile(hash);
+               this.isHash = false;
+               this.isUpload = true;
+               localStorage.removeItem('intervalHashId')
+            }
         }
         getHashSwarm();
       });
