@@ -5,7 +5,50 @@
       v-if="loading"
       color="indigo"
     ></v-progress-linear>
+    <v-dialog
+      v-model="isHash"
+      hide-overlay
+      persistent
+      width="375"
+      class="modal-loading"
+    >
+      <v-card
+        color="blue-berry accent-4"
+        dark
+        class="modal-card-loading"
+      >
+        <v-card-text class="text-center text-modal-loading">
+          Please Wait, document is uploading
+          <v-progress-linear
+            indeterminate
+            color="white"
+            class="mb-0 mt-4"
+          ></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
+    <v-dialog
+        transition="dialog-top-transition"
+        max-width="375"
+         v-model="isUpload"
+      >
+        <template>
+          <v-card color="blue-berry accent-4">
+            <v-card-text class="text-center text-modal-loading pt-10">
+              The document has been uploaded successfully!
+            </v-card-text>
+            <v-card-actions class="justify-end">
+              <v-btn
+                text
+                @click="isUpload = false"
+                class="pink"
+                color="white"
+              >Ok</v-btn>
+            </v-card-actions>
+          </v-card>
+        </template>
+      </v-dialog>
     <v-card>
       <v-tabs background-color="blue-berry accent-4" dark v-model="tabIndex">
         <v-tab v-for="item in tabitems" :key="item.key">
@@ -313,7 +356,7 @@ import "share-api-polyfill";
 import { BigNumber, ethers } from "ethers";
 import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
 import { SwarmManager  } from "../../../../views/dashboard/pages/wallet/SwarmManager";
-import { firstValueFrom, forkJoin, map, Subject } from "rxjs";
+import { async, firstValueFrom, forkJoin, map, Subject } from "rxjs";
 import { base64 } from "ethers/lib/utils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
@@ -326,10 +369,13 @@ export default class SmartcardDocuments extends Vue {
   canUpload: boolean = false;
   loading: boolean = false;
   pin = "";
+  hash: any = '';
   showPassword = false;
   uploadStatus = false;
   typelink = { mode: "2" };
   unlockPin = false;
+  isHash = false;
+  isUpload = false;
   ancon: AnconManager;
   swarm: SwarmManager;
   report: unknown = {};
@@ -483,28 +529,45 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async web3Connect() {
-    this.swarm = new SwarmManager();
-    const hash = await this.swarm.createPostageStamp(this.files[0]);
-    console.log(hash)
-    // @ts-ignore
-    this.$confirm({
-      auth: true,
-      message: "Please enter a passphrase",
-      button: {
-        yes: "Yes",
-        no: "Cancel",
-      },
-      /**
-       * Callback Function
-       * @param {Boolean} confirm
-       * @param {String} password
-       */
-      callback: async (confirm, password) => {
-        if (confirm && password) {
-          await this.connect(password);
+    if (this.typelink.mode !== "3") {
+       // @ts-ignore
+      this.$confirm({
+        auth: true,
+        message: "Please enter a passphrase",
+        button: {
+          yes: "Yes",
+          no: "Cancel",
+        },
+        /**
+         * Callback Function
+         * @param {Boolean} confirm
+         * @param {String} password
+         */
+        callback: async (confirm, password) => {
+          if (confirm && password) {
+            await this.connect(password);
+          }
+        },
+      });
+    } else {
+      this.swarm = new SwarmManager();
+      const hashObse = await this.swarm.createPostageStamp(this.files[0]);
+      this.isHash = true;
+      hashObse.subscribe(hash => {
+        const getHashSwarm = async () => {
+            if(hash) {
+              const intervalHashId = localStorage.getItem('intervalHashId');
+               clearInterval(parseInt(intervalHashId));
+               this.hash = hash;
+               await this.swarm.getFile(hash);
+               this.isHash = false;
+               this.isUpload = true;
+               localStorage.removeItem('intervalHashId')
+            }
         }
-      },
-    });
+        getHashSwarm();
+      });
+    }
   }
 
   async connect(passphrase: string) {

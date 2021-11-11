@@ -90,3 +90,18 @@
     flex: 0 0 15%;
 }
 
+.v-dialog__content {
+    top: -6rem;   
+}
+
+.modal-card-loading {
+    height: 167px;
+    display: flex;
+    align-items: center;
+}
+
+.text-modal-loading {
+    font-size: 1.1rem;
+    color: white !important;
+    font-weight: bold;
+}
