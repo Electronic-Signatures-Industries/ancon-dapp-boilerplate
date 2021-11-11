@@ -1,20 +1,19 @@
 const config = {
-  chainId: 'cosmoshub-testnet',
+  chainId: "cosmoshub-testnet",
 
-  chainName: 'cosmoshubtesnet',
+  chainName: "cosmoshubtesnet",
 
   // rpc: 'wss://ancon.did.pa:26657',
-  rpc: 'ws://localhost:26657',
+  rpc: "ws://localhost:26657",
 
   // rest: 'https://ancon.did.pa:1318',
-  rest: 'http://localhost:1317',
+  rest: "http://localhost:1317",
 
   stakeCurrency: {
-
     coinDenom: "stake",
 
     coinMinimalDenom: "stake",
-    
+
     coinDecimals: 6,
     // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
     // You can get id from https://api.coingecko.com/api/v3/coins/list if it is listed.
@@ -25,21 +24,22 @@ const config = {
   // walletUrlForStaking: "",
   // The BIP44 path.
   bip44: {
-      // You can only set the coin type of BIP44.
-      // 'Purpose' is fixed to 44.
-      coinType: 118,
+    // You can only set the coin type of BIP44.
+    // 'Purpose' is fixed to 44.
+    coinType: 118,
   },
 
   bech32Config: {
-      bech32PrefixAccAddr: "cosmos",
-      bech32PrefixAccPub: "cosmospub",
-      bech32PrefixValAddr: "cosmosvaloper",
-      bech32PrefixValPub: "cosmosvaloperpub",
-      bech32PrefixConsAddr: "cosmosvalcons",
-      bech32PrefixConsPub: "cosmosvalconspub"
+    bech32PrefixAccAddr: "cosmos",
+    bech32PrefixAccPub: "cosmospub",
+    bech32PrefixValAddr: "cosmosvaloper",
+    bech32PrefixValPub: "cosmosvaloperpub",
+    bech32PrefixConsAddr: "cosmosvalcons",
+    bech32PrefixConsPub: "cosmosvalconspub",
   },
   // List of all coin/tokens used in this chain.
-  currencies: [{
+  currencies: [
+    {
       // Coin denomination to be displayed to the user.
       coinDenom: "atom",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
@@ -49,9 +49,11 @@ const config = {
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
       // You can get id from https://api.coingecko.com/api/v3/coins/list if it is listed.
       // coinGeckoId: ""
-  }],
+    },
+  ],
   // List of coin/tokens used as a fee token in this chain.
-  feeCurrencies: [{
+  feeCurrencies: [
+    {
       // Coin denomination to be displayed to the user.
       coinDenom: "atom",
       // Actual denom (i.e. uatom, uscrt) used by the blockchain.
@@ -61,7 +63,8 @@ const config = {
       // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
       // You can get id from https://api.coingecko.com/api/v3/coins/list if it is listed.
       // coinGeckoId: ""
-  }],
+    },
+  ],
   // (Optional) The number of the coin type.
   // This field is only used to fetch the address from ENS.
   // Ideally, it is recommended to be the same with BIP44 path's coin type.
@@ -73,10 +76,10 @@ const config = {
   // Currently, Keplr doesn't support dynamic calculation of the gas prices based on on-chain data.
   // Make sure that the gas prices are higher than the minimum gas prices accepted by chain validators and RPC/REST endpoint.
   gasPriceStep: {
-      low: 0.01,
-      average: 0.025,
-      high: 0.04
-  }
-}
+    low: 0.01,
+    average: 0.025,
+    high: 0.04,
+  },
+};
 
-export default config
+export default config;

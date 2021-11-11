@@ -661,13 +661,13 @@ export default class SmartcardDocuments extends Vue {
     // DAI
     this.daiWeb3contract = new this.web3instance.eth.Contract(
       xdvnftAbi.DAI.raw.abi,
-      "0x65c33Cf8d06FA391e79ee1126EFDeB3F1A372403"
+      "0x41cA17BEA13B345dAd16cC7150940e545340A965"
     );
 
     // XDVNFT
     this.nftWeb3Contract = new this.web3instance.eth.Contract(
       xdvnftAbi.XDVNFT.raw.abi,
-      "0x52721d527aBeFd2475C4d40E212947962114056d"
+      "0xd0F3010Ed3f5b21a037cF42742a0AB62F19e7c3A"
     );
 
     try {
@@ -890,7 +890,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "4",
+          amount: "24",
         },
       ],
       gas: "200000",
