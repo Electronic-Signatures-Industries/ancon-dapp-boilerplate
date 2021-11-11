@@ -14,7 +14,7 @@
           </v-list-item>
         </v-list>
       </v-menu> -->
-      <v-toolbar-title class="headline">XDV - v1.1.0</v-toolbar-title>
+      <v-toolbar-title class="headline">Ancon Dapp v0.2.0</v-toolbar-title>
 
       <v-spacer></v-spacer>
             <!-- <v-btn

@@ -11,11 +11,11 @@
         
       </v-col>
       <v-col md="6" align="right">
-        <v-btn href="https://bafybeic5al5fyuj2hohxo37xnwzyoojpwrhv2vpmd3azwpx22i2hcjaqiu.ipfs.infura-ipfs.io/wallet-1.0.0.jar" text offset="10"
-          > Download signer</v-btn
+        <v-btn href="https://docs.xdv.digital" text offset="10"
+          > Docs</v-btn
         >
-        <v-btn href="https://twitter.com/molekilla/status/1416434509944393736?s=20" text offset="10"
-          > Guides</v-btn
+        <v-btn href="https://github.com/Electronic-Signatures-Industries" text offset="10"
+          > Github</v-btn
         >
       </v-col>
     </v-row>

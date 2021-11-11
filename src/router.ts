@@ -46,20 +46,5 @@ export default new Router({
         },        
       ],
     },
-
-    {
-      path: '/fe',
-      // @ts-ignore
-      component: index,
-
-      children: [
-        {
-          name: 'Editor',
-          path: 'editor',
-          // @ts-ignore
-          component: TemplateEditor,
-        },
-      ],
-    },
   ],
 })
