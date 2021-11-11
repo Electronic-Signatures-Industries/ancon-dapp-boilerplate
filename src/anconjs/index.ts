@@ -164,6 +164,7 @@ export class AnconWeb3Client {
   }
 
   async connect(msgclients: Array<{name: string, client: any}>) {
+    await window.keplr.enable(config.chainId);
     this.cosmosChainId = config.chainId
     this.rpcUrl = config.rpc
     this.apiUrl = config.rest
@@ -182,16 +183,14 @@ export class AnconWeb3Client {
 
     const signer = window.keplr.getOfflineSigner(this.cosmosChainId)
     for (const txcli of msgclients) {
-      this.msgService[txcli.name] = txcli.client(signer, {
+      this.msgService[txcli.name] = await txcli.client(signer, {
         addr: this.rpcUrl,
       })
     }
 
     const k = await window.keplr.getKey(this.cosmosChainId)
-    this.cosmosAccount = await this.getAccountInfo(k.bech32Address)
-    this.cosmosAccount.account.base_account.pub_key = encodePubkey(
-      encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
-    ) as any
+    this.cosmosAccount = {}
+    this.cosmosAccount.address = k.bech32Address
     return this
   }
 

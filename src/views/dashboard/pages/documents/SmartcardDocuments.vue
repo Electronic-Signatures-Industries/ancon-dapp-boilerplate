@@ -12,16 +12,16 @@
                     <v-list-item-subtitle
                       >Ethereum address</v-list-item-subtitle
                     >
-                    <v-chip class="ma-2" color="#48409A" pill close outlined>
+                    <v-chip class="ma-2" color="#48409A" pill  outlined>
                       <v-icon left> mdi-wallet </v-icon>
                       {{ walletEthAdressDisplay }}
                     </v-chip>
                   </v-row>
                   <v-row class="d-inline-flex">
                     <v-list-item-subtitle
-                      >Cosmos EVM address</v-list-item-subtitle
+                      >Cosmos address</v-list-item-subtitle
                     >
-                    <v-chip class="ma-2" color="#48409A" pill close outlined>
+                    <v-chip class="ma-2" color="#48409A" pill  outlined>
                       <v-icon left> mdi-wallet </v-icon>
                       {{ walletCosmosAddressDisplay }}
                     </v-chip>
@@ -857,7 +857,7 @@ export default class SmartcardDocuments extends Vue {
           let key = cid;
           const path = "";
           const requestProof = await fetch(
-            `http://localhost:1317/ancon/proof/${key}${path}`
+            `${this.anconWeb3client.apiUrl}/ancon/proof/${key}${path}`
           );
           const proof = await requestProof.json();
 
@@ -897,7 +897,7 @@ export default class SmartcardDocuments extends Vue {
     };
 
     const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
-    return this.anconWeb3client.msgService.ancon.signAndBroadcast(encoded, fee, '');
+    return this.anconWeb3client.msgService.ancon.signAndBroadcast([encoded], {fee,memo: ''});
 
 }
 
@@ -981,7 +981,7 @@ export default class SmartcardDocuments extends Vue {
     if (this.ancon && this.cidindex) {
       const path = "/";
       const body = await fetch(
-        `http://localhost:1317/ancon/${this.cidindex}${path}`
+        `${this.anconWeb3client.apiUrl}/ancon/${this.cidindex}${path}`
       );
 
       const res = await body.json();
