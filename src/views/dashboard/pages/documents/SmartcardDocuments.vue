@@ -897,7 +897,7 @@ export default class SmartcardDocuments extends Vue {
     };
 
     const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
-    return this.anconWeb3client.msgService.ancon.signAndBroadcast([encoded], {fee,memo: ''});
+    return this.anconWeb3client.signAndBroadcast(encoded, fee)
 
 }
 

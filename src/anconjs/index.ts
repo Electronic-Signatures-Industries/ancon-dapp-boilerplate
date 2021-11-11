@@ -116,7 +116,7 @@ export class AnconWeb3Client {
   async signAndBroadcast(encoded: any, fee: any) {
     const { account } = this.cosmosAccount
 
-    const pubkey = this.cosmosAccount.account.base_account.pub_key
+    const pubkey = this.cosmosAccount.account.pub_key
 
     const txBodyEncodeObject = {
       typeUrl: '/cosmos.tx.v1beta1.TxBody',
@@ -131,7 +131,7 @@ export class AnconWeb3Client {
       [
         {
           pubkey,
-          sequence: account.base_account.sequence,
+          sequence: account.sequence,
         },
       ],
       fee.amount,
@@ -142,7 +142,7 @@ export class AnconWeb3Client {
       txBodyBytes,
       authInfoBytes,
       this.cosmosChainId,
-      account.base_account.account_number,
+      account.account_number,
     )
 
     const s = await window.keplr.signDirect(
@@ -156,14 +156,17 @@ export class AnconWeb3Client {
       signatures: [fromBase64(s.signature.signature)],
     })
 
-    return window.keplr.sendTx(
-      this.cosmosChainId,
-      TxRaw.encode(txsignedhex).finish(),
-      BroadcastMode.Sync,
-    )
+    return this.tm.broadcastTxSync({tx: TxRaw.encode(txsignedhex).finish()}) 
+
+    // window.keplr.sendTx(
+    //   this.cosmosChainId,
+    //   TxRaw.encode(txsignedhex).finish(),
+    //   BroadcastMode.Sync,
+    // )
   }
 
   async connect(msgclients: Array<{name: string, client: any}>) {
+    await createKeplrWallet()
     await window.keplr.enable(config.chainId);
     this.cosmosChainId = config.chainId
     this.rpcUrl = config.rpc
@@ -189,8 +192,11 @@ export class AnconWeb3Client {
     }
 
     const k = await window.keplr.getKey(this.cosmosChainId)
-    this.cosmosAccount = {}
-    this.cosmosAccount.address = k.bech32Address
+
+    this.cosmosAccount = await this.getAccountInfo(k.bech32Address)
+    this.cosmosAccount.account.pub_key = encodePubkey(
+      encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
+    ) as any
     return this
   }
 
@@ -201,6 +207,6 @@ export class AnconWeb3Client {
       )
     ).json()
 
-    return { ...res2, address: res2.account.base_account.address }
+    return { ...res2, address: res2.account.address }
   }
 }
