@@ -12,16 +12,14 @@
                     <v-list-item-subtitle
                       >Ethereum address</v-list-item-subtitle
                     >
-                    <v-chip class="ma-2" color="#48409A" pill  outlined>
+                    <v-chip class="ma-2" color="#48409A" pill outlined>
                       <v-icon left> mdi-wallet </v-icon>
                       {{ walletEthAdressDisplay }}
                     </v-chip>
                   </v-row>
                   <v-row class="d-inline-flex">
-                    <v-list-item-subtitle
-                      >Cosmos address</v-list-item-subtitle
-                    >
-                    <v-chip class="ma-2" color="#48409A" pill  outlined>
+                    <v-list-item-subtitle>Cosmos address</v-list-item-subtitle>
+                    <v-chip class="ma-2" color="#48409A" pill outlined>
                       <v-icon left> mdi-wallet </v-icon>
                       {{ walletCosmosAddressDisplay }}
                     </v-chip>
@@ -33,9 +31,10 @@
             <v-list nav dense>
               <v-list-item-group
                 v-model="sideBarItems.selectedItem"
+                :key="sideBarItems.selectedItem"
                 color="primary"
               >
-                <v-list-item v-for="(item, i) in sideBarItems.items" :key="i">
+                <v-list-item v-for="(item, i) in sideBarItems.items" :key="i" @click="sidebarListItemSelect(item.functional.key)">
                   <v-list-item-icon>
                     <v-icon v-text="item.icon"></v-icon>
                   </v-list-item-icon>
@@ -77,19 +76,21 @@
           v-if="loading"
           color="pink"
         ></v-progress-linear>
+        <v-divider></v-divider>
+        <v-divider></v-divider>
 
         <v-card>
-          <v-tabs
+          <!-- <v-tabs
             background-color="blue-berry accent-4"
             dark
-            v-model="tabIndex"
+            v-model="sideBarItems.selectedItem"
           >
-            <v-tab v-for="item in tabitems" :key="item.key">
-              {{ item.label }}
+            <v-tab v-for="item in sideBarItems.items" :key="item.functional.key">
+              {{ item.text }}
             </v-tab>
-          </v-tabs>
-          <v-tabs-items v-model="tabIndex">
-            <v-tab-item v-for="item in tabitems" :key="item.key">
+          </v-tabs> -->
+          <v-tabs-items v-model="sideBarItems.selectedItem">
+            <v-tab-item v-for="item in sideBarItems.items" :key="item.functional.key">
               <v-card flat>
                 <v-card-text>
                   <v-alert :type="alertType" v-if="alertMessage">{{
@@ -98,23 +99,34 @@
 
                   <v-row>
                     <v-col xs="6" sm="6" offset-sm="2">
+                      <v-text-field
+                        v-if="item.functional.key !== 'mint'"
+                        show-size
+                        chips
+                        
+                        :accept="item.functional.settings.signing.contentType"
+                        
+                        label="NFT Contract Address"
+                        required
+                        v-model="placeholderContractAddress"
+                      ></v-text-field>
                       <v-file-input
                         multiple
-                        v-if="item.settings.signing !== 'transfer'"
+                        v-if="item.functional.key === 'mint'"
                         show-size
                         chips
                         label="Files"
                         v-model="files"
                       ></v-file-input>
-                      <v-file-input
+                      <!-- <v-file-input
                         multiple
-                        v-if="item.settings.signing === 'transfer'"
+                        v-if="item.functional.settings.signing === 'transfer'"
                         show-size
                         chips
-                        :accept="item.settings.signing.contentType"
+                        :accept="item.functional.settings.signing.contentType"
                         label="PDF Documents"
                         v-model="files"
-                      ></v-file-input>
+                      ></v-file-input> -->
                       <v-alert type="alert" dense v-if="cidindex"
                         >Image URI: {{ cidindex }}</v-alert
                       >
@@ -123,19 +135,72 @@
                   <v-row>
                     <v-col xs="6" sm="6" offset-sm="2">
                       <v-text-field
+                        v-if="item.functional.key === 'mint'"
+                        show-size
+                        chips
+                        
+                        :accept="item.functional.settings.signing.contentType"
+                        
                         label="Name"
                         required
                         v-model="name"
+                      ></v-text-field>
+                      <v-text-field
+                        v-if="item.functional.key !== 'mint'"
+                        show-size
+                        chips
+                        
+                        :accept="item.functional.settings.signing.contentType"
+                        
+                        label="Token ID"
+                        required
+                        v-model="tokenID"
                       ></v-text-field>
                     </v-col>
                   </v-row>
                   <v-row>
                     <v-col xs="6" sm="6" offset-sm="2">
                       <v-text-field
+                        v-if="item.functional.key === 'mint'"
+                        show-size
+                        chips
                         required
                         label="Description"
+
                         v-model="description"
                       ></v-text-field>
+                      <v-text-field
+                        v-if="item.functional.key === 'crosschain-swap'"
+                        show-size
+                        chips
+                        required
+                        label="Network"
+
+                        v-model="description"
+                      ></v-text-field>
+                      <v-menu offset-y v-if="item.functional.key === 'crosschain-swap'"
+                        show-size
+                        chips
+                        required>
+                        <template v-slot:activator="{ on, attrs }">
+                          <v-btn
+                            color="#48409A"
+                            dark
+                            v-bind="attrs"
+                            v-on="on"
+                          >
+                            Network
+                          </v-btn>
+                        </template>
+                        <v-list>
+                          <v-list-item
+                            v-for="(item, index) in dropdownItems"
+                            :key="index"
+                          >
+                            <v-list-item-title>{{ item.title }}</v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
                     </v-col>
                   </v-row>
 
@@ -445,7 +510,7 @@ export default class SmartcardDocuments extends Vue {
   connected = false;
   cidindex = "";
   DAIAddress: string = `0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635`;
-  XDVNFTAddress: string = `0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46`
+  XDVNFTAddress: string = `0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46`;
   tabIndex = null;
   tabitems = [
     {
@@ -518,6 +583,7 @@ export default class SmartcardDocuments extends Vue {
     },
   ];
   name = "My New Fancy NFT";
+  tokenID = "000";
   description = "Powered by Ancon Protocol";
   viewItems = [];
   transactions = [];
@@ -536,16 +602,63 @@ export default class SmartcardDocuments extends Vue {
   walletCosmosAddress = "";
   walletCosmosAddressDisplay = "Not connected";
   sideBarItems = {
-    selectedItem: 0,
+    selectedItem: "mint",
     items: [
-      { text: "Mint", icon: "mdi-checkerboard-plus" },
-      { text: "Transfer", icon: "mdi-bank-transfer" },
-      { text: "Crosschain", icon: "mdi-transit-connection-horizontal" },
+      {
+        text: "Mint",
+        icon: "mdi-checkerboard-plus",
+        functional: {
+          key: "mint",
+          label: "Mint NFT",
+          settings: {
+            signing: "simple",
+            contentType: null,
+          },
+        },
+      },
+      {
+        text: "Transfer",
+        icon: "mdi-bank-transfer",
+        functional: {
+          key: "owner-transfer",
+          label: "Transfer NFT Ownership",
+          settings: {
+            signing: "transfer",
+            contentType: null,
+          },
+        },
+      },
+      {
+        text: "Crosschain",
+        icon: "mdi-transit-connection-horizontal",
+        functional: {
+          key: "crosschain-swap",
+          label: "Crosschain Swap",
+          settings: {
+            signing: "swap",
+            contentType: null,
+          },
+        },
+      }
     ],
   };
+  placeholderContractAddress = "0x0000000000000000";
   daiWeb3contract: any;
   nftWeb3Contract: any;
 
+  dropdownItems = [
+    { title: 'Ethereum' },
+    { title: 'Binance Smart Chain' },
+    { title: 'Solana' },
+    { title: 'Kucoin Chain' },
+    { title: 'Polygon' },
+  ]
+
+  sidebarListItemSelect(itemKey: string ){
+    this.sideBarItems.selectedItem = itemKey
+    console.log("clicked and index is", itemKey)
+  }
+  
   async loadTransactions() {
     if (this.ethersContract) {
       const query = this.ethersContract.filters.Transfer(this.currentAccount);
@@ -898,9 +1011,8 @@ export default class SmartcardDocuments extends Vue {
     };
 
     const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
-    return this.anconWeb3client.signAndBroadcast(encoded, fee)
-
-}
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
 
   /** Updates metadata ownership*/
   async updateMetadata(metadataCid: string) {
@@ -912,7 +1024,7 @@ export default class SmartcardDocuments extends Vue {
       recipientChainId: "3", // config / settings
       sender: this.anconWeb3client.cosmosAccount.address,
     });
-       const fee = {
+    const fee = {
       amount: [
         {
           denom: "uatom",
@@ -922,9 +1034,13 @@ export default class SmartcardDocuments extends Vue {
       gas: "200000",
     };
 
-    const encoded = this.anconWeb3client.msgService.ancon.msgUpdateMetadataOwnership(msgupd);
-    return this.anconWeb3client.msgService.ancon.signAndBroadcast(encoded, fee, '');
-
+    const encoded =
+      this.anconWeb3client.msgService.ancon.msgUpdateMetadataOwnership(msgupd);
+    return this.anconWeb3client.msgService.ancon.signAndBroadcast(
+      encoded,
+      fee,
+      ""
+    );
   }
 
   /** Relays message to chain b, returns bool or revert*/
