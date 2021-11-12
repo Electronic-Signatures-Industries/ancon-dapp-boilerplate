@@ -188,7 +188,7 @@
                       <v-btn
                         color="pink"
                         v-if="connected === false"
-                        @click="connect"
+                        @click="web3Connect"
                         dark
                       >
                         Connect
@@ -449,7 +449,7 @@ export default class SmartcardDocuments extends Vue {
   hash: any = '';
   showPassword = false;
   uploadStatus = false;
-  typelink = { mode: "2" };
+  typelink = { mode: "3" };
   unlockPin = false;
   isHash = false;
   isUpload = false;

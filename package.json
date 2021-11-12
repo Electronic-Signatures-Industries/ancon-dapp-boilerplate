@@ -27,6 +27,7 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@babel/runtime": "^7.16.3",
     "@ceramicnetwork/key-did-resolver": "^0.2.2",
     "@chenfengyuan/vue-qrcode": "^1.0.2",
     "@confio/ics23": "^0.6.5",
@@ -81,6 +82,7 @@
     "pouchdb": "^7.2.1",
     "pouchdb-find": "^7.2.1",
     "promise-file-reader": "^1.0.2",
+    "regenerator-runtime": "^0.13.9",
     "rxjs": "^7.0.0",
     "share-api-polyfill": "^1.0.21",
     "sockjs-client": "^1.4.0",
@@ -111,6 +113,8 @@
     "xdv-universal-wallet-core": "^0.6.2"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
     "@mdi/font": "^5.0.45",
     "@mdi/js": "^5.0.45",
     "@types/jest": "^26.0.23",
@@ -129,6 +133,8 @@
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
+    "babel-plugin-transform-regenerator": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
     "copy-webpack-plugin": "^5.1.1",
     "eslint": "^6.8.0",
     "eslint-config-vuetify": "^0.4.1",

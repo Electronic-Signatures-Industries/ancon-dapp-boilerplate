@@ -10,7 +10,11 @@ import './plugins/vee-validate';
 import './plugins/appconfig';
 import Vuebar from 'vuebar';
 import VueConfirmDialog from 'vue-confirm-dialog'
-
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+import "@babel/plugin-transform-runtime";
+import 'babel-polyfill';
+import 'babel-core';
 
 import GAuth from 'vue-google-oauth2'
 import Cryptoicon from 'vue-cryptoicon';
