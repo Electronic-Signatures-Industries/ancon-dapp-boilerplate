@@ -1,10 +1,14 @@
 <template>
-  <v-container>
+  <div>
+    
     <v-row>
-      <v-col xs="4" sm="4">
-        <v-card width="256" min-height="800" tile>
+      
+    <v-navigation-drawer
+      permanent
+      
+    >
+        <v-card  min-height="900">
           <v-navigation-drawer permanent>
-            <!-- <v-system-bar></v-system-bar> -->
             <v-list>
               <v-list-item>
                 <v-col xs="8" sm="8">
@@ -46,8 +50,10 @@
             </v-list>
           </v-navigation-drawer>
         </v-card>
-      </v-col>
+      </v-navigation-drawer>
+    
       <v-col>
+        <v-container>
         <v-card>
           <v-list-item>
             <v-list-item-title class="text-h6 mb-1">
@@ -77,18 +83,8 @@
           color="pink"
         ></v-progress-linear>
         <v-divider></v-divider>
-        <v-divider></v-divider>
 
         <v-card>
-          <!-- <v-tabs
-            background-color="blue-berry accent-4"
-            dark
-            v-model="sideBarItems.selectedItem"
-          >
-            <v-tab v-for="item in sideBarItems.items" :key="item.functional.key">
-              {{ item.text }}
-            </v-tab>
-          </v-tabs> -->
           <v-tabs-items v-model="sideBarItems.selectedItem">
             <v-tab-item v-for="item in sideBarItems.items" :key="item.functional.key">
               <v-card flat>
@@ -118,15 +114,6 @@
                         label="Files"
                         v-model="files"
                       ></v-file-input>
-                      <!-- <v-file-input
-                        multiple
-                        v-if="item.functional.settings.signing === 'transfer'"
-                        show-size
-                        chips
-                        :accept="item.functional.settings.signing.contentType"
-                        label="PDF Documents"
-                        v-model="files"
-                      ></v-file-input> -->
                       <v-alert type="alert" dense v-if="cidindex"
                         >Image URI: {{ cidindex }}</v-alert
                       >
@@ -170,13 +157,13 @@
                         v-model="description"
                       ></v-text-field>
                       <v-text-field
-                        v-if="item.functional.key === 'crosschain-swap'"
+                        v-if="item.functional.key !== 'mint'"
                         show-size
                         chips
                         required
-                        label="Network"
+                        label="Recipient Address"
 
-                        v-model="description"
+                        v-model="recipientAddressPlaceholder"
                       ></v-text-field>
                       <v-menu offset-y v-if="item.functional.key === 'crosschain-swap'"
                         show-size
@@ -432,9 +419,10 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        </v-container>
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
@@ -511,57 +499,6 @@ export default class SmartcardDocuments extends Vue {
   cidindex = "";
   DAIAddress: string = `0xb0c578D19f6E7dD455798b76CC92FfdDb61aD635`;
   XDVNFTAddress: string = `0xEcf598C751c0e129e68BB4cF7580a88cB2f03B46`;
-  tabIndex = null;
-  tabitems = [
-    {
-      key: "mint",
-      label: "Mint NFT",
-      settings: {
-        signing: "simple",
-        contentType: null,
-      },
-    },
-    {
-      key: "owner-transfer",
-      label: "Transfer NFT Ownership",
-      settings: {
-        signing: "transfer",
-        contentType: null,
-      },
-    },
-    {
-      key: "crosschain-swap",
-      label: "Crosschain Swap",
-      settings: {
-        signing: "swap",
-        contentType: null,
-      },
-    },
-    // {
-    //   key: "crosschain1",
-    //   label: "NFT Cross Chain (new recipient token id, unique owner)",
-    //   settings: {
-    //     signing: "xchain_1",
-    //     contentType: null,
-    //   },
-    // },
-    // {
-    //   key: "crosschain2",
-    //   label: "NFT Cross Chain (new recipient token id, co-owners)",
-    //   settings: {
-    //     signing: "xchain_2",
-    //     contentType: null,
-    //   },
-    // },
-    // {
-    //   key: "pades",
-    //   label: "Qualified PDF",
-    //   settings: {
-    //     signing: "pades",
-    //     contentType: "application/pdf",
-    //   },
-    //    },
-  ];
 
   tabDetailIndex = null;
   tabDetailItems = [
@@ -584,6 +521,7 @@ export default class SmartcardDocuments extends Vue {
   ];
   name = "My New Fancy NFT";
   tokenID = "000";
+  recipientAddressPlaceholder="0x000000000000000000";
   description = "Powered by Ancon Protocol";
   viewItems = [];
   transactions = [];
