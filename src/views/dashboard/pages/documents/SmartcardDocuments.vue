@@ -1,13 +1,8 @@
 <template>
   <div>
-    
     <v-row>
-      
-    <v-navigation-drawer
-      permanent
-      
-    >
-        <v-card  min-height="900">
+      <v-navigation-drawer permanent>
+        <v-card min-height="900">
           <v-navigation-drawer permanent>
             <v-list>
               <v-list-item>
@@ -38,7 +33,11 @@
                 :key="sideBarItems.selectedItem"
                 color="primary"
               >
-                <v-list-item v-for="(item, i) in sideBarItems.items" :key="i" @click="sidebarListItemSelect(item.functional.key)">
+                <v-list-item
+                  v-for="(item, i) in sideBarItems.items"
+                  :key="i"
+                  @click="sidebarListItemSelect(item.functional.key)"
+                >
                   <v-list-item-icon>
                     <v-icon v-text="item.icon"></v-icon>
                   </v-list-item-icon>
@@ -51,374 +50,376 @@
           </v-navigation-drawer>
         </v-card>
       </v-navigation-drawer>
-    
+
       <v-col>
         <v-container>
-        <v-card>
-          <v-list-item>
-            <v-list-item-title class="text-h6 mb-1">
-              Balances
-            </v-list-item-title>
-          </v-list-item>
-          <v-card-text>
-            <v-row>
-              <v-col xs="3" sm="3" offset-sm="2">
-                <cryptoicon symbol="atom" size="24" class="cripto-icon" />
-                {{ balances.bnb }}
-              </v-col>
-              <v-col xs="3" sm="3">
-                <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
-                {{ balances.bnb }}
-              </v-col>
-              <v-col xs="3" sm="3">
-                <cryptoicon symbol="dai" size="24" class="cripto-icon" />
-                {{ balances.dai }}
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-        <v-progress-linear
-          indeterminate
-          v-if="loading"
-          color="pink"
-        ></v-progress-linear>
-        <v-divider></v-divider>
+          <v-card>
+            <v-list-item>
+              <v-list-item-title class="text-h6 mb-1">
+                Balances
+              </v-list-item-title>
+            </v-list-item>
+            <v-card-text>
+              <v-row>
+                <v-col xs="3" sm="3" offset-sm="2">
+                  <cryptoicon symbol="atom" size="24" class="cripto-icon" />
+                  {{ balances.bnb }}
+                </v-col>
+                <v-col xs="3" sm="3">
+                  <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
+                  {{ balances.bnb }}
+                </v-col>
+                <v-col xs="3" sm="3">
+                  <cryptoicon symbol="dai" size="24" class="cripto-icon" />
+                  {{ balances.dai }}
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+          <v-progress-linear
+            indeterminate
+            v-if="loading"
+            color="pink"
+          ></v-progress-linear>
+          <v-divider></v-divider>
 
-        <v-card>
-          <v-tabs-items v-model="sideBarItems.selectedItem">
-            <v-tab-item v-for="item in sideBarItems.items" :key="item.functional.key">
-              <v-card flat>
-                <v-card-text>
-                  <v-alert :type="alertType" v-if="alertMessage">{{
-                    alertMessage
-                  }}</v-alert>
-
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
-                      <v-text-field
-                        v-if="item.functional.key !== 'mint'"
-                        show-size
-                        chips
-                        
-                        :accept="item.functional.settings.signing.contentType"
-                        
-                        label="NFT Contract Address"
-                        required
-                        v-model="placeholderContractAddress"
-                      ></v-text-field>
-                      <v-file-input
-                        multiple
-                        v-if="item.functional.key === 'mint'"
-                        show-size
-                        chips
-                        label="Files"
-                        v-model="files"
-                      ></v-file-input>
-                      <v-alert type="alert" dense v-if="cidindex"
-                        >Image URI: {{ cidindex }}</v-alert
-                      >
-                    </v-col>
-                  </v-row>
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
-                      <v-text-field
-                        v-if="item.functional.key === 'mint'"
-                        show-size
-                        chips
-                        
-                        :accept="item.functional.settings.signing.contentType"
-                        
-                        label="Name"
-                        required
-                        v-model="name"
-                      ></v-text-field>
-                      <v-text-field
-                        v-if="item.functional.key !== 'mint'"
-                        show-size
-                        chips
-                        
-                        :accept="item.functional.settings.signing.contentType"
-                        
-                        label="Token ID"
-                        required
-                        v-model="tokenID"
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
-                      <v-text-field
-                        v-if="item.functional.key === 'mint'"
-                        show-size
-                        chips
-                        required
-                        label="Description"
-
-                        v-model="description"
-                      ></v-text-field>
-                      <v-text-field
-                        v-if="item.functional.key !== 'mint'"
-                        show-size
-                        chips
-                        required
-                        label="Recipient Address"
-
-                        v-model="recipientAddressPlaceholder"
-                      ></v-text-field>
-                      <v-menu offset-y v-if="item.functional.key === 'crosschain-swap'"
-                        show-size
-                        chips
-                        required>
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-btn
-                            color="#48409A"
-                            dark
-                            v-bind="attrs"
-                            v-on="on"
-                          >
-                            Network
-                          </v-btn>
-                        </template>
-                        <v-list>
-                          <v-list-item
-                            v-for="(item, index) in dropdownItems"
-                            :key="index"
-                          >
-                            <v-list-item-title>{{ item.title }}</v-list-item-title>
-                          </v-list-item>
-                        </v-list>
-                      </v-menu>
-                    </v-col>
-                  </v-row>
-
-                  <v-row>
-                    <v-col xs="6" offset="2">
-                      <v-btn
-                        color="pink"
-                        v-if="connected === false"
-                        @click="connect"
-                        dark
-                      >
-                        Connect
-                      </v-btn>
-                      <v-btn
-                        :disabled="files.length === 0"
-                        v-if="connected"
-                        @click="xdvify"
-                        color="primary"
-                      >
-                        Create metadata and mint
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-card>
-
-        <v-card>
-          <v-tabs
-            background-color="blue-berry accent-4"
-            dark
-            v-model="tabDetailIndex"
-          >
-            <v-tab v-for="item in tabDetailItems" :key="item.key">
-              {{ item.label }}
-            </v-tab>
-          </v-tabs>
-          <v-tabs-items v-model="tabDetailIndex">
-            <v-tab-item key="details">
-              <v-alert type="success" v-if="txid.length > 0" dense dismissible
-                >{{ cids.length }} file(s) has been signed and uploaded</v-alert
+          <v-card>
+            <v-tabs-items v-model="sideBarItems.selectedItem">
+              <v-tab-item
+                v-for="item in sideBarItems.items"
+                :key="item.functional.key"
               >
-              <v-card>
-                <v-row dense>
-                  <v-col cols="12">
-                    <v-card>
-                      <v-card-title class="text-h5">
-                        Transaction details
-                      </v-card-title>
+                <v-card flat>
+                  <v-card-text>
+                    <v-alert :type="alertType" v-if="alertMessage">{{
+                      alertMessage
+                    }}</v-alert>
 
-                      <v-card-text v-if="!!cidindex">
-                        <div>No transactions</div>
-                      </v-card-text>
-                      <v-card-text v-if="!!cidindex">
-                        <div>Tx {{ txid }}</div>
-                        <div>Ancon cid {{ cidindex }}</div>
+                    <v-row>
+                      <v-col xs="6" sm="6" offset-sm="2">
+                        <v-text-field
+                          v-if="item.functional.key !== 'mint'"
+                          show-size
+                          chips
+                          :accept="item.functional.settings.signing.contentType"
+                          label="NFT Contract Address"
+                          required
+                          v-model="placeholderContractAddress"
+                        ></v-text-field>
+                        <v-file-input
+                          multiple
+                          v-if="item.functional.key === 'mint'"
+                          show-size
+                          chips
+                          label="Files"
+                          v-model="files"
+                        ></v-file-input>
+                        <v-alert type="alert" dense v-if="cidindex"
+                          >Image URI: {{ cidindex }}</v-alert
+                        >
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col xs="6" sm="6" offset-sm="2">
+                        <v-text-field
+                          v-if="item.functional.key === 'mint'"
+                          show-size
+                          chips
+                          :accept="item.functional.settings.signing.contentType"
+                          label="Name"
+                          required
+                          v-model="name"
+                        ></v-text-field>
+                        <v-text-field
+                          v-if="item.functional.key !== 'mint'"
+                          show-size
+                          chips
+                          :accept="item.functional.settings.signing.contentType"
+                          label="Token ID"
+                          required
+                          v-model="tokenID"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col xs="6" sm="6" offset-sm="2">
+                        <v-text-field
+                          v-if="item.functional.key === 'mint'"
+                          show-size
+                          chips
+                          required
+                          label="Description"
+                          v-model="description"
+                        ></v-text-field>
+                        <v-text-field
+                          v-if="item.functional.key !== 'mint'"
+                          show-size
+                          chips
+                          required
+                          label="Recipient Address"
+                          v-model="recipientAddressPlaceholder"
+                        ></v-text-field>
+                        <v-menu
+                          offset-y
+                          v-if="item.functional.key === 'crosschain-swap'"
+                          show-size
+                          chips
+                          required
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <v-btn
+                              color="#48409A"
+                              dark
+                              v-bind="attrs"
+                              v-on="on"
+                            >
+                              Network
+                            </v-btn>
+                          </template>
+                          <v-list>
+                            <v-list-item
+                              v-for="(item, index) in dropdownItems"
+                              :key="index"
+                            >
+                              <v-list-item-title>{{
+                                item.title
+                              }}</v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu>
+                      </v-col>
+                    </v-row>
 
-                        <v-row
-                          ><v-col>
-                            <v-simple-table dense md="10">
-                              <template v-slot:default>
-                                <!-- <thead>
+                    <v-row>
+                      <v-col xs="6" offset="2">
+                        <v-btn
+                          color="pink"
+                          v-if="connected === false"
+                          @click="connect"
+                          dark
+                        >
+                          Connect
+                        </v-btn>
+                        <v-btn
+                          :disabled="files.length === 0"
+                          v-if="connected"
+                          @click="xdvify"
+                          color="primary"
+                        >
+                          Create metadata and mint
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-tab-item>
+            </v-tabs-items>
+          </v-card>
+
+          <v-card>
+            <v-tabs
+              background-color="blue-berry accent-4"
+              dark
+              v-model="tabDetailIndex"
+            >
+              <v-tab v-for="item in tabDetailItems" :key="item.key">
+                {{ item.label }}
+              </v-tab>
+            </v-tabs>
+            <v-tabs-items v-model="tabDetailIndex">
+              <v-tab-item key="details">
+                <v-alert type="success" v-if="txid.length > 0" dense dismissible
+                  >{{ cids.length }} file(s) has been signed and
+                  uploaded</v-alert
+                >
+                <v-card>
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-card>
+                        <v-card-title class="text-h5">
+                          Transaction details
+                        </v-card-title>
+
+                        <v-card-text v-if="!!cidindex">
+                          <div>No transactions</div>
+                        </v-card-text>
+                        <v-card-text v-if="!!cidindex">
+                          <div>Tx {{ txid }}</div>
+                          <div>Ancon cid {{ cidindex }}</div>
+
+                          <v-row
+                            ><v-col>
+                              <v-simple-table dense md="10">
+                                <template v-slot:default>
+                                  <!-- <thead>
                               <tr>
                                 <th>CID</th>
                                 <th>Content Type</th>
                                 <th>Name</th>
                               </tr>
                             </thead> -->
-                                <tbody>
-                                  <tr
-                                    v-for="item in reportVerify"
-                                    :key="item.title"
-                                  >
-                                    <td>
-                                      {{ item.title }}
-                                    </td>
-                                    <td>
-                                      {{ item.subtitle }}
-                                    </td>
-                                    <td>
-                                      {{ item.name }}
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </template>
-                            </v-simple-table>
-                          </v-col>
-                        </v-row>
-                        <v-row>
-                          <v-col>
-                            <v-simple-table dense md="10">
-                              <template v-slot:default>
-                                <thead>
-                                  <tr>
-                                    <th>CID</th>
-                                    <th>Content Type</th>
-                                    <th>Name</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr
-                                    v-for="item in viewItems.signedFiles"
-                                    :key="item.cid"
-                                  >
-                                    <td>
-                                      {{ item.cid }}
-                                    </td>
-                                    <td>
-                                      {{ item.contentType }}
-                                    </td>
-                                    <td>
-                                      {{ item.name }}
-                                    </td>
-                                    <td>
-                                      <v-btn
-                                        v-show="false"
-                                        @click="
-                                          loadCid(
-                                            item.cid,
-                                            viewItems.type,
-                                            item.name,
-                                            item.contentType
-                                          )
-                                        "
-                                        ><v-icon right dark>
-                                          mdi-download
-                                        </v-icon>
-                                        Download</v-btn
-                                      >
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </template>
-                            </v-simple-table>
-                          </v-col>
-                        </v-row>
-                      </v-card-text>
+                                  <tbody>
+                                    <tr
+                                      v-for="item in reportVerify"
+                                      :key="item.title"
+                                    >
+                                      <td>
+                                        {{ item.title }}
+                                      </td>
+                                      <td>
+                                        {{ item.subtitle }}
+                                      </td>
+                                      <td>
+                                        {{ item.name }}
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </template>
+                              </v-simple-table>
+                            </v-col>
+                          </v-row>
+                          <v-row>
+                            <v-col>
+                              <v-simple-table dense md="10">
+                                <template v-slot:default>
+                                  <thead>
+                                    <tr>
+                                      <th>CID</th>
+                                      <th>Content Type</th>
+                                      <th>Name</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr
+                                      v-for="item in viewItems.signedFiles"
+                                      :key="item.cid"
+                                    >
+                                      <td>
+                                        {{ item.cid }}
+                                      </td>
+                                      <td>
+                                        {{ item.contentType }}
+                                      </td>
+                                      <td>
+                                        {{ item.name }}
+                                      </td>
+                                      <td>
+                                        <v-btn
+                                          v-show="false"
+                                          @click="
+                                            loadCid(
+                                              item.cid,
+                                              viewItems.type,
+                                              item.name,
+                                              item.contentType
+                                            )
+                                          "
+                                          ><v-icon right dark>
+                                            mdi-download
+                                          </v-icon>
+                                          Download</v-btn
+                                        >
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </template>
+                              </v-simple-table>
+                            </v-col>
+                          </v-row>
+                        </v-card-text>
 
-                      <v-card-actions v-if="!!cidindex">
-                        <v-btn @click="shareTo(cidindex)" text
-                          ><v-icon right dark> mdi-link </v-icon> Share
-                        </v-btn>
-                        <v-btn
-                          @click="verifyChain(cidindex)"
-                          text
-                          v-if="viewItems.type === 'jwt'"
-                        >
-                          <v-icon right dark> mdi-certificate </v-icon> Verify
-                        </v-btn>
-                      </v-card-actions>
-                    </v-card>
-                  </v-col>
-                </v-row>
-              </v-card>
-            </v-tab-item>
-            <v-tab-item key="transactions">
-              <v-alert type="success" v-if="txid.length > 0" dense dismissible
-                >{{ cids.length }} file(s) has been signed and uploaded</v-alert
-              >
-              <v-card>
-                <v-row dense>
-                  <v-col cols="12">
-                    <v-card>
-                      <v-card-title class="text-h5">
-                        Transactions
-                      </v-card-title>
+                        <v-card-actions v-if="!!cidindex">
+                          <v-btn @click="shareTo(cidindex)" text
+                            ><v-icon right dark> mdi-link </v-icon> Share
+                          </v-btn>
+                          <v-btn
+                            @click="verifyChain(cidindex)"
+                            text
+                            v-if="viewItems.type === 'jwt'"
+                          >
+                            <v-icon right dark> mdi-certificate </v-icon> Verify
+                          </v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-card>
+              </v-tab-item>
+              <v-tab-item key="transactions">
+                <v-alert type="success" v-if="txid.length > 0" dense dismissible
+                  >{{ cids.length }} file(s) has been signed and
+                  uploaded</v-alert
+                >
+                <v-card>
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-card>
+                        <v-card-title class="text-h5">
+                          Transactions
+                        </v-card-title>
 
-                      <v-card-text>
-                        <v-simple-table dense>
-                          <template v-slot:default>
-                            <thead>
-                              <tr>
-                                <th class="text-left">Tx</th>
-                                <th class="text-left">Event</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="item in transactions" :key="item">
-                                <td>{{ item.transactionHash }}</td>
-                                <td>{{ item.event }}</td>
-                              </tr>
-                            </tbody>
-                          </template>
-                        </v-simple-table>
-                      </v-card-text>
-                      <v-card-actions>
-                        <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
-                      </v-card-actions>
-                    </v-card>
-                  </v-col>
-                </v-row>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-card>
-
-        <vue-confirm-dialog></vue-confirm-dialog>
-        <v-dialog v-model="unlockPin" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="headline">Enter PIN for hardware module</span>
-            </v-card-title>
-
-            <v-card-text>
-              <v-form autocomplete="off">
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <v-text-field
-                      required
-                      v-model="pin"
-                      :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                      :type="showPassword ? 'text' : 'password'"
-                      class="input-group--focused"
-                      @click:append="showPassword = !showPassword"
-                    ></v-text-field>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="unlockPin = false"
-                >Cancel</v-btn
-              >
-              <v-btn color="blue darken-1" text @click="xdvify">OK</v-btn>
-            </v-card-actions>
+                        <v-card-text>
+                          <v-simple-table dense>
+                            <template v-slot:default>
+                              <thead>
+                                <tr>
+                                  <th class="text-left">Tx</th>
+                                  <th class="text-left">Event</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="item in transactions" :key="item">
+                                  <td>{{ item.transactionHash }}</td>
+                                  <td>{{ item.event }}</td>
+                                </tr>
+                              </tbody>
+                            </template>
+                          </v-simple-table>
+                        </v-card-text>
+                        <v-card-actions>
+                          <!-- <v-btn @click="shareTo" text> Render content </v-btn> -->
+                        </v-card-actions>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-card>
+              </v-tab-item>
+            </v-tabs-items>
           </v-card>
-        </v-dialog>
+
+          <vue-confirm-dialog></vue-confirm-dialog>
+          <v-dialog v-model="unlockPin" max-width="500px">
+            <v-card>
+              <v-card-title>
+                <span class="headline">Enter PIN for hardware module</span>
+              </v-card-title>
+
+              <v-card-text>
+                <v-form autocomplete="off">
+                  <v-row>
+                    <v-col cols="12" md="12">
+                      <v-text-field
+                        required
+                        v-model="pin"
+                        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                        :type="showPassword ? 'text' : 'password'"
+                        class="input-group--focused"
+                        @click:append="showPassword = !showPassword"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-form>
+              </v-card-text>
+
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text @click="unlockPin = false"
+                  >Cancel</v-btn
+                >
+                <v-btn color="blue darken-1" text @click="xdvify">OK</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-container>
       </v-col>
     </v-row>
@@ -521,7 +522,7 @@ export default class SmartcardDocuments extends Vue {
   ];
   name = "My New Fancy NFT";
   tokenID = "000";
-  recipientAddressPlaceholder="0x000000000000000000";
+  recipientAddressPlaceholder = "0x000000000000000000";
   description = "Powered by Ancon Protocol";
   viewItems = [];
   transactions = [];
@@ -577,7 +578,7 @@ export default class SmartcardDocuments extends Vue {
             contentType: null,
           },
         },
-      }
+      },
     ],
   };
   placeholderContractAddress = "0x0000000000000000";
@@ -585,18 +586,18 @@ export default class SmartcardDocuments extends Vue {
   nftWeb3Contract: any;
 
   dropdownItems = [
-    { title: 'Ethereum' },
-    { title: 'Binance Smart Chain' },
-    { title: 'Solana' },
-    { title: 'Kucoin Chain' },
-    { title: 'Polygon' },
-  ]
+    { title: "Ethereum" },
+    { title: "Binance Smart Chain" },
+    { title: "Solana" },
+    { title: "Kucoin Chain" },
+    { title: "Polygon" },
+  ];
 
-  sidebarListItemSelect(itemKey: string ){
-    this.sideBarItems.selectedItem = itemKey
-    console.log("clicked and index is", itemKey)
+  sidebarListItemSelect(itemKey: string) {
+    this.sideBarItems.selectedItem = itemKey;
+    console.log("clicked and index is", itemKey);
   }
-  
+
   async loadTransactions() {
     if (this.ethersContract) {
       const query = this.ethersContract.filters.Transfer(this.currentAccount);
