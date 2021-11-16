@@ -11,17 +11,41 @@
                     <v-list-item-subtitle
                       >Ethereum address</v-list-item-subtitle
                     >
-                    <v-chip class="ma-2" color="#48409A" pill outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletEthAdressDisplay }}
-                    </v-chip>
+                    <v-tooltip right>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-chip
+                          class="ma-2"
+                          color="#48409A"
+                          pill
+                          outlined
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          <v-icon left> mdi-wallet </v-icon>
+                          {{ walletEthAddressDisplay }}
+                        </v-chip>
+                      </template>
+                      <span> {{ walletEthAdddress }}</span>
+                    </v-tooltip>
                   </v-row>
                   <v-row class="d-inline-flex">
                     <v-list-item-subtitle>Cosmos address</v-list-item-subtitle>
-                    <v-chip class="ma-2" color="#48409A" pill outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletCosmosAddressDisplay }}
-                    </v-chip>
+                    <v-tooltip right>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-chip
+                          class="ma-2"
+                          color="#48409A"
+                          pill
+                          outlined
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          <v-icon left> mdi-wallet </v-icon>
+                          {{ walletCosmosAddressDisplay }}
+                        </v-chip>
+                      </template>
+                      <span> {{ walletCosmosAddress }}</span>
+                    </v-tooltip>
                   </v-row>
                 </v-col>
               </v-list-item>
@@ -536,8 +560,8 @@ export default class SmartcardDocuments extends Vue {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDE0ZDM0NDExYTYyQkJjMjBEMzkzZDNjN2RhQUE4YzZEMGRmNDY2NjAiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2MzUwMTU4NTUyNTIsIm5hbWUiOiJBbmNvbiJ9.TiAmVFS000shN0L9cV3q2SWsJhVW0uxM0ZCEbzTe9QI";
   nftAPIKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDlFNWJFMjI2YUU4NzhFZkJGZGU1NzhDM0VkMmY2NDhGMjEzMDBmOGMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNTAxNTU4Mzg2OSwibmFtZSI6ImFuY29uIn0.3VIRmGQ3IIfwk4X30NPDSfX8SN3YdFGnPqsYDc-7jlY";
-  walletEthAdress = "";
-  walletEthAdressDisplay = "Not connected";
+  walletEthAddress = "";
+  walletEthAddressDisplay = "Not connected";
   walletCosmosAddress = "";
   walletCosmosAddressDisplay = "Not connected";
   sideBarItems = {
@@ -701,13 +725,13 @@ export default class SmartcardDocuments extends Vue {
       },
     ]);
 
-    this.walletEthAdress = accounts[0];
+    this.walletEthAddress = accounts[0];
 
-    this.walletEthAdressDisplay = `
-      ${this.walletEthAdress.substring(0, 7)}...
-      ${this.walletEthAdress.substring(
-        this.walletEthAdress.length - 7,
-        this.walletEthAdress.length
+    this.walletEthAddressDisplay = `
+      ${this.walletEthAddress.substring(0, 7)}...
+      ${this.walletEthAddress.substring(
+        this.walletEthAddress.length - 7,
+        this.walletEthAddress.length
       )}`;
 
     this.currentAccount = accounts[0];
