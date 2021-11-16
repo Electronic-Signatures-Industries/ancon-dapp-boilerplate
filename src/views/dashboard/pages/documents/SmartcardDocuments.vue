@@ -25,7 +25,7 @@
                           {{ walletEthAddressDisplay }}
                         </v-chip>
                       </template>
-                      <span> {{ walletEthAdddress }}</span>
+                      <span> {{ walletEthAddress }}</span>
                     </v-tooltip>
                   </v-row>
                   <v-row class="d-inline-flex">
@@ -858,6 +858,14 @@ export default class SmartcardDocuments extends Vue {
     // address tokenAddress,
     // address to
     // 3. MetadataOwnershipChanged event
+
+    //sendmetadataownership must verify the packet proof
+    //on claim verify packet proof is derived from metadata proof
+
+    // 4. metadata validation on new tokenid
+    // send ancon proof, if pass, flag mapping true (gas costs)
+    // on packet transaction take ancon proof check match metadata
+    // 
   }
 
   async mounted() {
