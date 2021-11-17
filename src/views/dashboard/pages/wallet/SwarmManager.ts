@@ -12,7 +12,8 @@ export class SwarmManager {
 
     async createPostageStamp(file) {
         let intervalId;
-        let hash = '';
+        let _hash = '';
+        let _multiHash = '';
         let intervalHashId;
         const postageBatchIdObse = new Observable(subscriber => {
             const getPostageBatchId = async () => {
@@ -29,8 +30,10 @@ export class SwarmManager {
 
         postageBatchIdObse.subscribe(batchId => {
             const getHashSwarm = async () => {
-                hash = await this.createHashFile(batchId, file);
+               const { hash, multiHash } = await this.createHashFile(batchId, file);
                 if(hash) {
+                    _hash = hash;
+                    _multiHash = multiHash;
                     clearInterval(intervalId);
                 }
             }
@@ -39,7 +42,7 @@ export class SwarmManager {
         
         const hashObse = new Observable(subscriber => {
             intervalHashId = setInterval(() => {
-                subscriber.next(hash);
+                subscriber.next({ _hash, _multiHash });
             }, 10000);
             localStorage.setItem('intervalHashId', intervalHashId);
         });
@@ -48,15 +51,17 @@ export class SwarmManager {
     }
 
     async createHashFile(postageBatchId, file) {
+        console.log(postageBatchId, file)
         let hash = '';
+        let multiHash = '';
         try {
             const swarmHash = await bee.uploadFile(postageBatchId, file);
-            // hash = contentHash.fromSwarm(swarmHash);
+            multiHash = contentHash.fromSwarm(swarmHash);
             hash = swarmHash;
         } catch (e) {
             console.log(e);
         }
-        return hash;
+        return { hash, multiHash };
     }
 
     async getFile(hash) {

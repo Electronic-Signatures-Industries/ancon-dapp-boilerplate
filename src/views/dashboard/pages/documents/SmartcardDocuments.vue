@@ -45,53 +45,8 @@
         </template>
       </v-dialog>
     <v-row>
-      <v-col xs="4" sm="4">
-        <v-card width="256" min-height="800" tile>
-          <v-navigation-drawer permanent>
-            <!-- <v-system-bar></v-system-bar> -->
-            <v-list>
-              <v-list-item>
-                <v-col xs="8" sm="8">
-                  <v-row class="d-inline-flex">
-                    <v-list-item-subtitle
-                      >Ethereum address</v-list-item-subtitle
-                    >
-                    <v-chip class="ma-2" color="#48409A" pill close outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletEthAdressDisplay }}
-                    </v-chip>
-                  </v-row>
-                  <v-row class="d-inline-flex">
-                    <v-list-item-subtitle
-                      >Cosmos EVM address</v-list-item-subtitle
-                    >
-                    <v-chip class="ma-2" color="#48409A" pill close outlined>
-                      <v-icon left> mdi-wallet </v-icon>
-                      {{ walletCosmosAddressDisplay }}
-                    </v-chip>
-                  </v-row>
-                </v-col>
-              </v-list-item>
-            </v-list>
-            <v-divider></v-divider>
-            <v-list nav dense>
-              <v-list-item-group
-                v-model="sideBarItems.selectedItem"
-                color="primary"
-              >
-                <v-list-item v-for="(item, i) in sideBarItems.items" :key="i">
-                  <v-list-item-icon>
-                    <v-icon v-text="item.icon"></v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.text"></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-navigation-drawer>
-        </v-card>
-      </v-col>
+      <!-- <v-col xs="4" sm="4">
+      </v-col> -->
       <v-col>
         <v-card>
           <v-list-item>
@@ -102,16 +57,25 @@
           <v-card-text>
             <v-row>
               <v-col xs="3" sm="3" offset-sm="2">
-                <cryptoicon symbol="atom" size="24" class="cripto-icon" />
-                {{ balances.bnb }}
+                <v-row>
+                  <v-col xs="2" sm="2" class="ml-1">
+                    <v-img 
+                    :src="require('../../../../assets/wallet-solid.svg')" 
+                    contain 
+                    height="25" />
+                  </v-col>
+                  <v-col xs="8" sm="8" class="ml-n7">
+                     {{ walletEthAdressDisplay }}
+                  </v-col>
+                </v-row>  
               </v-col>
               <v-col xs="3" sm="3">
                 <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
-                {{ balances.bnb }}
+                {{ balances.usdc }}
               </v-col>
               <v-col xs="3" sm="3">
-                <cryptoicon symbol="dai" size="24" class="cripto-icon" />
-                {{ balances.dai }}
+                <cryptoicon symbol="bnb" size="24" class="cripto-icon" />
+                {{ balances.bnb }}
               </v-col>
             </v-row>
           </v-card-text>
@@ -140,8 +104,8 @@
                     alertMessage
                   }}</v-alert>
 
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
+                  <v-row class="justify-center">
+                    <v-col xs="6" sm="6">
                       <v-file-input
                         multiple
                         v-if="item.settings.signing !== 'transfer'"
@@ -164,8 +128,8 @@
                       >
                     </v-col>
                   </v-row>
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
+                  <v-row class="justify-center">
+                    <v-col xs="6" sm="6">
                       <v-text-field
                         label="Name"
                         required
@@ -173,8 +137,8 @@
                       ></v-text-field>
                     </v-col>
                   </v-row>
-                  <v-row>
-                    <v-col xs="6" sm="6" offset-sm="2">
+                  <v-row class="justify-center">
+                    <v-col xs="6" sm="6">
                       <v-text-field
                         required
                         label="Description"
@@ -183,8 +147,8 @@
                     </v-col>
                   </v-row>
 
-                  <v-row>
-                    <v-col xs="6" offset="2">
+                  <v-row class="justify-center">
+                    <v-col xs="6" sm="6" offset="5">
                       <v-btn
                         color="pink"
                         v-if="connected === false"
@@ -441,6 +405,7 @@ import { AnconWeb3Provider } from "cosmjs-web3provider/anconProvider";
 @Component({
   components: {},
 })
+
 export default class SmartcardDocuments extends Vue {
   files: File[] = [];
   canUpload: boolean = false;
@@ -465,6 +430,7 @@ export default class SmartcardDocuments extends Vue {
   fab = false;
   selected = [0];
   cid = {};
+  isCreatPostageBatchId = false;
   search = {};
   searchInput = null;
   reports = [];
@@ -479,7 +445,7 @@ export default class SmartcardDocuments extends Vue {
   txid: any = "";
   balances = {
     bnb: "0",
-    dai: "0",
+    usdc: "0",
     daiMock: "0",
   };
   connected = false;
@@ -495,46 +461,6 @@ export default class SmartcardDocuments extends Vue {
         contentType: null,
       },
     },
-    {
-      key: "owner-transfer",
-      label: "Transfer NFT Ownership",
-      settings: {
-        signing: "transfer",
-        contentType: null,
-      },
-    },
-    {
-      key: "crosschain-swap",
-      label: "Crosschain Swap",
-      settings: {
-        signing: "swap",
-        contentType: null,
-      },
-    },
-    // {
-    //   key: "crosschain1",
-    //   label: "NFT Cross Chain (new recipient token id, unique owner)",
-    //   settings: {
-    //     signing: "xchain_1",
-    //     contentType: null,
-    //   },
-    // },
-    // {
-    //   key: "crosschain2",
-    //   label: "NFT Cross Chain (new recipient token id, co-owners)",
-    //   settings: {
-    //     signing: "xchain_2",
-    //     contentType: null,
-    //   },
-    // },
-    // {
-    //   key: "pades",
-    //   label: "Qualified PDF",
-    //   settings: {
-    //     signing: "pades",
-    //     contentType: "application/pdf",
-    //   },
-    //    },
   ];
 
   tabDetailIndex = null;
@@ -653,6 +579,81 @@ export default class SmartcardDocuments extends Vue {
     );
   }
 
+  async web3ConnectEth() {
+    //@ts-ignore
+      const accounts = await window.ethereum.enable();
+      this.web3instance = new Web3(window.ethereum);
+      //@ts-ignore
+      const provider = new ethers.providers.Web3Provider(
+        this.web3instance.currentProvider
+      );
+      this.anconWeb3client = new AnconWeb3Provider(
+      "https://ancon.did.pa/evm",
+      "ancon",
+      "anconprotocol_9000-1",
+      9000,
+      new ethers.providers.Web3Provider(window.ethereum),
+      accounts[0] as string
+    );
+      //debugger
+
+      this.walletEthAdress = this.anconWeb3client.web3defaultAccount;
+
+      this.walletEthAdressDisplay = "";
+
+    //Getting first 7 chars & concat into displayed string
+    for (let i = 0; i < 7; i++) {
+      this.walletEthAdressDisplay += this.walletEthAdress[i];
+    }
+
+    this.walletEthAdressDisplay += "...";
+
+    //Getting last 6 chars & concat into displayed string
+    for (
+      let i = this.walletEthAdress.length - 6;
+      i < this.walletEthAdress.length;
+      i++
+    ) {
+      this.walletEthAdressDisplay += this.walletEthAdress[i];
+    }
+  }
+
+  async getCreatBatchId() {
+      this.swarm = new SwarmManager();
+      const hashObse = await this.swarm.createPostageStamp(this.files[0]);
+      this.isHash = true;
+      hashObse.subscribe((value: any) => {
+        const getHashSwarm = async () => {
+          const { _hash, _multiHash} = value;
+            if(_hash) {
+              const intervalHashId = localStorage.getItem('intervalHashId');
+               clearInterval(parseInt(intervalHashId));
+               this.hash = _multiHash;
+               await this.swarm.getFile(_hash);
+               this.isHash = false;
+               this.isUpload = true;
+               localStorage.removeItem('intervalHashId')
+            }
+        }
+        getHashSwarm();
+      });
+  }
+
+  async getHashFile() {
+    this.swarm = new SwarmManager();
+    const { hash, multiHash } = await this.swarm.createHashFile((Vue as any).appconfig.BATCHID, this.files[0]);
+    this.isHash = true;
+    if (hash) {
+      this.hash = multiHash;
+      await this.swarm.getFile(hash);
+      this.isHash = false;
+      this.isUpload = true;
+    } else {
+      this.isCreatPostageBatchId = true;
+    }
+    
+  }
+
   async web3Connect() {
     if (this.typelink.mode !== "3") {
        // @ts-ignore
@@ -675,23 +676,7 @@ export default class SmartcardDocuments extends Vue {
         },
       });
     } else {
-      this.swarm = new SwarmManager();
-      const hashObse = await this.swarm.createPostageStamp(this.files[0]);
-      this.isHash = true;
-      hashObse.subscribe(hash => {
-        const getHashSwarm = async () => {
-            if(hash) {
-              const intervalHashId = localStorage.getItem('intervalHashId');
-               clearInterval(parseInt(intervalHashId));
-               this.hash = hash;
-               await this.swarm.getFile(hash);
-               this.isHash = false;
-               this.isUpload = true;
-               localStorage.removeItem('intervalHashId')
-            }
-        }
-        getHashSwarm();
-      });
+      this.isCreatPostageBatchId ? this.getCreatBatchId() : this.getHashFile();
     }
   }
 
@@ -791,14 +776,14 @@ export default class SmartcardDocuments extends Vue {
 
   async loadBalances() {
     setInterval(async () => {
-      const [daiBal] = await this.daiWeb3contract.methods.balanceOf(
+      const [usdc] = await this.daiWeb3contract.methods.balanceOf(
         this.currentAccount
       );
 
       const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
 
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      this.balances.dai = ethers.utils.formatEther(daiBal);
+      this.balances.usdc = ethers.utils.formatEther(usdc);
     }, 1250);
   }
 
@@ -858,11 +843,11 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async mounted() {
+    this.web3ConnectEth();
     if (this.$router.currentRoute.params.cid) {
       this.cidindex = this.$router.currentRoute.params.cid || "";
       await this.loadViewer();
     }
-
     await this.loadTransactions();
   }
 
