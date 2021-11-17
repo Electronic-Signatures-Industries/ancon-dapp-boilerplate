@@ -17,15 +17,20 @@
                           class="ma-2"
                           color="#48409A"
                           pill
+                          label
+                          close
+                          close-icon="mdi-close-outline"
                           outlined
                           v-bind="attrs"
                           v-on="on"
+                          @click:close="disconnect"
+                          @click="copyEthAddress"
                         >
                           <v-icon left> mdi-wallet </v-icon>
                           {{ walletEthAddressDisplay }}
                         </v-chip>
                       </template>
-                      <span> {{ walletEthAddress }}</span>
+                      <span v-if="this.connected"> {{ walletEthAddress + ' (click to copy)' }}</span>
                     </v-tooltip>
                   </v-row>
                   <v-row class="d-inline-flex">
@@ -37,14 +42,19 @@
                           color="#48409A"
                           pill
                           outlined
+                          label
+                          close
+                          close-icon="mdi-close-outline"
                           v-bind="attrs"
                           v-on="on"
+                          @click:close="disconnect"
+                          @click="copyCosmosAddress"
                         >
                           <v-icon left> mdi-wallet </v-icon>
                           {{ walletCosmosAddressDisplay }}
                         </v-chip>
                       </template>
-                      <span> {{ walletCosmosAddress }}</span>
+                      <span v-if="this.connected"> {{ walletCosmosAddress + ' (click to copy)' }}</span>
                     </v-tooltip>
                   </v-row>
                 </v-col>
@@ -712,6 +722,26 @@ export default class SmartcardDocuments extends Vue {
     });
   }
 
+  async copyEthAddress(){
+    if(this.connected){
+      navigator.clipboard.writeText(this.walletEthAddress)
+      console.log("Eth address copied")
+    }
+  }
+
+  async copyCosmosAddress(){
+    if(this.connected){
+      navigator.clipboard.writeText(this.walletCosmosAddress)
+      console.log("Cosmos address copied")
+    }
+  }
+
+  async disconnect() {
+    this.connected = false;;
+    this.walletEthAddressDisplay = "Not connected"
+    this.walletCosmosAddressDisplay = "Not connected"
+  }
+
   async connect(passphrase: string) {
     //@ts-ignore
     const accounts = await window.ethereum.enable();
@@ -728,8 +758,7 @@ export default class SmartcardDocuments extends Vue {
     this.walletEthAddress = accounts[0];
 
     this.walletEthAddressDisplay = `
-      ${this.walletEthAddress.substring(0, 7)}...
-      ${this.walletEthAddress.substring(
+      ${this.walletEthAddress.substring(0, 8)}...${this.walletEthAddress.substring(
         this.walletEthAddress.length - 7,
         this.walletEthAddress.length
       )}`;
@@ -753,8 +782,7 @@ export default class SmartcardDocuments extends Vue {
       this.walletCosmosAddress = this.anconWeb3client.cosmosAccount.address;
 
       this.walletCosmosAddressDisplay = `
-      ${this.walletCosmosAddress.substring(0, 7)}...
-      ${this.walletCosmosAddress.substring(
+      ${this.walletCosmosAddress.substring(0, 7)}...${this.walletCosmosAddress.substring(
         this.walletCosmosAddress.length - 7,
         this.walletCosmosAddress.length
       )}`;
