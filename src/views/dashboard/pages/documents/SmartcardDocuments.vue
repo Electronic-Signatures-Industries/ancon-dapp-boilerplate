@@ -430,7 +430,6 @@ export default class SmartcardDocuments extends Vue {
   fab = false;
   selected = [0];
   cid = {};
-  isCreatPostageBatchId = false;
   search = {};
   searchInput = null;
   reports = [];
@@ -648,10 +647,7 @@ export default class SmartcardDocuments extends Vue {
       await this.swarm.getFile(hash);
       this.isHash = false;
       this.isUpload = true;
-    } else {
-      this.isCreatPostageBatchId = true;
-    }
-    
+    } 
   }
 
   async web3Connect() {
@@ -676,7 +672,7 @@ export default class SmartcardDocuments extends Vue {
         },
       });
     } else {
-      this.isCreatPostageBatchId ? this.getCreatBatchId() : this.getHashFile();
+      (Vue as any).appconfig.CREATE_POSTAGE_BATCH_ENABLE ? this.getCreatBatchId() : this.getHashFile();
     }
   }
 
