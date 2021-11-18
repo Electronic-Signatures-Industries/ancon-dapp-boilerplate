@@ -151,7 +151,6 @@ export interface V1ChainConfig {
   istanbulBlock?: string;
   muirGlacierBlock?: string;
   berlinBlock?: string;
-  catalystBlock?: string;
   londonBlock?: string;
 }
 
@@ -430,10 +429,8 @@ export interface V1TraceConfig {
 
   /** @format uint64 */
   reexec?: string;
-  disableMemory?: boolean;
   disableStack?: boolean;
   disableStorage?: boolean;
-  disableReturnData?: boolean;
   debug?: boolean;
 
   /** @format int32 */
@@ -444,6 +441,8 @@ export interface V1TraceConfig {
    * instead of *big.Int.
    */
   overrides?: V1ChainConfig;
+  enableMemory?: boolean;
+  enableReturnData?: boolean;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -792,10 +791,8 @@ EthAccount.
       "traceConfig.tracer"?: string;
       "traceConfig.timeout"?: string;
       "traceConfig.reexec"?: string;
-      "traceConfig.disableMemory"?: boolean;
       "traceConfig.disableStack"?: boolean;
       "traceConfig.disableStorage"?: boolean;
-      "traceConfig.disableReturnData"?: boolean;
       "traceConfig.debug"?: boolean;
       "traceConfig.limit"?: number;
       "traceConfig.overrides.homesteadBlock"?: string;
@@ -811,8 +808,9 @@ EthAccount.
       "traceConfig.overrides.istanbulBlock"?: string;
       "traceConfig.overrides.muirGlacierBlock"?: string;
       "traceConfig.overrides.berlinBlock"?: string;
-      "traceConfig.overrides.catalystBlock"?: string;
       "traceConfig.overrides.londonBlock"?: string;
+      "traceConfig.enableMemory"?: boolean;
+      "traceConfig.enableReturnData"?: boolean;
     },
     params: RequestParams = {},
   ) =>

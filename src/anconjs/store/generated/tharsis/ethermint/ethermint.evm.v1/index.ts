@@ -13,14 +13,13 @@ import { TraceConfig } from "./module/types/ethermint/evm/v1/evm"
 import { GenesisAccount } from "./module/types/ethermint/evm/v1/genesis"
 import { QueryTxLogsRequest } from "./module/types/ethermint/evm/v1/query"
 import { QueryTxLogsResponse } from "./module/types/ethermint/evm/v1/query"
-import { QueryStaticCallResponse } from "./module/types/ethermint/evm/v1/query"
 import { LegacyTx } from "./module/types/ethermint/evm/v1/tx"
 import { AccessListTx } from "./module/types/ethermint/evm/v1/tx"
 import { DynamicFeeTx } from "./module/types/ethermint/evm/v1/tx"
 import { ExtensionOptionsEthereumTx } from "./module/types/ethermint/evm/v1/tx"
 
 
-export { Params, ChainConfig, State, TransactionLogs, Log, TxResult, AccessTuple, TraceConfig, GenesisAccount, QueryTxLogsRequest, QueryTxLogsResponse, QueryStaticCallResponse, LegacyTx, AccessListTx, DynamicFeeTx, ExtensionOptionsEthereumTx };
+export { Params, ChainConfig, State, TransactionLogs, Log, TxResult, AccessTuple, TraceConfig, GenesisAccount, QueryTxLogsRequest, QueryTxLogsResponse, LegacyTx, AccessListTx, DynamicFeeTx, ExtensionOptionsEthereumTx };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -81,7 +80,6 @@ const getDefaultState = () => {
 						GenesisAccount: getStructure(GenesisAccount.fromPartial({})),
 						QueryTxLogsRequest: getStructure(QueryTxLogsRequest.fromPartial({})),
 						QueryTxLogsResponse: getStructure(QueryTxLogsResponse.fromPartial({})),
-						QueryStaticCallResponse: getStructure(QueryStaticCallResponse.fromPartial({})),
 						LegacyTx: getStructure(LegacyTx.fromPartial({})),
 						AccessListTx: getStructure(AccessListTx.fromPartial({})),
 						DynamicFeeTx: getStructure(DynamicFeeTx.fromPartial({})),

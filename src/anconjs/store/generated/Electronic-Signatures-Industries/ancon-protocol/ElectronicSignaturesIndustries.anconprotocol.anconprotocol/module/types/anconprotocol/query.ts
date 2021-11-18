@@ -10,7 +10,14 @@ export interface QueryDidWebRequest {
   name: string
 }
 
-export interface QueryDidWebResponse {}
+export interface QuerySchemaStoreRequest {
+  cid: string
+  path: string
+}
+
+export interface QuerySchemaStoreResponse {
+  data: Uint8Array
+}
 
 export interface QueryProofMetadataRequest {
   cid: string
@@ -23,16 +30,8 @@ export interface QueryProofResponse {
 }
 
 export interface QueryGetDidRequest {
-  name: string
+  hashcid: string
 }
-
-export interface QueryGetDidResponse {}
-
-export interface QueryReadDidKeyRequest {
-  name: string
-}
-
-export interface QueryReadDidKeyResponse {}
 
 export interface QueryReadRoyaltyInfo {
   cid: string
@@ -110,7 +109,12 @@ export interface QueryGetDelegateRequest {
   id: string
 }
 
-export interface QueryGetDelegateResponse {}
+export interface QueryGetDelegateResponse {
+  delegate: string
+  delegateType: string
+  validity: number
+  creator: string
+}
 
 export interface QueryNonceRequest {
   id: string
@@ -118,7 +122,10 @@ export interface QueryNonceRequest {
 
 export interface QueryNonceResponse {}
 
-export interface QueryGetAttributesResponse {}
+export interface QueryGetAttributesResponse {
+  name: string[]
+  value: string[]
+}
 
 export interface QueryIdentifyOwnerResponse {}
 
@@ -196,20 +203,32 @@ export const QueryDidWebRequest = {
   }
 }
 
-const baseQueryDidWebResponse: object = {}
+const baseQuerySchemaStoreRequest: object = { cid: '', path: '' }
 
-export const QueryDidWebResponse = {
-  encode(_: QueryDidWebResponse, writer: Writer = Writer.create()): Writer {
+export const QuerySchemaStoreRequest = {
+  encode(message: QuerySchemaStoreRequest, writer: Writer = Writer.create()): Writer {
+    if (message.cid !== '') {
+      writer.uint32(10).string(message.cid)
+    }
+    if (message.path !== '') {
+      writer.uint32(18).string(message.path)
+    }
     return writer
   },
 
-  decode(input: Reader | Uint8Array, length?: number): QueryDidWebResponse {
+  decode(input: Reader | Uint8Array, length?: number): QuerySchemaStoreRequest {
     const reader = input instanceof Uint8Array ? new Reader(input) : input
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
+    const message = { ...baseQuerySchemaStoreRequest } as QuerySchemaStoreRequest
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
+        case 1:
+          message.cid = reader.string()
+          break
+        case 2:
+          message.path = reader.string()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -218,18 +237,93 @@ export const QueryDidWebResponse = {
     return message
   },
 
-  fromJSON(_: any): QueryDidWebResponse {
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
+  fromJSON(object: any): QuerySchemaStoreRequest {
+    const message = { ...baseQuerySchemaStoreRequest } as QuerySchemaStoreRequest
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = String(object.cid)
+    } else {
+      message.cid = ''
+    }
+    if (object.path !== undefined && object.path !== null) {
+      message.path = String(object.path)
+    } else {
+      message.path = ''
+    }
     return message
   },
 
-  toJSON(_: QueryDidWebResponse): unknown {
+  toJSON(message: QuerySchemaStoreRequest): unknown {
     const obj: any = {}
+    message.cid !== undefined && (obj.cid = message.cid)
+    message.path !== undefined && (obj.path = message.path)
     return obj
   },
 
-  fromPartial(_: DeepPartial<QueryDidWebResponse>): QueryDidWebResponse {
-    const message = { ...baseQueryDidWebResponse } as QueryDidWebResponse
+  fromPartial(object: DeepPartial<QuerySchemaStoreRequest>): QuerySchemaStoreRequest {
+    const message = { ...baseQuerySchemaStoreRequest } as QuerySchemaStoreRequest
+    if (object.cid !== undefined && object.cid !== null) {
+      message.cid = object.cid
+    } else {
+      message.cid = ''
+    }
+    if (object.path !== undefined && object.path !== null) {
+      message.path = object.path
+    } else {
+      message.path = ''
+    }
+    return message
+  }
+}
+
+const baseQuerySchemaStoreResponse: object = {}
+
+export const QuerySchemaStoreResponse = {
+  encode(message: QuerySchemaStoreResponse, writer: Writer = Writer.create()): Writer {
+    if (message.data.length !== 0) {
+      writer.uint32(10).bytes(message.data)
+    }
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QuerySchemaStoreResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseQuerySchemaStoreResponse } as QuerySchemaStoreResponse
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.data = reader.bytes()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): QuerySchemaStoreResponse {
+    const message = { ...baseQuerySchemaStoreResponse } as QuerySchemaStoreResponse
+    if (object.data !== undefined && object.data !== null) {
+      message.data = bytesFromBase64(object.data)
+    }
+    return message
+  },
+
+  toJSON(message: QuerySchemaStoreResponse): unknown {
+    const obj: any = {}
+    message.data !== undefined && (obj.data = base64FromBytes(message.data !== undefined ? message.data : new Uint8Array()))
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<QuerySchemaStoreResponse>): QuerySchemaStoreResponse {
+    const message = { ...baseQuerySchemaStoreResponse } as QuerySchemaStoreResponse
+    if (object.data !== undefined && object.data !== null) {
+      message.data = object.data
+    } else {
+      message.data = new Uint8Array()
+    }
     return message
   }
 }
@@ -378,12 +472,12 @@ export const QueryProofResponse = {
   }
 }
 
-const baseQueryGetDidRequest: object = { name: '' }
+const baseQueryGetDidRequest: object = { hashcid: '' }
 
 export const QueryGetDidRequest = {
   encode(message: QueryGetDidRequest, writer: Writer = Writer.create()): Writer {
-    if (message.name !== '') {
-      writer.uint32(10).string(message.name)
+    if (message.hashcid !== '') {
+      writer.uint32(10).string(message.hashcid)
     }
     return writer
   },
@@ -396,7 +490,7 @@ export const QueryGetDidRequest = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          message.name = reader.string()
+          message.hashcid = reader.string()
           break
         default:
           reader.skipType(tag & 7)
@@ -408,158 +502,27 @@ export const QueryGetDidRequest = {
 
   fromJSON(object: any): QueryGetDidRequest {
     const message = { ...baseQueryGetDidRequest } as QueryGetDidRequest
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name)
+    if (object.hashcid !== undefined && object.hashcid !== null) {
+      message.hashcid = String(object.hashcid)
     } else {
-      message.name = ''
+      message.hashcid = ''
     }
     return message
   },
 
   toJSON(message: QueryGetDidRequest): unknown {
     const obj: any = {}
-    message.name !== undefined && (obj.name = message.name)
+    message.hashcid !== undefined && (obj.hashcid = message.hashcid)
     return obj
   },
 
   fromPartial(object: DeepPartial<QueryGetDidRequest>): QueryGetDidRequest {
     const message = { ...baseQueryGetDidRequest } as QueryGetDidRequest
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name
+    if (object.hashcid !== undefined && object.hashcid !== null) {
+      message.hashcid = object.hashcid
     } else {
-      message.name = ''
+      message.hashcid = ''
     }
-    return message
-  }
-}
-
-const baseQueryGetDidResponse: object = {}
-
-export const QueryGetDidResponse = {
-  encode(_: QueryGetDidResponse, writer: Writer = Writer.create()): Writer {
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryGetDidResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(_: any): QueryGetDidResponse {
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
-    return message
-  },
-
-  toJSON(_: QueryGetDidResponse): unknown {
-    const obj: any = {}
-    return obj
-  },
-
-  fromPartial(_: DeepPartial<QueryGetDidResponse>): QueryGetDidResponse {
-    const message = { ...baseQueryGetDidResponse } as QueryGetDidResponse
-    return message
-  }
-}
-
-const baseQueryReadDidKeyRequest: object = { name: '' }
-
-export const QueryReadDidKeyRequest = {
-  encode(message: QueryReadDidKeyRequest, writer: Writer = Writer.create()): Writer {
-    if (message.name !== '') {
-      writer.uint32(10).string(message.name)
-    }
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryReadDidKeyRequest {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryReadDidKeyRequest } as QueryReadDidKeyRequest
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        case 1:
-          message.name = reader.string()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(object: any): QueryReadDidKeyRequest {
-    const message = { ...baseQueryReadDidKeyRequest } as QueryReadDidKeyRequest
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name)
-    } else {
-      message.name = ''
-    }
-    return message
-  },
-
-  toJSON(message: QueryReadDidKeyRequest): unknown {
-    const obj: any = {}
-    message.name !== undefined && (obj.name = message.name)
-    return obj
-  },
-
-  fromPartial(object: DeepPartial<QueryReadDidKeyRequest>): QueryReadDidKeyRequest {
-    const message = { ...baseQueryReadDidKeyRequest } as QueryReadDidKeyRequest
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name
-    } else {
-      message.name = ''
-    }
-    return message
-  }
-}
-
-const baseQueryReadDidKeyResponse: object = {}
-
-export const QueryReadDidKeyResponse = {
-  encode(_: QueryReadDidKeyResponse, writer: Writer = Writer.create()): Writer {
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryReadDidKeyResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryReadDidKeyResponse } as QueryReadDidKeyResponse
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(_: any): QueryReadDidKeyResponse {
-    const message = { ...baseQueryReadDidKeyResponse } as QueryReadDidKeyResponse
-    return message
-  },
-
-  toJSON(_: QueryReadDidKeyResponse): unknown {
-    const obj: any = {}
-    return obj
-  },
-
-  fromPartial(_: DeepPartial<QueryReadDidKeyResponse>): QueryReadDidKeyResponse {
-    const message = { ...baseQueryReadDidKeyResponse } as QueryReadDidKeyResponse
     return message
   }
 }
@@ -1439,10 +1402,22 @@ export const QueryGetDelegateRequest = {
   }
 }
 
-const baseQueryGetDelegateResponse: object = {}
+const baseQueryGetDelegateResponse: object = { delegate: '', delegateType: '', validity: 0, creator: '' }
 
 export const QueryGetDelegateResponse = {
-  encode(_: QueryGetDelegateResponse, writer: Writer = Writer.create()): Writer {
+  encode(message: QueryGetDelegateResponse, writer: Writer = Writer.create()): Writer {
+    if (message.delegate !== '') {
+      writer.uint32(10).string(message.delegate)
+    }
+    if (message.delegateType !== '') {
+      writer.uint32(18).string(message.delegateType)
+    }
+    if (message.validity !== 0) {
+      writer.uint32(24).uint64(message.validity)
+    }
+    if (message.creator !== '') {
+      writer.uint32(34).string(message.creator)
+    }
     return writer
   },
 
@@ -1453,6 +1428,18 @@ export const QueryGetDelegateResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
+        case 1:
+          message.delegate = reader.string()
+          break
+        case 2:
+          message.delegateType = reader.string()
+          break
+        case 3:
+          message.validity = longToNumber(reader.uint64() as Long)
+          break
+        case 4:
+          message.creator = reader.string()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -1461,18 +1448,62 @@ export const QueryGetDelegateResponse = {
     return message
   },
 
-  fromJSON(_: any): QueryGetDelegateResponse {
+  fromJSON(object: any): QueryGetDelegateResponse {
     const message = { ...baseQueryGetDelegateResponse } as QueryGetDelegateResponse
+    if (object.delegate !== undefined && object.delegate !== null) {
+      message.delegate = String(object.delegate)
+    } else {
+      message.delegate = ''
+    }
+    if (object.delegateType !== undefined && object.delegateType !== null) {
+      message.delegateType = String(object.delegateType)
+    } else {
+      message.delegateType = ''
+    }
+    if (object.validity !== undefined && object.validity !== null) {
+      message.validity = Number(object.validity)
+    } else {
+      message.validity = 0
+    }
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator)
+    } else {
+      message.creator = ''
+    }
     return message
   },
 
-  toJSON(_: QueryGetDelegateResponse): unknown {
+  toJSON(message: QueryGetDelegateResponse): unknown {
     const obj: any = {}
+    message.delegate !== undefined && (obj.delegate = message.delegate)
+    message.delegateType !== undefined && (obj.delegateType = message.delegateType)
+    message.validity !== undefined && (obj.validity = message.validity)
+    message.creator !== undefined && (obj.creator = message.creator)
     return obj
   },
 
-  fromPartial(_: DeepPartial<QueryGetDelegateResponse>): QueryGetDelegateResponse {
+  fromPartial(object: DeepPartial<QueryGetDelegateResponse>): QueryGetDelegateResponse {
     const message = { ...baseQueryGetDelegateResponse } as QueryGetDelegateResponse
+    if (object.delegate !== undefined && object.delegate !== null) {
+      message.delegate = object.delegate
+    } else {
+      message.delegate = ''
+    }
+    if (object.delegateType !== undefined && object.delegateType !== null) {
+      message.delegateType = object.delegateType
+    } else {
+      message.delegateType = ''
+    }
+    if (object.validity !== undefined && object.validity !== null) {
+      message.validity = object.validity
+    } else {
+      message.validity = 0
+    }
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator
+    } else {
+      message.creator = ''
+    }
     return message
   }
 }
@@ -1570,10 +1601,16 @@ export const QueryNonceResponse = {
   }
 }
 
-const baseQueryGetAttributesResponse: object = {}
+const baseQueryGetAttributesResponse: object = { name: '', value: '' }
 
 export const QueryGetAttributesResponse = {
-  encode(_: QueryGetAttributesResponse, writer: Writer = Writer.create()): Writer {
+  encode(message: QueryGetAttributesResponse, writer: Writer = Writer.create()): Writer {
+    for (const v of message.name) {
+      writer.uint32(10).string(v!)
+    }
+    for (const v of message.value) {
+      writer.uint32(18).string(v!)
+    }
     return writer
   },
 
@@ -1581,9 +1618,17 @@ export const QueryGetAttributesResponse = {
     const reader = input instanceof Uint8Array ? new Reader(input) : input
     let end = length === undefined ? reader.len : reader.pos + length
     const message = { ...baseQueryGetAttributesResponse } as QueryGetAttributesResponse
+    message.name = []
+    message.value = []
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
+        case 1:
+          message.name.push(reader.string())
+          break
+        case 2:
+          message.value.push(reader.string())
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -1592,18 +1637,52 @@ export const QueryGetAttributesResponse = {
     return message
   },
 
-  fromJSON(_: any): QueryGetAttributesResponse {
+  fromJSON(object: any): QueryGetAttributesResponse {
     const message = { ...baseQueryGetAttributesResponse } as QueryGetAttributesResponse
+    message.name = []
+    message.value = []
+    if (object.name !== undefined && object.name !== null) {
+      for (const e of object.name) {
+        message.name.push(String(e))
+      }
+    }
+    if (object.value !== undefined && object.value !== null) {
+      for (const e of object.value) {
+        message.value.push(String(e))
+      }
+    }
     return message
   },
 
-  toJSON(_: QueryGetAttributesResponse): unknown {
+  toJSON(message: QueryGetAttributesResponse): unknown {
     const obj: any = {}
+    if (message.name) {
+      obj.name = message.name.map((e) => e)
+    } else {
+      obj.name = []
+    }
+    if (message.value) {
+      obj.value = message.value.map((e) => e)
+    } else {
+      obj.value = []
+    }
     return obj
   },
 
-  fromPartial(_: DeepPartial<QueryGetAttributesResponse>): QueryGetAttributesResponse {
+  fromPartial(object: DeepPartial<QueryGetAttributesResponse>): QueryGetAttributesResponse {
     const message = { ...baseQueryGetAttributesResponse } as QueryGetAttributesResponse
+    message.name = []
+    message.value = []
+    if (object.name !== undefined && object.name !== null) {
+      for (const e of object.name) {
+        message.name.push(e)
+      }
+    }
+    if (object.value !== undefined && object.value !== null) {
+      for (const e of object.value) {
+        message.value.push(e)
+      }
+    }
     return message
   }
 }
@@ -1947,8 +2026,9 @@ export interface Query {
   Denoms(request: QueryDenomsRequest): Promise<QueryDenomsResponse>
   /** NFT queries the NFT for the given denom and token ID */
   GetNft(request: QueryNFTRequest): Promise<QueryNFTResponse>
-  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse>
-  GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse>
+  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse>
+  GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse>
+  ReadSchemaStoreResource(request: QuerySchemaStoreRequest): Promise<QuerySchemaStoreResponse>
 }
 
 export class QueryClientImpl implements Query {
@@ -2028,16 +2108,22 @@ export class QueryClientImpl implements Query {
     return promise.then((data) => QueryNFTResponse.decode(new Reader(data)))
   }
 
-  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryDidWebResponse> {
+  ResolveDidWeb(request: QueryDidWebRequest): Promise<QueryResourceResponse> {
     const data = QueryDidWebRequest.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ResolveDidWeb', data)
-    return promise.then((data) => QueryDidWebResponse.decode(new Reader(data)))
+    return promise.then((data) => QueryResourceResponse.decode(new Reader(data)))
   }
 
-  GetDidKey(request: QueryGetDidRequest): Promise<QueryGetDidResponse> {
+  GetDidKey(request: QueryGetDidRequest): Promise<QueryResourceResponse> {
     const data = QueryGetDidRequest.encode(request).finish()
     const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'GetDidKey', data)
-    return promise.then((data) => QueryGetDidResponse.decode(new Reader(data)))
+    return promise.then((data) => QueryResourceResponse.decode(new Reader(data)))
+  }
+
+  ReadSchemaStoreResource(request: QuerySchemaStoreRequest): Promise<QuerySchemaStoreResponse> {
+    const data = QuerySchemaStoreRequest.encode(request).finish()
+    const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ReadSchemaStoreResource', data)
+    return promise.then((data) => QuerySchemaStoreResponse.decode(new Reader(data)))
   }
 }
 
@@ -2054,6 +2140,25 @@ var globalThis: any = (() => {
   if (typeof global !== 'undefined') return global
   throw 'Unable to locate global object'
 })()
+
+const atob: (b64: string) => string = globalThis.atob || ((b64) => globalThis.Buffer.from(b64, 'base64').toString('binary'))
+function bytesFromBase64(b64: string): Uint8Array {
+  const bin = atob(b64)
+  const arr = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; ++i) {
+    arr[i] = bin.charCodeAt(i)
+  }
+  return arr
+}
+
+const btoa: (bin: string) => string = globalThis.btoa || ((bin) => globalThis.Buffer.from(bin, 'binary').toString('base64'))
+function base64FromBytes(arr: Uint8Array): string {
+  const bin: string[] = []
+  for (let i = 0; i < arr.byteLength; ++i) {
+    bin.push(String.fromCharCode(arr[i]))
+  }
+  return btoa(bin.join(''))
+}
 
 type Builtin = Date | Function | Uint8Array | string | number | undefined
 export type DeepPartial<T> = T extends Builtin

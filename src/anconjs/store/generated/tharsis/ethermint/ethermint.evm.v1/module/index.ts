@@ -13,7 +13,7 @@ const types = [
 ];
 export const MissingWalletError = new Error("wallet is required");
 
-export const registry = new Registry(<any>types);
+const registry = new Registry(<any>types);
 
 const defaultFee = {
   amount: [],

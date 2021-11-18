@@ -100,12 +100,12 @@
                   {{ balances.bnb }}
                 </v-col>
                 <v-col xs="3" sm="3">
-                  <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
-                  {{ balances.bnb }}
-                </v-col>
-                <v-col xs="3" sm="3">
                   <cryptoicon symbol="dai" size="24" class="cripto-icon" />
                   {{ balances.dai }}
+                </v-col>
+                <v-col xs="3" sm="3">
+                  <cryptoicon symbol="usdc" size="24" class="cripto-icon" />
+                  {{ balances.bnb }}
                 </v-col>
               </v-row>
             </v-card-text>
@@ -142,7 +142,7 @@
                         ></v-text-field>
                         <v-file-input
                           multiple
-                          v-if="item.functional.key === 'mint'"
+                          v-if="false"
                           show-size
                           chips
                           label="Files"
@@ -177,14 +177,14 @@
                     </v-row>
                     <v-row>
                       <v-col xs="6" sm="6" offset-sm="2">
-                        <v-text-field
+                        <v-textarea
                           v-if="item.functional.key === 'mint'"
                           show-size
                           chips
                           required
-                          label="Description"
-                          v-model="description"
-                        ></v-text-field>
+                          label="JSON"
+                          v-model="jsonTextArea"
+                        ></v-textarea>
                         <v-text-field
                           v-if="item.functional.key !== 'mint'"
                           show-size
@@ -230,17 +230,17 @@
                           color="pink"
                           v-if="connected === false"
                           @click="connect"
-                          dark
+                          dark 
                         >
                           Connect
                         </v-btn>
                         <v-btn
-                          :disabled="files.length === 0"
+                          
                           v-if="connected"
-                          @click="xdvify"
+                          @click="uploadJson"
                           color="primary"
                         >
-                          Create metadata and mint
+                          Create JSON
                         </v-btn>
                       </v-col>
                     </v-row>
@@ -475,10 +475,11 @@ import { Web3Storage } from "web3.storage/dist/bundle.esm.min.js";
 import {
   MsgMetadata,
   MsgMetadataResponse,
+  MsgSchemaStore,
+  MsgSchemaStoreResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
 import {
-  encoder,
   txClient,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
@@ -626,6 +627,7 @@ export default class SmartcardDocuments extends Vue {
     { title: "Kucoin Chain" },
     { title: "Polygon" },
   ];
+  jsonTextArea: string;
 
   sidebarListItemSelect(itemKey: string) {
     this.sideBarItems.selectedItem = itemKey;
@@ -803,9 +805,10 @@ export default class SmartcardDocuments extends Vue {
       );
 
       const bnb = await this.web3instance.eth.getBalance(this.currentAccount);
-
+      // const XDVNFT = this.nftWeb3Contract.methods.balanceOf(this.currentAccount).send()
+      //this.balances.daiMock = ethers.utils.formatEther(XDVNFT);
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      // this.balances.dai = ethers.utils.formatEther(daiBal);
+      this.balances.dai = ethers.utils.formatEther(daiBal);
     }, 1250);
   }
 
@@ -903,6 +906,40 @@ export default class SmartcardDocuments extends Vue {
     }
 
     await this.loadTransactions();
+  }
+
+  subscribeToSchemaStoreEvents() {
+    const query = `message.action='AddSchemaStore'`;
+    const c = this.anconWeb3client.tm.subscribeTx(query);
+    const listener = {
+      next: async (log: TxEvent) => {
+        // Decode response
+        const res = MsgSchemaStoreResponse.decode(log.result.data);
+        console.log(res);
+        // Hack: Protobuf issue
+        const cid = res.cid.split(";")[1];
+        console.log(cid);
+
+        // // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
+        // const content =
+        //   await this.anconWeb3client.queryClient.queryReadWithPath(
+        //     cid,
+        //     "/",
+        //     {}
+        //   );
+
+        // console.log(content.data);
+
+        // this.result = await this.mintNft(cid);
+
+        // this.cidindex = cid;
+        // await this.loadViewer();
+        // await this.loadTransactions();
+        this.loading = false;
+        c.removeListener(listener);
+      },
+    };
+    c.addListener(listener);
   }
 
   /** Subscribes to events
@@ -1041,6 +1078,184 @@ export default class SmartcardDocuments extends Vue {
       ""
     );
   }
+
+  async uploadJson(){
+
+    const tEnc = new TextEncoder().encode(this.jsonTextArea)
+    const res = await this.addJson(this.name, tEnc)
+    debugger
+    
+    return res
+  }
+
+  async addJson(name, data): Promise<any> {
+    const msg = MsgSchemaStore.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      path: "Kendall/" + name,
+      data: data,
+      codec: 'dag-json',
+      isJsonSchema: false,
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgSchemaStore(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
+  async loadJson(root, name, description): Promise<any> {
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
+    const msg = MsgMetadata.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ethr:${this.currentAccount}`,
+      description,
+      did: "",
+      from: "",
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
+  async createDidKey(root, name, description): Promise<any> {
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
+    const msg = MsgMetadata.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ethr:${this.currentAccount}`,
+      description,
+      did: "",
+      from: "",
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
+  async createDidWeb(root, name, description): Promise<any> {
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
+    const msg = MsgMetadata.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ethr:${this.currentAccount}`,
+      description,
+      did: "",
+      from: "",
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
+  async addDataSource(root, name, description): Promise<any> {
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
+    const msg = MsgMetadata.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ethr:${this.currentAccount}`,
+      description,
+      did: "",
+      from: "",
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
+  async createDataUnions(root, name, description): Promise<any> {
+    //did:example:123?service=agent&relativeRef=/credentials#degree
+    //did:ethr:9000:tokenaddress?service=erc721&tokenid
+    const msg = MsgMetadata.fromPartial({
+      creator: this.anconWeb3client.cosmosAccount.address,
+      name,
+      image: root,
+      additionalSources: [],
+      links: [],
+      owner: `did:ethr:${this.currentAccount}`,
+      description,
+      did: "",
+      from: "",
+    });
+
+    const fee = {
+      amount: [
+        {
+          denom: "uatom",
+          amount: "24",
+        },
+      ],
+      gas: "200000",
+    };
+
+    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+  }
+
 
   /** Relays message to chain b, returns bool or revert*/
   async relayMessage() {}

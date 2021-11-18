@@ -5,7 +5,7 @@ export declare const protobufPackage = "ethermint.evm.v1";
 export interface GenesisState {
     /** accounts is an array containing the ethereum genesis accounts. */
     accounts: GenesisAccount[];
-    /** params defines all the paramaters of the module. */
+    /** params defines all the parameters of the module. */
     params: Params | undefined;
 }
 /**

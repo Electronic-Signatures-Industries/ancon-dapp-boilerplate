@@ -138,7 +138,6 @@ export interface V1ChainConfig {
     istanbulBlock?: string;
     muirGlacierBlock?: string;
     berlinBlock?: string;
-    catalystBlock?: string;
     londonBlock?: string;
 }
 export interface V1EstimateGasResponse {
@@ -385,10 +384,8 @@ export interface V1TraceConfig {
     timeout?: string;
     /** @format uint64 */
     reexec?: string;
-    disableMemory?: boolean;
     disableStack?: boolean;
     disableStorage?: boolean;
-    disableReturnData?: boolean;
     debug?: boolean;
     /** @format int32 */
     limit?: number;
@@ -397,6 +394,8 @@ export interface V1TraceConfig {
      * instead of *big.Int.
      */
     overrides?: V1ChainConfig;
+    enableMemory?: boolean;
+    enableReturnData?: boolean;
 }
 export declare type QueryParamsType = Record<string | number, any>;
 export declare type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
@@ -553,10 +552,8 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
         "traceConfig.tracer"?: string;
         "traceConfig.timeout"?: string;
         "traceConfig.reexec"?: string;
-        "traceConfig.disableMemory"?: boolean;
         "traceConfig.disableStack"?: boolean;
         "traceConfig.disableStorage"?: boolean;
-        "traceConfig.disableReturnData"?: boolean;
         "traceConfig.debug"?: boolean;
         "traceConfig.limit"?: number;
         "traceConfig.overrides.homesteadBlock"?: string;
@@ -572,8 +569,9 @@ export declare class Api<SecurityDataType extends unknown> extends HttpClient<Se
         "traceConfig.overrides.istanbulBlock"?: string;
         "traceConfig.overrides.muirGlacierBlock"?: string;
         "traceConfig.overrides.berlinBlock"?: string;
-        "traceConfig.overrides.catalystBlock"?: string;
         "traceConfig.overrides.londonBlock"?: string;
+        "traceConfig.enableMemory"?: boolean;
+        "traceConfig.enableReturnData"?: boolean;
     }, params?: RequestParams) => Promise<HttpResponse<V1QueryTraceTxResponse, RpcStatus>>;
     /**
    * No description

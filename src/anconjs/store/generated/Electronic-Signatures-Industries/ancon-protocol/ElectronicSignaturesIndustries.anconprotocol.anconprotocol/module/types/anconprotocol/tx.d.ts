@@ -1,4 +1,5 @@
 import { Reader, Writer } from 'protobufjs/minimal';
+import { MsgAddDataSourceResponse, MsgRemoveDataSourceResponse, MsgUpdateDataSourceResponse, MsgAddDataUnionResponse, MsgRemoveDataUnionResponse, MsgUpdateDataUnionResponse, MsgAddDataSource, MsgRemoveDataSource, MsgUpdateDataSource, MsgAddDataUnion, MsgRemoveDataUnion, MsgUpdateDataUnion } from '../anconprotocol/data_union';
 export declare const protobufPackage = "ElectronicSignaturesIndustries.anconprotocol.anconprotocol";
 export interface MsgUpdateMetadataOwnership {
     hash: string;
@@ -11,9 +12,22 @@ export interface MsgUpdateMetadataOwnership {
     /** optional */
     recipientChainId: string;
     sender: string;
+    tokenAddress: string;
+    tokenId: string;
+}
+export interface MsgSchemaStore {
+    creator: string;
+    path: string;
+    data: Uint8Array;
+    codec: string;
+    isJsonSchema: boolean;
+}
+export interface MsgSchemaStoreResponse {
+    cid: string;
 }
 export interface MsgUpdateMetadataOwnershipResponse {
-    cid: string;
+    metadataRef: string;
+    packetRef: string;
 }
 export interface MsgRegisterRelay {
     sender: string;
@@ -29,10 +43,12 @@ export interface MsgCreateDid {
     creator: string;
     vanityName: string;
     didType: string;
+    publicKeyBytes: Uint8Array;
 }
 export interface MsgCreateDidResponse {
     cid: string;
     did: string;
+    url: string;
 }
 export interface MsgUpdateDid {
     creator: string;
@@ -49,7 +65,7 @@ export interface MsgRevokeDid {
     cid: string;
 }
 export interface MsgRevokeDidResponse {
-    id: number;
+    ok: boolean;
 }
 export interface MsgMintTrustedContent {
     creator: string;
@@ -161,6 +177,7 @@ export interface MsgMintTrustedResourceResponse {
 /** MsgRoyaltyInfo */
 export interface MsgRoyaltyInfo {
     creator: string;
+    id: string;
     receiver: string;
     royaltyFeePercentage: number;
     metadataRef: string;
@@ -196,21 +213,12 @@ export interface MsgTransferNFT {
     recipient: string;
 }
 export interface MsgChangeOwnerResponse {
-    identity: string;
+    didIdentity: string;
     owner: string;
     previousChange: number;
 }
-export interface MsgCreateDIDOwner {
-    creator: string;
-    owner: string;
-    didKey: string;
-    didWeb: string;
-}
-export interface MsgCreateDIDOwnerResponse {
-}
 export interface MsgChangeOwner {
     creator: string;
-    identity: string;
     newOwner: string;
 }
 export interface MsgGrantDelegate {
@@ -218,51 +226,41 @@ export interface MsgGrantDelegate {
     delegateType: string;
     validity: number;
     creator: string;
-    identity: string;
+    didIdentity: string;
 }
 export interface MsgGrantDelegateResponse {
-    hash: Uint8Array;
+    ok: boolean;
 }
 export interface MsgRevokeDelegate {
     delegate: string;
     delegateType: string;
     validity: number;
     creator: string;
-    identity: string;
+    didIdentity: string;
 }
 export interface MsgRevokeDelegateResponse {
-    hash: Uint8Array;
+    ok: boolean;
 }
 export interface MsgSetAttribute {
-    identity: string;
+    didIdentity: string;
     actor: string;
     creator: string;
-    name: Uint8Array;
-    value: Uint8Array;
-}
-export interface MsgSetAttributeResponse {
-    hash: Uint8Array;
-}
-export interface MsgGrantAttribute {
-    identity: string;
-    actor: string;
-    name: Uint8Array;
-    value: Uint8Array;
-    creator: string;
+    name: string[];
+    value: string[];
     validity: number;
 }
-export interface MsgGrantAttributeResponse {
+export interface MsgSetAttributeResponse {
     ok: boolean;
 }
 export interface MsgRevokeAttribute {
-    identity: string;
+    didIdentity: string;
     actor: string;
     name: Uint8Array;
     value: Uint8Array;
     creator: string;
 }
 export interface MsgRevokeAttributeResponse {
-    hash: Uint8Array;
+    ok: boolean;
 }
 /** MsgTransferNFTResponse defines the Msg/TransferNFT response type. */
 export interface MsgTransferNFTResponse {
@@ -354,12 +352,43 @@ export interface MsgFile {
 export interface MsgFileResponse {
     hash: string;
 }
+export interface MsgSendMetadataOwnership {
+    creator: string;
+    data: AguaclaraPacketData | undefined;
+}
+export interface MsgSendMetadataOwnershipResponse {
+    cid: string;
+}
+export interface AguaclaraPacketData {
+    creator: string;
+    tokenAddress: string;
+    tokenId: string;
+    didRecipient: string;
+    toMetadata: string;
+    hash: string;
+    currentChainId: string;
+    recipientChainId: string;
+}
 export declare const MsgUpdateMetadataOwnership: {
     encode(message: MsgUpdateMetadataOwnership, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): MsgUpdateMetadataOwnership;
     fromJSON(object: any): MsgUpdateMetadataOwnership;
     toJSON(message: MsgUpdateMetadataOwnership): unknown;
     fromPartial(object: DeepPartial<MsgUpdateMetadataOwnership>): MsgUpdateMetadataOwnership;
+};
+export declare const MsgSchemaStore: {
+    encode(message: MsgSchemaStore, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSchemaStore;
+    fromJSON(object: any): MsgSchemaStore;
+    toJSON(message: MsgSchemaStore): unknown;
+    fromPartial(object: DeepPartial<MsgSchemaStore>): MsgSchemaStore;
+};
+export declare const MsgSchemaStoreResponse: {
+    encode(message: MsgSchemaStoreResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSchemaStoreResponse;
+    fromJSON(object: any): MsgSchemaStoreResponse;
+    toJSON(message: MsgSchemaStoreResponse): unknown;
+    fromPartial(object: DeepPartial<MsgSchemaStoreResponse>): MsgSchemaStoreResponse;
 };
 export declare const MsgUpdateMetadataOwnershipResponse: {
     encode(message: MsgUpdateMetadataOwnershipResponse, writer?: Writer): Writer;
@@ -550,20 +579,6 @@ export declare const MsgChangeOwnerResponse: {
     toJSON(message: MsgChangeOwnerResponse): unknown;
     fromPartial(object: DeepPartial<MsgChangeOwnerResponse>): MsgChangeOwnerResponse;
 };
-export declare const MsgCreateDIDOwner: {
-    encode(message: MsgCreateDIDOwner, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): MsgCreateDIDOwner;
-    fromJSON(object: any): MsgCreateDIDOwner;
-    toJSON(message: MsgCreateDIDOwner): unknown;
-    fromPartial(object: DeepPartial<MsgCreateDIDOwner>): MsgCreateDIDOwner;
-};
-export declare const MsgCreateDIDOwnerResponse: {
-    encode(_: MsgCreateDIDOwnerResponse, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): MsgCreateDIDOwnerResponse;
-    fromJSON(_: any): MsgCreateDIDOwnerResponse;
-    toJSON(_: MsgCreateDIDOwnerResponse): unknown;
-    fromPartial(_: DeepPartial<MsgCreateDIDOwnerResponse>): MsgCreateDIDOwnerResponse;
-};
 export declare const MsgChangeOwner: {
     encode(message: MsgChangeOwner, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): MsgChangeOwner;
@@ -612,20 +627,6 @@ export declare const MsgSetAttributeResponse: {
     fromJSON(object: any): MsgSetAttributeResponse;
     toJSON(message: MsgSetAttributeResponse): unknown;
     fromPartial(object: DeepPartial<MsgSetAttributeResponse>): MsgSetAttributeResponse;
-};
-export declare const MsgGrantAttribute: {
-    encode(message: MsgGrantAttribute, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): MsgGrantAttribute;
-    fromJSON(object: any): MsgGrantAttribute;
-    toJSON(message: MsgGrantAttribute): unknown;
-    fromPartial(object: DeepPartial<MsgGrantAttribute>): MsgGrantAttribute;
-};
-export declare const MsgGrantAttributeResponse: {
-    encode(message: MsgGrantAttributeResponse, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): MsgGrantAttributeResponse;
-    fromJSON(object: any): MsgGrantAttributeResponse;
-    toJSON(message: MsgGrantAttributeResponse): unknown;
-    fromPartial(object: DeepPartial<MsgGrantAttributeResponse>): MsgGrantAttributeResponse;
 };
 export declare const MsgRevokeAttribute: {
     encode(message: MsgRevokeAttribute, writer?: Writer): Writer;
@@ -739,32 +740,60 @@ export declare const MsgFileResponse: {
     toJSON(message: MsgFileResponse): unknown;
     fromPartial(object: DeepPartial<MsgFileResponse>): MsgFileResponse;
 };
+export declare const MsgSendMetadataOwnership: {
+    encode(message: MsgSendMetadataOwnership, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnership;
+    fromJSON(object: any): MsgSendMetadataOwnership;
+    toJSON(message: MsgSendMetadataOwnership): unknown;
+    fromPartial(object: DeepPartial<MsgSendMetadataOwnership>): MsgSendMetadataOwnership;
+};
+export declare const MsgSendMetadataOwnershipResponse: {
+    encode(message: MsgSendMetadataOwnershipResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendMetadataOwnershipResponse;
+    fromJSON(object: any): MsgSendMetadataOwnershipResponse;
+    toJSON(message: MsgSendMetadataOwnershipResponse): unknown;
+    fromPartial(object: DeepPartial<MsgSendMetadataOwnershipResponse>): MsgSendMetadataOwnershipResponse;
+};
+export declare const AguaclaraPacketData: {
+    encode(message: AguaclaraPacketData, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): AguaclaraPacketData;
+    fromJSON(object: any): AguaclaraPacketData;
+    toJSON(message: AguaclaraPacketData): unknown;
+    fromPartial(object: DeepPartial<AguaclaraPacketData>): AguaclaraPacketData;
+};
 /** Msg defines the Msg service. */
 export interface Msg {
+    AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
+    AddDataSource(request: MsgAddDataSource): Promise<MsgAddDataSourceResponse>;
+    RemoveDataSource(request: MsgRemoveDataSource): Promise<MsgRemoveDataSourceResponse>;
+    UpdateDataSource(request: MsgUpdateDataSource): Promise<MsgUpdateDataSourceResponse>;
+    AddDataUnion(request: MsgAddDataUnion): Promise<MsgAddDataUnionResponse>;
+    RemoveDataUnion(request: MsgRemoveDataUnion): Promise<MsgRemoveDataUnionResponse>;
+    UpdateDataUnion(request: MsgUpdateDataUnion): Promise<MsgUpdateDataUnionResponse>;
+    /** Send cross chain message */
+    SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse>;
     /** CreateDid */
     CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse>;
     /** UpdateDid */
     UpdateDid(request: MsgUpdateDid): Promise<MsgUpdateDidResponse>;
     /** RevokeDid */
     RevokeDid(request: MsgRevokeDid): Promise<MsgRevokeDidResponse>;
-    /**
-     * RoyaltyInfo defines a metadata CID royalty info
-     *  rpc RoyaltyInfo(MsgRoyaltyInfo) returns (MsgRoyaltyInfoResponse);
-     * ChangeOwer TODO
-     */
+    /** RoyaltyInfo defines a metadata CID royalty info */
+    RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse>;
+    /** ChangeOwer */
     ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse>;
     /**
      * rpc ValidDelegate(MsgValidDelegate) returns (MsgValidDelegateResponse);
-     * RevokeDelegate TODO
+     * RevokeDelegate
      */
     RevokeDelegate(request: MsgRevokeDelegate): Promise<MsgRevokeDelegateResponse>;
-    /** GrantDelegate TODO */
+    /** GrantDelegate */
     GrantDelegate(request: MsgGrantDelegate): Promise<MsgGrantDelegateResponse>;
-    /** GrantAttribute TODO */
-    GrantAttribute(request: MsgGrantAttribute): Promise<MsgGrantAttributeResponse>;
-    /** RevokeAttribute TODO */
+    /** GrantAttribute */
+    GrantAttribute(request: MsgSetAttribute): Promise<MsgSetAttributeResponse>;
+    /** RevokeAttribute */
     RevokeAttribute(request: MsgRevokeAttribute): Promise<MsgRevokeAttributeResponse>;
-    /** Metadata TODO */
+    /** Metadata */
     Metadata(request: MsgMetadata): Promise<MsgMetadataResponse>;
     /** IssueDenom defines a method for issue a denom. */
     IssueDenom(request: MsgIssueDenom): Promise<MsgIssueDenomResponse>;
@@ -788,13 +817,22 @@ export interface Msg {
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
     constructor(rpc: Rpc);
+    AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
+    AddDataSource(request: MsgAddDataSource): Promise<MsgAddDataSourceResponse>;
+    RemoveDataSource(request: MsgRemoveDataSource): Promise<MsgRemoveDataSourceResponse>;
+    UpdateDataSource(request: MsgUpdateDataSource): Promise<MsgUpdateDataSourceResponse>;
+    AddDataUnion(request: MsgAddDataUnion): Promise<MsgAddDataUnionResponse>;
+    RemoveDataUnion(request: MsgRemoveDataUnion): Promise<MsgRemoveDataUnionResponse>;
+    UpdateDataUnion(request: MsgUpdateDataUnion): Promise<MsgUpdateDataUnionResponse>;
+    SendMetadataOwnership(request: MsgSendMetadataOwnership): Promise<MsgSendMetadataOwnershipResponse>;
     CreateDid(request: MsgCreateDid): Promise<MsgCreateDidResponse>;
     UpdateDid(request: MsgUpdateDid): Promise<MsgUpdateDidResponse>;
     RevokeDid(request: MsgRevokeDid): Promise<MsgRevokeDidResponse>;
+    RoyaltyInfo(request: MsgRoyaltyInfo): Promise<MsgRoyaltyInfoResponse>;
     ChangeOwner(request: MsgChangeOwner): Promise<MsgChangeOwnerResponse>;
     RevokeDelegate(request: MsgRevokeDelegate): Promise<MsgRevokeDelegateResponse>;
     GrantDelegate(request: MsgGrantDelegate): Promise<MsgGrantDelegateResponse>;
-    GrantAttribute(request: MsgGrantAttribute): Promise<MsgGrantAttributeResponse>;
+    GrantAttribute(request: MsgSetAttribute): Promise<MsgSetAttributeResponse>;
     RevokeAttribute(request: MsgRevokeAttribute): Promise<MsgRevokeAttributeResponse>;
     Metadata(request: MsgMetadata): Promise<MsgMetadataResponse>;
     IssueDenom(request: MsgIssueDenom): Promise<MsgIssueDenomResponse>;

@@ -55,8 +55,6 @@ export interface ChainConfig {
   muirGlacierBlock: string
   /** Berlin switch block (nil = no fork, 0 = already on berlin) */
   berlinBlock: string
-  /** Catalyst switch block (nil = no fork, 0 = already on catalyst) */
-  catalystBlock: string
   /** London switch block (nil = no fork, 0 = already on london) */
   londonBlock: string
 }
@@ -149,20 +147,20 @@ export interface TraceConfig {
   timeout: string
   /** number of blocks the tracer is willing to go back */
   reexec: number
-  /** disable memory capture */
-  disableMemory: boolean
   /** disable stack capture */
   disableStack: boolean
   /** disable storage capture */
   disableStorage: boolean
-  /** disable return data capture */
-  disableReturnData: boolean
   /** print output during capture end */
   debug: boolean
   /** maximum length of output, but zero means unlimited */
   limit: number
   /** Chain overrides, can be used to execute a trace using future fork rules */
   overrides: ChainConfig | undefined
+  /** enable memory capture */
+  enableMemory: boolean
+  /** enable return data capture */
+  enableReturnData: boolean
 }
 
 const baseParams: object = { evmDenom: '', enableCreate: false, enableCall: false, extraEips: 0 }
@@ -318,7 +316,6 @@ const baseChainConfig: object = {
   istanbulBlock: '',
   muirGlacierBlock: '',
   berlinBlock: '',
-  catalystBlock: '',
   londonBlock: ''
 }
 
@@ -362,9 +359,6 @@ export const ChainConfig = {
     }
     if (message.berlinBlock !== '') {
       writer.uint32(106).string(message.berlinBlock)
-    }
-    if (message.catalystBlock !== '') {
-      writer.uint32(130).string(message.catalystBlock)
     }
     if (message.londonBlock !== '') {
       writer.uint32(138).string(message.londonBlock)
@@ -417,9 +411,6 @@ export const ChainConfig = {
           break
         case 13:
           message.berlinBlock = reader.string()
-          break
-        case 16:
-          message.catalystBlock = reader.string()
           break
         case 17:
           message.londonBlock = reader.string()
@@ -499,11 +490,6 @@ export const ChainConfig = {
     } else {
       message.berlinBlock = ''
     }
-    if (object.catalystBlock !== undefined && object.catalystBlock !== null) {
-      message.catalystBlock = String(object.catalystBlock)
-    } else {
-      message.catalystBlock = ''
-    }
     if (object.londonBlock !== undefined && object.londonBlock !== null) {
       message.londonBlock = String(object.londonBlock)
     } else {
@@ -527,7 +513,6 @@ export const ChainConfig = {
     message.istanbulBlock !== undefined && (obj.istanbulBlock = message.istanbulBlock)
     message.muirGlacierBlock !== undefined && (obj.muirGlacierBlock = message.muirGlacierBlock)
     message.berlinBlock !== undefined && (obj.berlinBlock = message.berlinBlock)
-    message.catalystBlock !== undefined && (obj.catalystBlock = message.catalystBlock)
     message.londonBlock !== undefined && (obj.londonBlock = message.londonBlock)
     return obj
   },
@@ -598,11 +583,6 @@ export const ChainConfig = {
       message.berlinBlock = object.berlinBlock
     } else {
       message.berlinBlock = ''
-    }
-    if (object.catalystBlock !== undefined && object.catalystBlock !== null) {
-      message.catalystBlock = object.catalystBlock
-    } else {
-      message.catalystBlock = ''
     }
     if (object.londonBlock !== undefined && object.londonBlock !== null) {
       message.londonBlock = object.londonBlock
@@ -1179,12 +1159,12 @@ const baseTraceConfig: object = {
   tracer: '',
   timeout: '',
   reexec: 0,
-  disableMemory: false,
   disableStack: false,
   disableStorage: false,
-  disableReturnData: false,
   debug: false,
-  limit: 0
+  limit: 0,
+  enableMemory: false,
+  enableReturnData: false
 }
 
 export const TraceConfig = {
@@ -1198,17 +1178,11 @@ export const TraceConfig = {
     if (message.reexec !== 0) {
       writer.uint32(24).uint64(message.reexec)
     }
-    if (message.disableMemory === true) {
-      writer.uint32(32).bool(message.disableMemory)
-    }
     if (message.disableStack === true) {
       writer.uint32(40).bool(message.disableStack)
     }
     if (message.disableStorage === true) {
       writer.uint32(48).bool(message.disableStorage)
-    }
-    if (message.disableReturnData === true) {
-      writer.uint32(56).bool(message.disableReturnData)
     }
     if (message.debug === true) {
       writer.uint32(64).bool(message.debug)
@@ -1218,6 +1192,12 @@ export const TraceConfig = {
     }
     if (message.overrides !== undefined) {
       ChainConfig.encode(message.overrides, writer.uint32(82).fork()).ldelim()
+    }
+    if (message.enableMemory === true) {
+      writer.uint32(88).bool(message.enableMemory)
+    }
+    if (message.enableReturnData === true) {
+      writer.uint32(96).bool(message.enableReturnData)
     }
     return writer
   },
@@ -1238,17 +1218,11 @@ export const TraceConfig = {
         case 3:
           message.reexec = longToNumber(reader.uint64() as Long)
           break
-        case 4:
-          message.disableMemory = reader.bool()
-          break
         case 5:
           message.disableStack = reader.bool()
           break
         case 6:
           message.disableStorage = reader.bool()
-          break
-        case 7:
-          message.disableReturnData = reader.bool()
           break
         case 8:
           message.debug = reader.bool()
@@ -1258,6 +1232,12 @@ export const TraceConfig = {
           break
         case 10:
           message.overrides = ChainConfig.decode(reader, reader.uint32())
+          break
+        case 11:
+          message.enableMemory = reader.bool()
+          break
+        case 12:
+          message.enableReturnData = reader.bool()
           break
         default:
           reader.skipType(tag & 7)
@@ -1284,11 +1264,6 @@ export const TraceConfig = {
     } else {
       message.reexec = 0
     }
-    if (object.disableMemory !== undefined && object.disableMemory !== null) {
-      message.disableMemory = Boolean(object.disableMemory)
-    } else {
-      message.disableMemory = false
-    }
     if (object.disableStack !== undefined && object.disableStack !== null) {
       message.disableStack = Boolean(object.disableStack)
     } else {
@@ -1298,11 +1273,6 @@ export const TraceConfig = {
       message.disableStorage = Boolean(object.disableStorage)
     } else {
       message.disableStorage = false
-    }
-    if (object.disableReturnData !== undefined && object.disableReturnData !== null) {
-      message.disableReturnData = Boolean(object.disableReturnData)
-    } else {
-      message.disableReturnData = false
     }
     if (object.debug !== undefined && object.debug !== null) {
       message.debug = Boolean(object.debug)
@@ -1319,6 +1289,16 @@ export const TraceConfig = {
     } else {
       message.overrides = undefined
     }
+    if (object.enableMemory !== undefined && object.enableMemory !== null) {
+      message.enableMemory = Boolean(object.enableMemory)
+    } else {
+      message.enableMemory = false
+    }
+    if (object.enableReturnData !== undefined && object.enableReturnData !== null) {
+      message.enableReturnData = Boolean(object.enableReturnData)
+    } else {
+      message.enableReturnData = false
+    }
     return message
   },
 
@@ -1327,13 +1307,13 @@ export const TraceConfig = {
     message.tracer !== undefined && (obj.tracer = message.tracer)
     message.timeout !== undefined && (obj.timeout = message.timeout)
     message.reexec !== undefined && (obj.reexec = message.reexec)
-    message.disableMemory !== undefined && (obj.disableMemory = message.disableMemory)
     message.disableStack !== undefined && (obj.disableStack = message.disableStack)
     message.disableStorage !== undefined && (obj.disableStorage = message.disableStorage)
-    message.disableReturnData !== undefined && (obj.disableReturnData = message.disableReturnData)
     message.debug !== undefined && (obj.debug = message.debug)
     message.limit !== undefined && (obj.limit = message.limit)
     message.overrides !== undefined && (obj.overrides = message.overrides ? ChainConfig.toJSON(message.overrides) : undefined)
+    message.enableMemory !== undefined && (obj.enableMemory = message.enableMemory)
+    message.enableReturnData !== undefined && (obj.enableReturnData = message.enableReturnData)
     return obj
   },
 
@@ -1354,11 +1334,6 @@ export const TraceConfig = {
     } else {
       message.reexec = 0
     }
-    if (object.disableMemory !== undefined && object.disableMemory !== null) {
-      message.disableMemory = object.disableMemory
-    } else {
-      message.disableMemory = false
-    }
     if (object.disableStack !== undefined && object.disableStack !== null) {
       message.disableStack = object.disableStack
     } else {
@@ -1368,11 +1343,6 @@ export const TraceConfig = {
       message.disableStorage = object.disableStorage
     } else {
       message.disableStorage = false
-    }
-    if (object.disableReturnData !== undefined && object.disableReturnData !== null) {
-      message.disableReturnData = object.disableReturnData
-    } else {
-      message.disableReturnData = false
     }
     if (object.debug !== undefined && object.debug !== null) {
       message.debug = object.debug
@@ -1388,6 +1358,16 @@ export const TraceConfig = {
       message.overrides = ChainConfig.fromPartial(object.overrides)
     } else {
       message.overrides = undefined
+    }
+    if (object.enableMemory !== undefined && object.enableMemory !== null) {
+      message.enableMemory = object.enableMemory
+    } else {
+      message.enableMemory = false
+    }
+    if (object.enableReturnData !== undefined && object.enableReturnData !== null) {
+      message.enableReturnData = object.enableReturnData
+    } else {
+      message.enableReturnData = false
     }
     return message
   }

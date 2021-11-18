@@ -55,18 +55,30 @@ export const QueryDidWebRequest = {
         return message;
     }
 };
-const baseQueryDidWebResponse = {};
-export const QueryDidWebResponse = {
-    encode(_, writer = Writer.create()) {
+const baseQuerySchemaStoreRequest = { cid: '', path: '' };
+export const QuerySchemaStoreRequest = {
+    encode(message, writer = Writer.create()) {
+        if (message.cid !== '') {
+            writer.uint32(10).string(message.cid);
+        }
+        if (message.path !== '') {
+            writer.uint32(18).string(message.path);
+        }
         return writer;
     },
     decode(input, length) {
         const reader = input instanceof Uint8Array ? new Reader(input) : input;
         let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryDidWebResponse };
+        const message = { ...baseQuerySchemaStoreRequest };
         while (reader.pos < end) {
             const tag = reader.uint32();
             switch (tag >>> 3) {
+                case 1:
+                    message.cid = reader.string();
+                    break;
+                case 2:
+                    message.path = reader.string();
+                    break;
                 default:
                     reader.skipType(tag & 7);
                     break;
@@ -74,16 +86,90 @@ export const QueryDidWebResponse = {
         }
         return message;
     },
-    fromJSON(_) {
-        const message = { ...baseQueryDidWebResponse };
+    fromJSON(object) {
+        const message = { ...baseQuerySchemaStoreRequest };
+        if (object.cid !== undefined && object.cid !== null) {
+            message.cid = String(object.cid);
+        }
+        else {
+            message.cid = '';
+        }
+        if (object.path !== undefined && object.path !== null) {
+            message.path = String(object.path);
+        }
+        else {
+            message.path = '';
+        }
         return message;
     },
-    toJSON(_) {
+    toJSON(message) {
         const obj = {};
+        message.cid !== undefined && (obj.cid = message.cid);
+        message.path !== undefined && (obj.path = message.path);
         return obj;
     },
-    fromPartial(_) {
-        const message = { ...baseQueryDidWebResponse };
+    fromPartial(object) {
+        const message = { ...baseQuerySchemaStoreRequest };
+        if (object.cid !== undefined && object.cid !== null) {
+            message.cid = object.cid;
+        }
+        else {
+            message.cid = '';
+        }
+        if (object.path !== undefined && object.path !== null) {
+            message.path = object.path;
+        }
+        else {
+            message.path = '';
+        }
+        return message;
+    }
+};
+const baseQuerySchemaStoreResponse = {};
+export const QuerySchemaStoreResponse = {
+    encode(message, writer = Writer.create()) {
+        if (message.data.length !== 0) {
+            writer.uint32(10).bytes(message.data);
+        }
+        return writer;
+    },
+    decode(input, length) {
+        const reader = input instanceof Uint8Array ? new Reader(input) : input;
+        let end = length === undefined ? reader.len : reader.pos + length;
+        const message = { ...baseQuerySchemaStoreResponse };
+        while (reader.pos < end) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.data = reader.bytes();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    },
+    fromJSON(object) {
+        const message = { ...baseQuerySchemaStoreResponse };
+        if (object.data !== undefined && object.data !== null) {
+            message.data = bytesFromBase64(object.data);
+        }
+        return message;
+    },
+    toJSON(message) {
+        const obj = {};
+        message.data !== undefined && (obj.data = base64FromBytes(message.data !== undefined ? message.data : new Uint8Array()));
+        return obj;
+    },
+    fromPartial(object) {
+        const message = { ...baseQuerySchemaStoreResponse };
+        if (object.data !== undefined && object.data !== null) {
+            message.data = object.data;
+        }
+        else {
+            message.data = new Uint8Array();
+        }
         return message;
     }
 };
@@ -227,11 +313,11 @@ export const QueryProofResponse = {
         return message;
     }
 };
-const baseQueryGetDidRequest = { name: '' };
+const baseQueryGetDidRequest = { hashcid: '' };
 export const QueryGetDidRequest = {
     encode(message, writer = Writer.create()) {
-        if (message.name !== '') {
-            writer.uint32(10).string(message.name);
+        if (message.hashcid !== '') {
+            writer.uint32(10).string(message.hashcid);
         }
         return writer;
     },
@@ -243,7 +329,7 @@ export const QueryGetDidRequest = {
             const tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1:
-                    message.name = reader.string();
+                    message.hashcid = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -254,142 +340,27 @@ export const QueryGetDidRequest = {
     },
     fromJSON(object) {
         const message = { ...baseQueryGetDidRequest };
-        if (object.name !== undefined && object.name !== null) {
-            message.name = String(object.name);
+        if (object.hashcid !== undefined && object.hashcid !== null) {
+            message.hashcid = String(object.hashcid);
         }
         else {
-            message.name = '';
+            message.hashcid = '';
         }
         return message;
     },
     toJSON(message) {
         const obj = {};
-        message.name !== undefined && (obj.name = message.name);
+        message.hashcid !== undefined && (obj.hashcid = message.hashcid);
         return obj;
     },
     fromPartial(object) {
         const message = { ...baseQueryGetDidRequest };
-        if (object.name !== undefined && object.name !== null) {
-            message.name = object.name;
+        if (object.hashcid !== undefined && object.hashcid !== null) {
+            message.hashcid = object.hashcid;
         }
         else {
-            message.name = '';
+            message.hashcid = '';
         }
-        return message;
-    }
-};
-const baseQueryGetDidResponse = {};
-export const QueryGetDidResponse = {
-    encode(_, writer = Writer.create()) {
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryGetDidResponse };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(_) {
-        const message = { ...baseQueryGetDidResponse };
-        return message;
-    },
-    toJSON(_) {
-        const obj = {};
-        return obj;
-    },
-    fromPartial(_) {
-        const message = { ...baseQueryGetDidResponse };
-        return message;
-    }
-};
-const baseQueryReadDidKeyRequest = { name: '' };
-export const QueryReadDidKeyRequest = {
-    encode(message, writer = Writer.create()) {
-        if (message.name !== '') {
-            writer.uint32(10).string(message.name);
-        }
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryReadDidKeyRequest };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1:
-                    message.name = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(object) {
-        const message = { ...baseQueryReadDidKeyRequest };
-        if (object.name !== undefined && object.name !== null) {
-            message.name = String(object.name);
-        }
-        else {
-            message.name = '';
-        }
-        return message;
-    },
-    toJSON(message) {
-        const obj = {};
-        message.name !== undefined && (obj.name = message.name);
-        return obj;
-    },
-    fromPartial(object) {
-        const message = { ...baseQueryReadDidKeyRequest };
-        if (object.name !== undefined && object.name !== null) {
-            message.name = object.name;
-        }
-        else {
-            message.name = '';
-        }
-        return message;
-    }
-};
-const baseQueryReadDidKeyResponse = {};
-export const QueryReadDidKeyResponse = {
-    encode(_, writer = Writer.create()) {
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryReadDidKeyResponse };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(_) {
-        const message = { ...baseQueryReadDidKeyResponse };
-        return message;
-    },
-    toJSON(_) {
-        const obj = {};
-        return obj;
-    },
-    fromPartial(_) {
-        const message = { ...baseQueryReadDidKeyResponse };
         return message;
     }
 };
@@ -1233,9 +1204,21 @@ export const QueryGetDelegateRequest = {
         return message;
     }
 };
-const baseQueryGetDelegateResponse = {};
+const baseQueryGetDelegateResponse = { delegate: '', delegateType: '', validity: 0, creator: '' };
 export const QueryGetDelegateResponse = {
-    encode(_, writer = Writer.create()) {
+    encode(message, writer = Writer.create()) {
+        if (message.delegate !== '') {
+            writer.uint32(10).string(message.delegate);
+        }
+        if (message.delegateType !== '') {
+            writer.uint32(18).string(message.delegateType);
+        }
+        if (message.validity !== 0) {
+            writer.uint32(24).uint64(message.validity);
+        }
+        if (message.creator !== '') {
+            writer.uint32(34).string(message.creator);
+        }
         return writer;
     },
     decode(input, length) {
@@ -1245,6 +1228,18 @@ export const QueryGetDelegateResponse = {
         while (reader.pos < end) {
             const tag = reader.uint32();
             switch (tag >>> 3) {
+                case 1:
+                    message.delegate = reader.string();
+                    break;
+                case 2:
+                    message.delegateType = reader.string();
+                    break;
+                case 3:
+                    message.validity = longToNumber(reader.uint64());
+                    break;
+                case 4:
+                    message.creator = reader.string();
+                    break;
                 default:
                     reader.skipType(tag & 7);
                     break;
@@ -1252,16 +1247,68 @@ export const QueryGetDelegateResponse = {
         }
         return message;
     },
-    fromJSON(_) {
+    fromJSON(object) {
         const message = { ...baseQueryGetDelegateResponse };
+        if (object.delegate !== undefined && object.delegate !== null) {
+            message.delegate = String(object.delegate);
+        }
+        else {
+            message.delegate = '';
+        }
+        if (object.delegateType !== undefined && object.delegateType !== null) {
+            message.delegateType = String(object.delegateType);
+        }
+        else {
+            message.delegateType = '';
+        }
+        if (object.validity !== undefined && object.validity !== null) {
+            message.validity = Number(object.validity);
+        }
+        else {
+            message.validity = 0;
+        }
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = String(object.creator);
+        }
+        else {
+            message.creator = '';
+        }
         return message;
     },
-    toJSON(_) {
+    toJSON(message) {
         const obj = {};
+        message.delegate !== undefined && (obj.delegate = message.delegate);
+        message.delegateType !== undefined && (obj.delegateType = message.delegateType);
+        message.validity !== undefined && (obj.validity = message.validity);
+        message.creator !== undefined && (obj.creator = message.creator);
         return obj;
     },
-    fromPartial(_) {
+    fromPartial(object) {
         const message = { ...baseQueryGetDelegateResponse };
+        if (object.delegate !== undefined && object.delegate !== null) {
+            message.delegate = object.delegate;
+        }
+        else {
+            message.delegate = '';
+        }
+        if (object.delegateType !== undefined && object.delegateType !== null) {
+            message.delegateType = object.delegateType;
+        }
+        else {
+            message.delegateType = '';
+        }
+        if (object.validity !== undefined && object.validity !== null) {
+            message.validity = object.validity;
+        }
+        else {
+            message.validity = 0;
+        }
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = object.creator;
+        }
+        else {
+            message.creator = '';
+        }
         return message;
     }
 };
@@ -1348,18 +1395,32 @@ export const QueryNonceResponse = {
         return message;
     }
 };
-const baseQueryGetAttributesResponse = {};
+const baseQueryGetAttributesResponse = { name: '', value: '' };
 export const QueryGetAttributesResponse = {
-    encode(_, writer = Writer.create()) {
+    encode(message, writer = Writer.create()) {
+        for (const v of message.name) {
+            writer.uint32(10).string(v);
+        }
+        for (const v of message.value) {
+            writer.uint32(18).string(v);
+        }
         return writer;
     },
     decode(input, length) {
         const reader = input instanceof Uint8Array ? new Reader(input) : input;
         let end = length === undefined ? reader.len : reader.pos + length;
         const message = { ...baseQueryGetAttributesResponse };
+        message.name = [];
+        message.value = [];
         while (reader.pos < end) {
             const tag = reader.uint32();
             switch (tag >>> 3) {
+                case 1:
+                    message.name.push(reader.string());
+                    break;
+                case 2:
+                    message.value.push(reader.string());
+                    break;
                 default:
                     reader.skipType(tag & 7);
                     break;
@@ -1367,16 +1428,52 @@ export const QueryGetAttributesResponse = {
         }
         return message;
     },
-    fromJSON(_) {
+    fromJSON(object) {
         const message = { ...baseQueryGetAttributesResponse };
+        message.name = [];
+        message.value = [];
+        if (object.name !== undefined && object.name !== null) {
+            for (const e of object.name) {
+                message.name.push(String(e));
+            }
+        }
+        if (object.value !== undefined && object.value !== null) {
+            for (const e of object.value) {
+                message.value.push(String(e));
+            }
+        }
         return message;
     },
-    toJSON(_) {
+    toJSON(message) {
         const obj = {};
+        if (message.name) {
+            obj.name = message.name.map((e) => e);
+        }
+        else {
+            obj.name = [];
+        }
+        if (message.value) {
+            obj.value = message.value.map((e) => e);
+        }
+        else {
+            obj.value = [];
+        }
         return obj;
     },
-    fromPartial(_) {
+    fromPartial(object) {
         const message = { ...baseQueryGetAttributesResponse };
+        message.name = [];
+        message.value = [];
+        if (object.name !== undefined && object.name !== null) {
+            for (const e of object.name) {
+                message.name.push(e);
+            }
+        }
+        if (object.value !== undefined && object.value !== null) {
+            for (const e of object.value) {
+                message.value.push(e);
+            }
+        }
         return message;
     }
 };
@@ -1734,12 +1831,17 @@ export class QueryClientImpl {
     ResolveDidWeb(request) {
         const data = QueryDidWebRequest.encode(request).finish();
         const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ResolveDidWeb', data);
-        return promise.then((data) => QueryDidWebResponse.decode(new Reader(data)));
+        return promise.then((data) => QueryResourceResponse.decode(new Reader(data)));
     }
     GetDidKey(request) {
         const data = QueryGetDidRequest.encode(request).finish();
         const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'GetDidKey', data);
-        return promise.then((data) => QueryGetDidResponse.decode(new Reader(data)));
+        return promise.then((data) => QueryResourceResponse.decode(new Reader(data)));
+    }
+    ReadSchemaStoreResource(request) {
+        const data = QuerySchemaStoreRequest.encode(request).finish();
+        const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Query', 'ReadSchemaStoreResource', data);
+        return promise.then((data) => QuerySchemaStoreResponse.decode(new Reader(data)));
     }
 }
 var globalThis = (() => {
@@ -1753,6 +1855,23 @@ var globalThis = (() => {
         return global;
     throw 'Unable to locate global object';
 })();
+const atob = globalThis.atob || ((b64) => globalThis.Buffer.from(b64, 'base64').toString('binary'));
+function bytesFromBase64(b64) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; ++i) {
+        arr[i] = bin.charCodeAt(i);
+    }
+    return arr;
+}
+const btoa = globalThis.btoa || ((bin) => globalThis.Buffer.from(bin, 'binary').toString('base64'));
+function base64FromBytes(arr) {
+    const bin = [];
+    for (let i = 0; i < arr.byteLength; ++i) {
+        bin.push(String.fromCharCode(arr[i]));
+    }
+    return btoa(bin.join(''));
+}
 function longToNumber(long) {
     if (long.gt(Number.MAX_SAFE_INTEGER)) {
         throw new globalThis.Error('Value is larger than Number.MAX_SAFE_INTEGER');

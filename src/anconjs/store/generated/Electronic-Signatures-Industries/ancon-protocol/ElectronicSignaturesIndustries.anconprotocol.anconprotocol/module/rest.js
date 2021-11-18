@@ -130,7 +130,7 @@ export class HttpClient {
     }
 }
 /**
- * @title anconprotocol/did_registry.proto
+ * @title anconprotocol/data_union.proto
  * @version version not set
  */
 export class Api extends HttpClient {
@@ -183,10 +183,10 @@ export class Api extends HttpClient {
          *
          * @tags Query
          * @name QueryGetDidKey
-         * @request GET:/ancon/didregistry/{name}
+         * @request GET:/ancon/didregistry/{hashcid}
          */
-        this.queryGetDidKey = (name, params = {}) => this.request({
-            path: `/ancon/didregistry/${name}`,
+        this.queryGetDidKey = (hashcid, params = {}) => this.request({
+            path: `/ancon/didregistry/${hashcid}`,
             method: "GET",
             format: "json",
             ...params,
@@ -304,6 +304,20 @@ export class Api extends HttpClient {
         this.queryReadRoyaltyInfo = (cid, price, params = {}) => this.request({
             path: `/ancon/royalty/${cid}/${price}`,
             method: "GET",
+            format: "json",
+            ...params,
+        });
+        /**
+         * No description
+         *
+         * @tags Query
+         * @name QueryReadSchemaStoreResource
+         * @request GET:/ancon/schemastore/{cid}
+         */
+        this.queryReadSchemaStoreResource = (cid, query, params = {}) => this.request({
+            path: `/ancon/schemastore/${cid}`,
+            method: "GET",
+            query: query,
             format: "json",
             ...params,
         });

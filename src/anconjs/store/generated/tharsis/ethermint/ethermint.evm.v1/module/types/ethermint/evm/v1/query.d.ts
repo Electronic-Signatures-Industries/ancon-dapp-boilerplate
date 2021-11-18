@@ -117,10 +117,6 @@ export interface QueryParamsResponse {
     /** params define the evm module parameters. */
     params: Params | undefined;
 }
-/** QueryStaticCallRequest defines static call response */
-export interface QueryStaticCallResponse {
-    data: Uint8Array;
-}
 /** EthCallRequest defines EthCall request */
 export interface EthCallRequest {
     /** same json format as the json rpc api. */
@@ -258,13 +254,6 @@ export declare const QueryParamsResponse: {
     fromJSON(object: any): QueryParamsResponse;
     toJSON(message: QueryParamsResponse): unknown;
     fromPartial(object: DeepPartial<QueryParamsResponse>): QueryParamsResponse;
-};
-export declare const QueryStaticCallResponse: {
-    encode(message: QueryStaticCallResponse, writer?: Writer): Writer;
-    decode(input: Reader | Uint8Array, length?: number): QueryStaticCallResponse;
-    fromJSON(object: any): QueryStaticCallResponse;
-    toJSON(message: QueryStaticCallResponse): unknown;
-    fromPartial(object: DeepPartial<QueryStaticCallResponse>): QueryStaticCallResponse;
 };
 export declare const EthCallRequest: {
     encode(message: EthCallRequest, writer?: Writer): Writer;

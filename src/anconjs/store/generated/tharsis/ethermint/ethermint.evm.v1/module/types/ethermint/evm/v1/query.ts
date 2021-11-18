@@ -136,11 +136,6 @@ export interface QueryParamsResponse {
   params: Params | undefined
 }
 
-/** QueryStaticCallRequest defines static call response */
-export interface QueryStaticCallResponse {
-  data: Uint8Array
-}
-
 /** EthCallRequest defines EthCall request */
 export interface EthCallRequest {
   /** same json format as the json rpc api. */
@@ -1187,59 +1182,6 @@ export const QueryParamsResponse = {
       message.params = Params.fromPartial(object.params)
     } else {
       message.params = undefined
-    }
-    return message
-  }
-}
-
-const baseQueryStaticCallResponse: object = {}
-
-export const QueryStaticCallResponse = {
-  encode(message: QueryStaticCallResponse, writer: Writer = Writer.create()): Writer {
-    if (message.data.length !== 0) {
-      writer.uint32(10).bytes(message.data)
-    }
-    return writer
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryStaticCallResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = { ...baseQueryStaticCallResponse } as QueryStaticCallResponse
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        case 1:
-          message.data = reader.bytes()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(object: any): QueryStaticCallResponse {
-    const message = { ...baseQueryStaticCallResponse } as QueryStaticCallResponse
-    if (object.data !== undefined && object.data !== null) {
-      message.data = bytesFromBase64(object.data)
-    }
-    return message
-  },
-
-  toJSON(message: QueryStaticCallResponse): unknown {
-    const obj: any = {}
-    message.data !== undefined && (obj.data = base64FromBytes(message.data !== undefined ? message.data : new Uint8Array()))
-    return obj
-  },
-
-  fromPartial(object: DeepPartial<QueryStaticCallResponse>): QueryStaticCallResponse {
-    const message = { ...baseQueryStaticCallResponse } as QueryStaticCallResponse
-    if (object.data !== undefined && object.data !== null) {
-      message.data = object.data
-    } else {
-      message.data = new Uint8Array()
     }
     return message
   }

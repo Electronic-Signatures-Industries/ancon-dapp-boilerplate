@@ -18,8 +18,8 @@ import {
   makeAuthInfoBytes,
   makeSignBytes,
   makeSignDoc,
-  Registry,
-  DirectSecp256k1HdWallet
+  DirectSecp256k1HdWallet,
+  Registry
 } from '@cosmjs/proto-signing'
 import {
   QueryClient,
@@ -48,9 +48,8 @@ import {
   pubToAddress,
 } from 'ethereumjs-util'
 import {
-  encoder,
-  queryClient,
   registry,
+  queryClient,
 } from './store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module'
 import {
   arrayify,
@@ -199,30 +198,31 @@ export class AnconWeb3Client {
       },
     )
 
-    this.connectedSigner = await SigningStargateClient.connectWithSigner(
-      this.rpcUrl,
-      this.signer,
-      {
-        registry,
-        prefix: 'cosmos',
-      },
-    )
-    
     this.cosmosAccount = (await this.signer.getAccounts())[0]
-
+    
     // const signer = window.keplr.getOfflineSigner(this.cosmosChainId)
     for (const txcli of msgclients) {
       this.msgService[txcli.name] = await txcli.client(this.signer, {
         addr: this.rpcUrl,
       })
     }
-
+    
     // const k = await window.keplr.getKey(this.cosmosChainId)
-
+    
     // this.cosmosAccount = await this.getAccountInfo(k.bech32Address)
     // this.cosmosAccount.account.pub_key = encodePubkey(
-    //   encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
-    // ) as any
+      //   encodeSecp256k1Pubkey(Secp256k1.compressPubkey(k.pubKey)),
+      // ) as any
+      this.connectedSigner = await SigningStargateClient.connectWithSigner(
+        this.rpcUrl,
+        this.signer,
+        {
+          registry,
+  
+          prefix: 'cosmos',
+        },
+      )
+      
     
     return this
   }

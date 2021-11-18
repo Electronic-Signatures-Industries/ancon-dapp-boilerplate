@@ -976,54 +976,6 @@ export const QueryParamsResponse = {
         return message;
     }
 };
-const baseQueryStaticCallResponse = {};
-export const QueryStaticCallResponse = {
-    encode(message, writer = Writer.create()) {
-        if (message.data.length !== 0) {
-            writer.uint32(10).bytes(message.data);
-        }
-        return writer;
-    },
-    decode(input, length) {
-        const reader = input instanceof Uint8Array ? new Reader(input) : input;
-        let end = length === undefined ? reader.len : reader.pos + length;
-        const message = { ...baseQueryStaticCallResponse };
-        while (reader.pos < end) {
-            const tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1:
-                    message.data = reader.bytes();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-            }
-        }
-        return message;
-    },
-    fromJSON(object) {
-        const message = { ...baseQueryStaticCallResponse };
-        if (object.data !== undefined && object.data !== null) {
-            message.data = bytesFromBase64(object.data);
-        }
-        return message;
-    },
-    toJSON(message) {
-        const obj = {};
-        message.data !== undefined && (obj.data = base64FromBytes(message.data !== undefined ? message.data : new Uint8Array()));
-        return obj;
-    },
-    fromPartial(object) {
-        const message = { ...baseQueryStaticCallResponse };
-        if (object.data !== undefined && object.data !== null) {
-            message.data = object.data;
-        }
-        else {
-            message.data = new Uint8Array();
-        }
-        return message;
-    }
-};
 const baseEthCallRequest = { gasCap: 0 };
 export const EthCallRequest = {
     encode(message, writer = Writer.create()) {

@@ -1,4 +1,5 @@
 declare const _default: {
+    ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAguaclara: (store: any) => void;
     ElectronicSignaturesIndustriesAnconProtocolElectronicSignaturesIndustriesAnconprotocolAnconprotocol: (store: any) => void;
     CosmosCosmosSdkCosmosAuthzV1Beta1: (store: any) => void;
     CosmosCosmosSdkCosmosBankV1Beta1: (store: any) => void;
@@ -11,6 +12,7 @@ declare const _default: {
     CosmosCosmosSdkCosmosStakingV1Beta1: (store: any) => void;
     CosmosCosmosSdkCosmosVestingV1Beta1: (store: any) => void;
     CosmosIbcGoIbcApplicationsTransferV1: (store: any) => void;
+    CosmosIbcGoIbcApplicationsTransferV2: (store: any) => void;
     TharsisEthermintEthermintEvmV1: (store: any) => void;
 };
 export default _default;

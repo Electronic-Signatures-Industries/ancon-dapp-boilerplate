@@ -50,8 +50,6 @@ export interface ChainConfig {
     muirGlacierBlock: string;
     /** Berlin switch block (nil = no fork, 0 = already on berlin) */
     berlinBlock: string;
-    /** Catalyst switch block (nil = no fork, 0 = already on catalyst) */
-    catalystBlock: string;
     /** London switch block (nil = no fork, 0 = already on london) */
     londonBlock: string;
 }
@@ -138,20 +136,20 @@ export interface TraceConfig {
     timeout: string;
     /** number of blocks the tracer is willing to go back */
     reexec: number;
-    /** disable memory capture */
-    disableMemory: boolean;
     /** disable stack capture */
     disableStack: boolean;
     /** disable storage capture */
     disableStorage: boolean;
-    /** disable return data capture */
-    disableReturnData: boolean;
     /** print output during capture end */
     debug: boolean;
     /** maximum length of output, but zero means unlimited */
     limit: number;
     /** Chain overrides, can be used to execute a trace using future fork rules */
     overrides: ChainConfig | undefined;
+    /** enable memory capture */
+    enableMemory: boolean;
+    /** enable return data capture */
+    enableReturnData: boolean;
 }
 export declare const Params: {
     encode(message: Params, writer?: Writer): Writer;
