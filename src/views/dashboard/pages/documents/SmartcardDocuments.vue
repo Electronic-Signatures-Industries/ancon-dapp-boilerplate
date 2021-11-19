@@ -128,11 +128,11 @@
                     <v-alert :type="alertType" v-if="alertMessage">{{
                       alertMessage
                     }}</v-alert>
-
+                    <!-- Card Fields -->
                     <v-row>
                       <v-col xs="6" sm="6" offset-sm="2">
                         <v-text-field
-                          v-if="item.functional.key !== 'mint'"
+                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
                           show-size
                           chips
                           :accept="item.functional.settings.signing.contentType"
@@ -151,6 +151,15 @@
                         <v-alert type="alert" dense v-if="cidindex"
                           >Image URI: {{ cidindex }}</v-alert
                         >
+                        <v-text-field
+                          v-if="item.functional.key === 'create-did'"
+                          show-size
+                          chips
+                          :accept="item.functional.settings.signing.contentType"
+                          label="Domain Name"
+                          required
+                          v-model="didDomainName"
+                        ></v-text-field>
                       </v-col>
                     </v-row>
                     <v-row>
@@ -165,13 +174,22 @@
                           v-model="name"
                         ></v-text-field>
                         <v-text-field
-                          v-if="item.functional.key !== 'mint'"
+                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
                           show-size
                           chips
                           :accept="item.functional.settings.signing.contentType"
                           label="Token ID"
                           required
                           v-model="tokenID"
+                        ></v-text-field>
+                        <v-text-field
+                          v-if="item.functional.key === 'create-did'"
+                          show-size
+                          chips
+                          :accept="item.functional.settings.signing.contentType"
+                          label="Public Key"
+                          required
+                          v-model="didPublicKey"
                         ></v-text-field>
                       </v-col>
                     </v-row>
@@ -186,13 +204,25 @@
                           v-model="jsonTextArea"
                         ></v-textarea>
                         <v-text-field
-                          v-if="item.functional.key !== 'mint'"
+                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
                           show-size
                           chips
                           required
                           label="Recipient Address"
                           v-model="recipientAddressPlaceholder"
                         ></v-text-field>
+                        <v-chip-group
+                          v-if="item.functional.key === 'create-did'"
+                          active-class="primary--text"
+                        >
+                          <v-chip 
+                            v-for="item in didTypes" 
+                            :key=item.key
+                            @click="selectDIDType(item.key)"
+                            >{{item.functional.label}} 
+                            
+                          </v-chip>
+                        </v-chip-group>
                         <v-menu
                           offset-y
                           v-if="item.functional.key === 'crosschain-swap'"
@@ -236,11 +266,19 @@
                         </v-btn>
                         <v-btn
                           
-                          v-if="connected"
+                          v-if="false"
                           @click="uploadJson"
                           color="primary"
                         >
                           Create JSON
+                        </v-btn>
+                        <v-btn
+                          
+                          v-if="connected"
+                          @click="createDID"
+                          color="primary"
+                        >
+                          Create DID
                         </v-btn>
                       </v-col>
                     </v-row>
@@ -614,6 +652,18 @@ export default class SmartcardDocuments extends Vue {
           },
         },
       },
+      {
+        text: "DID",
+        icon: "mdi-identifier",
+        functional: {
+          key: "create-did",
+          label: "Create Did",
+          settings: {
+            signing: "swap",
+            contentType: null,
+          },
+        },
+      },
     ],
   };
   placeholderContractAddress = "0x0000000000000000";
@@ -627,7 +677,24 @@ export default class SmartcardDocuments extends Vue {
     { title: "Kucoin Chain" },
     { title: "Polygon" },
   ];
-  jsonTextArea: string;
+  jsonTextArea: string = "";
+  didDomainName="DomainName"
+  didPublicKey="zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+  didTypeSelected="";
+  didTypes = [
+    {
+      key: "web",
+      functional: {
+        label: "Did Web",
+      }
+    },
+    { 
+      key: "key",
+      functional: {
+        label: "Did Key",
+      }
+    }
+  ]
 
   sidebarListItemSelect(itemKey: string) {
     this.sideBarItems.selectedItem = itemKey;
@@ -1077,6 +1144,29 @@ export default class SmartcardDocuments extends Vue {
       fee,
       ""
     );
+  }
+  
+  async selectDIDType(key:string) {
+    console.log("Chip clicked:", key);
+    this.didTypeSelected = key;
+    console.log("Did type selected: ", this.didTypeSelected);
+  }
+
+  async createDID(){
+
+    const domain = new TextEncoder().encode(this.didDomainName)
+    const pubk = new TextEncoder().encode(this.didPublicKey)
+    const type = this.didTypeSelected
+    // const res = await this.addJson(this.name, tEnc)
+    
+
+    console.log("Create Did called", 
+    "\nDomain: ", this.didDomainName, 
+    "\nPubk: ", this.didPublicKey,
+    "\nDid Type: ", type
+    )
+    
+    // return res
   }
 
   async uploadJson(){
