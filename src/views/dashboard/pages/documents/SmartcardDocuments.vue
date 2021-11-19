@@ -30,7 +30,9 @@
                           {{ walletEthAddressDisplay }}
                         </v-chip>
                       </template>
-                      <span v-if="this.connected"> {{ walletEthAddress + ' (click to copy)' }}</span>
+                      <span v-if="this.connected">
+                        {{ walletEthAddress + " (click to copy)" }}</span
+                      >
                     </v-tooltip>
                   </v-row>
                   <v-row class="d-inline-flex">
@@ -54,7 +56,9 @@
                           {{ walletCosmosAddressDisplay }}
                         </v-chip>
                       </template>
-                      <span v-if="this.connected"> {{ walletCosmosAddress + ' (click to copy)' }}</span>
+                      <span v-if="this.connected">
+                        {{ walletCosmosAddress + " (click to copy)" }}</span
+                      >
                     </v-tooltip>
                   </v-row>
                 </v-col>
@@ -132,7 +136,10 @@
                     <v-row>
                       <v-col xs="6" sm="6" offset-sm="2">
                         <v-text-field
-                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
+                          v-if="
+                            item.functional.key !== 'mint' &&
+                            item.functional.key !== 'create-did'
+                          "
                           show-size
                           chips
                           :accept="item.functional.settings.signing.contentType"
@@ -174,7 +181,10 @@
                           v-model="name"
                         ></v-text-field>
                         <v-text-field
-                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
+                          v-if="
+                            item.functional.key !== 'mint' &&
+                            item.functional.key !== 'create-did'
+                          "
                           show-size
                           chips
                           :accept="item.functional.settings.signing.contentType"
@@ -204,7 +214,10 @@
                           v-model="jsonTextArea"
                         ></v-textarea>
                         <v-text-field
-                          v-if="item.functional.key !== 'mint' && item.functional.key !== 'create-did'"
+                          v-if="
+                            item.functional.key !== 'mint' &&
+                            item.functional.key !== 'create-did'
+                          "
                           show-size
                           chips
                           required
@@ -215,12 +228,11 @@
                           v-if="item.functional.key === 'create-did'"
                           active-class="primary--text"
                         >
-                          <v-chip 
-                            v-for="item in didTypes" 
-                            :key=item.key
+                          <v-chip
+                            v-for="item in didTypes"
+                            :key="item.key"
                             @click="selectDIDType(item.key)"
-                            >{{item.functional.label}} 
-                            
+                            >{{ item.functional.label }}
                           </v-chip>
                         </v-chip-group>
                         <v-menu
@@ -260,20 +272,14 @@
                           color="pink"
                           v-if="connected === false"
                           @click="connect"
-                          dark 
+                          dark
                         >
                           Connect
                         </v-btn>
-                        <v-btn
-                          
-                          v-if="false"
-                          @click="uploadJson"
-                          color="primary"
-                        >
+                        <v-btn v-if="false" @click="uploadJson" color="primary">
                           Create JSON
                         </v-btn>
                         <v-btn
-                          
                           v-if="connected"
                           @click="createDID"
                           color="primary"
@@ -517,9 +523,7 @@ import {
   MsgSchemaStoreResponse,
   MsgUpdateMetadataOwnership,
 } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
-import {
-  txClient,
-} from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
+import { txClient } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
   LegacyTx,
   MsgEthereumTx,
@@ -678,23 +682,23 @@ export default class SmartcardDocuments extends Vue {
     { title: "Polygon" },
   ];
   jsonTextArea: string = "";
-  didDomainName="DomainName"
-  didPublicKey="zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-  didTypeSelected="";
+  didDomainName = "DomainName";
+  didPublicKey = "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  didTypeSelected = "";
   didTypes = [
     {
       key: "web",
       functional: {
         label: "Did Web",
-      }
+      },
     },
-    { 
+    {
       key: "key",
       functional: {
         label: "Did Key",
-      }
-    }
-  ]
+      },
+    },
+  ];
 
   sidebarListItemSelect(itemKey: string) {
     this.sideBarItems.selectedItem = itemKey;
@@ -791,24 +795,24 @@ export default class SmartcardDocuments extends Vue {
     });
   }
 
-  async copyEthAddress(){
-    if(this.connected){
-      navigator.clipboard.writeText(this.walletEthAddress)
-      console.log("Eth address copied")
+  async copyEthAddress() {
+    if (this.connected) {
+      navigator.clipboard.writeText(this.walletEthAddress);
+      console.log("Eth address copied");
     }
   }
 
-  async copyCosmosAddress(){
-    if(this.connected){
-      navigator.clipboard.writeText(this.walletCosmosAddress)
-      console.log("Cosmos address copied")
+  async copyCosmosAddress() {
+    if (this.connected) {
+      navigator.clipboard.writeText(this.walletCosmosAddress);
+      console.log("Cosmos address copied");
     }
   }
 
   async disconnect() {
-    this.connected = false;;
-    this.walletEthAddressDisplay = "Not connected"
-    this.walletCosmosAddressDisplay = "Not connected"
+    this.connected = false;
+    this.walletEthAddressDisplay = "Not connected";
+    this.walletCosmosAddressDisplay = "Not connected";
   }
 
   async connect(passphrase: string) {
@@ -827,10 +831,13 @@ export default class SmartcardDocuments extends Vue {
     this.walletEthAddress = accounts[0];
 
     this.walletEthAddressDisplay = `
-      ${this.walletEthAddress.substring(0, 8)}...${this.walletEthAddress.substring(
-        this.walletEthAddress.length - 7,
-        this.walletEthAddress.length
-      )}`;
+      ${this.walletEthAddress.substring(
+        0,
+        8
+      )}...${this.walletEthAddress.substring(
+      this.walletEthAddress.length - 7,
+      this.walletEthAddress.length
+    )}`;
 
     this.currentAccount = accounts[0];
     // DAI
@@ -851,7 +858,10 @@ export default class SmartcardDocuments extends Vue {
       this.walletCosmosAddress = this.anconWeb3client.cosmosAccount.address;
 
       this.walletCosmosAddressDisplay = `
-      ${this.walletCosmosAddress.substring(0, 7)}...${this.walletCosmosAddress.substring(
+      ${this.walletCosmosAddress.substring(
+        0,
+        7
+      )}...${this.walletCosmosAddress.substring(
         this.walletCosmosAddress.length - 7,
         this.walletCosmosAddress.length
       )}`;
@@ -956,14 +966,12 @@ export default class SmartcardDocuments extends Vue {
     // address tokenAddress,
     // address to
     // 3. MetadataOwnershipChanged event
-
     //sendmetadataownership must verify the packet proof
     //on claim verify packet proof is derived from metadata proof
-
     // 4. metadata validation on new tokenid
     // send ancon proof, if pass, flag mapping true (gas costs)
     // on packet transaction take ancon proof check match metadata
-    // 
+    //
   }
 
   async mounted() {
@@ -1145,37 +1153,38 @@ export default class SmartcardDocuments extends Vue {
       ""
     );
   }
-  
-  async selectDIDType(key:string) {
+
+  async selectDIDType(key: string) {
     console.log("Chip clicked:", key);
     this.didTypeSelected = key;
     console.log("Did type selected: ", this.didTypeSelected);
   }
 
-  async createDID(){
-
-    const domain = new TextEncoder().encode(this.didDomainName)
-    const pubk = new TextEncoder().encode(this.didPublicKey)
-    const type = this.didTypeSelected
+  async createDID() {
+    const domain = new TextEncoder().encode(this.didDomainName);
+    const pubk = new TextEncoder().encode(this.didPublicKey);
+    const type = this.didTypeSelected;
     // const res = await this.addJson(this.name, tEnc)
-    
 
-    console.log("Create Did called", 
-    "\nDomain: ", this.didDomainName, 
-    "\nPubk: ", this.didPublicKey,
-    "\nDid Type: ", type
-    )
-    
+    console.log(
+      "Create Did called",
+      "\nDomain: ",
+      this.didDomainName,
+      "\nPubk: ",
+      this.didPublicKey,
+      "\nDid Type: ",
+      type
+    );
+
     // return res
   }
 
-  async uploadJson(){
+  async uploadJson() {
+    const tEnc = new TextEncoder().encode(this.jsonTextArea);
+    const res = await this.addJson(this.name, tEnc);
+    debugger;
 
-    const tEnc = new TextEncoder().encode(this.jsonTextArea)
-    const res = await this.addJson(this.name, tEnc)
-    debugger
-    
-    return res
+    return res;
   }
 
   async addJson(name, data): Promise<any> {
@@ -1183,7 +1192,7 @@ export default class SmartcardDocuments extends Vue {
       creator: this.anconWeb3client.cosmosAccount.address,
       path: "Kendall/" + name,
       data: data,
-      codec: 'dag-json',
+      codec: "dag-json",
       isJsonSchema: false,
     });
 
@@ -1345,7 +1354,6 @@ export default class SmartcardDocuments extends Vue {
     const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
     return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
-
 
   /** Relays message to chain b, returns bool or revert*/
   async relayMessage() {}
