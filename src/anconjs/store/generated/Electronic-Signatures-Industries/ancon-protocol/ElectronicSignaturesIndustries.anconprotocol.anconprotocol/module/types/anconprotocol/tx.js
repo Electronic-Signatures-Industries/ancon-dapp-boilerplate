@@ -5734,9 +5734,9 @@ export class MsgClientImpl {
     constructor(rpc) {
         this.rpc = rpc;
     }
-    AddSchemaStore(request) {
+    SchemaStore(request) {
         const data = MsgSchemaStore.encode(request).finish();
-        const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'AddSchemaStore', data);
+        const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'SchemaStore', data);
         return promise.then((data) => MsgSchemaStoreResponse.decode(new Reader(data)));
     }
     AddDataSource(request) {

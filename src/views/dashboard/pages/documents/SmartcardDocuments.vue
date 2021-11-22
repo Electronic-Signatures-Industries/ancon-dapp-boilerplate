@@ -506,29 +506,25 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import "share-api-polyfill";
-
+import config from "../../../../../src/anconjs/anconConfig";
 import { BigNumber, ethers } from "ethers";
-import { AnconManager } from "../../../../views/dashboard/pages/wallet/anconManager";
-import { AnconWeb3Client } from "../../../../anconjs";
+import { HDLocalWeb3Client } from "anconjs/src";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { arrayify, base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
 import { TxEvent } from "@cosmjs/tendermint-rpc";
 import { Web3Storage } from "web3.storage/dist/bundle.esm.min.js";
-
+import { txClient } from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
+  MsgAnchorCid,
+  MsgAnchorCidWithProof,
+  MsgAnchorCidResponse,
+  MsgAnchorCidWithProofResponse,
+  MsgCreateDid,
   MsgMetadata,
-  MsgMetadataResponse,
-  MsgSchemaStore,
-  MsgSchemaStoreResponse,
   MsgUpdateMetadataOwnership,
-} from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
-import { txClient } from "@/anconjs/store/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
-import {
-  LegacyTx,
-  MsgEthereumTx,
-  MsgEthereumTxResponse,
-} from "@/anconjs/store/generated/tharsis/ethermint/ethermint.evm.v1/module/types/ethermint/evm/v1/tx";
+} from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
+import { PostSchemaRequest } from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/query";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -544,7 +540,6 @@ export default class SmartcardDocuments extends Vue {
   uploadStatus = false;
   typelink = { mode: "2" };
   unlockPin = false;
-  ancon: AnconManager;
   swarm: SwarmManager;
   report: unknown = {};
   cids: any = [];
@@ -606,7 +601,7 @@ export default class SmartcardDocuments extends Vue {
   emulateSmartcard = false;
   //wallet: Wallet;
   web3instance: Web3;
-  anconWeb3client: AnconWeb3Client;
+  anconWeb3client: HDLocalWeb3Client;
   onboard = null;
   chainId: number;
   web3storageAPIKey =
@@ -749,7 +744,6 @@ export default class SmartcardDocuments extends Vue {
     } else {
       // none
     }
-    const result = await this.ancon.getObject(cid);
 
     // if (blob.content === null) {
     //   //TODO: download all sources
@@ -820,7 +814,12 @@ export default class SmartcardDocuments extends Vue {
     const accounts = await window.ethereum.enable();
     this.web3instance = new Web3(window.ethereum);
     //@ts-ignore
-    this.anconWeb3client = new AnconWeb3Client();
+    this.anconWeb3client = new HDLocalWeb3Client(
+      "lend lock kit kiss walnut flower expect text upset nut arrive hub waste stairs climb neither must crowd harvest network wife lizard shiver obtain",
+      "cosmos",
+      `m/44'/118'/0'/0`,
+      config
+    );
     await this.anconWeb3client.connect([
       {
         name: "ancon",
@@ -866,6 +865,13 @@ export default class SmartcardDocuments extends Vue {
         this.walletCosmosAddress.length
       )}`;
 
+      // this.subscribeToSchemaStoreEvents();
+      this.anconWeb3client.subscribeToTx("SchemaStore", (res) => {
+        console.log(res);
+      });
+      this.anconWeb3client.subscribeToTx("CreateDid", (res) => {
+        console.log(res);
+      });
       this.subscribeToMetadataEvents();
       this.subscribeToUpdateMetadataEvents();
       await this.loadBalances();
@@ -984,7 +990,7 @@ export default class SmartcardDocuments extends Vue {
   }
 
   subscribeToSchemaStoreEvents() {
-    const query = `message.action='AddSchemaStore'`;
+    const query = `message.action='SchemaStore'`;
     const c = this.anconWeb3client.tm.subscribeTx(query);
     const listener = {
       next: async (log: TxEvent) => {
@@ -992,9 +998,8 @@ export default class SmartcardDocuments extends Vue {
         const res = MsgSchemaStoreResponse.decode(log.result.data);
         console.log(res);
         // Hack: Protobuf issue
-        const cid = res.cid.split(";")[1];
+        const cid = res.cid.split("=")[1];
         console.log(cid);
-
         // // Get CID content from GET /ancon/{cid} or /ancon/{cid}/{path}
         // const content =
         //   await this.anconWeb3client.queryClient.queryReadWithPath(
@@ -1021,7 +1026,7 @@ export default class SmartcardDocuments extends Vue {
    *
    */
   subscribeToMetadataEvents() {
-    const query = `message.action='Metadata'`;
+    const query = `message.action='CreateDid'`;
     const c = this.anconWeb3client.tm.subscribeTx(query);
     const listener = {
       next: async (log: TxEvent) => {
@@ -1164,7 +1169,8 @@ export default class SmartcardDocuments extends Vue {
     const domain = new TextEncoder().encode(this.didDomainName);
     const pubk = new TextEncoder().encode(this.didPublicKey);
     const type = this.didTypeSelected;
-    // const res = await this.addJson(this.name, tEnc)
+    
+    const res = await this.createDidWebOrKey();
 
     console.log(
       "Create Did called",
@@ -1200,7 +1206,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
@@ -1239,61 +1245,28 @@ export default class SmartcardDocuments extends Vue {
     return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
 
-  async createDidKey(root, name, description): Promise<any> {
+
+  async createDidWebOrKey(): Promise<any> {
     //did:example:123?service=agent&relativeRef=/credentials#degree
     //did:ethr:9000:tokenaddress?service=erc721&tokenid
-    const msg = MsgMetadata.fromPartial({
+    const msg = MsgCreateDid.fromPartial({
       creator: this.anconWeb3client.cosmosAccount.address,
-      name,
-      image: root,
-      additionalSources: [],
-      links: [],
-      owner: `did:ethr:${this.currentAccount}`,
-      description,
-      did: "",
-      from: "",
+      vanityName: this.didDomainName,
+      didType: this.didTypeSelected,
+      publicKeyBytes: new TextEncoder().encode(this.didPublicKey),
     });
 
     const fee = {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
     };
 
-    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
-    return this.anconWeb3client.signAndBroadcast(encoded, fee);
-  }
-
-  async createDidWeb(root, name, description): Promise<any> {
-    //did:example:123?service=agent&relativeRef=/credentials#degree
-    //did:ethr:9000:tokenaddress?service=erc721&tokenid
-    const msg = MsgMetadata.fromPartial({
-      creator: this.anconWeb3client.cosmosAccount.address,
-      name,
-      image: root,
-      additionalSources: [],
-      links: [],
-      owner: `did:ethr:${this.currentAccount}`,
-      description,
-      did: "",
-      from: "",
-    });
-
-    const fee = {
-      amount: [
-        {
-          denom: "uatom",
-          amount: "24",
-        },
-      ],
-      gas: "200000",
-    };
-
-    const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
+    const encoded = this.anconWeb3client.msgService.ancon.msgCreateDid(msg);
     return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
 

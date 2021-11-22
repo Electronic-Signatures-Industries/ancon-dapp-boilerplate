@@ -6106,7 +6106,7 @@ export const AguaclaraPacketData = {
 
 /** Msg defines the Msg service. */
 export interface Msg {
-  AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>
+  SchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>
   AddDataSource(request: MsgAddDataSource): Promise<MsgAddDataSourceResponse>
   RemoveDataSource(request: MsgRemoveDataSource): Promise<MsgRemoveDataSourceResponse>
   UpdateDataSource(request: MsgUpdateDataSource): Promise<MsgUpdateDataSourceResponse>
@@ -6163,9 +6163,9 @@ export class MsgClientImpl implements Msg {
   constructor(rpc: Rpc) {
     this.rpc = rpc
   }
-  AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse> {
+  SchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse> {
     const data = MsgSchemaStore.encode(request).finish()
-    const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'AddSchemaStore', data)
+    const promise = this.rpc.request('ElectronicSignaturesIndustries.anconprotocol.anconprotocol.Msg', 'SchemaStore', data)
     return promise.then((data) => MsgSchemaStoreResponse.decode(new Reader(data)))
   }
 

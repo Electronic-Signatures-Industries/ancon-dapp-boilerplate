@@ -29,6 +29,7 @@ import {
 } from '@cosmjs/stargate'
 import {
   broadcastTxCommitSuccess,
+  broadcastTxSyncSuccess,
   pubkeyToAddress,
   pubkeyToRawAddress,
   Tendermint34Client,
@@ -159,8 +160,9 @@ export class AnconWeb3Client {
     //   authInfoBytes: s.signed.authInfoBytes,
     //   signatures: [fromBase64(s.signature.signature)],
     // })
-    const res = await this.tm.broadcastTxCommit({tx: TxRaw.encode(Tx).finish()}) 
-    return broadcastTxCommitSuccess(res)
+    const res = await this.tm.broadcastTxSync({tx: TxRaw.encode(Tx).finish()}) 
+    debugger
+    return broadcastTxSyncSuccess(res)
 
     // window.keplr.sendTx(
     //   this.cosmosChainId,

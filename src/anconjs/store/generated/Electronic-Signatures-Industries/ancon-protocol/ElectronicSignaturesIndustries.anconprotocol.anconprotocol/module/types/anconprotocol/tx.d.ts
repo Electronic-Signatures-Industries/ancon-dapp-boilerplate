@@ -763,7 +763,7 @@ export declare const AguaclaraPacketData: {
 };
 /** Msg defines the Msg service. */
 export interface Msg {
-    AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
+    SchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
     AddDataSource(request: MsgAddDataSource): Promise<MsgAddDataSourceResponse>;
     RemoveDataSource(request: MsgRemoveDataSource): Promise<MsgRemoveDataSourceResponse>;
     UpdateDataSource(request: MsgUpdateDataSource): Promise<MsgUpdateDataSourceResponse>;
@@ -817,7 +817,7 @@ export interface Msg {
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
     constructor(rpc: Rpc);
-    AddSchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
+    SchemaStore(request: MsgSchemaStore): Promise<MsgSchemaStoreResponse>;
     AddDataSource(request: MsgAddDataSource): Promise<MsgAddDataSourceResponse>;
     RemoveDataSource(request: MsgRemoveDataSource): Promise<MsgRemoveDataSourceResponse>;
     UpdateDataSource(request: MsgUpdateDataSource): Promise<MsgUpdateDataSourceResponse>;
