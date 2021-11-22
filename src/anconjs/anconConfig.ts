@@ -1,13 +1,13 @@
 const config = {
-  chainId: "cosmoshub-testnet",
+  chainId: "ancon",
 
-  chainName: "cosmoshubtesnet",
+  chainName: "testnet",
 
-  // rpc: 'wss://ancon.did.pa:26657',
-  rpc: "ws://localhost:26657",
+  rpc: 'wss://ancon.did.pa:26657',
+//  rpc: "ws://localhost:26657",
 
-  // rest: 'https://ancon.did.pa:1318',
-  rest: "http://localhost:1317",
+  rest: 'https://ancon.did.pa:1318',
+  // rest: "http://localhost:1317",
 
   stakeCurrency: {
     coinDenom: "stake",

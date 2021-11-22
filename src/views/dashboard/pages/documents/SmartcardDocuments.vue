@@ -512,7 +512,7 @@ import { HDLocalWeb3Client } from "anconjs/src";
 import { SwarmManager } from "../../../../views/dashboard/pages/wallet/SwarmManager";
 import { arrayify, base64 } from "ethers/lib/utils";
 import Web3, * as web3 from "web3";
-import { TxEvent } from "@cosmjs/tendermint-rpc";
+import { TxEvent, TxResponse } from "@cosmjs/tendermint-rpc";
 import { Web3Storage } from "web3.storage/dist/bundle.esm.min.js";
 import { txClient } from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module";
 import {
@@ -523,8 +523,15 @@ import {
   MsgCreateDid,
   MsgMetadata,
   MsgUpdateMetadataOwnership,
+  MsgMetadataResponse,
+  MsgCreateDidResponse,
 } from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/tx";
 import { PostSchemaRequest } from "anconjs/src/generated/Electronic-Signatures-Industries/ancon-protocol/ElectronicSignaturesIndustries.anconprotocol.anconprotocol/module/types/anconprotocol/query";
+import { TxResult } from "anconjs/src/generated/tharsis/ethermint/ethermint.evm.v1";
+import { createKeplrWallet } from "@/anconjs/KeplrWrapper";
+import { IndexedTx } from "@cosmjs/stargate";
+import { findAttribute, parseEvent } from "@cosmjs/launchpad/build/logs";
+import { fromUtf8 } from "@cosmjs/encoding";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -809,7 +816,25 @@ export default class SmartcardDocuments extends Vue {
     this.walletCosmosAddressDisplay = "Not connected";
   }
 
+  async transactionCompleted(tx: TxResponse) {
+    debugger;
+    if (tx.result.events.length === 0) {
+      console.log(tx.result.log);
+      this.alertMessage = `An error has occurred`;
+      this.loading = false;
+      return;
+    }
+
+    const response = tx.result.events.find((a) => a.type === "DidCreated");
+    if (response) {
+      const attrs = (k) =>
+        fromUtf8(response.attributes.find((a) => fromUtf8(a.key) === k).value);
+      this.alertMessage = `DID created <a href="${attrs("Url")}">${attrs("Did")}</a> stored as CID ${attrs("Cid")}`;
+      this.loading = false;
+    }
+  }
   async connect(passphrase: string) {
+    await createKeplrWallet();
     //@ts-ignore
     const accounts = await window.ethereum.enable();
     this.web3instance = new Web3(window.ethereum);
@@ -820,12 +845,15 @@ export default class SmartcardDocuments extends Vue {
       `m/44'/118'/0'/0`,
       config
     );
-    await this.anconWeb3client.connect([
-      {
-        name: "ancon",
-        client: txClient,
-      },
-    ]);
+    await this.anconWeb3client.connect(
+      [
+        {
+          name: "ancon",
+          client: txClient,
+        },
+      ],
+      this.transactionCompleted
+    );
 
     this.walletEthAddress = accounts[0];
 
@@ -865,15 +893,6 @@ export default class SmartcardDocuments extends Vue {
         this.walletCosmosAddress.length
       )}`;
 
-      // this.subscribeToSchemaStoreEvents();
-      this.anconWeb3client.subscribeToTx("SchemaStore", (res) => {
-        console.log(res);
-      });
-      this.anconWeb3client.subscribeToTx("CreateDid", (res) => {
-        console.log(res);
-      });
-      this.subscribeToMetadataEvents();
-      this.subscribeToUpdateMetadataEvents();
       await this.loadBalances();
       await this.loadTransactions();
     } catch (e) {
@@ -891,7 +910,7 @@ export default class SmartcardDocuments extends Vue {
       // const XDVNFT = this.nftWeb3Contract.methods.balanceOf(this.currentAccount).send()
       //this.balances.daiMock = ethers.utils.formatEther(XDVNFT);
       this.balances.bnb = ethers.utils.formatEther(bnb);
-      this.balances.dai = ethers.utils.formatEther(daiBal);
+      //     this.balances.dai = ethers.utils.formatEther(daiBal);
     }, 1250);
   }
 
@@ -1026,7 +1045,7 @@ export default class SmartcardDocuments extends Vue {
    *
    */
   subscribeToMetadataEvents() {
-    const query = `message.action='CreateDid'`;
+    const query = `message.action='Metadata'`;
     const c = this.anconWeb3client.tm.subscribeTx(query);
     const listener = {
       next: async (log: TxEvent) => {
@@ -1120,7 +1139,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
@@ -1144,7 +1163,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "4",
+          amount: "240",
         },
       ],
       gas: "200000",
@@ -1152,11 +1171,7 @@ export default class SmartcardDocuments extends Vue {
 
     const encoded =
       this.anconWeb3client.msgService.ancon.msgUpdateMetadataOwnership(msgupd);
-    return this.anconWeb3client.msgService.ancon.signAndBroadcast(
-      encoded,
-      fee,
-      ""
-    );
+    return this.anconWeb3client.msgService.ancon.signAndBroadcast(encoded, fee);
   }
 
   async selectDIDType(key: string) {
@@ -1166,11 +1181,10 @@ export default class SmartcardDocuments extends Vue {
   }
 
   async createDID() {
-    const domain = new TextEncoder().encode(this.didDomainName);
-    const pubk = new TextEncoder().encode(this.didPublicKey);
+    this.loading = true;
     const type = this.didTypeSelected;
-    
-    const res = await this.createDidWebOrKey();
+
+    await this.createDidWebOrKey();
 
     console.log(
       "Create Did called",
@@ -1235,7 +1249,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
@@ -1244,7 +1258,6 @@ export default class SmartcardDocuments extends Vue {
     const encoded = this.anconWeb3client.msgService.ancon.msgMetadata(msg);
     return this.anconWeb3client.signAndBroadcast(encoded, fee);
   }
-
 
   async createDidWebOrKey(): Promise<any> {
     //did:example:123?service=agent&relativeRef=/credentials#degree
@@ -1267,7 +1280,9 @@ export default class SmartcardDocuments extends Vue {
     };
 
     const encoded = this.anconWeb3client.msgService.ancon.msgCreateDid(msg);
-    return this.anconWeb3client.signAndBroadcast(encoded, fee);
+    const res = await this.anconWeb3client.signAndBroadcast(encoded, fee);
+    const data = MsgCreateDidResponse.decode(res.data);
+    return data;
   }
 
   async addDataSource(root, name, description): Promise<any> {
@@ -1289,7 +1304,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
@@ -1318,7 +1333,7 @@ export default class SmartcardDocuments extends Vue {
       amount: [
         {
           denom: "uatom",
-          amount: "24",
+          amount: "240",
         },
       ],
       gas: "200000",
