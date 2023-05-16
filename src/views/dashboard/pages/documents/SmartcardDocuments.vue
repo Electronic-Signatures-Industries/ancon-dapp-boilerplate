@@ -142,6 +142,8 @@ import { BigNumber, ethers } from "ethers";
 import { IPFSManager } from "../wallet/IPFSManager";
 import { eddsa } from "elliptic";
 import { base64 } from "ethers/lib/utils";
+import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
+import { filter } from "rxjs/operators";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -208,8 +210,13 @@ export default class SmartcardDocuments extends Vue {
   result: void;
   txid: any = "";
   DAIAddress: string = `0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867`;
-
-  async mounted() {}
+sc: SmartCardConnectorPKCS11;
+ 
+async mounted() {
+    const sc = new SmartCardConnectorPKCS11();
+    await sc.initialize();
+    this.sc = sc;   
+  }
 
   openCid(cid: string) {
     const href = `https://explore.ipld.io/#/explore/${cid}`;
@@ -317,13 +324,49 @@ export default class SmartcardDocuments extends Vue {
     if (this.select.includes("simple")) {
       lnk = await this.createSimpleDocumentNode(this.files);
     } else if (this.select.includes("protected")) {
-      lnk = await this.createDocumentNode(this.files);
+      lnk = await this.createSign(this.files);
     }
     if (lnk && this.select.includes("onchain")) {
       this.result = await this.anchor(lnk);
     } else if (lnk && this.select.includes("nft")) {
       this.result = await this.mintNft(lnk);
     }
+  }
+
+  async createSign(files?: File[]){
+    if (
+      files.length > 0 &&
+      this.pin.length === 0 &&
+      this.typelink.mode === "2"
+    ) {
+      this.files = files;
+      this.unlockPin = true;
+      return;
+    }
+    this.unlockPin = false;
+    this.canUpload = false;
+    this.loading = true;
+   
+    const data = await files[0].arrayBuffer();
+    
+    const shareFormat = {
+        content: base64.encode(Buffer.from(data)),
+    };
+    
+
+    const certs =  await this.sc.getCerts('0', this.pin)
+    // this.unlockPin = false;
+
+    const pdf =    await this.sc.signPades(
+        this.pin,
+        shareFormat.content    );
+ 
+
+        console.log(pdf)
+        console.log(certs)
+        this.loading = false;
+    return null;
+  
   }
   /** Creates document node */
   async createDocumentNode(files?: File[]) {
