@@ -214,7 +214,7 @@ sc: SmartCardConnectorPKCS11;
  
 async mounted() {
     const sc = new SmartCardConnectorPKCS11();
-    await sc.initialize();
+    await sc.connect();
     this.sc = sc;   
   }
 
@@ -356,14 +356,15 @@ async mounted() {
 
     const certs =  await this.sc.getCerts('0', this.pin)
     // this.unlockPin = false;
+    console.log(certs)
 
-    const pdf =    await this.sc.signPades(
+    const pdf =    await this.sc.sign(
+      '0',
         this.pin,
-        shareFormat.content    );
+        Buffer.from(data)    );
  
 
         console.log(pdf)
-        console.log(certs)
         this.loading = false;
     return null;
   
