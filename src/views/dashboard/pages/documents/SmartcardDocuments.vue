@@ -144,6 +144,7 @@ import { eddsa } from "elliptic";
 import { base64 } from "ethers/lib/utils";
 import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
 import { filter } from "rxjs/operators";
+import { ShareUtils } from "../shared/ShareUtils";
 const xdvnftAbi = require("../../../../abi/xdvnft");
 const xdvAbi = require("../../../../abi/xdv.json");
 
@@ -358,15 +359,21 @@ async mounted() {
     // this.unlockPin = false;
     console.log(certs)
 
-    const pdf =    await this.sc.sign(
-      '0',
+    const pdf =    await this.sc.signPades(
         this.pin,
-        Buffer.from(data)    );
- 
+        shareFormat.content    );
 
-        console.log(pdf)
+        const buf = Buffer.from(pdf.signedDocument);
+        // send to viewer
+        const blob = new Blob(
+        [buf],
+        { type: files[0].type });
+
+
+        await ShareUtils.downloadFile(blob, files[0].name);
         this.loading = false;
-    return null;
+
+        return null;
   
   }
   /** Creates document node */
