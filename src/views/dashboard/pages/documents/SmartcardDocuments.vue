@@ -139,8 +139,6 @@ import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
 import { fromDagJWS } from "dids/lib/utils";
 import { BigNumber, ethers } from "ethers";
-import { IPFSManager } from "../wallet/IPFSManager";
-import { eddsa } from "elliptic";
 import { base64 } from "ethers/lib/utils";
 import { SmartCardConnectorPKCS11 } from "../shared/SmartCardConnector";
 import { filter } from "rxjs/operators";
@@ -362,7 +360,6 @@ async mounted() {
     const pdf =    await this.sc.signPades(
         this.pin,
         shareFormat.content    );
-
         const buf = Buffer.from(pdf.signedDocument);
         // send to viewer
         const blob = new Blob(

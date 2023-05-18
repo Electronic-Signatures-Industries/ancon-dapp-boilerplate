@@ -10,7 +10,6 @@
 import { Component, Vue } from 'vue-property-decorator';
 
 import { SolidoSingleton } from './components/core/SolidoSingleton';
-import Onboard from 'bnc-onboard';
 import Web3 from 'web3';
 
 @Component({
