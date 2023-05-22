@@ -128,12 +128,8 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import moment from "moment";
-import {
-  DIDManager,
-  IPLDManager,
-  Wallet,
-  X509Utils,
-} from "xdv-universal-wallet-core";
+
+
 import { CAGOB } from "./cagob.pem";
 import { CARAIZ } from "./caraiz.pem";
 import { CAPC2 } from "./capc2.pem";
@@ -257,37 +253,6 @@ async mounted() {
   //      Verify chain
   // ==========================================
   async verifyChain(cid: string): Promise<any> {
-    try {
-      const res = await (this.ipfs as IPLDManager).get(cid);
-
-      const obj = await this.ipfs?.getObject(cid);
-      const decoded = fromDagJWS(res.value).split(".");
-      const data = `${decoded[0]}.${decoded[1]}`;
-      const sig = `${decoded[2]}`;
-
-      let pub = obj.value.documentPubCert;
-      let report = {};
-      if (obj.value.alg === "ED25519") {
-        // const kp = new eddsa('ed25519')
-        // const kk = kp.keyFromPublic((base64.decode(obj.value.public))
-        // const a = kk.verify(data, sig);
-        return;
-      }
-      report = await X509Utils.verifyChain(
-        data,
-        sig,
-        obj.value.documentPubCert,
-        [CAGOB, CAPC2, CARAIZ]
-      );
-
-      // @ts-ignore
-      this.reportVerify = report
-        .map((i) => `${i.title}: ${i.subtitle}`)
-        .join("<br />");
-    } catch (e) {
-      // TODO: log
-      console.log(e);
-    }
   }
 
   /**
@@ -297,24 +262,7 @@ async mounted() {
    * @returns
    */
   async createEphimericalWallet() {
-    const accountName = "walletcorexdv";
-    const passphrase = "abc123456789";
-    const wallet = new Wallet({ isWeb: false });
-    await wallet.open(accountName, passphrase);
-
-    const acct = (await wallet.getAccount()) as any;
-    let walletId;
-
-    if (acct.keystores.length === 0) {
-      walletId = await wallet.addWallet();
-    } else {
-      walletId = acct.keystores[0].walletId;
-    }
-
-    return wallet.createEd25519({
-      passphrase: passphrase,
-      walletId: walletId,
-    });
+  
   }
 
   // Stores documents and NFT
@@ -375,125 +323,12 @@ async mounted() {
   }
   /** Creates document node */
   async createDocumentNode(files?: File[]) {
-    if (
-      files.length > 0 &&
-      this.pin.length === 0 &&
-      this.typelink.mode === "2"
-    ) {
-      this.files = files;
-      this.unlockPin = true;
-      return;
-    }
-    this.unlockPin = false;
-    this.canUpload = false;
-    this.loading = true;
-    try {
-      this.cids = [];
-      this.items = [];
-      const didManager = new DIDManager();
-      const pin = this.pin;
-      const didRSA = await didManager.create3ID_PKCS11(pin);
-      await didRSA.did.authenticate();
-
-      const ipfsManager = new IPLDManager(didRSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
-
-      for (let index = 0; index < this.files.length; index++) {
-        const file = this.files[index];
-        const arr = await file.arrayBuffer();
-        const cid = await ipfsManager.addSignedObject(new Uint8Array(arr), {
-          name: file.name,
-          contentType: file.type,
-          lastModified: new Date(file.lastModified),
-          certificate: (didRSA as any).certificate,
-        } as any);
-        this.cids.push({
-          cid,
-        });
-        this.items = [
-          ...this.items,
-          {
-            file,
-            cid,
-          },
-        ];
-        // this.reports = [
-        //   ...this.reports,
-        //   await this.verifyChain(cid.toString()),
-        // ];
-      }
-      this.did = didRSA.did.id;
-      const lnk = await ipfsManager.addSignedObject(
-        Buffer.from(JSON.stringify({ index: true })),
-        {
-          alg: "RS256",
-          signedFiles: this.cids,
-          certificate: (didRSA as any).certificate,
-        }
-      );
-      this.manifest = lnk.toString();
-      return lnk.toString();
-    } catch (e) {
-      this.loading = false;
-    }
-    this.loading = false;
-    return null;
+ 
   }
 
   /** Creates simple document node */
   async createSimpleDocumentNode(files?: File[]) {
-    this.unlockPin = false;
-    this.canUpload = false;
-    this.loading = true;
-    try {
-      this.cids = [];
-      this.items = [];
-      const oneTimeWallet = await this.createEphimericalWallet();
-      const didEDDSA = oneTimeWallet;
-      await didEDDSA.did.authenticate();
-
-      const ipfsManager = new IPLDManager(didEDDSA.did);
-      await ipfsManager.start(`https://ipfs.xdv.digital`);
-      this.ipfs = ipfsManager;
-      for (let index = 0; index < this.files.length; index++) {
-        const file = this.files[index];
-        const arr = await file.arrayBuffer();
-        const { cid } = await ipfsManager.client.add({
-          path: file.name,
-          content: arr,
-        });
-        this.cids.push({
-          cid: cid.toString(),
-        });
-        this.items = [
-          ...this.items,
-          {
-            file,
-            cid,
-          },
-        ];
-        // this.reports = [
-        //   ...this.reports,
-        //   await this.verifyChain(cid.toString()),
-        // ];
-      }
-
-      this.did = didEDDSA.did.id;
-      const lnk = await ipfsManager.addSignedObject(
-        Buffer.from(JSON.stringify({ index: true })),
-        {
-          alg: "ED25519",
-          publicKey: base64.encode(didEDDSA.publicKey),
-          signedFiles: this.cids,
-        }
-      );
-      this.manifest = lnk.toString();
-      return lnk.toString();
-    } catch (e) {
-      this.loading = false;
-    }
-    return null;
+ 
   }
 
   get web3Selector() {
