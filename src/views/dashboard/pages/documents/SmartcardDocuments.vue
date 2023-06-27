@@ -176,7 +176,7 @@ export default class SmartcardDocuments extends Vue {
       value: "pdfstamp",
     },
   ];
-  select = ["simple", "onchain"];
+  select = ["protected"];
   showPassword = false;
   uploadStatus = false;
   typelink = { mode: "2" };
@@ -305,17 +305,23 @@ async mounted() {
     // this.unlockPin = false;
     console.log(certs)
 
-    const pdf =    await this.sc.signPades(
+    const pdf = await this.sc.signPades(
         this.pin,
-        shareFormat.content    );
-        const buf = Buffer.from(pdf.signedDocument);
-        // send to viewer
-        const blob = new Blob(
-        [buf],
-        { type: files[0].type });
-
-
-        await ShareUtils.downloadFile(blob, files[0].name);
+        shareFormat.content);
+        const bin = atob(pdf.signedDocument)
+        try{
+        console.log('File Size:', Math.round(bin.length / 1024), 'KB');
+        console.log('PDF Version:', bin.match(/^.PDF-([0-9.]+)/)[1]);
+        console.log('Create Date:', bin.match(/<xmp:CreateDate>(.+?)<\/xmp:CreateDate>/)[1]);
+        console.log('Modify Date:', bin.match(/<xmp:ModifyDate>(.+?)<\/xmp:ModifyDate>/)[1]);
+        console.log('Creator Tool:', bin.match(/<xmp:CreatorTool>(.+?)<\/xmp:CreatorTool>/)[1]);
+        } catch {
+          console.log('PDF not properly created');
+        }
+        const _name = files[0].name;
+        const x = _name.lastIndexOf(".");
+        const name = _name.substring(0, x) + "_signed" + _name.substring(x)
+        await ShareUtils.downloadFileBase64(pdf.signedDocument, name);
         this.loading = false;
 
         return null;

@@ -79,6 +79,25 @@ export class ShareUtils {
         }
     }
 
+    /**
+     * Downloads a File object
+     * @param blob File
+     * @param name name
+     */
+    static async downloadFileBase64(blob: string, name: string) {
+        try {
+            // const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = 'data:application/pdf;base64,' + blob;
+            a.download = name;
+            document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+            a.click();
+            a.remove();
+        } catch (e) {
+            throw new Error('No se pudo convertir el archivo');
+        }
+    }
+
     static async openEphemeralLinkIndex(link: string) {
      
     }
